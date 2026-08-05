@@ -30,6 +30,14 @@ export default defineNuxtConfig({
 });
 ```
 
+## Agent skill
+
+Install the consumer-facing skill for this module with:
+
+```sh
+npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
+```
+
 `@nuxt/ui` is installed and initialized as a module dependency automatically.
 The consuming application should also follow the [Nuxt UI installation
 guide](https://ui.nuxt.com/docs/getting-started/installation/nuxt) for its

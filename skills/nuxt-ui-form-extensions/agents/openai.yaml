@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nuxt UI Form Extensions"
+  short_description: "Build resilient editable Nuxt UI forms"
+  default_prompt: "Use $nuxt-ui-form-extensions to build or troubleshoot draft-backed Nuxt UI forms."

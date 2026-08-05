@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nuxt Loops Renderer"
+  short_description: "Render trusted Loops LMX ASTs in Nuxt"
+  default_prompt: "Use $nuxt-loops-renderer to integrate or troubleshoot Loops LMX rendering in a Nuxt app."

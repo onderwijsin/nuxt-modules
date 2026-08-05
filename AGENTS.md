@@ -54,6 +54,7 @@ When multiple valid solutions exist, prefer:
   are not part of the task
 - **MUST** use Zod for boundary validation where applicable
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
+- **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's public API surface changes, alongside the module README
 
 ### Package Manager Contract
 
@@ -100,8 +101,9 @@ A task is **ONLY** complete when **ALL** applicable items are satisfied:
 3. TypeScript checks pass with `pnpm typecheck`
 4. Unit tests pass with `pnpm test`
 5. Documentation updated in `docs/` (single source of truth)
-6. All code written or touched has proper JSDoc where applicable
-7. Runtime contracts remain backward-compatible unless explicitly requested
+6. When a module's public API surface changes, the corresponding installable consumer skill in `skills/` and module README are updated
+7. All code written or touched has proper JSDoc where applicable
+8. Runtime contracts remain backward-compatible unless explicitly requested
 
 **Important:** After completing the above, the agent **MUST NOT** commit the changes, unless explicitly requested. Instead, the
 agent **MUST** provide a summary of the work done, including:

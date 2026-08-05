@@ -34,6 +34,24 @@ corepack enable
 pnpm install --frozen-lockfile
 ```
 
+## 🤖 Module skills
+
+Install the consumer-facing agent skills for these modules with:
+
+```sh
+npx skills add onderwijsin/nuxt-modules
+```
+
+To install only one skill, pass its name:
+
+```sh
+npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
+npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
+```
+
+These skills provide module-specific guidance, API references, examples, and
+troubleshooting for agents working in consuming Nuxt applications.
+
 ## 🚀 Getting Started
 
 Build all workspace packages and isolated playgrounds with:
