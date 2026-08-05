@@ -198,9 +198,9 @@ export default defineNuxtModule({
   meta: {
     name: "@onderwijsin/nuxt-example",
     compatibility: {
-      nuxt: "^4.0.0",
-    },
-  },
+      nuxt: "^4.0.0"
+    }
+  }
 });
 ```
 
