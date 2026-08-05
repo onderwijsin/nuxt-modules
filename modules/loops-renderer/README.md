@@ -27,6 +27,14 @@ export default defineNuxtConfig({
 });
 ```
 
+## Agent skill
+
+Install the consumer-facing skill for this module with:
+
+```sh
+npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
+```
+
 `@nuxt/ui` is registered as a Nuxt module dependency automatically. The
 renderer uses its `UButton` and `UIcon` components.
 
