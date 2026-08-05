@@ -69,6 +69,7 @@ the publish artefact itself.
 | Every PR | Recursive build                | Builds shared utilities, modules, and playgrounds.                                                        |
 | Every PR | Package metadata               | Checks public access, repository metadata, Node support, required files, and private dependency bundling. |
 | Every PR | Packed artefact and Publint    | Inspects the actual tarball and validates npm package metadata.                                           |
+| Publish  | Utility and Nuxt preparation   | Builds shared utility declarations and generates the Nuxt configuration required by module builds.        |
 | Publish  | Recursive build                | Rebuilds the merged source before publishing.                                                             |
 | Publish  | Package metadata               | Confirms the package still meets the publish contract.                                                    |
 | Publish  | Packed artefact and Publint    | Prevents an invalid or incomplete tarball from reaching npm.                                              |
