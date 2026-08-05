@@ -35,6 +35,29 @@ modules/<module-name>/
 Tests belong to the package they exercise. Shared package tests use the same
 convention, for example `packages/module-utils/__tests__/`.
 
+## Local modules
+
+Local modules live inside a consuming Nuxt application's `modules/` directory
+and do not need package metadata, a module-builder configuration, a changelog,
+or a publishable playground. Use a root `index.ts` entrypoint and keep runtime
+code beside it:
+
+```text
+modules/<module-name>/
+├── index.ts
+├── runtime/
+│   └── app/
+│       ├── composables/
+│       └── plugins/
+└── README.md
+```
+
+Register the local entrypoint from `nuxt.config.ts`, for example
+`modules: ["./modules/static-text"]`. Local modules still use `defineNuxtModule`,
+`createResolver`, and the Nuxt Kit registration utilities. Keep their runtime
+exports and options documented, but do not convert them into installable
+packages unless that is explicitly requested.
+
 ## Playgrounds
 
 Each publishable module should have an isolated Nuxt application under

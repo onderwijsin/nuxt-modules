@@ -1,0 +1,115 @@
+import type { ModuleOptions } from "./types/options";
+
+import { resolve } from "node:path";
+import {
+  addImports,
+  addPluginTemplate,
+  addTemplate,
+  addTypeTemplate,
+  createResolver,
+  defineNuxtModule
+} from "@nuxt/kit";
+import { z } from "zod";
+
+import optionsSchema from "./config/options.schema";
+import { version } from "../package.json";
+
+export type { TextDictionary, TextKey, TextTranslator } from "./types/dictionary";
+
+const MODULE_NAME = "@onderwijsin/nuxt-static-text";
+const MODULE_KEY = "staticText";
+
+const DEFAULTS = {
+  content: "assets/ui/content"
+} satisfies ModuleOptions;
+
+const moduleOptionsSchema = z.object(optionsSchema);
+
+function normalizeContentPath(content: string): string {
+  return content.startsWith("./") ? content.slice(2) : content;
+}
+
+/**
+ * Provides a typed, Vue-I18n-compatible text lookup API backed by a project's local content file.
+ */
+export default defineNuxtModule<ModuleOptions>({
+  meta: {
+    name: MODULE_NAME,
+    configKey: MODULE_KEY,
+    version,
+    compatibility: {
+      nuxt: "^4.0.0"
+    }
+  },
+  defaults: DEFAULTS,
+  setup(options, nuxt) {
+    const result = moduleOptionsSchema.safeParse(options);
+
+    if (!result.success) {
+      throw new Error(
+        `Invalid @onderwijsin/nuxt-static-text options: ${z.prettifyError(result.error)}`
+      );
+    }
+
+    const resolver = createResolver(import.meta.url);
+    const runtimeDir = resolver.resolve("./runtime");
+    const contentPath = resolve(
+      nuxt.options.srcDir,
+      normalizeContentPath(result.data.content ?? DEFAULTS.content)
+    );
+
+    nuxt.options.build.transpile.push(runtimeDir);
+
+    addTemplate({
+      filename: "static-text-content.ts",
+      write: true,
+      getContents: () => `export { default } from ${JSON.stringify(contentPath)};\n`
+    });
+
+    const composableTemplate = addTemplate({
+      filename: "static-text-composable.ts",
+      getContents: () => `import content from ${JSON.stringify(contentPath)};
+import { createTextTranslator } from ${JSON.stringify(resolver.resolve(runtimeDir, "translator"))};
+
+export const useText = createTextTranslator(content);
+`
+    });
+    addImports({
+      name: "useText",
+      from: composableTemplate.dst
+    });
+    addPluginTemplate({
+      filename: "static-text-plugin.mjs",
+      getContents: () => `import content from ${JSON.stringify(contentPath)};
+import { defineNuxtPlugin } from "nuxt/app";
+import { createTextTranslator } from ${JSON.stringify(resolver.resolve(runtimeDir, "translator"))};
+
+export default defineNuxtPlugin(() => ({
+  provide: {
+    t: createTextTranslator(content)
+  }
+}));
+`
+    });
+    addTypeTemplate({
+      filename: "types/static-text.d.ts",
+      getContents: () => `import type content from "../static-text-content";
+import type { TextTranslator } from "${MODULE_NAME}";
+
+declare module "#app" {
+  interface NuxtApp {
+    $t: TextTranslator<typeof content>;
+  }
+}
+
+declare module "vue" {
+  interface ComponentCustomProperties {
+    $t: TextTranslator<typeof content>;
+  }
+}
+
+export {};
+`
+    });
+  }
+});

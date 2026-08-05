@@ -1,0 +1,14 @@
+{
+  "name": "static-text-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-static-text": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}
