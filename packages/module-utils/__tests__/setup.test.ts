@@ -51,12 +51,11 @@ describe("moduleSetup", () => {
 });
 
 describe("validateModuleOptions", () => {
-  const log = { error: vi.fn(), info: vi.fn() };
-
   it("defaults enabled and preserves the schema output types", () => {
+    const log = { info: vi.fn() };
     const result = validateModuleOptions(
       { name: "example" },
-      z.object({ name: z.string(), retries: z.number().default(2) }),
+      { name: z.string(), retries: z.number().default(2) },
       log as never
     );
 
@@ -67,11 +66,23 @@ describe("validateModuleOptions", () => {
   });
 
   it("validates the merged schema and logs invalid options", () => {
-    expect(() =>
-      validateModuleOptions({ name: 42 }, z.object({ name: z.string() }), log as never)
-    ).toThrow("Invalid module options. Exiting.");
-    expect(log.error).toHaveBeenCalledWith(
-      "Module options validation failed for the following reasons 👇"
+    const log = { info: vi.fn() };
+
+    expect(() => validateModuleOptions({ name: 42 }, { name: z.string() }, log as never)).toThrow(
+      "Invalid module options ☝. Exiting."
     );
+    expect(log.info).toHaveBeenCalled();
+  });
+
+  it("keeps an explicit enabled value", () => {
+    const log = { info: vi.fn() };
+
+    const result = validateModuleOptions(
+      { enabled: false, mode: "production" },
+      { mode: z.enum(["development", "production"]) },
+      log as never
+    );
+
+    expect(result).toEqual({ enabled: false, mode: "production" });
   });
 });
