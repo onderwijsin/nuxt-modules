@@ -1,0 +1,49 @@
+{
+  "name": "@onderwijsin/nuxt-ui-form-extenions",
+  "version": "0.1.0",
+  "description": "Nuxt UI form extensions.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "modules/ui-form-extenions"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
+  },
+  "dependencies": {
+    "@nuxt/kit": "catalog:",
+    "@nuxt/schema": "catalog:",
+    "@nuxt/ui": "catalog:"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "catalog:",
+    "module-utils": "workspace:*",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

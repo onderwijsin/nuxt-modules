@@ -9,18 +9,18 @@ tree and no module, workspace package, CI workflow, or release implementation
 yet. The initial commits establish some of the requested foundation, but the
 repository does not currently meet the monorepo specification.
 
-| Area                         | Current state                                                                              | Specification status                                                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Node and package manager     | `.nvmrc` specifies Node 24; root pins `pnpm@11.13.1`; local Node is 24.16.0.               | Partially complete: root `engines` is missing.                                                                                |
-| Root package                 | ESM package with formatter/linter/hook scripts.                                            | Incomplete: wrong package name and not private; required build, check, Changeset, package, and recursive scripts are missing. |
-| pnpm workspace               | Uses strict catalog configuration and exact versions.                                      | Not started: it has no workspace discovery globs or workspace packages.                                                       |
-| Formatting and linting       | Oxfmt and Oxlint configurations exist; `fmt:check` and `lint` pass.                        | Partially complete: script names/options and lint coverage do not yet match the specification.                                |
-| Commit conventions           | Commitlint config and Husky hooks exist.                                                   | Partially complete: hooks invoke plain `pnpm`, the commit-message hook mutates subjects, and CI does not validate PR titles.  |
-| Testing and type checking    | Root scripts exist but there is no `tsconfig`, Vitest dependency, or Vitest configuration. | Not started: `typecheck` fails because TypeScript has no project; `test` fails because `vitest` is unavailable.               |
-| Modules and shared utilities | Private packages exist under `packages/`; no publishable modules exist under `modules/`.   | Not started.                                                                                                                  |
-| Artefact validation          | No packing, publint, Are the Types Wrong, or clean-fixture validation exists.              | Not started.                                                                                                                  |
-| Versioning and releases      | No Changesets, npm auth configuration, or workflows exist.                                 | Not started.                                                                                                                  |
-| Documentation                | MIT `LICENSE` exists; no root or package README exists.                                    | Incomplete.                                                                                                                   |
+| Area                         | Current state                                                                                   | Specification status                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Node and package manager     | `.nvmrc` specifies Node 24; root pins `pnpm@11.13.1`; local Node is 24.16.0.                    | Partially complete: root `engines` is missing.                                                                                |
+| Root package                 | ESM package with formatter/linter/hook scripts.                                                 | Incomplete: wrong package name and not private; required build, check, Changeset, package, and recursive scripts are missing. |
+| pnpm workspace               | Uses strict catalog configuration and exact versions.                                           | Not started: it has no workspace discovery globs or workspace packages.                                                       |
+| Formatting and linting       | Oxfmt and Oxlint configurations exist; `fmt:check` and `lint` pass.                             | Partially complete: script names/options and lint coverage do not yet match the specification.                                |
+| Commit conventions           | Commitlint config and Husky hooks exist.                                                        | Partially complete: hooks invoke plain `pnpm`, the commit-message hook mutates subjects, and CI does not validate PR titles.  |
+| Testing and type checking    | Root scripts exist but there is no `tsconfig`, Vitest dependency, or Vitest configuration.      | Not started: `typecheck` fails because TypeScript has no project; `test` fails because `vitest` is unavailable.               |
+| Modules and shared utilities | Private packages exist under `packages/`; the first publishable module exists under `modules/`. | Partially complete: the initial module boilerplate is in place.                                                               |
+| Artefact validation          | No packing, publint, Are the Types Wrong, or clean-fixture validation exists.                   | Not started.                                                                                                                  |
+| Versioning and releases      | No Changesets, npm auth configuration, or workflows exist.                                      | Not started.                                                                                                                  |
+| Documentation                | MIT `LICENSE` exists; no root or package README exists.                                         | Incomplete.                                                                                                                   |
 
 ### Current command evidence
 
@@ -41,10 +41,9 @@ repository does not currently meet the monorepo specification.
 - An integration playground is intentionally out of scope for now. Retain the
   `playgrounds/*` workspace glob for future discovery, but create no integration
   application.
-- No production module is selected yet. Use one small, explicitly non-published
-  `@onderwijsin/nuxt-starter` package to exercise the module, playground,
-  testing, packing, and leakage-validation workflow. Replace it with the first
-  real module before enabling a release that could publish it.
+- The first production module is `@onderwijsin/nuxt-ui-form-extenions`. It is
+  being introduced as a small boilerplate package before its form logic is
+  implemented.
 
 ## Delivery phases
 
@@ -94,17 +93,16 @@ it.
 their package-local type checks without adding publication or validation
 machinery.
 
-### Phase 3 — Establish a non-published Nuxt starter module
+### Phase 3 — Establish the first publishable Nuxt module
 
-**Goal:** implement a small `nuxt-starter` reference package to prove the
-toolchain without representing a production module or publishing it.
+**Goal:** implement the initial `@onderwijsin/nuxt-ui-form-extenions` package
+as a publishable Nuxt module and prove the module build path before adding its
+form logic.
 
-- Create `modules/nuxt-starter` with the same native ESM, Node `>=22`, Nuxt
+- Create `modules/ui-form-extenions` with the same native ESM, Node `>=22`, Nuxt
   `^4.0.0`, dist-only files, exports, generated declaration entrypoint, README,
-  and changelog contracts required of a future published package. Set the
-  repository metadata to `onderwijsin/nuxt-modules`, but configure the package
-  as private and exclude it from Changesets and publication until it is replaced
-  by a real module.
+  and changelog contracts required of a published package. Set the repository
+  metadata to `onderwijsin/nuxt-modules` and configure public npm access.
 - Implement `src/module.ts` using `defineNuxtModule`, explicit metadata, typed
   options, and documented Nuxt compatibility. Use Zod for external/boundary
   option validation where applicable.
@@ -117,14 +115,13 @@ toolchain without representing a production module or publishing it.
 - Add `modules/nuxt-starter/playground`, marked private. It must install the
   module as `workspace:*`, register it by public package name, include realistic
   configuration, and support dev, typecheck, and production build commands.
-- Document the starter's purpose, registration, options, runtime API, minimal
-  example, and compatibility in its README; label it as internal/non-published
-  and add it to the root package table as a development fixture rather than an
-  available package.
+- Document the module's purpose, registration, dependency on `@nuxt/ui`, and
+  compatibility in its README. Keep the initial implementation intentionally
+  minimal so the form logic can be added separately.
 
-**Exit gate:** the starter builds, tests pass, its playground type-checks and
-builds, and a packed tarball installs and works in the clean consumer fixture.
-The release workflow excludes it and no npm package is published.
+**Exit gate:** the module builds, tests pass, and its packed artefact exposes
+only the intended module entrypoint and declarations. Release automation is
+still deferred until the module logic is ready.
 
 ### Phase 4 — Versioning, CI, and release controls
 

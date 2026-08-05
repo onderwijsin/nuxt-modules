@@ -2,20 +2,26 @@
 
 The repository uses Oxfmt, Oxlint, TypeScript, and Vitest.
 
+Make sure to enable corepack before working with pnpm:
+
+```sh
+corepack enable
+```
+
 Run the main checks with:
 
 ```sh
-corepack pnpm format:check
-corepack pnpm lint
-corepack pnpm typecheck
-corepack pnpm test
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
 ```
 
 Apply formatting and lint fixes with:
 
 ```sh
-corepack pnpm format
-corepack pnpm lint:fix
+pnpm format
+pnpm lint:fix
 ```
 
 Formatting covers repository source and documentation. Generated output such
