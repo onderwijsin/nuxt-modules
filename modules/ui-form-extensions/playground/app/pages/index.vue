@@ -25,7 +25,12 @@ const { state, saving, isDirty, submit } = useDraftForm<ProfileState, ProfileSta
   }
 });
 
-/** Saves the current form draft as the canonical profile state. */
+/**
+ * Saves the current form draft as the canonical profile state.
+ *
+ * @param event The submitted profile form event.
+ * @returns A promise that settles after the profile is saved.
+ */
 async function save(event: FormSubmitEvent<ProfileState>): Promise<void> {
   await submit(event.data);
 }

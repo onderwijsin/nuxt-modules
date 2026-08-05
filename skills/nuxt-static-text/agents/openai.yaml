@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nuxt Static Text"
+  short_description: "Use typed static text in Nuxt"
+  default_prompt: "Use $nuxt-static-text to integrate or troubleshoot typed static text in a Nuxt app."

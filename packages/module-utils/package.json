@@ -24,6 +24,9 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
+  "dependencies": {
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@nuxt/schema": "catalog:",
     "consola": "catalog:",

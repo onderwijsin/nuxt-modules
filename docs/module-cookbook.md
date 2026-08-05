@@ -17,6 +17,7 @@ modules/<module-name>/
 │   ├── module.ts
 │   ├── runtime/
 │   │   ├── index.css
+│   │   ├── types/
 │   │   ├── app/
 │   │   │   ├── components/
 │   │   │   ├── composables/
@@ -25,7 +26,7 @@ modules/<module-name>/
 │   │   ├── server/
 │   │   ├── shared/
 │   │   └── etc ...
-│   └── types/
+│   └── types/             # Public TypeScript types exported by the module
 ├── CHANGELOG.md
 ├── README.md
 ├── package.json
@@ -34,6 +35,29 @@ modules/<module-name>/
 
 Tests belong to the package they exercise. Shared package tests use the same
 convention, for example `packages/module-utils/__tests__/`.
+
+## Local modules
+
+Local modules live inside a consuming Nuxt application's `modules/` directory
+and do not need package metadata, a module-builder configuration, a changelog,
+or a publishable playground. Use a root `index.ts` entrypoint and keep runtime
+code beside it:
+
+```text
+modules/<module-name>/
+├── index.ts
+├── runtime/
+│   └── app/
+│       ├── composables/
+│       └── plugins/
+└── README.md
+```
+
+Register the local entrypoint from `nuxt.config.ts`, for example
+`modules: ["./modules/static-text"]`. Local modules still use `defineNuxtModule`,
+`createResolver`, and the Nuxt Kit registration utilities. Keep their runtime
+exports and options documented, but do not convert them into installable
+packages unless that is explicitly requested.
 
 ## Playgrounds
 
@@ -221,9 +245,57 @@ export default defineNuxtModule<ModuleOptions>({
 });
 ```
 
-Keep options typed and document non-obvious options with JSDoc. Use a schema
-or Zod validation at external boundaries when options accept untrusted or
-user-provided values.
+Keep options typed and document non-obvious options with JSDoc. Add runtime
+validation when an option is required or must have a specific shape, such as
+an enum. If every option is optional and ordinary TypeScript types are enough,
+do not add validation just for the sake of having a schema.
+
+Keep `src/module.ts` focused on module orchestration: metadata, lifecycle,
+option validation, and Nuxt Kit registration. Do not place helper functions,
+token maps, CSS generation, or other module-specific utilities inline in the
+entrypoint. Put them in one or more focused files under `src/config/` (for
+build-time configuration) or the appropriate `src/runtime/` directory (for
+runtime behavior), and import them into the entrypoint. This keeps the module
+definition readable and makes pure configuration behavior straightforward to
+test without bootstrapping Nuxt.
+
+When validation is useful, define the Zod fields as a plain object in a
+module-local schema file:
+
+```ts
+// src/config/options.schema.ts
+import { z } from "zod";
+
+export default {
+  mode: z.enum(["development", "production"]),
+  endpoint: z.url()
+};
+```
+
+Import that object in the module entrypoint and validate the raw options after
+the enabled check:
+
+```ts
+import schema from "./config/options.schema";
+import { validateModuleOptions } from "module-utils";
+
+setup(rawOptions, nuxt) {
+  const log = useLogger("example");
+  const { isEnabled } = moduleSetup("@onderwijsin/nuxt-example", rawOptions, log);
+
+  if (!isEnabled()) {
+    return;
+  }
+
+  const options = validateModuleOptions(rawOptions, schema, log);
+  // options is validated, includes enabled: true by default, and is type-safe.
+}
+```
+
+`validateModuleOptions` combines the plain schema object with the shared
+`enabled: z.boolean().default(true)` field. See the loops-renderer module for
+the complete implementation pattern. Do not create a validation schema for a
+module whose options do not need runtime validation.
 
 ## Module dependencies
 
@@ -271,6 +343,31 @@ addComponentsDir({ path: resolver.resolve(runtimeDir, "app", "components") });
 Runtime files should import their Vue or framework dependencies explicitly when
 they are also unit-tested as package source. This makes the runtime behavior
 clear and avoids relying on application-only auto-imports during tests.
+
+### Type templates
+
+For a static declaration registered with `addTypeTemplate`, keep the source file
+under `src/runtime/types/` and reference it with `src`:
+
+```ts
+const resolver = createResolver(import.meta.url);
+const runtimeDir = resolver.resolve("./runtime");
+
+addTypeTemplate({
+  filename: "types/example.d.ts",
+  src: resolver.resolve(runtimeDir, "types/example.d.ts")
+});
+```
+
+This location is required because `nuxt-module-build` publishes the module
+entrypoint and the `src/runtime/` tree. It does not copy arbitrary files from
+other source directories such as `src/types/`. A file referenced by
+`addTypeTemplate({ src })` is resolved from the built package when the
+consumer's Nuxt application starts, so it must exist in `dist/`.
+
+Use `getContents` only when the declaration must be generated from consumer
+options or other build-time values. Static declarations should remain files so
+they are easier to read, edit, and typecheck.
 
 ### Runtime CSS
 

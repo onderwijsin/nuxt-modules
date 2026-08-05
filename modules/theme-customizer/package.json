@@ -1,0 +1,65 @@
+{
+  "name": "@onderwijsin/nuxt-theme-customizer",
+  "version": "0.1.0",
+  "description": "Nuxt module for runtime theme selection and custom color editing in Nuxt UI.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "modules/theme-customizer"
+  },
+  "style": "./dist/runtime/index.css",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "style": "./dist/runtime/index.css",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "predev:playground": "nuxt-module-build build --stub",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "dev:playground": "nuxt dev playground"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "catalog:",
+    "@nuxt/kit": "catalog:",
+    "@nuxt/schema": "catalog:",
+    "@nuxt/ui": "catalog:",
+    "@pinia/nuxt": "^1.0.1",
+    "@vueuse/core": "^14.4.0",
+    "@vueuse/nuxt": "^14.4.0",
+    "h3": "^1.15.11",
+    "nitropack": "^2.13.4",
+    "ofetch": "^1.5.1",
+    "pinia": "^4.0.2",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "scule": "catalog:",
+    "tailwindcss": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "catalog:",
+    "module-utils": "workspace:*",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

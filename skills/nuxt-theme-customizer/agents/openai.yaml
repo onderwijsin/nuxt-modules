@@ -1,0 +1,4 @@
+interface:
+  display_name: Nuxt Theme Customizer
+  short_description: Configure and use the Nuxt UI theme customizer.
+  default_prompt: Help me configure @onderwijsin/nuxt-theme-customizer with valid palettes and a ThemePicker.

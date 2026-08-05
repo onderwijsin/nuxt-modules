@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, useAppConfig } from "#imports";
 import {
   loopsLmxAstSchema,
   getUnsupportedLoopsLmxNodes,
@@ -9,8 +9,7 @@ import {
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../types";
-import { useAppConfig } from "nuxt/app";
-import { createLoopsRendererConfig, hasRendererSpecificContent } from "../utils/renderer";
+import { createLoopsRendererConfig } from "../utils/renderer";
 
 const props = defineProps<{
   /** Parsed LMX component tree received from the public campaign-detail API. */
@@ -30,10 +29,7 @@ const parsedContent = computed(() => loopsLmxAstSchema.safeParse(props.data));
 const ast = computed(() => (parsedContent.value.success ? parsedContent.value.data : null));
 
 const hasRenderableContent = computed(
-  () =>
-    ast.value !== null &&
-    (hasRenderableLoopsLmxNodes(ast.value.children) ||
-      hasRendererSpecificContent(ast.value.children))
+  () => ast.value !== null && hasRenderableLoopsLmxNodes(ast.value.children)
 );
 const hasUnsupportedContent = computed(
   () => ast.value !== null && hasUnsupportedLoopsLmxNodes(ast.value.children)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed } from "#imports";
 import type { LoopsLmxElement } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
 

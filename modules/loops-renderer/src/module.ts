@@ -20,7 +20,7 @@ export default defineNuxtModule<ModuleOptions>({
     }
   },
   defaults: {
-    applyInlineStyles: true
+    // applyInlineStyles: true
   },
   moduleDependencies: {
     "@nuxt/ui": {

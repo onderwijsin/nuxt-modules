@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { isPrepareMode, moduleSetup, resolveLoggerScope, resolveModuleName } from "../src/index";
+import { z } from "zod";
+import {
+  isPrepareMode,
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  validateModuleOptions
+} from "../src/index";
 
 describe("module naming helpers", () => {
   it("resolves a config key to the repository module name", () => {
@@ -40,5 +47,42 @@ describe("moduleSetup", () => {
     expect(log.info).toHaveBeenCalledWith(
       "Module @onderwijsin/nuxt-example is disabled. Skipping setup..."
     );
+  });
+});
+
+describe("validateModuleOptions", () => {
+  it("defaults enabled and preserves the schema output types", () => {
+    const log = { info: vi.fn() };
+    const result = validateModuleOptions(
+      { name: "example" },
+      { name: z.string(), retries: z.number().default(2) },
+      log as never
+    );
+
+    expect(result).toEqual({ enabled: true, name: "example", retries: 2 });
+    expect(result.enabled).toBe(true);
+    expect(result.name).toBe("example");
+    expect(result.retries).toBe(2);
+  });
+
+  it("validates the merged schema and logs invalid options", () => {
+    const log = { info: vi.fn() };
+
+    expect(() => validateModuleOptions({ name: 42 }, { name: z.string() }, log as never)).toThrow(
+      "Invalid module options ☝. Exiting."
+    );
+    expect(log.info).toHaveBeenCalled();
+  });
+
+  it("keeps an explicit enabled value", () => {
+    const log = { info: vi.fn() };
+
+    const result = validateModuleOptions(
+      { enabled: false, mode: "production" },
+      { mode: z.enum(["development", "production"]) },
+      log as never
+    );
+
+    expect(result).toEqual({ enabled: false, mode: "production" });
   });
 });

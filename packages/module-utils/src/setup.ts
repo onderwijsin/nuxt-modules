@@ -1,6 +1,7 @@
 import { kebabCase } from "scule";
 import type { Nuxt } from "@nuxt/schema";
 import type { ConsolaInstance } from "consola";
+import { z } from "zod";
 
 export interface BaseModuleOptions {
   /** Indicates if the module is enabled */
@@ -82,4 +83,32 @@ export function moduleSetup<T extends BaseModuleOptions>(
     end,
     isEnabled
   };
+}
+
+/**
+ * Validate module options against a given zod schema. Options should be the user provided options merged with defaults
+ * @param options - The options object
+ * @param schema - the Zod schema
+ * @param log - the module scoped logger
+ * @returns The validated options object with strict types
+ * @throws Error if the module options are invalid, logging each validation issue
+ */
+export function validateModuleOptions<T extends BaseModuleOptions, S extends z.ZodRawShape>(
+  options: T,
+  schema: S,
+  log: ConsolaInstance
+) {
+  const mergedSchema = z
+    .object({
+      enabled: z.boolean().default(true)
+    })
+    .extend(schema);
+  const result = mergedSchema.safeParse(options);
+
+  if (result.success) {
+    return result.data;
+  }
+
+  log.info(z.prettifyError(result.error));
+  throw new Error(`Invalid module options ☝. Exiting.`);
 }

@@ -8,16 +8,12 @@ use in internal _Onderwijs in_ projects.
 
 ## 📦 What's in the box?
 
-| Package                                | Description                                                                                                                             |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. Located at `modules/ui-form-extensions`. |
-
-## 🧰 Private Packages
-
-| Package        | Description                                                       |
-| -------------- | ----------------------------------------------------------------- |
-| `module-utils` | Private, shared runtime utilities bundled into consuming modules. |
-| `test-utils`   | Private, test-only workspace utilities.                           |
+| Package                                | Description                                                                                    |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `@onderwijsin/nuxt-static-text`        | Type-safe static text tokens for Nuxt applications. Compatible with Vue i18n syntax.           |
+| `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
+| `@onderwijsin/nuxt-loops-renderer`     | Nuxt module for rendering Loops parsed LMX email content.                                      |
+| `@onderwijsin/nuxt-theme-customizer`   | Runtime theme picker and custom color editor for Nuxt UI.                                      |
 
 ## 🧱 Requirements
 
@@ -47,6 +43,8 @@ To install only one skill, pass its name:
 ```sh
 npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
 npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
+npx skills add onderwijsin/nuxt-modules --skill nuxt-static-text
+npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
 ```
 
 These skills provide module-specific guidance, API references, examples, and
@@ -64,6 +62,8 @@ Run the module playground during development:
 
 ```sh
 pnpm --filter @onderwijsin/nuxt-ui-form-extensions dev:playground
+pnpm --filter @onderwijsin/nuxt-static-text dev:playground
+pnpm --filter @onderwijsin/nuxt-theme-customizer dev:playground
 ```
 
 Run playground checks directly when iterating:
@@ -113,6 +113,15 @@ relevant validation commands from the cookbook.
 Module request:
 <describe the module or change here>
 ```
+
+## 🧰 Private Packages
+
+This project contains various private packages as internal dependencies.
+
+| Package        | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `module-utils` | Private, shared runtime utilities bundled into consuming modules. |
+| `test-utils`   | Private, test-only workspace utilities.                           |
 
 ## 📚 Documentation
 

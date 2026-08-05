@@ -1,0 +1,180 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const kit = vi.hoisted(() => ({
+  addComponentsDir: vi.fn(),
+  addImports: vi.fn(),
+  addPlugin: vi.fn(),
+  addServerHandler: vi.fn(),
+  addTemplate: vi.fn((template: { filename: string }) => ({ dst: `./${template.filename}` })),
+  addTypeTemplate: vi.fn(),
+  createResolver: vi.fn(() => ({ resolve: vi.fn((...parts: string[]) => parts.join("/")) })),
+  defineNuxtModule: vi.fn((definition) => definition),
+  extendPages: vi.fn(),
+  extendRouteRules: vi.fn(),
+  useLogger: vi.fn(() => ({ start: vi.fn(), success: vi.fn(), info: vi.fn() }))
+}));
+
+vi.mock("@nuxt/kit", () => kit);
+vi.mock("node:fs", () => ({ readFileSync: vi.fn(() => "@theme static {}") }));
+
+import themeCustomizerModule from "../src/module";
+import type { ThemePalette } from "../src/types";
+
+const moduleDefinition = themeCustomizerModule as unknown as {
+  meta: Record<string, unknown>;
+  moduleDependencies: Record<string, unknown>;
+  defaults: (nuxt: { options: { dev: boolean } }) => Record<string, unknown>;
+  setup: (options: Record<string, unknown>, nuxt: never) => void;
+};
+
+const palette = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#ff0000"])
+) as ThemePalette;
+
+type MockNuxt = {
+  options: {
+    dev: boolean;
+    appConfig: { ui: { colors: Record<string, string> } };
+    ui: { theme: { colors: string[] } };
+    runtimeConfig: {
+      public: {
+        themeCustomizer: {
+          groups: Record<string, string[]>;
+          googleFonts?: { families: string[] };
+        };
+      };
+    };
+    css: string[];
+    build: { transpile: string[] };
+  };
+};
+
+describe("theme customizer module", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("defaults Google Fonts to the curated family list", () => {
+    expect(moduleDefinition.defaults({ options: { dev: true } })).toEqual({
+      enabled: true,
+      googleFonts: {
+        families: [
+          "Public Sans",
+          "Roboto",
+          "Open Sans",
+          "Lato",
+          "Montserrat",
+          "DM Sans",
+          "Inter",
+          "Poppins",
+          "Nunito Sans",
+          "Raleway",
+          "Merriweather",
+          "Playfair Display"
+        ]
+      }
+    });
+  });
+
+  it("exposes the package identity and Nuxt UI dependencies", () => {
+    expect(moduleDefinition.meta).toMatchObject({
+      name: "@onderwijsin/nuxt-theme-customizer",
+      configKey: "themeCustomizer",
+      compatibility: { nuxt: "^4.0.0" }
+    });
+    expect(moduleDefinition.moduleDependencies).toMatchObject({
+      "@nuxt/ui": { version: "^4.6.1" },
+      "@pinia/nuxt": { version: "^1.0.1" },
+      "pinia-plugin-persistedstate": { version: "^4.7.1" },
+      "@vueuse/nuxt": { version: "^14.3.0" }
+    });
+  });
+
+  it("registers runtime assets and preserves custom groups", () => {
+    const nuxt: MockNuxt = {
+      options: {
+        dev: true,
+        appConfig: { ui: { colors: {} } },
+        ui: { theme: { colors: [] } },
+        runtimeConfig: { public: { themeCustomizer: { groups: {} } } },
+        css: [],
+        build: { transpile: [] }
+      }
+    };
+
+    moduleDefinition.setup(
+      {
+        enabled: true,
+        primary: { ocean: palette },
+        neutral: {},
+        accent: { coral: palette }
+      },
+      nuxt as never
+    );
+
+    expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
+    expect(kit.addComponentsDir).toHaveBeenCalledWith({
+      path: "./runtime/app/components",
+      pathPrefix: false
+    });
+    expect(kit.addPlugin).toHaveBeenCalledWith({
+      src: "./runtime/app/plugins/theme-customizer.client",
+      mode: "client"
+    });
+    expect(kit.addImports).toHaveBeenCalledWith({
+      name: "useConfirmDialog",
+      from: "./runtime/app/composables/confirm-dialog"
+    });
+    expect(kit.addServerHandler).toHaveBeenCalledWith({
+      handler: "./runtime/server/api/theme/palette.get",
+      route: "/api/theme/palette"
+    });
+    expect(kit.addTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filename: "theme-customizer.generated.css",
+        write: true
+      })
+    );
+    expect(nuxt.options.runtimeConfig.public.themeCustomizer).toEqual({
+      groups: {
+        primary: ["ocean"],
+        neutral: [],
+        accent: ["coral"]
+      },
+      googleFonts: { families: [] }
+    });
+    expect(nuxt.options.ui.theme.colors).toEqual(["accent"]);
+    expect(kit.extendPages).toHaveBeenCalled();
+  });
+
+  it("skips all registration when disabled", () => {
+    const nuxt = { options: { dev: true, build: { transpile: [] } } };
+
+    moduleDefinition.setup({ enabled: false }, nuxt as never);
+
+    expect(nuxt.options.build.transpile).toEqual([]);
+    expect(kit.addComponentsDir).not.toHaveBeenCalled();
+  });
+
+  it("rejects incomplete palettes", () => {
+    const nuxt = { options: { dev: true, build: { transpile: [] } } };
+
+    expect(() =>
+      moduleDefinition.setup({ primary: { ocean: { 500: "#fff000" } } }, nuxt as never)
+    ).toThrow("Invalid module options");
+  });
+
+  it("requires at least one primary palette when enabled", () => {
+    const nuxt = { options: { dev: true, build: { transpile: [] } } };
+
+    expect(() => moduleDefinition.setup({}, nuxt as never)).toThrow("Invalid module options");
+  });
+
+  it("rejects incomplete custom-group palettes", () => {
+    const nuxt = { options: { dev: true, build: { transpile: [] } } };
+
+    expect(() =>
+      moduleDefinition.setup({ accent: { coral: { 500: "#fff000" } } }, nuxt as never)
+    ).toThrow("Invalid module options");
+  });
+});

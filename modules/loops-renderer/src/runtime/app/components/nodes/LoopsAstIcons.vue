@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed } from "#imports";
 import {
   getLoopsLmxPixels,
   resolveSafeLoopsLmxUrl,
@@ -40,7 +40,12 @@ const style = computed(() => ({
   ...applyInlineStyles(props.node.attributes, props.config.applyInlineStyles !== false)
 }));
 
-/** Converts the supported Loops Font Awesome names to the locally bundled Simple Icons collection. */
+/**
+ * Converts the supported Loops Font Awesome names to the locally bundled Simple Icons collection.
+ *
+ * @param name The supported icon name to convert.
+ * @returns The local icon class name, or `null` when the name is unsupported.
+ */
 function getIconName(name: string | undefined): string | null {
   return (
     {
