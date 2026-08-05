@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Validates publishable package metadata and private dependency bundling.
+ */
+
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 

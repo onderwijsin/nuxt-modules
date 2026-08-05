@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Ensures pull requests include a changeset unless explicitly exempted.
+ */
+
 import { existsSync, readFileSync } from "node:fs";
 
 const eventFile = process.env.GITHUB_EVENT_PATH;

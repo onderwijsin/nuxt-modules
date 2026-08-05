@@ -12,28 +12,39 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
-      - run: corepack pnpm format:check
-      - run: corepack pnpm lint
-      - run: corepack pnpm typecheck
-      - run: corepack pnpm test
-      - run: corepack pnpm build
-      - run: corepack pnpm validate:packages
       - run: corepack pnpm changeset:version
-      - run: node scripts/prepare-release-packages.mjs
-      - uses: peter-evans/create-pull-request@v7
-        with:
-          branch: release/packages
-          delete-branch: false
-          title: "chore: prepare package release"
-          commit-message: "chore: prepare package release"
-          body: "Automated Changesets release pull request."
-          labels: release
+      - name: Create or update release pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .changeset modules pnpm-lock.yaml
+          if git diff --cached --quiet; then
+            echo "No release changes to publish."
+            exit 0
+          fi
+          git switch -C release/packages
+          git commit -m "chore: prepare package release"
+          git push --force origin HEAD:release/packages
+
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+          headers=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
+          existing=$(curl --fail-with-body --silent --show-error "${api}/pulls?head=${GITHUB_REPOSITORY_OWNER}:release%2Fpackages&base=main&state=open" "${headers[@]}" | jq -r '.[0].number // empty')
+          body='{"title":"chore: prepare package release","head":"release/packages","base":"main","body":"Automated Changesets release pull request. CI validates the release changes before merge."}'
+          if [[ -n "${existing}" ]]; then
+            curl --fail-with-body --silent --show-error -X PATCH "${api}/pulls/${existing}" "${headers[@]}" -H "Content-Type: application/json" -d "${body}"
+          else
+            curl --fail-with-body --silent --show-error -X POST "${api}/pulls" "${headers[@]}" -H "Content-Type: application/json" -d "${body}"
+          fi

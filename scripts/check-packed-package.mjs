@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Verifies that a packed module contains only intended files and no private imports.
+ */
+
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 

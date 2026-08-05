@@ -6,6 +6,7 @@ export default defineConfig({
     correctness: "warn"
   },
   rules: {
+    "jsdoc/check-tag-names": ["error", { definedTags: ["fileoverview"] }],
     "vue/prop-name-casing": "off",
     "eslint/no-unused-vars": [
       "error",

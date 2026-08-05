@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Reports whether publishable package versions are pending, published, or failed.
+ */
+
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";

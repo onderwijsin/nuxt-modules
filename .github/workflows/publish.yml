@@ -11,22 +11,29 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           cache: pnpm
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
-      - run: corepack pnpm format:check
-      - run: corepack pnpm lint
-      - run: corepack pnpm typecheck
-      - run: corepack pnpm test
       - run: corepack pnpm build
       - run: corepack pnpm validate:packages
+      - name: Validate packed modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/packages"
+          for package in modules/*/package.json; do
+            name=$(node -p "require('./$package').name")
+            archive=$(corepack pnpm --filter "$name" pack --pack-destination "$RUNNER_TEMP/packages" --json | node -e 'let s=""; process.stdin.on("data", c => s += c).on("end", () => process.stdout.write(JSON.parse(s).filename))')
+            node scripts/check-packed-package.mjs "$archive"
+            corepack pnpm exec publint "$(dirname "$package")"
+          done
       - name: Report package status before publishing
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

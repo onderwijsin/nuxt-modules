@@ -16,7 +16,6 @@
     "test:watch": "vitest",
     "e2e": "corepack pnpm --recursive --if-present run e2e",
     "validate:packages": "node scripts/validate-packages.mjs",
-    "check:packed": "node scripts/check-packed-package.mjs",
     "changeset": "changeset",
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",
