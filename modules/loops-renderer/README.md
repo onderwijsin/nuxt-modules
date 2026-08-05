@@ -27,6 +27,14 @@ export default defineNuxtConfig({
 });
 ```
 
+Import the module stylesheet in the consuming application's main CSS file after `@nuxt/ui`:
+
+```css
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "@onderwijsin/nuxt-loops-renderer";
+```
+
 ## Agent skill
 
 Install the consumer-facing skill for this module with:

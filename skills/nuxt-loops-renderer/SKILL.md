@@ -28,6 +28,14 @@ export default defineNuxtConfig({
 });
 ```
 
+In the consuming application's main CSS file, import the module stylesheet:
+
+```css
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "@onderwijsin/nuxt-loops-renderer";
+```
+
 The module targets Nuxt 4 and Node.js 22+. `LoopsRenderer` is auto-imported after registration.
 
 ## Core workflow
