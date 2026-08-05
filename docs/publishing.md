@@ -39,7 +39,9 @@ changesets.
 The workflow commits those changes to `release/packages` and creates or
 updates a pull request targeting `main` using Git and the GitHub API. It does
 not publish packages. The pull request exists so the generated version and
-changelog changes can be reviewed and receive the normal pull request CI.
+changelog changes can be reviewed and receive the normal pull request CI. It
+is labeled `automated` and `no-changeset` because it contains generated
+release changes rather than a new contributor changeset.
 
 ### 2. Publish the release
 

@@ -58,6 +58,8 @@ jobs:
           body='{"title":"chore: prepare package release","head":"release/packages","base":"main","body":"Automated Changesets release pull request. CI validates the release changes before merge."}'
           if [[ -n "${existing}" ]]; then
             curl --fail-with-body --silent --show-error -X PATCH "${api}/pulls/${existing}" "${headers[@]}" -H "Content-Type: application/json" -d "${body}"
+            pr_number="${existing}"
           else
-            curl --fail-with-body --silent --show-error -X POST "${api}/pulls" "${headers[@]}" -H "Content-Type: application/json" -d "${body}"
+            pr_number=$(curl --fail-with-body --silent --show-error -X POST "${api}/pulls" "${headers[@]}" -H "Content-Type: application/json" -d "${body}" | jq -r '.number')
           fi
+          curl --fail-with-body --silent --show-error -X POST "${api}/issues/${pr_number}/labels" "${headers[@]}" -H "Content-Type: application/json" -d '{"labels":["automated","no-changeset"]}'
