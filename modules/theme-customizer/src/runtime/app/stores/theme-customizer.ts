@@ -7,9 +7,10 @@ import { useAppConfig, useRuntimeConfig } from "nuxt/app";
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, THEME_SHADES } from "../utils/theme";
 import { useLocalStorage } from "../utils/storage";
+import { applyThemeFont, DEFAULT_THEME_FONT, sanitizeFontFamily } from "../utils/font";
 import type { ThemeAppConfig, ThemeCustomizerRuntimeConfig } from "../types";
 
-import type { ThemeShade } from "../../../types";
+import type { ThemeShade } from "../types";
 export type ThemeColorGroup = string;
 
 export type CustomThemeColor = {
@@ -32,6 +33,7 @@ export const useThemeCustomizerStore = defineStore(
     const colors = ref<PersistedThemeColor[]>([]);
     const groups = ref<ThemeColorGroup[]>([]);
     const activeColors = reactive<Record<ThemeColorGroup, string>>({});
+    const font = ref(DEFAULT_THEME_FONT);
 
     const appConfig = useAppConfig() as ThemeAppConfig;
     const runtimeConfig = useRuntimeConfig() as ThemeCustomizerRuntimeConfig;
@@ -166,6 +168,8 @@ export const useThemeCustomizerStore = defineStore(
         const token = activeColors[group] || defaultColor(group);
         if (token) setActiveColor(group, token);
       }
+
+      applyThemeFont(font.value);
     }
 
     /**
@@ -261,6 +265,19 @@ export const useThemeCustomizerStore = defineStore(
       runtime.setActiveColor(group, token);
     }
 
+    /**
+     * Selects and applies a Google Font family.
+     * @param value Font family to activate.
+     * @returns Nothing; invalid family names are ignored.
+     */
+    function setFont(value: string) {
+      const family = sanitizeFontFamily(value);
+      if (!family) return;
+
+      font.value = family;
+      applyThemeFont(family);
+    }
+
     return {
       activeColors,
       addColor,
@@ -272,6 +289,8 @@ export const useThemeCustomizerStore = defineStore(
       isRuntimeGroup,
       removeColor,
       removeGroup,
+      font,
+      setFont,
       setActiveColor,
       updateShade
     };
@@ -279,7 +298,7 @@ export const useThemeCustomizerStore = defineStore(
   {
     persist: {
       storage: useLocalStorage(),
-      pick: ["colors", "groups", "activeColors"]
+      pick: ["colors", "groups", "activeColors", "font"]
     }
   }
 );

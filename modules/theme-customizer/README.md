@@ -108,6 +108,46 @@ The picker can select configured palettes, generate a temporary palette from a
 HEX value, change Nuxt UI's radius, and open the full theme editor. The module
 UI is Dutch.
 
+It also includes a searchable Font field. By default it offers a small curated
+set of Google Fonts. To load the complete Google Fonts catalog, configure a
+server-side API key. The API key is optional; you can instead provide the exact
+font families the consuming application should offer:
+
+```ts
+export default defineNuxtConfig({
+  themeCustomizer: {
+    googleFonts: {
+      apiKey: process.env.GOOGLE_FONTS_API_KEY,
+      families: ["Inter", "DM Sans", "Merriweather"]
+    }
+  }
+});
+```
+
+The module proxies and filters Google Fonts metadata at `/api/theme/fonts`,
+debouncing SelectMenu queries. The selected family is persisted locally and
+loaded through Google Fonts CSS. When `families` is provided without an API key,
+that list replaces the built-in 12-font fallback.
+
+### Acquiring a Google Fonts API key
+
+The key is only needed when the full Google Fonts catalog is desired. It is
+used by the module's server-side proxy and is never sent to the browser:
+
+1. Select or create a project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable the [Web Fonts Developer API](https://console.cloud.google.com/apis/library/webfonts.googleapis.com).
+3. Open [APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
+4. Choose **Create credentials → API key**, then copy the generated key.
+5. Restrict the key to the Web Fonts Developer API and store it in an environment variable:
+
+```sh
+GOOGLE_FONTS_API_KEY=your-key
+```
+
+The Google Fonts API documents the endpoint and API-key requirement in its
+[Developer API guide](https://developers.google.com/fonts/docs/developer_api).
+Keep the key server-side and do not commit it to source control.
+
 ## Theme editor and generated palettes
 
 The module registers `/thema`, which lets users inspect active shades, create
@@ -139,7 +179,7 @@ the module does not use cookies.
 
 The following APIs are automatically imported:
 
-- `ThemePicker`, `ColorPalette`, `ThemeCustomizer`, `HexInput`, and `RadiusInput`;
+- `ThemePicker`, `FontPicker`, `ColorPalette`, `ThemeCustomizer`, `HexInput`, and `RadiusInput`;
 - `Confirmation`;
 - `useGeneratedPalette()`;
 - `useConfirmDialog()`;

@@ -30,7 +30,7 @@ import {
 import type { ThemeCustomizerOptions } from "./types";
 
 export { THEME_SHADES } from "./types";
-export type { ThemePalette, ThemeShade } from "./types";
+export type { ThemeFontOption, ThemeGoogleFontsOptions, ThemePalette, ThemeShade } from "./types";
 /** Maps a theme color group to its named palettes. */
 export type { ThemeColorGroups, ThemeCustomizerOptions } from "./types";
 
@@ -93,8 +93,14 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     nuxtOptions.ui.theme.colors = configuredUiColors(groups, nuxtOptions.ui.theme.colors);
 
     nuxt.options.runtimeConfig.public.themeCustomizer = {
-      groups: configuredRuntimeGroups(groups) as never
+      groups: configuredRuntimeGroups(groups) as never,
+      googleFonts: {
+        families: options.googleFonts?.families ?? []
+      }
     };
+    if (options.googleFonts?.apiKey) {
+      nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
+    }
     const appConfig = nuxt.options.appConfig as {
       ui?: { colors?: Record<string, string> };
     };
@@ -123,6 +129,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     addServerHandler({
       handler: resolver.resolve(runtimeDir, "server/api/theme/palette.get"),
       route: "/api/theme/palette"
+    });
+    addServerHandler({
+      handler: resolver.resolve(runtimeDir, "server/api/theme/fonts.get"),
+      route: "/api/theme/fonts"
     });
     extendPages((pages) => {
       pages.push({

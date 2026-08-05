@@ -1,5 +1,14 @@
 import type { ButtonProps } from "@nuxt/ui";
 
+/** Supported Tailwind theme shade levels. */
+export type ThemeShade = 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950;
+
+/** A font family option displayed by the theme customizer. */
+export type ThemeFontOption = {
+  label: string;
+  value: string;
+};
+
 /** Runtime app configuration consumed by the theme customizer. */
 export type ThemeAppConfig = {
   ui: {
@@ -26,6 +35,9 @@ export type ThemeCustomizerRuntimeConfig = {
   public: {
     themeCustomizer: {
       groups: Record<string, string[]>;
+      googleFonts?: {
+        families: string[];
+      };
     };
   };
 };

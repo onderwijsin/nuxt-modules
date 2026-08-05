@@ -7,8 +7,7 @@ import { useRuntimeConfig } from "nuxt/app";
 
 import { type CustomThemeColor, useThemeCustomizerStore } from "../stores/theme-customizer";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";
-import type { ThemeShade } from "../../../types";
-import type { ThemeCustomizerRuntimeConfig } from "../types";
+import type { ThemeCustomizerRuntimeConfig, ThemeShade } from "../types";
 
 const store = useThemeCustomizerStore();
 const confirm = useConfirmDialog();

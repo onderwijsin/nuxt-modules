@@ -34,7 +34,14 @@ type MockNuxt = {
     dev: boolean;
     appConfig: { ui: { colors: Record<string, string> } };
     ui: { theme: { colors: string[] } };
-    runtimeConfig: { public: { themeCustomizer: { groups: Record<string, string[]> } } };
+    runtimeConfig: {
+      public: {
+        themeCustomizer: {
+          groups: Record<string, string[]>;
+          googleFonts?: { families: string[] };
+        };
+      };
+    };
     css: string[];
     build: { transpile: string[] };
   };
@@ -104,10 +111,13 @@ describe("theme customizer module", () => {
         write: true
       })
     );
-    expect(nuxt.options.runtimeConfig.public.themeCustomizer.groups).toEqual({
-      primary: ["ocean"],
-      neutral: [],
-      accent: ["coral"]
+    expect(nuxt.options.runtimeConfig.public.themeCustomizer).toEqual({
+      groups: {
+        primary: ["ocean"],
+        neutral: [],
+        accent: ["coral"]
+      },
+      googleFonts: { families: [] }
     });
     expect(nuxt.options.ui.theme.colors).toEqual(["accent"]);
     expect(kit.extendPages).toHaveBeenCalled();

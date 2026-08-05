@@ -21,6 +21,30 @@ describe("theme option validation", () => {
     });
   });
 
+  it("accepts an optional Google Fonts API key without treating it as a color group", () => {
+    const result = themeOptionsSchema.safeParse({
+      googleFonts: { apiKey: "test-key" },
+      primary: { ocean: palette }
+    });
+
+    expect(result.success).toBe(true);
+    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+      googleFonts: { apiKey: "test-key" }
+    });
+  });
+
+  it("normalizes configured font families", () => {
+    const result = themeOptionsSchema.safeParse({
+      googleFonts: { families: ["Inter", " Inter ", "DM Sans"] },
+      primary: { ocean: palette }
+    });
+
+    expect(result.success).toBe(true);
+    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+      googleFonts: { families: ["Inter", "DM Sans"] }
+    });
+  });
+
   it("requires a primary palette when enabled", () => {
     const result = themeOptionsSchema.safeParse({ enabled: true, primary: {} });
 

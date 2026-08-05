@@ -18,14 +18,24 @@ export const themeOptionsShape = {
     error: "Configureer minstens één palet in de primaire kleurgroep."
   }),
   secondary: themePaletteSchema.optional(),
-  neutral: themePaletteSchema.optional()
+  neutral: themePaletteSchema.optional(),
+  googleFonts: z
+    .object({
+      apiKey: z.string().trim().min(1).optional(),
+      families: z
+        .array(z.string().trim().min(1).max(100))
+        .max(100)
+        .transform((families) => [...new Set(families)])
+        .optional()
+    })
+    .optional()
 };
 
 export const themeOptionsSchema = z
   .looseObject(themeOptionsShape)
   .superRefine((options, context) => {
     for (const [name, value] of Object.entries(options)) {
-      if (name === "enabled") continue;
+      if (name === "enabled" || name === "googleFonts") continue;
 
       const result = themePaletteSchema.safeParse(value);
       if (!result.success) {

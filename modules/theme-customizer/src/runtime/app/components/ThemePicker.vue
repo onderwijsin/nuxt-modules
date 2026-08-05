@@ -98,31 +98,33 @@ function setRadius(radius: ThemeRadius) {
     />
 
     <template #content>
-      <div class="max-h-[80vh] w-80 space-y-4 overflow-y-auto p-3">
-        <UButton
-          color="neutral"
-          size="xs"
-          variant="ghost"
-          label="Kleuroverzicht"
-          trailing-icon="lucide:arrow-right"
-          :to="{ name: 'theme' }"
-          class="float-right"
-        />
+      <div class="max-h-[80vh] w-80 space-y-8 overflow-y-auto p-3 pb-4">
+        <div class="w-full flex justify-end">
+          <UButton
+            color="neutral"
+            size="xs"
+            variant="ghost"
+            label="Kleuroverzicht"
+            trailing-icon="lucide:arrow-right"
+            :to="{ name: 'theme' }"
+          />
+        </div>
         <PaletteGroupPicker
-          v-for="group in groups"
-          :key="group.name"
+          v-for="(group, index) in groups"
+          :key="index"
           v-model:custom-hex="customHex[group.name]"
           :group="group"
           :active-color="appConfig.ui.colors[group.name] ?? ''"
           :loading="loading[group.name]"
           :error="errors[group.name]"
           :show-custom-input="!group.runtimeGroup || group.customColors.length > 0"
-          class="pt-6"
+          :class="{ '-mt-6': index === 0 }"
           @select="setColor(group.name, $event)"
           @delete="deleteGroup(group.name)"
           @submit="submitPalette(group.name)"
         />
         <RadiusPicker :model-value="appConfig.ui.radius" @update:model-value="setRadius" />
+        <FontPicker />
       </div>
     </template>
   </UPopover>

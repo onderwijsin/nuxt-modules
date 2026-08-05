@@ -32,11 +32,11 @@ export function colorLabel(color: string) {
  * @param shade Shade level whose adjacent value should be selected.
  * @returns The adjacent shade, or the input shade at the palette boundary.
  */
-export function adjacentThemeShade(shade: number) {
+export function adjacentThemeShade(shade: (typeof THEME_SHADES)[number]) {
   const index = THEME_SHADES.indexOf(shade as (typeof THEME_SHADES)[number]);
   const adjacentIndex = shade < 500 ? index + 1 : index - 1;
 
-  return THEME_SHADES[adjacentIndex] ?? shade;
+  return (THEME_SHADES[adjacentIndex] ?? shade) as (typeof THEME_SHADES)[number];
 }
 
 /**

@@ -100,6 +100,9 @@ export default defineNuxtConfig({
   },
   themeCustomizer: {
     enabled: true,
+    googleFonts: {
+      apiKey: process.env.GOOGLE_FONTS_API_KEY
+    },
     primary: {
       Ocean: blue,
       Emerald: emerald,

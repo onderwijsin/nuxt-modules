@@ -44,6 +44,7 @@
     "@vueuse/core": "^14.4.0",
     "@vueuse/nuxt": "^14.4.0",
     "h3": "^1.15.11",
+    "nitropack": "^2.13.4",
     "ofetch": "^1.5.1",
     "pinia": "^4.0.2",
     "pinia-plugin-persistedstate": "^4.7.1",
