@@ -1,0 +1,18 @@
+{
+  "name": "nuxt-modules",
+  "version": "1.0.0",
+  "license": "MIT",
+  "packageManager": "pnpm@11.13.1",
+  "type": "module",
+  "scripts": {
+    "postinstall": "husky || true"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
+    "husky": "catalog:",
+    "lint-staged": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:"
+  }
+}
