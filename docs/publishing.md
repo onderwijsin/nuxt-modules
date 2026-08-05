@@ -3,6 +3,27 @@
 Publishing uses two manually triggered stages and is never triggered by a
 push to `main`.
 
+## Local developer workflow
+
+When a change affects a published module, create a Changeset locally before
+opening the pull request:
+
+```sh
+pnpm changeset
+pnpm changeset:status
+```
+
+Select every affected publishable package, choose the appropriate SemVer
+impact, and write a concise release note. Commit the generated
+`.changeset/<name>.md` file with the code change. Pull request CI checks that a
+Changeset is present; documentation-only or CI-only changes may use the
+`no-changeset` label instead.
+
+The local Changeset is input to the release process. Developers do not need
+to run `changeset:version` or `changeset:publish` locally. Those commands run
+in the manual GitHub Actions workflows after the change has been reviewed and
+merged.
+
 ## Two-stage release flow
 
 ### 1. Prepare the release

@@ -24,6 +24,7 @@ use in internal _Onderwijs in_ projects.
 - Node.js 24 for local development and CI.
 - Node.js 22 or newer for published modules.
 - pnpm 11.13.1 through Corepack.
+- gitleaks v8.x
 
 Run `corepack enable` once to activate the pinned pnpm version, then install
 the workspace dependencies:
@@ -105,11 +106,24 @@ Module request:
 
 ## 🚢 Publishing
 
-Publishing is a manual two-stage flow from `main`. **Prepare release** runs
-Changesets to version affected packages, update changelogs, and open or
-update a release pull request without publishing. After that pull request is
-merged, **Publish release** rebuilds and validates the packages, publishes
-through Changesets, reports npm status, and pushes package-specific tags.
+For every user-facing module change, create and commit a Changeset locally:
+
+```sh
+pnpm changeset
+pnpm changeset:status
+```
+
+Select the affected package, choose the SemVer impact, and write the release
+note. Pull request CI checks for this file; documentation-only and CI-only
+changes may use the `no-changeset` label. Developers do not need to version or
+publish locally.
+
+After review and merge, publishing is a manual two-stage flow from `main`.
+**Prepare release** consumes the Changesets, versions affected packages,
+updates changelogs, and opens or updates a release pull request without
+publishing. After that pull request is merged, **Publish release** rebuilds and
+validates the packages, publishes through Changesets, reports npm status, and
+pushes package-specific tags.
 
 The `NPM_TOKEN` GitHub secret is required for publishing and is never stored
 in the repository. See [`docs/publishing.md`](docs/publishing.md) for the

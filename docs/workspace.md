@@ -1,34 +1,113 @@
 # Workspace
 
-This repository uses pnpm workspaces with pnpm `11.13.1` and Node.js 22 or
-newer. Local development uses Node.js 24, as specified by `.nvmrc`.
+This repository is a pnpm workspace for standalone Nuxt 4 modules and the
+private packages that support them. Package versions are managed through the
+strict workspace catalog, and package-local scripts are included in the root
+recursive validation commands.
 
-Install dependencies with:
+## Requirements
+
+- Node.js 24 for local development and CI.
+- Node.js 22 or newer for published modules.
+- pnpm `11.13.1`, activated once with `corepack enable`.
+
+Install dependencies from the repository root:
 
 ```sh
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 ```
 
-Workspace packages are discovered from:
+Do not add a repository-local pnpm store or override the configured store
+location.
 
-- `packages/*`
-- `modules/*`
-- `modules/*/playground`
-- `playgrounds/*`
+## Workspace discovery
 
-Internal packages live under `packages/`. Publishable Nuxt modules live under
-`modules/`.
+The workspace automatically discovers packages in these locations:
 
-The first publishable module is `@onderwijsin/nuxt-ui-form-extensions`, located
-at `modules/ui-form-extensions`.
+```yaml
+packages:
+  - packages/*
+  - modules/*
+  - modules/*/playground
+  - playgrounds/*
+```
 
-The internal packages currently are:
+This means a package that follows the established layout is included by
+workspace commands without edits to root scripts or configuration. Keep
+playgrounds private and scoped to their owning module.
 
-- `module-utils` for reusable module-side utilities.
-- `test-utils` for test-only helpers.
+## Package groups
 
-`module-utils` is a private built workspace package. Its tsup output lives in
-`packages/module-utils/dist` and is consumed by modules through its package
-exports. Use `pnpm dev` in that package to watch and rebuild the output during
-active development. `test-utils` remains a private test-only source package.
-Both are type-checked through the root recursive `typecheck` command.
+### Private packages
+
+Private packages live under `packages/`:
+
+- `module-utils` contains reusable, module-agnostic runtime helpers. It is
+  built with tsup and its output is consumed through package exports.
+- `test-utils` is reserved for shared test fixtures, assertions, and Vitest
+  helpers. It must never be imported by published runtime code.
+
+Private packages are type-checked recursively. `module-utils` must be built
+before a consuming module uses its generated output:
+
+```sh
+pnpm --filter module-utils build
+pnpm --filter module-utils dev
+```
+
+Use `dev` only when actively changing the utility; it watches and rebuilds
+`packages/module-utils/dist`.
+
+### Publishable modules
+
+Publishable modules live under `modules/` and use the public naming convention
+`@onderwijsin/nuxt-<module-name>`. The current module is
+`@onderwijsin/nuxt-ui-form-extensions` at
+`modules/ui-form-extensions`.
+
+Every module owns an isolated Nuxt playground at `modules/<module-name>/playground`.
+The playground depends on its module with `workspace:*`, registers the public
+package name, and provides `dev`, `typecheck`, and `build` scripts. This is the
+repository's supported development and integration contract.
+
+## Working with packages
+
+Run a package script with a pnpm filter:
+
+```sh
+pnpm --filter @onderwijsin/nuxt-ui-form-extensions build
+pnpm --filter ui-form-extensions-playground typecheck
+pnpm --filter ui-form-extensions-playground build
+```
+
+Run workspace-wide checks from the root:
+
+```sh
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm validate:packages
+```
+
+The recursive build follows workspace dependency order, builds private utility
+packages, then builds modules and their playgrounds. Package validation checks
+publishable metadata and confirms that private workspace dependencies do not
+leak into runtime output.
+
+## Generated output
+
+Do not commit generated workspace output. The following are ignored and should
+be regenerated locally or in CI:
+
+- `dist/`
+- `.nuxt/`
+- `.output/`
+- `coverage/`
+- packed `*.tgz` archives
+
+The packed module artefact, rather than the workspace symlink, is the source
+of truth for release validation. CI checks the tarball contents, declarations,
+private dependency leakage, and Publint metadata.

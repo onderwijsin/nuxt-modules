@@ -13,6 +13,7 @@ The repository uses the following tools:
 - Publint and the repository's packed-package checks for npm artefact
   validation.
 - Husky, lint-staged, and Commitlint for local commit quality gates.
+- Gitleaks to prevent committing secrets.
 
 Enable Corepack once before working with pnpm:
 

@@ -55,10 +55,12 @@ commit `.nuxt`, `.output`, `dist`, coverage, or `.tgz` output.
 
 ## Changesets
 
-Run `pnpm changeset` and select each affected published package. Check the
-result with `pnpm changeset:status`. Use the
-`no-changeset` pull request label only for changes that do not affect a
-published package.
+Run `pnpm changeset` locally for every user-facing change, select each
+affected published package, choose the SemVer impact, and commit the generated
+`.changeset/<name>.md` file with the change. Check the result with
+`pnpm changeset:status`. Use the `no-changeset` pull request label only for
+changes that do not affect a published package. Versioning and publishing are
+performed by the manual release workflows after merge.
 
 ## Pull requests
 
