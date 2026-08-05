@@ -120,10 +120,10 @@ publish locally.
 
 After review and merge, publishing is a manual two-stage flow from `main`.
 **Prepare release** consumes the Changesets, versions affected packages,
-updates changelogs, and opens or updates a release pull request without
-publishing. After that pull request is merged, **Publish release** rebuilds and
-validates the packages, publishes through Changesets, reports npm status, and
-pushes package-specific tags.
+updates changelogs, appends links to the included commits, and opens or updates
+a release pull request without publishing. After that pull request is merged,
+**Publish release** rebuilds and validates the packages, publishes through
+Changesets, reports npm status, and pushes package-specific tags.
 
 The `NPM_TOKEN` GitHub secret is required for publishing and is never stored
 in the repository. See [`docs/publishing.md`](docs/publishing.md) for the

@@ -19,7 +19,9 @@ impact, and write a concise release note. Commit the generated
 Changeset is present; documentation-only or CI-only changes may use the
 `no-changeset` label instead.
 
-The local Changeset is input to the release process. Developers do not need
+The local Changeset is input to the release process. Its summary remains the
+curated release note; the configured `@changesets/changelog-git` generator also
+appends links to the commits included in the release. Developers do not need
 to run `changeset:version` or `changeset:publish` locally. Those commands run
 in the manual GitHub Actions workflows after the change has been reviewed and
 merged.

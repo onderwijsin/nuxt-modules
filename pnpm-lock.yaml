@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@changesets/changelog-git':
+      specifier: 0.2.1
+      version: 0.2.1
     '@changesets/cli':
       specifier: 2.31.1
       version: 2.31.1
@@ -80,6 +83,9 @@ importers:
 
   .:
     devDependencies:
+      '@changesets/changelog-git':
+        specifier: 'catalog:'
+        version: 0.2.1
       '@changesets/cli':
         specifier: 'catalog:'
         version: 2.31.1(@types/node@26.1.2)
