@@ -31,6 +31,93 @@ modules/<module-name>/
 Tests belong to the package they exercise. Shared package tests use the same
 convention, for example `packages/module-utils/__tests__/`.
 
+## Playgrounds
+
+Each publishable module should have an isolated Nuxt application under
+`modules/<module-name>/playground`. Use it to exercise the module against a
+real Nuxt application while developing runtime registration, auto-imports, and
+consumer-facing components.
+
+A Nuxt 4 playground uses the application directory for Vue files and assets:
+
+```text
+modules/<module-name>/playground/
+├── app/
+│   ├── assets/
+│   │   └── main.css
+│   └── pages/
+│       └── index.vue
+├── nuxt.config.ts
+├── package.json
+└── tsconfig.json
+```
+
+Register the module by its public package name and use a workspace dependency
+so the playground always exercises the local package:
+
+```json
+{
+  "name": "example-playground",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@onderwijsin/nuxt-example": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}
+```
+
+```ts
+export default defineNuxtConfig({
+  modules: ["@onderwijsin/nuxt-example"]
+});
+```
+
+Every playground must include the following `tsconfig.json`. Nuxt generates
+`.nuxt/tsconfig.json` during preparation; extending it gives the playground
+the generated aliases and types needed by `nuxt typecheck`:
+
+```json
+{
+  "extends": "./.nuxt/tsconfig.json"
+}
+```
+
+Expose a module-level convenience script for local development:
+
+```json
+{
+  "scripts": {
+    "dev:playground": "nuxt dev playground"
+  }
+}
+```
+
+Run it from the module directory or through the workspace filter:
+
+```sh
+cd modules/<module-name>
+corepack pnpm dev:playground
+
+# Or from the repository root:
+corepack pnpm --filter @onderwijsin/nuxt-example dev:playground
+```
+
+The playground is also part of the workspace validation contract. Run its
+checks directly when iterating, or use the root recursive commands to include
+all module playgrounds:
+
+```sh
+corepack pnpm --filter example-playground typecheck
+corepack pnpm --filter example-playground build
+corepack pnpm typecheck
+corepack pnpm build
+```
+
+Do not commit generated `.nuxt`, `.output`, or other build output from a
+playground. Keep the example focused on observable module behavior rather than
+duplicating application-specific stores or production UI.
+
 ## Package metadata
 
 Use the repository naming convention:

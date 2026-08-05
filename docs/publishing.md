@@ -18,4 +18,5 @@ pnpm changeset:publish
 The first publishable module is `@onderwijsin/nuxt-ui-form-extenions`. The
 private `module-utils` and `test-utils` packages are ignored by Changesets.
 The `NPM_TOKEN` GitHub secret must be configured before running the publish
-workflow. The npm token is read only through `.npmrc` and is never committed.
+workflow. The publish workflow configures npm authentication temporarily through
+`actions/setup-node`; the token is never committed.
