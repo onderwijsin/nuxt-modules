@@ -120,7 +120,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
     addTypeTemplate({
       filename: "types/theme-customizer.d.ts",
-      src: resolver.resolve("./types/theme-customizer.d.ts")
+      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
     });
     const appConfig = nuxt.options.appConfig as {
       ui?: { colors?: Record<string, string> };

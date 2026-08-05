@@ -30,7 +30,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "nuxt-module-build build && mkdir -p dist/types && cp src/types/theme-customizer.d.ts dist/types/theme-customizer.d.ts",
+    "build": "nuxt-module-build build",
     "predev:playground": "nuxt-module-build build --stub",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "dev:playground": "nuxt dev playground"
