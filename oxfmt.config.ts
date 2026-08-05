@@ -11,6 +11,7 @@ export default defineConfig({
     ".nuxt",
     "nuxt/.nuxt",
     ".output",
+    "*.tgz",
     "node_modules",
     ".agent/skills",
     ".agents/skills",

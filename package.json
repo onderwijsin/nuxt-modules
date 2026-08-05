@@ -1,25 +1,50 @@
 {
-  "name": "nuxt-modules",
+  "name": "@onderwijsin/nuxt-modules",
   "version": "1.0.0",
+  "private": true,
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "typecheck": "tsc --noEmit",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "fmt": "corepack pnpm format",
+    "fmt:check": "corepack pnpm format:check",
+    "lint": "oxlint --deny-warnings .",
+    "lint:fix": "oxlint --fix .",
+    "build": "corepack pnpm --recursive --if-present run build",
+    "typecheck": "corepack pnpm --recursive --if-present run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "corepack pnpm --recursive --if-present run e2e",
+    "check:artifacts": "corepack pnpm --recursive --if-present run check:artifacts",
+    "changeset": "changeset",
+    "changeset:status": "changeset status",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
     "postinstall": "husky || true"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "catalog:",
+    "@changesets/cli": "catalog:",
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
+    "@nuxt/module-builder": "catalog:",
+    "@nuxt/test-utils": "catalog:",
+    "@types/node": "catalog:",
     "husky": "catalog:",
     "lint-staged": "catalog:",
+    "nuxt": "catalog:",
     "oxfmt": "catalog:",
-    "oxlint": "catalog:"
+    "oxlint": "catalog:",
+    "publint": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:",
+    "vue-tsc": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "packageManager": "pnpm@11.13.1"
 }

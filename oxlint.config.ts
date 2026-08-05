@@ -17,6 +17,11 @@ export default defineConfig({
     ]
   },
   ignorePatterns: [
+    ".nuxt/**",
+    ".output/**",
+    "dist/**",
+    "coverage/**",
+    "**/*.tgz",
     ".agents/**",
     ".starters/**",
     "docs/content/**",

@@ -150,6 +150,7 @@ yarn.lock
 .yarn/install-state.gz
 .pnp.*
 .pnpm-store
+*.tgz
 
 # ===================================
 # 🧰 Internal Tools / Scripts

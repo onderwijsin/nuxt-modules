@@ -3,14 +3,43 @@ allowBuilds:
   esbuild: false
 
 catalog:
+  "@arethetypeswrong/cli": 0.18.5
+  "@changesets/cli": 2.31.1
   "@commitlint/cli": 21.2.1
   "@commitlint/config-conventional": 21.2.0
+  "@nuxt/module-builder": 1.0.3
+  "@nuxt/test-utils": 4.1.0
+  "@types/node": 26.1.2
   husky: 9.1.7
   lint-staged: 17.3.0
+  nuxt: 4.5.1
   oxfmt: 0.62.0
   oxlint: 1.77.0
+  publint: 0.3.23
+  tsx: 4.23.7
+  typescript: 7.0.2
+  vitest: 4.1.10
+  vue: 3.5.41
+  vue-tsc: 3.3.9
+
+packages:
+  - packages/*
+  - packages/*/playground
+  - playgrounds/*
 
 # shamefullyHoist: true
 catalogMode: "strict"
 cleanupUnusedCatalogs: true
 saveExact: true
+minimumReleaseAgeExclude:
+  - "@vue/compiler-core@3.5.41"
+  - "@vue/compiler-dom@3.5.41"
+  - "@vue/compiler-sfc@3.5.41"
+  - "@vue/compiler-ssr@3.5.41"
+  - "@vue/reactivity@3.5.41"
+  - "@vue/runtime-core@3.5.41"
+  - "@vue/runtime-dom@3.5.41"
+  - "@vue/server-renderer@3.5.41"
+  - "@vue/shared@3.5.41"
+  - tsx@4.23.7
+  - vue@3.5.41
