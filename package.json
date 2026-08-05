@@ -2,9 +2,15 @@
   "name": "nuxt-modules",
   "version": "1.0.0",
   "license": "MIT",
-  "packageManager": "pnpm@11.13.1",
   "type": "module",
   "scripts": {
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "husky || true"
   },
   "devDependencies": {
@@ -14,5 +20,6 @@
     "lint-staged": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:"
-  }
+  },
+  "packageManager": "pnpm@11.13.1"
 }
