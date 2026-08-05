@@ -1,0 +1,17 @@
+{
+  "name": "loops-renderer-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/ui": "catalog:",
+    "@onderwijsin/nuxt-loops-renderer": "workspace:*",
+    "@tailwindcss/typography": "0.5.20",
+    "nuxt": "catalog:",
+    "tailwindcss": "4.3.3"
+  }
+}

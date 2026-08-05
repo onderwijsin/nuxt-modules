@@ -38,6 +38,6 @@ describe("ui form extensions module", () => {
     moduleDefinition.setup({}, nuxt as never);
 
     expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
-    expect(kit.addImportsDir).toHaveBeenCalledWith("./runtime/composables");
+    expect(kit.addImportsDir).toHaveBeenCalledWith("./runtime/app/composables");
   });
 });

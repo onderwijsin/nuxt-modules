@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "@onderwijsin/nuxt-loops-renderer";
+
+@plugin "@tailwindcss/typography";

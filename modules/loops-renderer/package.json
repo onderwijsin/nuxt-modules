@@ -1,7 +1,7 @@
 {
-  "name": "@onderwijsin/nuxt-ui-form-extensions",
-  "version": "0.2.0",
-  "description": "Nuxt UI form extensions.",
+  "name": "@onderwijsin/nuxt-loops-renderer",
+  "version": "0.1.0",
+  "description": "Nuxt module for rendering Loops LMX email content.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
     "url": "https://github.com/onderwijsin/nuxt-modules/issues"
@@ -10,8 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
-    "directory": "modules/ui-form-extensions"
+    "directory": "modules/loops-renderer"
   },
+  "style": "./dist/runtime/index.css",
   "files": [
     "dist"
   ],
@@ -21,6 +22,7 @@
   "exports": {
     ".": {
       "types": "./dist/types.d.mts",
+      "style": "./dist/runtime/index.css",
       "import": "./dist/module.mjs"
     }
   },
@@ -36,7 +38,11 @@
   "dependencies": {
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
-    "@nuxt/ui": "catalog:"
+    "@nuxt/ui": "catalog:",
+    "@onderwijsin/loops-core": "1.1.0",
+    "@tailwindcss/typography": "0.5.20",
+    "simple-icons": "16.28.0",
+    "tailwindcss": "4.3.3"
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",

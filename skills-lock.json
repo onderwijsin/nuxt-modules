@@ -36,6 +36,12 @@
       "skillPath": "skills/loops-cli/SKILL.md",
       "computedHash": "a4c2b339ec9cbe1aa68dea9f1dc2145d7569862b452518d38bb00dbcfc599ab1"
     },
+    "loops-core-utils": {
+      "source": "onderwijsin/loops-core",
+      "sourceType": "github",
+      "skillPath": "skills/loops-core-utils/SKILL.md",
+      "computedHash": "d3b7e6ede63b0440e0d02f0d9ddc7f9a5041e968bc93f1830f2b560ddb7fdb73"
+    },
     "loops-email-sending-best-practices": {
       "source": "loops-so/skills",
       "sourceType": "github",
