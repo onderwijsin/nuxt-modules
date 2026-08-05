@@ -3,7 +3,6 @@ allowBuilds:
   esbuild: false
 
 catalog:
-  "@arethetypeswrong/cli": 0.18.5
   "@changesets/cli": 2.31.1
   "@commitlint/cli": 21.2.1
   "@commitlint/config-conventional": 21.2.0
@@ -16,7 +15,6 @@ catalog:
   oxfmt: 0.62.0
   oxlint: 1.77.0
   publint: 0.3.23
-  tsx: 4.23.7
   typescript: 7.0.2
   vitest: 4.1.10
   vue: 3.5.41
@@ -24,7 +22,8 @@ catalog:
 
 packages:
   - packages/*
-  - packages/*/playground
+  - modules/*
+  - modules/*/playground
   - playgrounds/*
 
 # shamefullyHoist: true

@@ -61,6 +61,9 @@ Nothing shall be versioned or published automatically on pushes to `main`.
 │       ├── prepare-release.yml
 │       └── publish.yml
 ├── packages/
+│   ├── module-utils/
+│   └── test-utils/
+├── modules/
 │   ├── nuxt-module-a/
 │   │   ├── playground/
 │   │   ├── src/
@@ -77,8 +80,6 @@ Nothing shall be versioned or published automatically on pushes to `main`.
 │   │   └── vitest.config.ts
 │   ├── nuxt-module-b/
 │   │   └── ...
-│   ├── runtime-utils/
-│   └── test-utils/
 ├── playgrounds/
 │   └── integration/
 ├── scripts/
@@ -101,7 +102,8 @@ The root `pnpm-workspace.yaml` shall include:
 ```yaml
 packages:
   - packages/*
-  - packages/*/playground
+  - modules/*
+  - modules/*/playground
   - playgrounds/*
 ```
 
@@ -181,7 +183,7 @@ Example package metadata:
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/<repository>.git",
-    "directory": "packages/nuxt-example"
+    "directory": "modules/nuxt-example"
   }
 }
 ```
@@ -213,13 +215,13 @@ Packages shall use `workspace:` references for local workspace dependencies.
 Shared utilities shall be split into two private packages:
 
 ```text
-@repo/runtime-utils
+@repo/module-utils
 @repo/test-utils
 ```
 
 ### 6.1 Runtime utilities
 
-`@repo/runtime-utils` may contain runtime or module setup code shared by multiple published packages.
+`@repo/module-utils` may contain runtime or module setup code shared by multiple published packages.
 
 It shall:
 
@@ -234,7 +236,7 @@ Example:
 
 ```json
 {
-  "name": "@repo/runtime-utils",
+  "name": "@repo/module-utils",
   "private": true,
   "type": "module",
   "sideEffects": false
@@ -275,7 +277,7 @@ The packed npm tarball is the source of truth for this validation.
 Every module shall contain its own isolated playground:
 
 ```text
-packages/nuxt-example/playground
+modules/nuxt-example/playground
 ```
 
 The playground shall:
@@ -532,7 +534,7 @@ Scopes should identify a package or repository concern:
 ```text
 feat(directus): add configurable collection caching
 fix(turnstile): preserve server validation errors
-test(runtime-utils): cover malformed URLs
+test(module-utils): cover malformed URLs
 ci(release): validate package tarballs
 ```
 
@@ -571,7 +573,7 @@ Example configuration:
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@repo/runtime-utils", "@repo/test-utils"]
+  "ignore": ["@repo/module-utils", "@repo/test-utils"]
 }
 ```
 
@@ -878,7 +880,7 @@ No additional governance, support, security, or deprecation policy documents are
 
 Adding a new module shall require:
 
-1. creating `packages/nuxt-<name>`;
+1. creating `modules/nuxt-<name>`;
 2. naming it `@onderwijsin/nuxt-<name>`;
 3. adding module source;
 4. adding an isolated playground;

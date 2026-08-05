@@ -16,7 +16,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "corepack pnpm --recursive --if-present run e2e",
-    "check:artifacts": "corepack pnpm --recursive --if-present run check:artifacts",
     "changeset": "changeset",
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",
@@ -24,7 +23,6 @@
     "postinstall": "husky || true"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "catalog:",
     "@changesets/cli": "catalog:",
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
@@ -37,7 +35,6 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "publint": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",

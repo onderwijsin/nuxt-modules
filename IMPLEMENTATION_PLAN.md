@@ -17,7 +17,7 @@ repository does not currently meet the monorepo specification.
 | Formatting and linting       | Oxfmt and Oxlint configurations exist; `fmt:check` and `lint` pass.                        | Partially complete: script names/options and lint coverage do not yet match the specification.                                |
 | Commit conventions           | Commitlint config and Husky hooks exist.                                                   | Partially complete: hooks invoke plain `pnpm`, the commit-message hook mutates subjects, and CI does not validate PR titles.  |
 | Testing and type checking    | Root scripts exist but there is no `tsconfig`, Vitest dependency, or Vitest configuration. | Not started: `typecheck` fails because TypeScript has no project; `test` fails because `vitest` is unavailable.               |
-| Modules and shared utilities | No `packages/` directory or publishable packages exist.                                    | Not started.                                                                                                                  |
+| Modules and shared utilities | Private packages exist under `packages/`; no publishable modules exist under `modules/`.   | Not started.                                                                                                                  |
 | Artefact validation          | No packing, publint, Are the Types Wrong, or clean-fixture validation exists.              | Not started.                                                                                                                  |
 | Versioning and releases      | No Changesets, npm auth configuration, or workflows exist.                                 | Not started.                                                                                                                  |
 | Documentation                | MIT `LICENSE` exists; no root or package README exists.                                    | Incomplete.                                                                                                                   |
@@ -55,8 +55,8 @@ workspace without publishing a module.
 
 - Update the root package to `@onderwijsin/nuxt-modules`, set `private: true`,
   retain native ESM, and add `engines.node: >=22`.
-- Add workspace discovery for `packages/*`, `packages/*/playground`, and
-  `playgrounds/*` to `pnpm-workspace.yaml`.
+- Add workspace discovery for `packages/*`, `modules/*`, `modules/*/playground`,
+  and `playgrounds/*` to `pnpm-workspace.yaml`.
 - Add root TypeScript and Vitest project configuration; make the root scripts
   match the specified command contract, including recursive build/typecheck,
   e2e, artefact checks, and Changeset commands.
@@ -78,35 +78,28 @@ workspace without publishing a module.
 typecheck, and test commands successfully, even before a publishable module is
 introduced.
 
-### Phase 2 — Add private shared packages and quality infrastructure
+### Phase 2 — Add private shared packages
 
 **Goal:** provide the reusable, non-published foundation before modules consume
 it.
 
-- Create `packages/runtime-utils` as private, side-effect-free ESM with named
+- Create `packages/module-utils` as private, side-effect-free ESM with named
   exports only. Keep it free of Nuxt module registration and runtime code from
   unrelated modules.
-- Create `packages/test-utils` as private test-only helpers and inspection
-  utilities. Enforce the boundary that production module code cannot import it.
-- Implement `scripts/validate-packages.ts` to discover publishable
-  `@onderwijsin/nuxt-*` workspaces, validate required metadata and files, and
-  reject invalid public/private package classification.
-- Implement `scripts/check-packed-package.ts` to inspect each npm tarball for
-  allowed contents, `@repo/*` dependency/import/declaration leakage, and test
-  utility inclusion. Make the tarball the validation input.
-- Add a reusable clean Nuxt consumer fixture flow that installs the packed
-  tarball, then executes `nuxt typecheck` and `nuxt build`.
+- Create `packages/test-utils` as a private test-only workspace package.
+- Keep package discovery, packed artefact inspection, leakage validation, and
+  clean-consumer fixtures deferred until a real module exists to exercise them.
 
-**Exit gate:** the artefact checker can pass for a deliberately minimal sample
-package and fail deterministically for a fixture with an injected private
-workspace reference.
+**Exit gate:** both private workspace packages are discovered by pnpm and pass
+their package-local type checks without adding publication or validation
+machinery.
 
 ### Phase 3 — Establish a non-published Nuxt starter module
 
 **Goal:** implement a small `nuxt-starter` reference package to prove the
 toolchain without representing a production module or publishing it.
 
-- Create `packages/nuxt-starter` with the same native ESM, Node `>=22`, Nuxt
+- Create `modules/nuxt-starter` with the same native ESM, Node `>=22`, Nuxt
   `^4.0.0`, dist-only files, exports, generated declaration entrypoint, README,
   and changelog contracts required of a future published package. Set the
   repository metadata to `onderwijsin/nuxt-modules`, but configure the package
@@ -115,13 +108,13 @@ toolchain without representing a production module or publishing it.
 - Implement `src/module.ts` using `defineNuxtModule`, explicit metadata, typed
   options, and documented Nuxt compatibility. Use Zod for external/boundary
   option validation where applicable.
-- Configure `@nuxt/module-builder` so private `@repo/runtime-utils` imports
+- Configure `@nuxt/module-builder` so private `@repo/module-utils` imports
   are explicitly inlined/bundled and never emitted as external production
   dependencies or declaration references.
 - Add focused unit tests for option normalisation and pure utilities, plus
   observable `@nuxt/test-utils` integration tests using only fixtures required
   by the module's behaviour.
-- Add `packages/nuxt-starter/playground`, marked private. It must install the
+- Add `modules/nuxt-starter/playground`, marked private. It must install the
   module as `workspace:*`, register it by public package name, include realistic
   configuration, and support dev, typecheck, and production build commands.
 - Document the starter's purpose, registration, options, runtime API, minimal

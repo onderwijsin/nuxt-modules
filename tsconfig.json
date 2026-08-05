@@ -11,5 +11,12 @@
     "verbatimModuleSyntax": true,
     "types": ["node"]
   },
-  "include": ["*.config.ts", "scripts/**/*.ts", "packages/**/*.ts", "packages/**/*.vue"]
+  "include": [
+    "*.config.ts",
+    "scripts/**/*.ts",
+    "packages/**/*.ts",
+    "packages/**/*.vue",
+    "modules/**/*.ts",
+    "modules/**/*.vue"
+  ]
 }
