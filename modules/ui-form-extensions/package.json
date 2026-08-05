@@ -1,5 +1,5 @@
 {
-  "name": "@onderwijsin/nuxt-ui-form-extenions",
+  "name": "@onderwijsin/nuxt-ui-form-extensions",
   "version": "0.1.0",
   "description": "Nuxt UI form extensions.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
@@ -10,7 +10,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
-    "directory": "modules/ui-form-extenions"
+    "directory": "modules/ui-form-extensions"
   },
   "files": [
     "dist"

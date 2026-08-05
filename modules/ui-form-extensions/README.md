@@ -1,4 +1,4 @@
-# @onderwijsin/nuxt-ui-form-extenions
+# @onderwijsin/nuxt-ui-form-extensions
 
 Nuxt UI form extensions for Nuxt 4. The module provides a small foundation for
 building forms that keep local edits separate from canonical application state.
@@ -17,14 +17,14 @@ patterns emerge.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-ui-form-extenions
+pnpm add @onderwijsin/nuxt-ui-form-extensions
 ```
 
 Register the module in `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ["@onderwijsin/nuxt-ui-form-extenions"]
+  modules: ["@onderwijsin/nuxt-ui-form-extensions"]
 });
 ```
 

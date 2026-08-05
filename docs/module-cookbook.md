@@ -97,10 +97,10 @@ Run it from the module directory or through the workspace filter:
 
 ```sh
 cd modules/<module-name>
-corepack pnpm dev:playground
+pnpm dev:playground
 
 # Or from the repository root:
-corepack pnpm --filter @onderwijsin/nuxt-example dev:playground
+pnpm --filter @onderwijsin/nuxt-example dev:playground
 ```
 
 The playground is also part of the workspace validation contract. Run its
@@ -108,10 +108,10 @@ checks directly when iterating, or use the root recursive commands to include
 all module playgrounds:
 
 ```sh
-corepack pnpm --filter example-playground typecheck
-corepack pnpm --filter example-playground build
-corepack pnpm typecheck
-corepack pnpm build
+pnpm --filter example-playground typecheck
+pnpm --filter example-playground build
+pnpm typecheck
+pnpm build
 ```
 
 Do not commit generated `.nuxt`, `.output`, or other build output from a
@@ -270,8 +270,8 @@ Use Vitest and keep tests next to the package:
 
 ```text
 packages/module-utils/__tests__/setup.test.ts
-modules/ui-form-extenions/__tests__/module.test.ts
-modules/ui-form-extenions/__tests__/draft-form.test.ts
+modules/ui-form-extensions/__tests__/module.test.ts
+modules/ui-form-extensions/__tests__/draft-form.test.ts
 ```
 
 Test pure utilities directly. For a module entrypoint, verify metadata,

@@ -6,7 +6,7 @@ newer. Local development uses Node.js 24, as specified by `.nvmrc`.
 Install dependencies with:
 
 ```sh
-corepack pnpm install
+pnpm install
 ```
 
 Workspace packages are discovered from:
@@ -19,9 +19,8 @@ Workspace packages are discovered from:
 Internal packages live under `packages/`. Publishable Nuxt modules live under
 `modules/`.
 
-The first publishable module is `@onderwijsin/nuxt-ui-form-extenions`, located
-at `modules/ui-form-extenions`. The spelling of `extenions` is intentional and
-is part of the package name.
+The first publishable module is `@onderwijsin/nuxt-ui-form-extensions`, located
+at `modules/ui-form-extensions`.
 
 The internal packages currently are:
 

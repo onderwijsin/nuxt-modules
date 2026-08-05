@@ -4,7 +4,7 @@ import { resolveModuleName, resolveLoggerScope, moduleSetup } from "module-utils
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types";
 
-const MODULE_KEY = "uiFormExtenions";
+const MODULE_KEY = "uiFormExtensions";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
 
 /**

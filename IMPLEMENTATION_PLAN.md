@@ -41,7 +41,7 @@ repository does not currently meet the monorepo specification.
 - An integration playground is intentionally out of scope for now. Retain the
   `playgrounds/*` workspace glob for future discovery, but create no integration
   application.
-- The first production module is `@onderwijsin/nuxt-ui-form-extenions`. It is
+- The first production module is `@onderwijsin/nuxt-ui-form-extensions`. It is
   being introduced as a small boilerplate package before its form logic is
   implemented.
 
@@ -95,11 +95,11 @@ machinery.
 
 ### Phase 3 — Establish the first publishable Nuxt module
 
-**Goal:** implement the initial `@onderwijsin/nuxt-ui-form-extenions` package
+**Goal:** implement the initial `@onderwijsin/nuxt-ui-form-extensions` package
 as a publishable Nuxt module and prove the module build path before adding its
 form logic.
 
-- Create `modules/ui-form-extenions` with the same native ESM, Node `>=22`, Nuxt
+- Create `modules/ui-form-extensions` with the same native ESM, Node `>=22`, Nuxt
   `^4.0.0`, dist-only files, exports, generated declaration entrypoint, README,
   and changelog contracts required of a published package. Set the repository
   metadata to `onderwijsin/nuxt-modules` and configure public npm access.

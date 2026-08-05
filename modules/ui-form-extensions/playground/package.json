@@ -1,5 +1,5 @@
 {
-  "name": "ui-form-extenions-playground",
+  "name": "ui-form-extensions-playground",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "catalog:",
-    "@onderwijsin/nuxt-ui-form-extenions": "workspace:*",
+    "@onderwijsin/nuxt-ui-form-extensions": "workspace:*",
     "nuxt": "catalog:"
   }
 }

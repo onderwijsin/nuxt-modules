@@ -3,11 +3,11 @@ import { isPrepareMode, moduleSetup, resolveLoggerScope, resolveModuleName } fro
 
 describe("module naming helpers", () => {
   it("resolves a config key to the repository module name", () => {
-    expect(resolveModuleName("uiFormExtenions")).toBe("@onderwijsin/nuxt-ui-form-extenions");
+    expect(resolveModuleName("uiFormExtensions")).toBe("@onderwijsin/nuxt-ui-form-extensions");
   });
 
   it("resolves a config key to a logger scope", () => {
-    expect(resolveLoggerScope("uiFormExtenions")).toBe("ui-form-extenions");
+    expect(resolveLoggerScope("uiFormExtensions")).toBe("ui-form-extensions");
   });
 });
 
