@@ -1,12 +1,13 @@
-import { defineStore } from "pinia";
 import type {} from "pinia-plugin-persistedstate";
+import { defineStore } from "pinia";
 import { kebabCase, titleCase } from "scule";
-import { reactive, ref } from "vue";
+import { reactive, ref } from "#imports";
 import { useAppConfig, useRuntimeConfig } from "nuxt/app";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, THEME_SHADES } from "../utils/theme";
-import { useLocalStorage } from "../utils/storage";
+
+import { piniaPluginPersistedstate } from "#imports";
 import { applyThemeFont, DEFAULT_THEME_FONT, sanitizeFontFamily } from "../utils/font";
 import type { ThemeAppConfig, ThemeCustomizerRuntimeConfig } from "../types";
 
@@ -35,8 +36,8 @@ export const useThemeCustomizerStore = defineStore(
     const activeColors = reactive<Record<ThemeColorGroup, string>>({});
     const font = ref(DEFAULT_THEME_FONT);
 
-    const appConfig = useAppConfig() as ThemeAppConfig;
-    const runtimeConfig = useRuntimeConfig() as ThemeCustomizerRuntimeConfig;
+    const appConfig = useAppConfig() as unknown as ThemeAppConfig;
+    const runtimeConfig = useRuntimeConfig() as unknown as ThemeCustomizerRuntimeConfig;
     const runtime = createThemeRuntimeAdapter(appConfig);
 
     /**
@@ -297,7 +298,7 @@ export const useThemeCustomizerStore = defineStore(
   },
   {
     persist: {
-      storage: useLocalStorage(),
+      storage: piniaPluginPersistedstate.localStorage(),
       pick: ["colors", "groups", "activeColors", "font"]
     }
   }

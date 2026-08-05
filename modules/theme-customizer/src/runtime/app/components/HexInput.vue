@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { computed, shallowRef, watch } from "vue";
-
+import { computed, shallowRef, watch } from "#imports";
 import { hexColorSchema } from "../utils/theme";
 
 const props = withDefaults(

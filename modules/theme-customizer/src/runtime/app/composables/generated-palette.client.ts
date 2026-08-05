@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { reactive } from "vue";
-import { $fetch } from "ofetch";
-import { useAppConfig, useRuntimeConfig, useState } from "nuxt/app";
+import { $fetch, reactive, useAppConfig, useRuntimeConfig, useState } from "#imports";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, hexColorSchema } from "../utils/theme";
@@ -29,9 +27,9 @@ const paletteResponseSchema = z.object({
  * @returns Reactive palette state and actions for generating, resetting, and removing palettes.
  */
 export function useGeneratedPalette() {
-  const appConfig = useAppConfig() as ThemeAppConfig;
+  const appConfig = useAppConfig() as unknown as ThemeAppConfig;
   const runtime = createThemeRuntimeAdapter(appConfig);
-  const runtimeConfig = useRuntimeConfig() as ThemeCustomizerRuntimeConfig;
+  const runtimeConfig = useRuntimeConfig() as unknown as ThemeCustomizerRuntimeConfig;
   const generatedTokenNames = useState<Record<string, string>>(
     "theme-picker-generated-token-names",
     () => ({})

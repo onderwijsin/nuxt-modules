@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { shallowRef } from "vue";
-
+import { shallowRef } from "#imports";
 import { useGoogleFonts } from "../composables/google-fonts.client";
 import { useThemeCustomizerStore } from "../stores/theme-customizer";
 import { sanitizeFontFamily } from "../utils/font";

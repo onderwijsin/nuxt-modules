@@ -9,6 +9,8 @@ The repository uses the following tools:
 - TypeScript and `vue-tsc` for type checking.
 - Vitest for unit tests and `@nuxt/test-utils` for Nuxt integration tests.
 - Nuxt 4 and `@nuxt/module-builder` for module development and builds.
+- Each Nuxt module root extends its generated `./.nuxt/tsconfig.json`; run
+  `dev:prepare` before typechecking so Nuxt auto-import types are available.
 - tsup for shared utility package builds and unbuild configuration for module
   bundling.
 - Changesets for independent package versions and release changelogs.

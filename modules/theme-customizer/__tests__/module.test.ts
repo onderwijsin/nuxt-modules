@@ -22,6 +22,7 @@ import type { ThemePalette } from "../src/types";
 const moduleDefinition = themeCustomizerModule as unknown as {
   meta: Record<string, unknown>;
   moduleDependencies: Record<string, unknown>;
+  defaults: (nuxt: { options: { dev: boolean } }) => Record<string, unknown>;
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
 
@@ -50,6 +51,28 @@ type MockNuxt = {
 describe("theme customizer module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("defaults Google Fonts to the curated family list", () => {
+    expect(moduleDefinition.defaults({ options: { dev: true } })).toEqual({
+      enabled: true,
+      googleFonts: {
+        families: [
+          "Public Sans",
+          "Roboto",
+          "Open Sans",
+          "Lato",
+          "Montserrat",
+          "DM Sans",
+          "Inter",
+          "Poppins",
+          "Nunito Sans",
+          "Raleway",
+          "Merriweather",
+          "Playfair Display"
+        ]
+      }
+    });
   });
 
   it("exposes the package identity and Nuxt UI dependencies", () => {

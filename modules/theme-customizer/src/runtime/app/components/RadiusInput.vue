@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { z } from "zod";
-import { computed, shallowRef, watch } from "vue";
+import { computed, shallowRef, watch } from "#imports";
 
 const props = withDefaults(
   defineProps<{

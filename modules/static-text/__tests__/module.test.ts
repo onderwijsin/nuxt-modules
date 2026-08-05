@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const kit = vi.hoisted(() => ({
   addImports: vi.fn(),
-  addPluginTemplate: vi.fn(),
+  addPlugin: vi.fn(),
   addTemplate: vi.fn((template: { filename: string }) => ({ dst: `./${template.filename}` })),
   addTypeTemplate: vi.fn(),
   createResolver: vi.fn(() => ({ resolve: vi.fn((...parts: string[]) => parts.join("/")) })),
@@ -21,7 +21,7 @@ const moduleDefinition = textModule as unknown as {
 describe("text module", () => {
   beforeEach(() => {
     kit.addImports.mockClear();
-    kit.addPluginTemplate.mockClear();
+    kit.addPlugin.mockClear();
     kit.addTemplate.mockClear();
     kit.addTypeTemplate.mockClear();
   });
@@ -45,11 +45,9 @@ describe("text module", () => {
     );
     expect(kit.addImports).toHaveBeenCalledWith({
       name: "useText",
-      from: "./static-text-composable.ts"
+      from: "./runtime/app/composables/text"
     });
-    expect(kit.addPluginTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ filename: "static-text-plugin.mjs" })
-    );
+    expect(kit.addPlugin).toHaveBeenCalledWith("./runtime/app/plugins/text");
     expect(kit.addTypeTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "types/static-text.d.ts" })
     );
@@ -60,7 +58,9 @@ describe("text module", () => {
 
     moduleDefinition.setup({ content: "./assets/ui/content" }, nuxt as never);
 
-    const template = kit.addTemplate.mock.calls[0]?.[0] as { getContents: () => string };
+    const template = kit.addTemplate.mock.calls[0]?.[0] as unknown as {
+      getContents: () => string;
+    };
 
     expect(template.getContents()).toContain("/project/app/assets/ui/content");
     expect(template.getContents()).not.toContain("/project/app/./assets/ui/content");
@@ -71,7 +71,9 @@ describe("text module", () => {
 
     moduleDefinition.setup({}, nuxt as never);
 
-    const template = kit.addTemplate.mock.calls[0]?.[0] as { getContents: () => string };
+    const template = kit.addTemplate.mock.calls[0]?.[0] as unknown as {
+      getContents: () => string;
+    };
 
     expect(template.getContents()).toContain("/project/app/assets/ui/content");
   });

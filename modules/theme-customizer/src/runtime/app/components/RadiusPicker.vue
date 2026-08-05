@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { shallowRef, watch } from "vue";
-
+import { shallowRef, watch } from "#imports";
 const props = defineProps<{
   modelValue: number;
 }>();

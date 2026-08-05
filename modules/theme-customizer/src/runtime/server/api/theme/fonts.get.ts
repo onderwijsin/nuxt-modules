@@ -1,7 +1,7 @@
-import { $fetch } from "ofetch";
-import { defineEventHandler, getQuery } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
 import { z } from "zod";
+import { $fetch } from "ofetch";
+import { defineEventHandler as h3DefineEventHandler, getQuery as h3GetQuery } from "h3";
+import { useRuntimeConfig } from "nitropack/runtime";
 
 type ThemeFontOption = {
   label: string;
@@ -19,21 +19,6 @@ type ThemeFontsRuntimeConfig = {
   };
 };
 
-const standardFonts = [
-  "Public Sans",
-  "Roboto",
-  "Open Sans",
-  "Lato",
-  "Montserrat",
-  "DM Sans",
-  "Inter",
-  "Poppins",
-  "Nunito Sans",
-  "Raleway",
-  "Merriweather",
-  "Playfair Display"
-];
-
 const googleFontsResponseSchema = z.object({
   items: z.array(z.object({ family: z.string().min(1) }))
 });
@@ -46,12 +31,12 @@ let cachedFonts: ThemeFontOption[] | undefined;
  * @param event The incoming Nitro request event.
  * @returns Matching font family options.
  */
-export default defineEventHandler(async (event): Promise<ThemeFontOption[]> => {
-  const query = querySchema.parse(getQuery(event));
+export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> => {
+  const query = querySchema.parse(h3GetQuery(event));
   const config = useRuntimeConfig(event) as ThemeFontsRuntimeConfig;
   const apiKey = config.themeCustomizerGoogleFontsApiKey;
-  const configuredFonts = config.public?.themeCustomizer?.googleFonts?.families;
-  const fallbackFonts = toFontOptions(configuredFonts?.length ? configuredFonts : standardFonts);
+  const configuredFonts = config.public?.themeCustomizer?.googleFonts?.families ?? [];
+  const fallbackFonts = toFontOptions(configuredFonts);
 
   if (!apiKey) return filterFonts(fallbackFonts, query.q);
 

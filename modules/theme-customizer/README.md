@@ -108,10 +108,10 @@ The picker can select configured palettes, generate a temporary palette from a
 HEX value, change Nuxt UI's radius, and open the full theme editor. The module
 UI is Dutch.
 
-It also includes a searchable Font field. By default it offers a small curated
-set of Google Fonts. To load the complete Google Fonts catalog, configure a
-server-side API key. The API key is optional; you can instead provide the exact
-font families the consuming application should offer:
+It also includes a searchable Font field. By default the module configures a
+curated set of 12 Google Fonts. To load the complete Google Fonts catalog,
+configure a server-side API key. The API key is optional; you can instead
+provide the exact font families the consuming application should offer:
 
 ```ts
 export default defineNuxtConfig({
@@ -127,7 +127,7 @@ export default defineNuxtConfig({
 The module proxies and filters Google Fonts metadata at `/api/theme/fonts`,
 debouncing SelectMenu queries. The selected family is persisted locally and
 loaded through Google Fonts CSS. When `families` is provided without an API key,
-that list replaces the built-in 12-font fallback.
+that list replaces the module's default family list.
 
 ### Acquiring a Google Fonts API key
 

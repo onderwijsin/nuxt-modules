@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { computed, reactive } from "vue";
-import { useAppConfig, useRuntimeConfig } from "nuxt/app";
 import { useGeneratedPalette } from "../composables/generated-palette.client";
 import { useThemeCustomizerStore } from "../stores/theme-customizer";
 import { NEUTRAL_COLORS } from "../utils/constants";
 import { colorLabel } from "../utils/theme";
 import type { ThemeAppConfig, ThemeCustomizerRuntimeConfig } from "../types";
+import { useConfirmDialog } from "../composables/confirm-dialog";
+
+import { computed, reactive, useAppConfig, useRuntimeConfig } from "#imports";
 
 type ThemeRadius = ThemeAppConfig["ui"]["radius"];
 

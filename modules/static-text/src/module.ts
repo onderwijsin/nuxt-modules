@@ -3,7 +3,7 @@ import type { ModuleOptions } from "./types/options";
 import { resolve } from "node:path";
 import {
   addImports,
-  addPluginTemplate,
+  addPlugin,
   addTemplate,
   addTypeTemplate,
   createResolver,
@@ -53,6 +53,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
+    const runtimeAppDir = resolver.resolve(runtimeDir, "app");
     const contentPath = resolve(
       nuxt.options.srcDir,
       normalizeContentPath(result.data.content ?? DEFAULTS.content)
@@ -65,32 +66,11 @@ export default defineNuxtModule<ModuleOptions>({
       write: true,
       getContents: () => `export { default } from ${JSON.stringify(contentPath)};\n`
     });
-
-    const composableTemplate = addTemplate({
-      filename: "static-text-composable.ts",
-      getContents: () => `import content from ${JSON.stringify(contentPath)};
-import { createTextTranslator } from ${JSON.stringify(resolver.resolve(runtimeDir, "translator"))};
-
-export const useText = createTextTranslator(content);
-`
-    });
     addImports({
       name: "useText",
-      from: composableTemplate.dst
+      from: resolver.resolve(runtimeAppDir, "composables/text")
     });
-    addPluginTemplate({
-      filename: "static-text-plugin.mjs",
-      getContents: () => `import content from ${JSON.stringify(contentPath)};
-import { defineNuxtPlugin } from "nuxt/app";
-import { createTextTranslator } from ${JSON.stringify(resolver.resolve(runtimeDir, "translator"))};
-
-export default defineNuxtPlugin(() => ({
-  provide: {
-    t: createTextTranslator(content)
-  }
-}));
-`
-    });
+    addPlugin(resolver.resolve(runtimeAppDir, "plugins/text"));
     addTypeTemplate({
       filename: "types/static-text.d.ts",
       getContents: () => `import type content from "../static-text-content";

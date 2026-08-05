@@ -62,7 +62,23 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   },
   defaults: (nuxt) => ({
-    enabled: nuxt.options.dev
+    enabled: nuxt.options.dev,
+    googleFonts: {
+      families: [
+        "Public Sans",
+        "Roboto",
+        "Open Sans",
+        "Lato",
+        "Montserrat",
+        "DM Sans",
+        "Inter",
+        "Poppins",
+        "Nunito Sans",
+        "Raleway",
+        "Merriweather",
+        "Playfair Display"
+      ]
+    }
   }),
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));

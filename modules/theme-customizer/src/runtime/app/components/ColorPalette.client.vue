@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import { useClipboard } from "@vueuse/core";
-import { computed } from "vue";
-import { useToast } from "@nuxt/ui/composables";
-
+import { computed, useClipboard, useToast } from "#imports";
 import type { ThemePaletteShade } from "../composables/generated-palette.client";
 import { normalizeCssColorToHex } from "../utils/color";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";

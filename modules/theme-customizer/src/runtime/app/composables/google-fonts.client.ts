@@ -1,35 +1,14 @@
-import { refDebounced } from "@vueuse/core";
-import { $fetch } from "ofetch";
-import { useRuntimeConfig } from "nuxt/app";
-import { computed, shallowRef, watch } from "vue";
-
-import { DEFAULT_THEME_FONT } from "../utils/font";
 import type { ThemeCustomizerRuntimeConfig, ThemeFontOption } from "../types";
-
-const STANDARD_FONTS = [
-  DEFAULT_THEME_FONT,
-  "Roboto",
-  "Open Sans",
-  "Lato",
-  "Montserrat",
-  "DM Sans",
-  "Inter",
-  "Poppins",
-  "Nunito Sans",
-  "Raleway",
-  "Merriweather",
-  "Playfair Display"
-];
+import { $fetch, computed, refDebounced, shallowRef, useRuntimeConfig, watch } from "#imports";
 
 /**
  * Loads searchable Google Font options for the theme picker.
  * @returns Font options, search state, loading state, and a lazy loading action.
  */
 export function useGoogleFonts() {
-  const runtimeConfig = useRuntimeConfig() as ThemeCustomizerRuntimeConfig;
+  const runtimeConfig = useRuntimeConfig() as unknown as ThemeCustomizerRuntimeConfig;
   const configuredFonts = runtimeConfig.public.themeCustomizer.googleFonts?.families ?? [];
-  const fallbackFonts = configuredFonts.length ? configuredFonts : STANDARD_FONTS;
-  const fonts = shallowRef<ThemeFontOption[]>(toFontOptions(fallbackFonts));
+  const fonts = shallowRef<ThemeFontOption[]>(toFontOptions(configuredFonts));
   const searchTerm = shallowRef("");
   const loading = shallowRef(false);
   const loaded = shallowRef(false);

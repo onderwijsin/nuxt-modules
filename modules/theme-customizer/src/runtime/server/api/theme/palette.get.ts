@@ -1,6 +1,6 @@
+import { z } from "zod";
 import { $fetch } from "ofetch";
 import { createError, defineEventHandler, getQuery } from "h3";
-import { z } from "zod";
 
 const hexSchema = z.string().regex(/^#[\da-f]{6}$/i, {
   error: "Invalid hex color"

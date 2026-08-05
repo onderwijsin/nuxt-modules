@@ -1,7 +1,6 @@
-import { useOverlay } from "@nuxt/ui/composables";
-
 import Confirmation from "../components/Confirmation.vue";
 import type { ConfirmDialogProps } from "../types";
+import { useOverlay } from "#imports";
 
 /**
  * Creates confirmation dialogs through Nuxt UI's overlay manager.

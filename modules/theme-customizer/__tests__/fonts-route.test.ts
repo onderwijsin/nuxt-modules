@@ -23,11 +23,17 @@ describe("theme fonts API route", () => {
     );
   });
 
-  it("returns curated fallback fonts without an API key", async () => {
+  it("returns configured fallback fonts without an API key", async () => {
     getQuery.mockReturnValue({ q: "inter" });
 
     await expect(
-      fontsHandler({ context: { nitro: { runtimeConfig: {} } } } as never)
+      fontsHandler({
+        context: {
+          nitro: {
+            runtimeConfig: { public: { themeCustomizer: { googleFonts: { families: ["Inter"] } } } }
+          }
+        }
+      } as never)
     ).resolves.toEqual([{ label: "Inter", value: "Inter" }]);
     expect(fetchFonts).not.toHaveBeenCalled();
   });

@@ -66,7 +66,8 @@ them in generated TypeScript types, for example `color="accent"`.
 
 ## Usage
 
-Place `<ThemePicker />` in the application's navigation:
+Place `<ThemePicker />` in the application's navigation, or use the standalone
+`<FontPicker />` when only font selection is needed:
 
 ```vue
 <UHeader>
@@ -75,6 +76,43 @@ Place `<ThemePicker />` in the application's navigation:
   </template>
 </UHeader>
 ```
+
+`ThemePicker` includes a debounced, searchable font selector. Configure a
+Google Fonts Developer API key when the complete catalog is needed. The key is
+optional; provide `families` to control the list without using the API:
+
+```ts
+export default defineNuxtConfig({
+  themeCustomizer: {
+    googleFonts: {
+      apiKey: process.env.GOOGLE_FONTS_API_KEY,
+      families: ["Inter", "DM Sans", "Merriweather"]
+    }
+  }
+});
+```
+
+Without an API key, the picker uses configured `families`; the module defaults
+this option to its curated 12-font list.
+
+### Acquiring a Google Fonts API key
+
+The key is optional and is only required for the complete Google Fonts
+catalog. To create one:
+
+1. Select or create a project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable the [Web Fonts Developer API](https://console.cloud.google.com/apis/library/webfonts.googleapis.com).
+3. Open [APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
+4. Choose **Create credentials → API key** and copy the generated key.
+5. Restrict the key to the Web Fonts Developer API, then store it in an environment variable:
+
+```sh
+GOOGLE_FONTS_API_KEY=your-key
+```
+
+Pass the environment variable through `themeCustomizer.googleFonts.apiKey` as
+shown above. The module uses it server-side; do not commit the key to source
+control. See Google's [Web Fonts Developer API guide](https://developers.google.com/fonts/docs/developer_api) for the API details.
 
 The module also provides `/thema` for palette inspection and editing. Its user
 interface is Dutch. Configured palettes, custom colors, groups, and active

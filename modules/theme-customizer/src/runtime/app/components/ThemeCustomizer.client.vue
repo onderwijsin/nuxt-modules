@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { useClipboard } from "@vueuse/core";
 import { z } from "zod";
-import { computed, shallowRef } from "vue";
-import { useToast } from "@nuxt/ui/composables";
-import { useRuntimeConfig } from "nuxt/app";
+import { useClipboard, useToast, shallowRef, useRuntimeConfig, computed } from "#imports";
+
+import { useConfirmDialog } from "../composables/confirm-dialog";
 
 import { type CustomThemeColor, useThemeCustomizerStore } from "../stores/theme-customizer";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";

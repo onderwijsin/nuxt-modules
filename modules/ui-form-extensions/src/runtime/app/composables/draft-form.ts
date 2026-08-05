@@ -1,4 +1,4 @@
-import { computed, reactive, shallowRef, toRaw, watch } from "vue";
+import { computed, reactive, shallowRef, toRaw, watch } from "#imports";
 
 /** Options for a form that keeps a local editable draft. */
 interface UseDraftFormOptions<TDraft extends object, TSubmission> {
@@ -86,7 +86,7 @@ function toRawDeep<T>(value: T): T {
     return rawValue.map((item) => toRawDeep(item)) as T;
   }
 
-  if (rawValue instanceof Date) return rawValue;
+  if (rawValue instanceof Date) return rawValue as unknown as T;
 
   if (isPlainObject(rawValue)) {
     const copy: Record<string, unknown> = {};

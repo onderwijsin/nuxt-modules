@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useGeneratedPalette } from "../composables/generated-palette.client";
 import { useThemeCustomizerStore } from "../stores/theme-customizer";
-import { computed } from "vue";
-import { useAppConfig } from "nuxt/app";
 import type { ThemeAppConfig } from "../types";
+
+import { computed, useAppConfig } from "#imports";
 
 const appConfig = useAppConfig() as ThemeAppConfig;
 const { customHex, generatedPalettes } = useGeneratedPalette();
