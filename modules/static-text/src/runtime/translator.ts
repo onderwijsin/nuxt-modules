@@ -1,4 +1,4 @@
-import type { TextDictionary, TextTranslator } from "../types/dictionary";
+import type { TextDictionary, TextTranslator } from "@onderwijsin/nuxt-static-text";
 
 type RuntimeParameters = Record<string, string | number>;
 

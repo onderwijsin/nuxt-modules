@@ -4,6 +4,8 @@ The repository uses the following tools:
 
 - pnpm workspaces with strict catalog versions and Corepack pinning.
 - Oxfmt for formatting and Oxlint for linting.
+- Oxlint's JSDoc plugin requires documented parameters and return values to include
+  descriptions.
 - TypeScript and `vue-tsc` for type checking.
 - Vitest for unit tests and `@nuxt/test-utils` for Nuxt integration tests.
 - Nuxt 4 and `@nuxt/module-builder` for module development and builds.

@@ -13,6 +13,7 @@ use in internal _Onderwijs in_ projects.
 | `@onderwijsin/nuxt-static-text`        | Type-safe static text tokens for Nuxt applications. Compatible with Vue i18n syntax.           |
 | `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
 | `@onderwijsin/nuxt-loops-renderer`     | Nuxt module for rendering Loops parsed LMX email content.                                      |
+| `@onderwijsin/nuxt-theme-customizer`   | Runtime theme picker and custom color editor for Nuxt UI.                                      |
 
 ## 🧱 Requirements
 
@@ -43,6 +44,7 @@ To install only one skill, pass its name:
 npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
 npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
 npx skills add onderwijsin/nuxt-modules --skill nuxt-static-text
+npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
 ```
 
 These skills provide module-specific guidance, API references, examples, and
@@ -61,6 +63,7 @@ Run the module playground during development:
 ```sh
 pnpm --filter @onderwijsin/nuxt-ui-form-extensions dev:playground
 pnpm --filter @onderwijsin/nuxt-static-text dev:playground
+pnpm --filter @onderwijsin/nuxt-theme-customizer dev:playground
 ```
 
 Run playground checks directly when iterating:

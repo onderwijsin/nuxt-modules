@@ -249,6 +249,15 @@ validation when an option is required or must have a specific shape, such as
 an enum. If every option is optional and ordinary TypeScript types are enough,
 do not add validation just for the sake of having a schema.
 
+Keep `src/module.ts` focused on module orchestration: metadata, lifecycle,
+option validation, and Nuxt Kit registration. Do not place helper functions,
+token maps, CSS generation, or other module-specific utilities inline in the
+entrypoint. Put them in one or more focused files under `src/config/` (for
+build-time configuration) or the appropriate `src/runtime/` directory (for
+runtime behavior), and import them into the entrypoint. This keeps the module
+definition readable and makes pure configuration behavior straightforward to
+test without bootstrapping Nuxt.
+
 When validation is useful, define the Zod fields as a plain object in a
 module-local schema file:
 
