@@ -52,8 +52,9 @@ Changesets publish. Changesets only publishes package versions that are part
 of the release and are not already published.
 
 When publishing succeeds, the workflow creates the package-specific Changesets
-git tags and pushes them to `main`. Re-running the workflow is safe: already
-published versions are reported and skipped by Changesets.
+git tags, pushes them to `main`, and creates a GitHub Release for each tag.
+Re-running the workflow is safe: already published versions and existing
+GitHub Releases are skipped.
 
 ## Checks performed
 

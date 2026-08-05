@@ -69,6 +69,27 @@ jobs:
         run: node scripts/report-publish-status.mjs --after
       - name: Create and push package tags
         if: steps.publish.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          set -euo pipefail
           pnpm changeset tag
-          git push --follow-tags origin main
+          git push --tags origin main
+
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+          headers=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
+          for tag in $(git tag --points-at HEAD); do
+            encoded_tag=$(jq -rn --arg tag "${tag}" '$tag | @uri')
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              "${api}/releases/tags/${encoded_tag}" "${headers[@]}")
+            if [[ "${status}" == "200" ]]; then
+              continue
+            fi
+            if [[ "${status}" != "404" ]]; then
+              echo "Unable to inspect GitHub release for tag ${tag} (HTTP ${status})." >&2
+              exit 1
+            fi
+            curl --fail-with-body --silent --show-error -X POST "${api}/releases" \
+              "${headers[@]}" -H "Content-Type: application/json" \
+              -d "$(jq -cn --arg tag "${tag}" '{tag_name: $tag, name: $tag, generate_release_notes: true}')"
+          done
