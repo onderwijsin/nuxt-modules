@@ -64,7 +64,8 @@ export default defineNuxtModule<ModuleOptions>({
     addTemplate({
       filename: "static-text-content.ts",
       write: true,
-      getContents: () => `export { default } from ${JSON.stringify(contentPath)};\n`
+      getContents: () =>
+        `// @ts-ignore The configured content path is resolved in the consuming Nuxt app.\nexport { default } from ${JSON.stringify(contentPath)};\n`
     });
     addImports({
       name: "useText",
