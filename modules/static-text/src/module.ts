@@ -74,23 +74,7 @@ export default defineNuxtModule<ModuleOptions>({
     addPlugin(resolver.resolve(runtimeAppDir, "plugins/text"));
     addTypeTemplate({
       filename: "types/static-text.d.ts",
-      getContents: () => `import type content from "../static-text-content";
-import type { TextTranslator } from "${MODULE_NAME}";
-
-declare module "#app" {
-  interface NuxtApp {
-    $t: TextTranslator<typeof content>;
-  }
-}
-
-declare module "vue" {
-  interface ComponentCustomProperties {
-    $t: TextTranslator<typeof content>;
-  }
-}
-
-export {};
-`
+      src: resolver.resolve(runtimeDir, "types/static-text.d.ts")
     });
   }
 });

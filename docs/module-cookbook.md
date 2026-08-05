@@ -17,6 +17,7 @@ modules/<module-name>/
 │   ├── module.ts
 │   ├── runtime/
 │   │   ├── index.css
+│   │   ├── types/
 │   │   ├── app/
 │   │   │   ├── components/
 │   │   │   ├── composables/
@@ -25,7 +26,7 @@ modules/<module-name>/
 │   │   ├── server/
 │   │   ├── shared/
 │   │   └── etc ...
-│   └── types/
+│   └── types/             # Public TypeScript types exported by the module
 ├── CHANGELOG.md
 ├── README.md
 ├── package.json
@@ -342,6 +343,31 @@ addComponentsDir({ path: resolver.resolve(runtimeDir, "app", "components") });
 Runtime files should import their Vue or framework dependencies explicitly when
 they are also unit-tested as package source. This makes the runtime behavior
 clear and avoids relying on application-only auto-imports during tests.
+
+### Type templates
+
+For a static declaration registered with `addTypeTemplate`, keep the source file
+under `src/runtime/types/` and reference it with `src`:
+
+```ts
+const resolver = createResolver(import.meta.url);
+const runtimeDir = resolver.resolve("./runtime");
+
+addTypeTemplate({
+  filename: "types/example.d.ts",
+  src: resolver.resolve(runtimeDir, "types/example.d.ts")
+});
+```
+
+This location is required because `nuxt-module-build` publishes the module
+entrypoint and the `src/runtime/` tree. It does not copy arbitrary files from
+other source directories such as `src/types/`. A file referenced by
+`addTypeTemplate({ src })` is resolved from the built package when the
+consumer's Nuxt application starts, so it must exist in `dist/`.
+
+Use `getContents` only when the declaration must be generated from consumer
+options or other build-time values. Static declarations should remain files so
+they are easier to read, edit, and typecheck.
 
 ### Runtime CSS
 
