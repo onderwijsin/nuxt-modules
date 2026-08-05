@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxElement, LoopsLmxVariables } from "@onderwijsin/loops-core";
+import {
+  applyInlineStyles,
+  type LoopsLmxElement,
+  type LoopsLmxVariables
+} from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyInlineStyles } from "@onderwijsin/loops-core";
 
 const props = defineProps<{
   /** The ordered or unordered LMX list to render. */

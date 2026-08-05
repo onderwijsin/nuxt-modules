@@ -7,12 +7,6 @@ import {
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-/* removed duplicate type import */
-/*
-  LoopsLmxCondition,
-  LoopsLmxElement,
-  LoopsLmxVariables
-*/
 import type { LoopsRendererConfig } from "../../../../types";
 
 const props = defineProps<{
