@@ -26,6 +26,7 @@ Run the main checks with:
 ```sh
 pnpm format:check
 pnpm lint
+pnpm build:utils
 pnpm typecheck
 pnpm test
 ```
@@ -46,6 +47,11 @@ For workspace builds and release artefact checks, run:
 pnpm build
 pnpm validate:packages
 ```
+
+`module-utils` must be built before workspace type checking so consuming
+modules can resolve its generated declarations. CI runs `build:utils`
+explicitly before `typecheck`; the recursive production build also respects
+workspace dependency order.
 
 The recursive build includes private packages, publishable modules, and
 isolated playgrounds. CI additionally packs each published module, checks that

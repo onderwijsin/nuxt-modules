@@ -86,6 +86,7 @@ Run workspace-wide checks from the root:
 ```sh
 pnpm format:check
 pnpm lint
+pnpm build:utils
 pnpm typecheck
 pnpm test
 pnpm build
