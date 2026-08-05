@@ -10,8 +10,8 @@
   "dependencies": {
     "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-loops-renderer": "workspace:*",
-    "@tailwindcss/typography": "0.5.20",
+    "@tailwindcss/typography": "catalog:",
     "nuxt": "catalog:",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "catalog:"
   }
 }

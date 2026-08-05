@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxElement } from "@onderwijsin/loops-core";
-import { getLoopsLmxImageWidth } from "@onderwijsin/loops-core";
-import { resolveSafeLoopsLmxUrl } from "@onderwijsin/loops-core";
-import { resolveLoopsLmxVariables, type LoopsLmxVariables } from "@onderwijsin/loops-core";
+import {
+  getLoopsLmxImageWidth,
+  resolveSafeLoopsLmxUrl,
+  resolveLoopsLmxVariables,
+  applyInlineStyles,
+  type LoopsLmxElement,
+  type LoopsLmxVariables
+} from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
@@ -32,7 +35,7 @@ const width = computed(() => getLoopsLmxImageWidth(props.node.attributes.width))
 <template>
   <hr
     v-if="node.name === 'Divider'"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   />
   <a v-else-if="source && imageLink" :href="imageLink" rel="noopener noreferrer">
     <img
@@ -40,7 +43,7 @@ const width = computed(() => getLoopsLmxImageWidth(props.node.attributes.width))
       :alt="alt"
       :width="width"
       loading="lazy"
-      :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+      :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
     />
   </a>
   <img
@@ -49,6 +52,6 @@ const width = computed(() => getLoopsLmxImageWidth(props.node.attributes.width))
     :alt="alt"
     :width="width"
     loading="lazy"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   />
 </template>

@@ -4,11 +4,13 @@ import {
   loopsLmxAstSchema,
   getUnsupportedLoopsLmxNodes,
   hasRenderableLoopsLmxNodes,
-  hasUnsupportedLoopsLmxNodes
+  hasUnsupportedLoopsLmxNodes,
+  type LoopsLmxAst,
+  type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-import type { LoopsLmxAst, LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
 import { useAppConfig } from "nuxt/app";
+import { defu } from "defu";
 
 const props = defineProps<{
   /** Parsed LMX component tree received from the public campaign-detail API. */
@@ -19,12 +21,15 @@ const props = defineProps<{
 
 const appConfig = useAppConfig() as { loopsRenderer?: LoopsRendererConfig };
 
-console.log(appConfig.loopsRenderer?.applyInlineStyles);
-
 const rendererConfig = computed<LoopsRendererConfig>(() => ({
-  ...props.config,
-  applyInlineStyles:
-    props.config?.applyInlineStyles ?? appConfig.loopsRenderer?.applyInlineStyles ?? true
+  ...defu(props.config, appConfig.loopsRenderer, {
+    applyInlineStyles: true,
+    evaluate: {
+      onMissingVariable: false,
+      onInvalidCondition: false,
+      onInvalidComparison: false
+    }
+  })
 }));
 
 // Persisted campaign content is untrusted JSON at this client boundary.

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { LoopsLmxElement } from "@onderwijsin/loops-core";
-import type { LoopsLmxVariables } from "@onderwijsin/loops-core";
+import type { LoopsLmxElement, LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
+import { applyInlineStyles } from "@onderwijsin/loops-core";
 
 defineProps<{
   /** Raw LMX code content; merge tags intentionally remain literal inside code blocks. */
@@ -14,7 +13,7 @@ defineProps<{
 
 <template>
   <pre
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   ><code><LoopsAstInline
     v-for="(child, index) in node.children"
     :key="index"

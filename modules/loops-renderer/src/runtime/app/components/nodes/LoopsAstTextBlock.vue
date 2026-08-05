@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import type { LoopsLmxElement, LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
+import { applyInlineStyles } from "@onderwijsin/loops-core";
 
 const props = defineProps<{
   node: LoopsLmxElement;
@@ -33,7 +33,7 @@ const alignmentClass = computed(() => {
     v-if="tag"
     :is="tag"
     :class="alignmentClass"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   >
     <LoopsAstNode
       v-for="(child, index) in node.children"

@@ -36,7 +36,17 @@ as runtime dependencies for the renderer.
 The AST should be parsed and persisted by a trusted backend. The renderer
 validates the received AST, resolves supported variables and URLs with the
 Loops Core helpers, lazy-loads images, and omits unsafe or unsupported content.
-Conditional section evaluation is not enabled yet.
+Sections can be conditionally rendered with the `if`, `ifOperation`, and
+`ifValue` LMX attributes. Evaluation fallbacks default to `false` and can be
+configured in the module options or per renderer:
+
+```ts
+export default defineNuxtConfig({
+  loopsRenderer: {
+    evaluate: { onMissingVariable: true }
+  }
+});
+```
 
 ## Compatibility
 

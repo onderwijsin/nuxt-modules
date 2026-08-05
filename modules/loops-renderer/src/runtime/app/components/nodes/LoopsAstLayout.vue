@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxElement } from "@onderwijsin/loops-core";
-import { getLoopsLmxColumnsLayout } from "@onderwijsin/loops-core";
-import type { LoopsLmxVariables } from "@onderwijsin/loops-core";
+import {
+  getLoopsLmxColumnsLayout,
+  applyInlineStyles,
+  type LoopsLmxElement,
+  type LoopsLmxVariables
+} from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
@@ -27,23 +29,17 @@ const columnsStyle = computed(() =>
 </script>
 
 <template>
-  <div
+  <LoopsAstSection
     v-if="node.name === 'Section'"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
-  >
-    <LoopsAstNode
-      v-for="(child, index) in node.children"
-      :key="index"
-      :node="child"
-      :variables="variables"
-      :config="config"
-    />
-  </div>
+    :node="node"
+    :variables="variables"
+    :config="config"
+  />
   <div
     v-else-if="node.name === 'Columns' && columns.length"
     :style="{
       ...columnsStyle,
-      ...applyStyles(node.attributes, config.applyInlineStyles !== false)
+      ...applyInlineStyles(node.attributes, config.applyInlineStyles !== false)
     }"
   >
     <LoopsAstNode
@@ -56,7 +52,7 @@ const columnsStyle = computed(() =>
   </div>
   <div
     v-else-if="node.name === 'ColumnItem'"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   >
     <LoopsAstNode
       v-for="(child, index) in node.children"

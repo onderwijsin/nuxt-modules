@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxElement } from "@onderwijsin/loops-core";
-import type { LoopsLmxVariables } from "@onderwijsin/loops-core";
+import type { LoopsLmxElement, LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
+import { applyInlineStyles } from "@onderwijsin/loops-core";
 
 const props = defineProps<{
   /** The ordered or unordered LMX list to render. */
@@ -25,11 +24,14 @@ const tag = computed(() => (props.node.name === "OrderedList" ? "ol" : "ul"));
 </script>
 
 <template>
-  <component :is="tag" :style="applyStyles(node.attributes, config.applyInlineStyles !== false)">
+  <component
+    :is="tag"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
+  >
     <li
       v-for="(item, index) in items"
       :key="index"
-      :style="applyStyles(item.attributes, config.applyInlineStyles !== false)"
+      :style="applyInlineStyles(item.attributes, config.applyInlineStyles !== false)"
     >
       <LoopsAstNode
         v-for="(child, childIndex) in item.children"

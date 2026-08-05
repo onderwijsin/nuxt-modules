@@ -984,6 +984,28 @@ export const data: LoopsLmxAst = {
           value: "\n"
         }
       ]
+    },
+    {
+      type: "element",
+      name: "Section",
+      attributes: {
+        if: "{contact.firstName}",
+        ifOperation: "equal",
+        ifValue: "Jane"
+      },
+      children: [
+        {
+          type: "element",
+          name: "Paragraph",
+          attributes: {},
+          children: [
+            {
+              type: "text",
+              value: "This text only renders because contact.firstName is Jane"
+            }
+          ]
+        }
+      ]
     }
   ]
 };

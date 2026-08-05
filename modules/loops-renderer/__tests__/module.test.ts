@@ -52,6 +52,21 @@ describe("loops renderer module", () => {
     });
   });
 
+  it("preserves explicit conditional evaluation fallbacks", () => {
+    const nuxt = { options: { appConfig: {}, build: { transpile: [] } } };
+
+    moduleDefinition.setup(
+      { evaluate: { onMissingVariable: true, onInvalidCondition: true } },
+      nuxt as never
+    );
+
+    expect(nuxt.options.appConfig).toMatchObject({
+      loopsRenderer: {
+        evaluate: { onMissingVariable: true, onInvalidCondition: true }
+      }
+    });
+  });
+
   it("registers the runtime component directory for enabled modules", () => {
     const nuxt = { options: { appConfig: {}, build: { transpile: [] } } };
 

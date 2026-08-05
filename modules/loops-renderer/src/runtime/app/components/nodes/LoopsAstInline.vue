@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxNode, LoopsLmxVariables } from "@onderwijsin/loops-core";
-import { resolveSafeLoopsLmxUrl } from "@onderwijsin/loops-core";
-import { resolveLoopsLmxVariables } from "@onderwijsin/loops-core";
+import {
+  resolveSafeLoopsLmxUrl,
+  resolveLoopsLmxVariables,
+  applyInlineStyles,
+  type LoopsLmxNode,
+  type LoopsLmxVariables
+} from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
 
 const props = defineProps<{
   node: LoopsLmxNode;
@@ -40,7 +43,7 @@ const inlineTag = computed(() => {
   )[props.node.name as "Strong" | "Em" | "Underline" | "Code"];
 });
 const style = computed(() =>
-  applyStyles(
+  applyInlineStyles(
     props.node.type === "element" ? props.node.attributes : {},
     props.config.applyInlineStyles !== false
   )

@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxNode, LoopsLmxVariables } from "@onderwijsin/loops-core";
-import { isRenderableLoopsLmxElement, resolveSafeLoopsLmxUrl } from "@onderwijsin/loops-core";
+import {
+  isRenderableLoopsLmxElement,
+  resolveSafeLoopsLmxUrl,
+  applyInlineStyles,
+  type LoopsLmxNode,
+  type LoopsLmxVariables
+} from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
 
 const props = defineProps<{
   node: LoopsLmxNode;
@@ -100,7 +104,7 @@ const buttonLink = computed(() =>
     :href="buttonLink"
     rel="noopener noreferrer"
     class="no-underline text-inverted"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   >
     <LoopsAstInline
       v-for="(child, index) in node.children"
@@ -112,7 +116,7 @@ const buttonLink = computed(() =>
   </UButton>
   <span
     v-else-if="isRenderable && node.type === 'element' && node.name === 'Button'"
-    :style="applyStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
   >
     <LoopsAstInline
       v-for="(child, index) in node.children"

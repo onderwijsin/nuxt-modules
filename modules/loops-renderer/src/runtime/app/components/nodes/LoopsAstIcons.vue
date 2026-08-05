@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LoopsLmxElement } from "@onderwijsin/loops-core";
-import { getLoopsLmxPixels } from "@onderwijsin/loops-core";
-import { resolveSafeLoopsLmxUrl } from "@onderwijsin/loops-core";
-import type { LoopsLmxVariables } from "@onderwijsin/loops-core";
+import {
+  getLoopsLmxPixels,
+  resolveSafeLoopsLmxUrl,
+  applyInlineStyles,
+  type LoopsLmxElement,
+  type LoopsLmxVariables
+} from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../../types";
-import { applyStyles } from "../../../../utils/applyStyles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
@@ -35,7 +37,7 @@ const style = computed(() => ({
   display: "flex",
   gap: `${getLoopsLmxPixels(props.node.attributes.gap, 0, 200) ?? 16}px`,
   fontSize: `${getLoopsLmxPixels(props.node.attributes.size, 18, 48) ?? 24}px`,
-  ...applyStyles(props.node.attributes, props.config.applyInlineStyles !== false)
+  ...applyInlineStyles(props.node.attributes, props.config.applyInlineStyles !== false)
 }));
 
 /** Converts the supported Loops Font Awesome names to the locally bundled Simple Icons collection. */

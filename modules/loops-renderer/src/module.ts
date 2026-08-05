@@ -37,11 +37,12 @@ export default defineNuxtModule<ModuleOptions>({
       return;
     }
 
-    console.log(options);
-
     nuxt.options.appConfig.loopsRenderer = {
       applyInlineStyles: options.applyInlineStyles ?? true
     };
+    Object.assign(nuxt.options.appConfig.loopsRenderer as object, {
+      evaluate: options.evaluate
+    });
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
