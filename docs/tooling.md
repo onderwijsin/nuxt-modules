@@ -48,10 +48,11 @@ pnpm build
 pnpm validate:packages
 ```
 
-`module-utils` must be built before workspace type checking so consuming
-modules can resolve its generated declarations. CI runs `build:utils`
-explicitly before `typecheck`; the recursive production build also respects
-workspace dependency order.
+`module-utils` must be built before workspace preparation so consuming modules
+can resolve its generated declarations. CI runs `build:utils` followed by
+`dev:prepare` before `typecheck`. Preparation creates stubs for every module
+and Nuxt types for every module playground; the recursive production build
+remains responsible for full module builds.
 
 The recursive build includes private packages, publishable modules, and
 isolated playgrounds. CI additionally packs each published module, checks that

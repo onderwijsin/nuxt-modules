@@ -49,11 +49,14 @@ Private packages live under `packages/`:
   helpers. It must never be imported by published runtime code.
 
 Private packages are type-checked recursively. `module-utils` must be built
-before a consuming module uses its generated output:
+before workspace preparation so consuming modules can resolve its generated
+output. Prepare every module stub and playground Nuxt types before type
+checking:
 
 ```sh
 pnpm --filter module-utils build
-pnpm --filter module-utils dev
+pnpm dev:prepare
+pnpm typecheck
 ```
 
 Use `dev` only when actively changing the utility; it watches and rebuilds
