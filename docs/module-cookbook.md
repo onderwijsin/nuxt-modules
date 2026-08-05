@@ -221,9 +221,48 @@ export default defineNuxtModule<ModuleOptions>({
 });
 ```
 
-Keep options typed and document non-obvious options with JSDoc. Use a schema
-or Zod validation at external boundaries when options accept untrusted or
-user-provided values.
+Keep options typed and document non-obvious options with JSDoc. Add runtime
+validation when an option is required or must have a specific shape, such as
+an enum. If every option is optional and ordinary TypeScript types are enough,
+do not add validation just for the sake of having a schema.
+
+When validation is useful, define the Zod fields as a plain object in a
+module-local schema file:
+
+```ts
+// src/config/options.schema.ts
+import { z } from "zod";
+
+export default {
+  mode: z.enum(["development", "production"]),
+  endpoint: z.url()
+};
+```
+
+Import that object in the module entrypoint and validate the raw options after
+the enabled check:
+
+```ts
+import schema from "./config/options.schema";
+import { validateModuleOptions } from "module-utils";
+
+setup(rawOptions, nuxt) {
+  const log = useLogger("example");
+  const { isEnabled } = moduleSetup("@onderwijsin/nuxt-example", rawOptions, log);
+
+  if (!isEnabled()) {
+    return;
+  }
+
+  const options = validateModuleOptions(rawOptions, schema, log);
+  // options is validated, includes enabled: true by default, and is type-safe.
+}
+```
+
+`validateModuleOptions` combines the plain schema object with the shared
+`enabled: z.boolean().default(true)` field. See the loops-renderer module for
+the complete implementation pattern. Do not create a validation schema for a
+module whose options do not need runtime validation.
 
 ## Module dependencies
 

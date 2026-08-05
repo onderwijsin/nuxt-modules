@@ -34,6 +34,7 @@ catalog:
   consola: 3.4.2
   tsup: 8.5.1
   defu: 6.1.7
+  zod: 4.4.3
 
 packages:
   - packages/*

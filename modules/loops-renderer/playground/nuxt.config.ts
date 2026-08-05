@@ -6,8 +6,8 @@ export default defineNuxtConfig({
   css: ["~/assets/main.css"],
   devtools: {
     enabled: true
-  },
-  loopsRenderer: {
-    applyInlineStyles: true
   }
+  // loopsRenderer: {
+  //   applyInlineStyles: false
+  // }
 });

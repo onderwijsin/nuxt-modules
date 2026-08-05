@@ -8,16 +8,10 @@ use in internal _Onderwijs in_ projects.
 
 ## 📦 What's in the box?
 
-| Package                                | Description                                                                                                                             |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. Located at `modules/ui-form-extensions`. |
-
-## 🧰 Private Packages
-
-| Package        | Description                                                       |
-| -------------- | ----------------------------------------------------------------- |
-| `module-utils` | Private, shared runtime utilities bundled into consuming modules. |
-| `test-utils`   | Private, test-only workspace utilities.                           |
+| Package                                | Description                                                                                    |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
+| `@onderwijsin/nuxt-loops-renderer`     | Nuxt module for rendering Loops parsed LMX email content.                                      |
 
 ## 🧱 Requirements
 
@@ -113,6 +107,15 @@ relevant validation commands from the cookbook.
 Module request:
 <describe the module or change here>
 ```
+
+## 🧰 Private Packages
+
+This project contains various private packages as internal dependencies.
+
+| Package        | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `module-utils` | Private, shared runtime utilities bundled into consuming modules. |
+| `test-utils`   | Private, test-only workspace utilities.                           |
 
 ## 📚 Documentation
 
