@@ -1,3 +1,5 @@
+import { computed, reactive, shallowRef, toRaw, watch } from "vue";
+
 /** Options for a form that keeps a local editable draft. */
 interface UseDraftFormOptions<TDraft extends object, TSubmission> {
   /** Returns the form-specific projection of the canonical source state. */
@@ -93,4 +95,3 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 }
-import { computed, reactive, shallowRef, toRaw, watch } from "vue";

@@ -16,10 +16,14 @@ modules/<module-name>/
 ├── src/
 │   ├── module.ts
 │   ├── runtime/
-│   │   ├── components/
-│   │   ├── composables/
+│   │   ├── index.css
+│   │   ├── app/
+│   │   │   ├── components/
+│   │   │   ├── composables/
+│   │   │   ├── pages/
+│   │   │   └── plugins/
 │   │   ├── server/
-│   │   ├── plugins/
+│   │   ├── shared/
 │   │   └── etc ...
 │   └── types/
 ├── CHANGELOG.md
@@ -88,10 +92,17 @@ Expose a module-level convenience script for local development:
 ```json
 {
   "scripts": {
+    "predev:playground": "nuxt-module-build build --stub",
     "dev:playground": "nuxt dev playground"
   }
 }
 ```
+
+The predev:playground lifecycle script runs once whenever the playground
+session starts. The --stub build makes the package entrypoint resolve back to
+the module's src/ files, so Nuxt can watch runtime source files during
+development. This avoids manually rebuilding the module before every
+playground session.
 
 Run it from the module directory or through the workspace filter:
 
@@ -233,12 +244,17 @@ declaration over calling the deprecated `installModule` helper.
 
 ## Runtime registration
 
-Put consumer-facing runtime code under `src/runtime`. Common patterns include:
+Put consumer-facing runtime code under `src/runtime`, mirroring Nuxt's root
+directory structure. Application code belongs under `src/runtime/app`, while
+server and shared code belongs under their corresponding runtime directories.
+Common patterns include:
 
-- `runtime/composables/` for auto-imported composables;
-- `runtime/components/` for globally registered components;
-- `runtime/plugins/` for Nuxt plugins; and
-- `runtime/server/` for server handlers or server utilities.
+- `runtime/app/composables/` for auto-imported application composables;
+- `runtime/app/components/` for globally registered application components;
+- `runtime/app/pages/` for module-provided pages;
+- `runtime/app/plugins/` for application plugins;
+- `runtime/server/` for server handlers or server utilities;
+- `runtime/shared/` for code shared between the application and server.
 
 Register only the runtime directories the module needs. For composables, use
 `addImportsDir` and transpile the runtime directory when required:
@@ -248,12 +264,47 @@ const resolver = createResolver(import.meta.url);
 const runtimeDir = resolver.resolve("./runtime");
 
 nuxt.options.build.transpile.push(runtimeDir);
-addImportsDir(resolver.resolve(runtimeDir, "composables"));
+addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));
+addComponentsDir({ path: resolver.resolve(runtimeDir, "app", "components") });
 ```
 
 Runtime files should import their Vue or framework dependencies explicitly when
 they are also unit-tested as package source. This makes the runtime behavior
 clear and avoids relying on application-only auto-imports during tests.
+
+### Runtime CSS
+
+When runtime components use Tailwind utility classes, expose a package CSS
+entrypoint so consumer applications can scan the module's runtime source:
+
+```css
+/* src/runtime/index.css */
+@source "./app";
+```
+
+Expose that stylesheet through the package's style export condition:
+
+```json
+{
+  "style": "./dist/runtime/index.css",
+  "exports": {
+    ".": {
+      "style": "./dist/runtime/index.css"
+    }
+  }
+}
+```
+
+Consumers can then include the module's utilities alongside their application
+stylesheet:
+
+```css
+@import "tailwindcss";
+@import "@onderwijsin/nuxt-loops-renderer";
+```
+
+This follows the same pattern used by Nuxt UI. The @source path is relative
+to the published stylesheet, so it continues to work from node_modules.
 
 ## Shared utilities
 

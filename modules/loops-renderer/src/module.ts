@@ -1,14 +1,14 @@
-import { defineNuxtModule, useLogger, createResolver, addImportsDir } from "@nuxt/kit";
-import { resolveModuleName, resolveLoggerScope, moduleSetup } from "module-utils";
+import { addComponentsDir, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
+import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types";
 
-const MODULE_KEY = "uiFormExtensions";
+const MODULE_KEY = "loopsRenderer";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
 
 /**
- * Provides the Nuxt UI form extensions module.
+ * Provides the Nuxt runtime foundation for rendering Loops LMX email content.
  */
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -18,6 +18,9 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: {
       nuxt: "^4.0.0"
     }
+  },
+  defaults: {
+    applyInlineStyles: true
   },
   moduleDependencies: {
     "@nuxt/ui": {
@@ -34,11 +37,21 @@ export default defineNuxtModule<ModuleOptions>({
       return;
     }
 
+    nuxt.options.appConfig.loopsRenderer = {
+      applyInlineStyles: options.applyInlineStyles ?? true
+    };
+    Object.assign(nuxt.options.appConfig.loopsRenderer as object, {
+      evaluate: options.evaluate
+    });
+
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
     nuxt.options.build.transpile.push(runtimeDir);
-    addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));
+    addComponentsDir({
+      path: resolver.resolve(runtimeDir, "app", "components"),
+      pathPrefix: false
+    });
 
     end();
   }

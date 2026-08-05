@@ -1,3 +1,5 @@
+![Stichting Onderwijs in](https://raw.githubusercontent.com/onderwijsin/.github/main/banner.png)
+
 # @onderwijsin/nuxt-ui-form-extensions
 
 Nuxt UI form extensions for Nuxt 4. The module provides a small foundation for

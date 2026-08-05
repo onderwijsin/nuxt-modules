@@ -1,7 +1,7 @@
 import { nextTick, ref } from "vue";
 import type { Ref } from "vue";
 import { describe, expect, it, vi } from "vitest";
-import { useDraftForm } from "../src/runtime/composables/draft-form";
+import { useDraftForm } from "../src/runtime/app/composables/draft-form";
 
 interface ProfileDraft {
   name: string;
