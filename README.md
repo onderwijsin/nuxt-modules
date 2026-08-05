@@ -1,16 +1,18 @@
-# @onderwijsin/nuxt-modules
+![Stichting Onderwijs in](https://raw.githubusercontent.com/onderwijsin/.github/main/banner.png)
+
+# Nuxt Modules
 
 This repository is a collection of standalone Nuxt 4 modules maintained by
-Onderwijs Informatiesystemen. The modules are opinionated building blocks for
-use in internal Onderwijs Informatiesystemen projects.
+_Onderwijs in_. The modules are opinionated building blocks for
+use in internal _Onderwijs in_ projects.
 
-## 📦 Modules
+## 📦 What's in the box?
 
 | Package                                | Description                                                                                                                             |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. Located at `modules/ui-form-extensions`. |
 
-## 🧰 Packages
+## 🧰 Private Packages
 
 | Package        | Description                                                       |
 | -------------- | ----------------------------------------------------------------- |
