@@ -5,7 +5,7 @@ import {
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-import type { LoopsRendererConfig } from "../../../../types";
+import type { LoopsRendererConfig } from "../../../types";
 
 const props = defineProps<{
   /** The ordered or unordered LMX list to render. */

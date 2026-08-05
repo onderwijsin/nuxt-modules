@@ -16,6 +16,7 @@ vi.mock("@nuxt/kit", () => kit);
 import loopsRendererModule from "../src/module";
 
 const moduleDefinition = loopsRendererModule as unknown as {
+  meta: { name: string; configKey: string; compatibility: { nuxt: string } };
   moduleDependencies: Record<string, unknown>;
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
@@ -24,6 +25,14 @@ describe("loops renderer module", () => {
   beforeEach(() => {
     kit.addComponentsDir.mockClear();
     kit.createResolver.mockClear();
+  });
+
+  it("exposes the expected Nuxt module identity and compatibility", () => {
+    expect(moduleDefinition.meta).toMatchObject({
+      name: "@onderwijsin/nuxt-loops-renderer",
+      configKey: "loopsRenderer",
+      compatibility: { nuxt: "^4.0.0" }
+    });
   });
 
   it("declares Nuxt UI as a module dependency", () => {
@@ -77,5 +86,15 @@ describe("loops renderer module", () => {
       path: "./runtime/app/components",
       pathPrefix: false
     });
+  });
+
+  it("skips runtime registration when explicitly disabled", () => {
+    const nuxt = { options: { appConfig: {}, build: { transpile: [] } } };
+
+    moduleDefinition.setup({ enabled: false }, nuxt as never);
+
+    expect(nuxt.options.appConfig).toEqual({});
+    expect(nuxt.options.build.transpile).toEqual([]);
+    expect(kit.addComponentsDir).not.toHaveBeenCalled();
   });
 });

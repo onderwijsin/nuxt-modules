@@ -7,7 +7,7 @@ import {
   type LoopsLmxNode,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-import type { LoopsRendererConfig } from "../../../../types";
+import type { LoopsRendererConfig } from "../../../types";
 
 const props = defineProps<{
   node: LoopsLmxNode;

@@ -8,9 +8,9 @@ import {
   type LoopsLmxAst,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-import type { LoopsRendererConfig } from "../../../types";
+import type { LoopsRendererConfig } from "../../types";
 import { useAppConfig } from "nuxt/app";
-import { defu } from "defu";
+import { createLoopsRendererConfig, hasRendererSpecificContent } from "../utils/renderer";
 
 const props = defineProps<{
   /** Parsed LMX component tree received from the public campaign-detail API. */
@@ -21,16 +21,9 @@ const props = defineProps<{
 
 const appConfig = useAppConfig() as { loopsRenderer?: LoopsRendererConfig };
 
-const rendererConfig = computed<LoopsRendererConfig>(() => ({
-  ...defu(props.config, appConfig.loopsRenderer, {
-    applyInlineStyles: true,
-    evaluate: {
-      onMissingVariable: false,
-      onInvalidCondition: false,
-      onInvalidComparison: false
-    }
-  })
-}));
+const rendererConfig = computed(() =>
+  createLoopsRendererConfig(props.config, appConfig.loopsRenderer)
+);
 
 // Persisted campaign content is untrusted JSON at this client boundary.
 const parsedContent = computed(() => loopsLmxAstSchema.safeParse(props.data));
@@ -48,19 +41,6 @@ const hasUnsupportedContent = computed(
 const unsupportedNodes = computed(() =>
   ast.value === null ? [] : getUnsupportedLoopsLmxNodes(ast.value.children)
 );
-
-/**
- * Covers parser nodes that are intentionally absent from the shared core visibility helper.
- * `Quote` is a block node and `Br` is inline content in the LMX specification.
- */
-function hasRendererSpecificContent(nodes: LoopsLmxAst["children"]): boolean {
-  return nodes.some(
-    (node) =>
-      node.type === "element" &&
-      (["Quote", "Br"].includes(node.name) ||
-        (node.name === "Component" && hasRendererSpecificContent(node.children)))
-  );
-}
 </script>
 
 <template>

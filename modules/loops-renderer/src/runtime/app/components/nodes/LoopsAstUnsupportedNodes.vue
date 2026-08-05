@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { LoopsLmxElement } from "@onderwijsin/loops-core";
-import type { LoopsRendererConfig } from "../../../../types";
+import type { LoopsRendererConfig } from "../../../types";
 
 const props = defineProps<{
   /** Elements deliberately omitted by the safe public renderer. */

@@ -4,7 +4,7 @@ import {
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-import type { LoopsRendererConfig } from "../../../../types";
+import type { LoopsRendererConfig } from "../../../types";
 
 defineProps<{
   /** Component nodes contain already-expanded LMX children from the archival parser. */

@@ -7,7 +7,7 @@ import {
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
-import type { LoopsRendererConfig } from "../../../../types";
+import type { LoopsRendererConfig } from "../../../types";
 
 const props = defineProps<{
   /** Section node whose optional conditional attributes control visibility. */
