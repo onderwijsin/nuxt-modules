@@ -6,6 +6,7 @@ import {
   addPlugin,
   addServerHandler,
   addTemplate,
+  addTypeTemplate,
   createResolver,
   defineNuxtModule,
   extendPages,
@@ -117,6 +118,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     if (options.googleFonts?.apiKey) {
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
+    addTypeTemplate({
+      filename: "types/theme-customizer.d.ts",
+      src: resolver.resolve("./types/theme-customizer.d.ts")
+    });
     const appConfig = nuxt.options.appConfig as {
       ui?: { colors?: Record<string, string> };
     };

@@ -37,6 +37,7 @@ When multiple valid solutions exist, prefer:
 - **MUST NOT** change Vitest coverage include paths unless explicitly requested
 - **MUST NOT** add tests solely to meet coverage thresholds - tests should only be added for known
   risks or regression prevention
+- **MUST NOT** add global type stubs to fix TypeScript issues unless specifically requested
 - **MUST** invoke PNPM as `corepack pnpm ...` instead of plain `pnpm ...`
 - **MUST NOT** create, configure, select, or use a repository-local PNPM store, including
   `.pnpm-store/`, `node_modules/.pnpm/`, or any other store path below the repository

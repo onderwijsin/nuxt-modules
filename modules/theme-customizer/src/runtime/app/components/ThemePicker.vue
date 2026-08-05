@@ -3,15 +3,15 @@ import { useGeneratedPalette } from "../composables/generated-palette.client";
 import { useThemeCustomizerStore } from "../stores/theme-customizer";
 import { NEUTRAL_COLORS } from "../utils/constants";
 import { colorLabel } from "../utils/theme";
-import type { ThemeAppConfig, ThemeCustomizerRuntimeConfig } from "../types";
+import type { AppConfig } from "nuxt/schema";
 import { useConfirmDialog } from "../composables/confirm-dialog";
 
 import { computed, reactive, useAppConfig, useRuntimeConfig } from "#imports";
 
-type ThemeRadius = ThemeAppConfig["ui"]["radius"];
+type ThemeRadius = AppConfig["ui"]["radius"];
 
-const appConfig = useAppConfig() as ThemeAppConfig;
-const runtimeConfig = useRuntimeConfig() as ThemeCustomizerRuntimeConfig;
+const appConfig = useAppConfig();
+const runtimeConfig = useRuntimeConfig();
 const { errors, generatePalette, loading, removeGeneratedPalette, resetPalette } =
   useGeneratedPalette();
 const themeCustomizer = useThemeCustomizerStore();

@@ -3,7 +3,6 @@ import { $fetch, reactive, useAppConfig, useRuntimeConfig, useState } from "#imp
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, hexColorSchema } from "../utils/theme";
-import type { ThemeAppConfig, ThemeCustomizerRuntimeConfig } from "../types";
 
 export type ThemePaletteShade = {
   level: number;
@@ -27,9 +26,9 @@ const paletteResponseSchema = z.object({
  * @returns Reactive palette state and actions for generating, resetting, and removing palettes.
  */
 export function useGeneratedPalette() {
-  const appConfig = useAppConfig() as unknown as ThemeAppConfig;
+  const appConfig = useAppConfig();
   const runtime = createThemeRuntimeAdapter(appConfig);
-  const runtimeConfig = useRuntimeConfig() as unknown as ThemeCustomizerRuntimeConfig;
+  const runtimeConfig = useRuntimeConfig();
   const generatedTokenNames = useState<Record<string, string>>(
     "theme-picker-generated-token-names",
     () => ({})

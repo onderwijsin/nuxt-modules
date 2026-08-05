@@ -9,7 +9,6 @@ import { builtInDefaultTokens, THEME_SHADES } from "../utils/theme";
 
 import { piniaPluginPersistedstate } from "#imports";
 import { applyThemeFont, DEFAULT_THEME_FONT, sanitizeFontFamily } from "../utils/font";
-import type { ThemeAppConfig, ThemeCustomizerRuntimeConfig } from "../types";
 
 import type { ThemeShade } from "../types";
 export type ThemeColorGroup = string;
@@ -36,8 +35,8 @@ export const useThemeCustomizerStore = defineStore(
     const activeColors = reactive<Record<ThemeColorGroup, string>>({});
     const font = ref(DEFAULT_THEME_FONT);
 
-    const appConfig = useAppConfig() as unknown as ThemeAppConfig;
-    const runtimeConfig = useRuntimeConfig() as unknown as ThemeCustomizerRuntimeConfig;
+    const appConfig = useAppConfig();
+    const runtimeConfig = useRuntimeConfig();
     const runtime = createThemeRuntimeAdapter(appConfig);
 
     /**

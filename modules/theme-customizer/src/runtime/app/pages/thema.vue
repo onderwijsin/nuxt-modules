@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import { useGeneratedPalette } from "../composables/generated-palette.client";
 import { useThemeCustomizerStore } from "../stores/theme-customizer";
-import type { ThemeAppConfig } from "../types";
-
 import { computed, useAppConfig } from "#imports";
 
-const appConfig = useAppConfig() as ThemeAppConfig;
+const appConfig = useAppConfig();
 const { customHex, generatedPalettes } = useGeneratedPalette();
 const themeCustomizer = useThemeCustomizerStore();
 const emptyGroups = computed(() =>

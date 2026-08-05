@@ -6,7 +6,7 @@ import { useConfirmDialog } from "../composables/confirm-dialog";
 
 import { type CustomThemeColor, useThemeCustomizerStore } from "../stores/theme-customizer";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";
-import type { ThemeCustomizerRuntimeConfig, ThemeShade } from "../types";
+import type { ThemeShade } from "../types";
 
 const store = useThemeCustomizerStore();
 const confirm = useConfirmDialog();
@@ -14,7 +14,7 @@ const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
 
 const name = shallowRef("");
-const runtimeConfig = useRuntimeConfig() as ThemeCustomizerRuntimeConfig;
+const runtimeConfig = useRuntimeConfig();
 const group = shallowRef(Object.keys(runtimeConfig.public.themeCustomizer.groups)[0] ?? "primary");
 const error = shallowRef<string>();
 const groupError = shallowRef<string>();

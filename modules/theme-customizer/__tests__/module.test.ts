@@ -6,6 +6,7 @@ const kit = vi.hoisted(() => ({
   addPlugin: vi.fn(),
   addServerHandler: vi.fn(),
   addTemplate: vi.fn((template: { filename: string }) => ({ dst: `./${template.filename}` })),
+  addTypeTemplate: vi.fn(),
   createResolver: vi.fn(() => ({ resolve: vi.fn((...parts: string[]) => parts.join("/")) })),
   defineNuxtModule: vi.fn((definition) => definition),
   extendPages: vi.fn(),

@@ -1,4 +1,4 @@
-import type { ThemeCustomizerRuntimeConfig, ThemeFontOption } from "../types";
+import type { ThemeFontOption } from "../types";
 import { $fetch, computed, refDebounced, shallowRef, useRuntimeConfig, watch } from "#imports";
 
 /**
@@ -6,7 +6,7 @@ import { $fetch, computed, refDebounced, shallowRef, useRuntimeConfig, watch } f
  * @returns Font options, search state, loading state, and a lazy loading action.
  */
 export function useGoogleFonts() {
-  const runtimeConfig = useRuntimeConfig() as unknown as ThemeCustomizerRuntimeConfig;
+  const runtimeConfig = useRuntimeConfig();
   const configuredFonts = runtimeConfig.public.themeCustomizer.googleFonts?.families ?? [];
   const fonts = shallowRef<ThemeFontOption[]>(toFontOptions(configuredFonts));
   const searchTerm = shallowRef("");
