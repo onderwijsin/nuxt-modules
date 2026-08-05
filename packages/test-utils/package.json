@@ -1,5 +1,5 @@
 {
-  "name": "@repo/test-utils",
+  "name": "test-utils",
   "private": true,
   "type": "module",
   "sideEffects": false,
