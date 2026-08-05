@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- 0220084: Add the Nuxt presentation layer for rendering parsed Loops LMX ASTs with the `LoopsRenderer` component, safe variable and URL resolution, conditional sections, inline styles, media, layouts, and development diagnostics.
+
 ## Unreleased
 
 - Update rendering for the expanded Loops LMX AST, including raw text, Quote,
