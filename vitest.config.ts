@@ -1,10 +1,12 @@
 import { defineConfig } from "vitest/config";
-import { fileURLToPath, URL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   resolve: {
     alias: {
-      "#imports": fileURLToPath(new URL("./vitest-imports.ts", import.meta.url))
+      "#imports": fileURLToPath(
+        new URL("./packages/test-utils/src/vitest-imports.ts", import.meta.url)
+      )
     }
   },
   test: {
