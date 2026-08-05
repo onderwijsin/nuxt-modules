@@ -86,9 +86,12 @@ pnpm changeset:publish
 
 The first publishable module is `@onderwijsin/nuxt-ui-form-extensions`. The
 private `module-utils` and `test-utils` packages are ignored by Changesets.
-The `NPM_TOKEN` GitHub secret must be configured before running the publish
-workflow. The publish workflow configures npm authentication temporarily
-through `actions/setup-node`; the token is never committed.
+The `NPM_TOKEN` and `APP_PRIVATE_KEY` GitHub secrets, plus the
+`APP_CLIENT_ID` repository or organization variable, must be configured for
+the release workflows. The release GitHub App token is used for release
+branch, pull request, and tag pushes so protected `main` can only be bypassed
+by the release app. The publish workflow configures npm authentication
+temporarily through `actions/setup-node`; neither token is committed.
 
 GitHub Actions sets `HUSKY=0` for CI, release preparation, and publishing, so
 dependency installation does not enable Husky hooks and automated commits do

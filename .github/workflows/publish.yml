@@ -21,10 +21,17 @@ jobs:
       github.event.pull_request.head.ref == 'release/packages')
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: main
+          token: ${{ steps.app-token.outputs.token }}
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
