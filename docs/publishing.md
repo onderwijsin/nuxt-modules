@@ -1,7 +1,8 @@
 # Publishing
 
-Publishing uses two manually triggered stages and is never triggered by a
-push to `main`.
+Publishing uses a prepared release pull request and runs automatically when
+that pull request is merged to `main`. The publish workflow remains manually
+dispatchable for recovery or re-runs.
 
 ## Local developer workflow
 
@@ -42,8 +43,8 @@ changelog changes can be reviewed and receive the normal pull request CI.
 
 ### 2. Publish the release
 
-After the release pull request is merged, run `publish.yml` manually from
-`main`. The workflow builds the merged packages, validates their publish
+After the `release/packages` pull request is merged to `main`, `publish.yml`
+runs automatically. It builds the merged packages, validates their publish
 metadata and packed artefacts, reports npm publication status, and runs
 Changesets publish. Changesets only publishes package versions that are part
 of the release and are not already published.
@@ -88,3 +89,7 @@ private `module-utils` and `test-utils` packages are ignored by Changesets.
 The `NPM_TOKEN` GitHub secret must be configured before running the publish
 workflow. The publish workflow configures npm authentication temporarily
 through `actions/setup-node`; the token is never committed.
+
+GitHub Actions sets `HUSKY=0` for CI, release preparation, and publishing, so
+dependency installation does not enable Husky hooks and automated commits do
+not run local-only checks.

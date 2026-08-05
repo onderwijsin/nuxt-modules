@@ -1,19 +1,30 @@
 name: Publish release
 
 on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: write
 
+env:
+  HUSKY: 0
+
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'release/packages')
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: main
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:

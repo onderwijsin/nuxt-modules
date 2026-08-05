@@ -7,6 +7,9 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  HUSKY: 0
+
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
