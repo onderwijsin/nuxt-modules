@@ -180,7 +180,7 @@ the module does not use cookies.
 The following APIs are automatically imported:
 
 - `ThemePicker`, `FontPicker`, `ColorPalette`, `ThemeCustomizer`, `HexInput`, and `RadiusInput`;
-- `Confirmation`;
+- `ThemeCustomizerConfirmation`;
 - `useGeneratedPalette()`;
 - `useThemeCustomizerConfirmDialog()`;
 - `useThemeCustomizerStore()`.

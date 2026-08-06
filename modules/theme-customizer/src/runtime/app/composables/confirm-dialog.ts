@@ -1,4 +1,4 @@
-import Confirmation from "../components/Confirmation.vue";
+import ThemeCustomizerConfirmation from "../components/ThemeCustomizerConfirmation.vue";
 import type { ConfirmDialogProps } from "../types";
 import { useOverlay } from "#imports";
 
@@ -10,7 +10,7 @@ export function useThemeCustomizerConfirmDialog() {
   const overlay = useOverlay();
 
   return (options: ConfirmDialogProps): Promise<boolean> => {
-    const modal = overlay.create(Confirmation, {
+    const modal = overlay.create(ThemeCustomizerConfirmation, {
       destroyOnClose: true,
       props: options
     });
