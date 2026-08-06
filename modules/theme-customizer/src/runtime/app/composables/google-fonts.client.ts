@@ -1,5 +1,6 @@
 import type { ThemeFontOption } from "../types";
-import { $fetch, computed, refDebounced, shallowRef, useRuntimeConfig, watch } from "#imports";
+import { computed, refDebounced, shallowRef, useRuntimeConfig, watch } from "#imports";
+import { ofetch } from "ofetch";
 
 /**
  * Loads searchable Google Font options for the theme picker.
@@ -26,7 +27,7 @@ export function useGoogleFonts() {
     loading.value = true;
 
     try {
-      const response = await $fetch<ThemeFontOption[]>("/api/theme/fonts", {
+      const response = await ofetch<ThemeFontOption[]>("/api/theme/fonts", {
         query: { q: debouncedSearchTerm.value }
       });
       if (currentRequestId === requestId && response.length) fonts.value = response;
