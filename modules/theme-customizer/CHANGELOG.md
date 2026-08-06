@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+### Patch Changes
+
+- 17c7443: Replace all $fetch instances with ofetch
+
 ## 0.2.3
 
 ### Patch Changes
