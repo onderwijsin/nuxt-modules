@@ -137,7 +137,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       from: resolver.resolve(runtimeDir, "app/composables/generated-palette.client")
     });
     addImports({
-      name: "useConfirmDialog",
+      name: "useThemeCustomizerConfirmDialog",
       from: resolver.resolve(runtimeDir, "app/composables/confirm-dialog")
     });
     addImports({
