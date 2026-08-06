@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5
+
+### Patch Changes
+
+- bb5e548: Make custom color names and custom color groups editable. Add support for ciustom token values (eg default font, radius, primary color etc)
+
 ## 0.2.4
 
 ### Patch Changes
