@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 env:
   HUSKY: 0
@@ -18,7 +19,7 @@ jobs:
     if: >-
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
-      github.event.pull_request.head.ref == 'release/packages')
+      github.event.pull_request.head.ref == 'changeset-release/main')
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - name: Generate GitHub App token
@@ -29,7 +30,6 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
           ref: main
           token: ${{ steps.app-token.outputs.token }}
       - name: Install pnpm
@@ -39,7 +39,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:utils
@@ -57,41 +56,11 @@ jobs:
             node scripts/check-packed-package.mjs "$archive"
             pnpm exec publint "$(dirname "$package")"
           done
-      - name: Report package status before publishing
+      - name: Publish packages
+        uses: changesets/action@v1
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: node scripts/report-publish-status.mjs
-      - name: Publish changed packages safely
-        id: publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm changeset:publish
-      - name: Report package status after publishing
-        if: always()
-        run: node scripts/report-publish-status.mjs --after
-      - name: Create and push package tags
-        if: steps.publish.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          pnpm changeset tag
-          git push --tags origin main
-
-          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-          headers=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
-          for tag in $(git tag --points-at HEAD); do
-            encoded_tag=$(jq -rn --arg tag "${tag}" '$tag | @uri')
-            status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
-              "${api}/releases/tags/${encoded_tag}" "${headers[@]}")
-            if [[ "${status}" == "200" ]]; then
-              continue
-            fi
-            if [[ "${status}" != "404" ]]; then
-              echo "Unable to inspect GitHub release for tag ${tag} (HTTP ${status})." >&2
-              exit 1
-            fi
-            curl --fail-with-body --silent --show-error -X POST "${api}/releases" \
-              "${headers[@]}" -H "Content-Type: application/json" \
-              -d "$(jq -cn --arg tag "${tag}" '{tag_name: $tag, name: $tag, generate_release_notes: true}')"
-          done
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          publish: pnpm changeset:publish
+          createGithubReleases: true

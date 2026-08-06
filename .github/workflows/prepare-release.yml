@@ -23,7 +23,6 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -34,32 +33,21 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm changeset:version
-      - name: Create or update release pull request
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .changeset modules pnpm-lock.yaml
-          if git diff --cached --quiet; then
-            echo "No release changes to publish."
-            exit 0
-          fi
-          git switch -C release/packages
-          git commit -m "chore: prepare package release"
-          git push --force origin HEAD:release/packages
-
-          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-          headers=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
-          existing=$(curl --fail-with-body --silent --show-error "${api}/pulls?head=${GITHUB_REPOSITORY_OWNER}:release%2Fpackages&base=main&state=open" "${headers[@]}" | jq -r '.[0].number // empty')
-          body='{"title":"chore: prepare package release","head":"release/packages","base":"main","body":"Automated Changesets release pull request. CI validates the release changes before merge."}'
-          if [[ -n "${existing}" ]]; then
-            curl --fail-with-body --silent --show-error -X PATCH "${api}/pulls/${existing}" "${headers[@]}" -H "Content-Type: application/json" -d "${body}"
-            pr_number="${existing}"
-          else
-            pr_number=$(curl --fail-with-body --silent --show-error -X POST "${api}/pulls" "${headers[@]}" -H "Content-Type: application/json" -d "${body}" | jq -r '.number')
-          fi
-          curl --fail-with-body --silent --show-error -X POST "${api}/issues/${pr_number}/labels" "${headers[@]}" -H "Content-Type: application/json" -d '{"labels":["automated","no-changeset"]}'
+      - name: Create or update version pull request
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          commit: "chore: version packages"
+          title: Publish new package versions
+      - name: Label version pull request
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            await github.rest.issues.addLabels({
+              ...context.repo,
+              issue_number: Number('${{ steps.changesets.outputs.pullRequestNumber }}'),
+              labels: ['automated', 'no-changeset'],
+            })

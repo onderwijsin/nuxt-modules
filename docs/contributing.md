@@ -58,13 +58,14 @@ commit `.nuxt`, `.output`, `dist`, coverage, or `.tgz` output.
 Run `pnpm changeset` locally for every user-facing change, select each
 affected published package, choose the SemVer impact, and commit the generated
 `.changeset/<name>.md` file with the change. Check the result with
-`pnpm changeset:status`. Use the `no-changeset` pull request label only for
-changes that do not affect a published package. Versioning and publishing are
+`pnpm changeset:status`. Changesets also posts the proposed release impact on
+the pull request. Use the `no-changeset` pull request label only for changes
+that do not affect a published package. Versioning and publishing are
 performed by the manual release workflows after merge.
 
 ## Pull requests
 
 Pull requests must pass formatting, linting, type checking, tests, recursive
-builds, playground checks, package metadata validation, packed artefact
-validation, and the Changeset policy. Releases are never published by pull
-request or push CI.
+builds, playground checks, package metadata validation, and packed artefact
+validation. Changesets reports release impact in a pull request comment.
+Releases are never published by pull request or push CI.
