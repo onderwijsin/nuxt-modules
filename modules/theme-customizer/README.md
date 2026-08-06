@@ -91,6 +91,34 @@ opted in explicitly:
 | `neutral`     | —                     | Optional additional neutral palettes.           |
 | Custom groups | —                     | Any additional named palette group.             |
 
+Initial selections can be configured with `defaults`. A color-group default
+must name a palette from that group; otherwise the first palette is used. When
+`googleFonts.families` is configured, its first family is the default font
+unless `defaults.font` is set explicitly. `defaults.radius` is measured in rem:
+
+```ts
+export default defineNuxtConfig({
+  themeCustomizer: {
+    primary: { ocean: oceanPalette, forest: forestPalette },
+    accent: { violet: violetPalette },
+    googleFonts: {
+      families: ["Inter", "DM Sans"]
+    },
+    defaults: {
+      primary: "forest",
+      accent: "violet",
+      font: "Inter",
+      radius: 0.375
+    }
+  }
+});
+```
+
+The default color keys are group names, so custom groups can be configured in
+the same way. Explicit `appConfig.ui.colors` values take precedence over these
+initial color defaults. User selections remain persisted in browser
+`localStorage`.
+
 ## ThemePicker
 
 `ThemePicker` is automatically registered as a component. Put it in the right
@@ -181,8 +209,10 @@ The following APIs are automatically imported:
 
 - `ThemePicker`, `FontPicker`, `ColorPalette`, `ThemeCustomizer`, `HexInput`, and `RadiusInput`;
 - `ThemeCustomizerConfirmation`;
+- `FormModal`;
 - `useGeneratedPalette()`;
 - `useThemeCustomizerConfirmDialog()`;
+- `useFormModal()`;
 - `useThemeCustomizerStore()`.
 
 ````

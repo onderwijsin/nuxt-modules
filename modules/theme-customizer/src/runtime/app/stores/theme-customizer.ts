@@ -33,11 +33,11 @@ export const useThemeCustomizerStore = defineStore(
     const colors = ref<PersistedThemeColor[]>([]);
     const groups = ref<ThemeColorGroup[]>([]);
     const activeColors = reactive<Record<ThemeColorGroup, string>>({});
-    const font = ref(DEFAULT_THEME_FONT);
 
     const appConfig = useAppConfig();
     const runtimeConfig = useRuntimeConfig();
     const runtime = createThemeRuntimeAdapter(appConfig);
+    const font = ref(runtimeConfig.public.themeCustomizer.defaults?.font ?? DEFAULT_THEME_FONT);
 
     /**
      * Returns all color groups configured for the current theme.
@@ -55,7 +55,12 @@ export const useThemeCustomizerStore = defineStore(
      * @returns The configured default token, or an empty string when none exists.
      */
     function defaultColor(group: ThemeColorGroup) {
+      const configuredDefault = runtimeConfig.public.themeCustomizer.defaults?.[group];
       return (
+        (typeof configuredDefault === "string" &&
+        runtimeConfig.public.themeCustomizer.groups[group]?.includes(configuredDefault)
+          ? configuredDefault
+          : undefined) ??
         builtInDefaultTokens[group] ??
         runtimeConfig.public.themeCustomizer.groups[group]?.[0] ??
         appConfig.ui.colors[group] ??
@@ -200,6 +205,33 @@ export const useThemeCustomizerStore = defineStore(
     }
 
     /**
+     * Renames a persisted custom color and updates its CSS token when needed.
+     * @param id Persisted custom color identifier.
+     * @param name New display name.
+     * @returns Nothing.
+     */
+    function renameColor(id: string, name: string) {
+      const color = colors.value.find((item) => item.id === id);
+      if (!color) return;
+
+      const normalizedName = normalizeColorName(name);
+      const baseToken = `custom-${toTokenSegment(color.group)}-${toTokenSegment(normalizedName)}`;
+      let token = baseToken;
+      let suffix = 2;
+      while (colors.value.some((item) => item.id !== id && item.token === token)) {
+        token = `${baseToken}-${suffix++}`;
+      }
+
+      const previousToken = color.token;
+      color.name = normalizedName;
+      color.token = token;
+      const wasActive = activeColors[color.group] === previousToken;
+      if (token !== previousToken) runtime.removeColorTokens(previousToken);
+      runtime.applyColor(color);
+      if (wasActive) setActiveColor(color.group, token);
+    }
+
+    /**
      * Updates one shade and immediately writes the new value to the runtime theme.
      * @param id Persisted custom color identifier.
      * @param shade Shade level to update.
@@ -255,6 +287,31 @@ export const useThemeCustomizerStore = defineStore(
     }
 
     /**
+     * Renames a runtime-created group and moves its persisted colors and selection.
+     * @param group Runtime group identifier.
+     * @param name New display name.
+     * @returns The normalized group identifier, or undefined when the rename is rejected.
+     */
+    function renameGroup(group: ThemeColorGroup, name: string) {
+      if (!isRuntimeGroup(group)) return;
+
+      const renamedGroup = toTokenSegment(sanitizeColorName(name));
+      if (!renamedGroup || renamedGroup === group || colorGroups().includes(renamedGroup)) return;
+
+      const token = activeColors[group] || appConfig.ui.colors[group] || defaultColor(group);
+      groups.value = groups.value.map((item) => (item === group ? renamedGroup : item));
+      for (const color of colors.value) {
+        if (color.group === group) color.group = renamedGroup;
+      }
+      delete activeColors[group];
+      delete appConfig.ui.colors[group];
+      runtime.removeGroup(group);
+      if (token) setActiveColor(renamedGroup, token);
+
+      return renamedGroup;
+    }
+
+    /**
      * Selects a built-in or custom color token for a theme group.
      * @param group Theme color group to update.
      * @param token Palette token to activate.
@@ -289,6 +346,8 @@ export const useThemeCustomizerStore = defineStore(
       isRuntimeGroup,
       removeColor,
       removeGroup,
+      renameColor,
+      renameGroup,
       font,
       setFont,
       setActiveColor,

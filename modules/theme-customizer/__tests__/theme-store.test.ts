@@ -16,7 +16,8 @@ const runtimeConfig = {
       groups: {
         primary: ["ocean"],
         neutral: []
-      }
+      },
+      defaults: { font: "Public Sans", primary: "ocean" }
     }
   }
 };
@@ -43,6 +44,7 @@ describe("useThemeCustomizerStore", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     appConfig.ui.colors = { primary: "ocean", neutral: "gray" };
+    runtimeConfig.public.themeCustomizer.defaults = { font: "Public Sans", primary: "ocean" };
     runtime.applyColor.mockClear();
     runtime.applyGroupColor.mockClear();
     runtime.readDefaultShade.mockClear();
@@ -60,6 +62,16 @@ describe("useThemeCustomizerStore", () => {
     expect(color.token).toBe("custom-primary-cafe-blue");
     expect(Object.keys(color.shades)).toHaveLength(11);
     expect(runtime.applyColor).toHaveBeenCalledWith(color);
+  });
+
+  it("initializes the configured default font and palette", () => {
+    runtimeConfig.public.themeCustomizer.defaults = { font: "Inter", primary: "ocean" };
+
+    const store = useThemeCustomizerStore();
+
+    expect(store.font).toBe("Inter");
+    store.applyPersistedTheme();
+    expect(runtime.setActiveColor).toHaveBeenCalledWith("primary", "ocean");
   });
 
   it("sanitizes and activates runtime groups", () => {
@@ -81,6 +93,33 @@ describe("useThemeCustomizerStore", () => {
     expect(color.shades[500]).toBe("#abcdef");
     expect(color.shades[600]).toBe("#abcdef");
     expect(runtime.applyColor).toHaveBeenCalledTimes(2);
+  });
+
+  it("renames custom colors while keeping their active selection", () => {
+    const store = useThemeCustomizerStore();
+    const color = store.addColor("Ocean", "primary");
+    store.setActiveColor("primary", color.token);
+
+    store.renameColor(color.id, "Sky Blue");
+
+    expect(color.name).toBe("Sky Blue");
+    expect(color.token).toBe("custom-primary-sky-blue");
+    expect(store.activeColors.primary).toBe(color.token);
+    expect(runtime.removeColorTokens).toHaveBeenCalledWith("custom-primary-ocean");
+    expect(runtime.applyColor).toHaveBeenLastCalledWith(color);
+    expect(runtime.setActiveColor).toHaveBeenLastCalledWith("primary", color.token);
+  });
+
+  it("renames runtime groups and moves their custom colors", () => {
+    const store = useThemeCustomizerStore();
+    store.addGroup("Brand colors");
+    const color = store.addColor("Ocean", "brand-colors");
+
+    expect(store.renameGroup("brand-colors", "Branding")).toBe("branding");
+    expect(store.groups).toEqual(["branding"]);
+    expect(color.group).toBe("branding");
+    expect(store.activeColors.branding).toBe("ocean");
+    expect(runtime.removeGroup).toHaveBeenCalledWith("brand-colors");
   });
 
   it("removes active colors and runtime groups cleanly", () => {

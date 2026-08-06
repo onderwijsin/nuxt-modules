@@ -29,3 +29,13 @@ export type ConfirmDialogProps = {
   color?: ButtonProps["color"];
   actions?: ConfirmationAction[];
 };
+
+/** Options accepted by the reusable name form modal. */
+export type FormModalProps = {
+  title: string;
+  label: string;
+  initialValue: string;
+  placeholder?: string;
+  submitLabel?: string;
+  validate?: (value: string) => string | undefined;
+};

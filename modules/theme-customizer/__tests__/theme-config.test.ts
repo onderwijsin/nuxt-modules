@@ -58,4 +58,19 @@ describe("theme configuration helpers", () => {
       []
     );
   });
+
+  it("uses valid configured group defaults and falls back to the first palette", () => {
+    const groups = {
+      primary: { ocean: palette, forest: palette },
+      accent: { coral: palette }
+    };
+
+    expect(configuredAppColors(groups, {}, { primary: "forest", accent: "missing" })).toEqual({
+      primary: "forest",
+      accent: "coral"
+    });
+    expect(generateThemeCss(groups, "@theme static {}", { primary: "forest" })).toContain(
+      "--color-primary-500: var(--color-forest-500);"
+    );
+  });
 });

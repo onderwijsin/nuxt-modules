@@ -20,6 +20,16 @@ export type ThemeGoogleFontsOptions = {
   families?: string[];
 };
 
+/** Default values used when initializing the theme customizer. */
+export type ThemeCustomizerDefaults = {
+  /** Default Google Font family; otherwise the first configured family is used. */
+  font?: string;
+  /** Default Nuxt UI radius in rem units. */
+  radius?: number;
+  /** Default palette token for a semantic color group. */
+  [group: string]: string | number | undefined;
+};
+
 export type ThemeCustomizerOptions = {
   /** Enables the module outside development when set to `true`. */
   enabled?: boolean;
@@ -31,5 +41,12 @@ export type ThemeCustomizerOptions = {
   neutral?: Record<string, ThemePalette>;
   /** Optional Google Fonts Developer API configuration. */
   googleFonts?: ThemeGoogleFontsOptions;
-  [group: string]: boolean | Record<string, ThemePalette> | ThemeGoogleFontsOptions | undefined;
+  /** Optional initial values for the theme customizer. */
+  defaults?: ThemeCustomizerDefaults;
+  [group: string]:
+    | boolean
+    | Record<string, ThemePalette>
+    | ThemeGoogleFontsOptions
+    | ThemeCustomizerDefaults
+    | undefined;
 };

@@ -1,5 +1,10 @@
 import { builtInDefaultTokens, THEME_SHADES } from "../runtime/app/utils/theme";
-import type { ThemeColorGroups, ThemeCustomizerOptions, ThemePalette } from "../types";
+import type {
+  ThemeColorGroups,
+  ThemeCustomizerDefaults,
+  ThemeCustomizerOptions,
+  ThemePalette
+} from "../types";
 export { builtInDefaultTokens } from "../runtime/app/utils/theme";
 
 const BUILT_IN_UI_COLORS = new Set([
@@ -25,7 +30,9 @@ export function configuredGroups(options: ThemeCustomizerOptions): ThemeColorGro
   const groups: ThemeColorGroups = {};
 
   for (const [name, value] of Object.entries(options)) {
-    if (name !== "googleFonts" && isThemeColorGroup(value)) groups[name] = value;
+    if (name !== "googleFonts" && name !== "defaults" && isThemeColorGroup(value)) {
+      groups[name] = value;
+    }
   }
 
   return groups;
@@ -63,12 +70,21 @@ export function configuredUiColors(groups: ThemeColorGroups, colors: string[] = 
  * Merges configured defaults into Nuxt UI's application color configuration.
  * @param groups Configured theme groups.
  * @param colors Existing Nuxt UI semantic color tokens.
+ * @param configuredDefaults Configured initial palette tokens by group.
  * @returns Nuxt UI semantic color tokens with module defaults applied.
  */
-export function configuredAppColors(groups: ThemeColorGroups, colors: Record<string, string> = {}) {
+export function configuredAppColors(
+  groups: ThemeColorGroups,
+  colors: Record<string, string> = {},
+  configuredDefaults: ThemeCustomizerDefaults = {}
+) {
   const defaults = Object.fromEntries(
     Object.entries(groups).flatMap(([group, palettes]) => {
-      const token = builtInDefaultTokens[group] ?? Object.keys(palettes)[0];
+      const configuredToken = configuredDefaults[group];
+      const token =
+        typeof configuredToken === "string" && configuredToken in palettes
+          ? configuredToken
+          : (builtInDefaultTokens[group] ?? Object.keys(palettes)[0]);
       return token ? [[group, token]] : [];
     })
   );
@@ -80,9 +96,14 @@ export function configuredAppColors(groups: ThemeColorGroups, colors: Record<str
  * Generates CSS variables for configured palettes and the active semantic aliases.
  * @param groups Configured palette groups.
  * @param neutralTheme Built-in neutral palette CSS.
+ * @param configuredDefaults Configured initial palette tokens by group.
  * @returns Generated CSS containing palette tokens and group aliases.
  */
-export function generateThemeCss(groups: ThemeColorGroups, neutralTheme: string): string {
+export function generateThemeCss(
+  groups: ThemeColorGroups,
+  neutralTheme: string,
+  configuredDefaults: ThemeCustomizerDefaults = {}
+): string {
   const tokens = Object.values(groups).flatMap((group) =>
     Object.entries(group).flatMap(([name, palette]) =>
       THEME_SHADES.map((shade) => `  --color-${name}-${shade}: ${palette[shade]};`)
@@ -90,8 +111,14 @@ export function generateThemeCss(groups: ThemeColorGroups, neutralTheme: string)
   );
   const neutralRoot = neutralTheme.replace("@theme static", ":root");
   const groupTokens = Object.entries(groups).flatMap(([group, palettes]) => {
+    const configuredToken = configuredDefaults[group];
     const builtInToken = builtInDefaultTokens[group];
-    const token = builtInToken && palettes[builtInToken] ? builtInToken : Object.keys(palettes)[0];
+    const token =
+      typeof configuredToken === "string" && configuredToken in palettes
+        ? configuredToken
+        : builtInToken && palettes[builtInToken]
+          ? builtInToken
+          : Object.keys(palettes)[0];
     if (!token || token === group) return [];
 
     return THEME_SHADES.map(

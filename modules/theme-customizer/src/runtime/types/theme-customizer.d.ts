@@ -10,6 +10,11 @@ declare module "nuxt/schema" {
       googleFonts?: {
         families: string[];
       };
+      defaults?: {
+        font?: string;
+        radius?: number;
+        [group: string]: string | number | undefined;
+      };
     };
   }
 

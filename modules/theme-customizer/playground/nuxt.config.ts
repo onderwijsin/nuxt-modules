@@ -112,6 +112,9 @@ export default defineNuxtConfig({
       Violet: violet,
       Rose: rose,
       Amber: amber
+    },
+    defaults: {
+      font: "Google Sans"
     }
   }
 });
