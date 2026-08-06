@@ -8,17 +8,6 @@ type ThemeFontOption = {
   value: string;
 };
 
-type ThemeFontsRuntimeConfig = {
-  themeCustomizerGoogleFontsApiKey?: string;
-  public?: {
-    themeCustomizer?: {
-      googleFonts?: {
-        families?: string[];
-      };
-    };
-  };
-};
-
 const googleFontsResponseSchema = z.object({
   items: z.array(z.object({ family: z.string().min(1) }))
 });
@@ -33,7 +22,7 @@ let cachedFonts: ThemeFontOption[] | undefined;
  */
 export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> => {
   const query = querySchema.parse(h3GetQuery(event));
-  const config = useRuntimeConfig(event) as ThemeFontsRuntimeConfig;
+  const config = useRuntimeConfig(event);
   const apiKey = config.themeCustomizerGoogleFontsApiKey;
   const configuredFonts = config.public?.themeCustomizer?.googleFonts?.families ?? [];
   const fallbackFonts = toFontOptions(configuredFonts);

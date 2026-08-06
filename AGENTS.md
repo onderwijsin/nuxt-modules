@@ -30,6 +30,8 @@ When multiple valid solutions exist, prefer:
 ### Hard Rules
 
 - **MUST NOT** introduce breaking UX or API-shape changes without explicit request
+- **MUST NOT** implement workarounds, quick fixes, or symptom-masking changes without explicit
+  permission; fixes must address the verified root cause
 - **MUST NOT** edit files under `.husky/**` unless explicitly requested in the current task
 - **MUST NOT** edit anything under `.agents/skills/**` unless explicitly requested
 - **MUST NOT** add dependencies unless explicitly requested and demonstrated to improve codebase

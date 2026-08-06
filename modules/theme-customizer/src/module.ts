@@ -82,17 +82,26 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   }),
   setup(rawOptions, nuxt) {
+    const resolver = createResolver(import.meta.url);
+    const runtimeDir = resolver.resolve("./runtime");
+
+    // Type declarations are needed by the module's own `nuxt prepare` run,
+    // which does not provide consumer options or enable runtime setup.
+    addTypeTemplate({
+      filename: "types/theme-customizer.d.ts",
+      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
+    });
+
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
 
     start();
+
     if (!isEnabled()) return;
 
     validateModuleOptions(rawOptions, themeOptionsShape, log);
     const options = parseThemeOptions(rawOptions);
 
-    const resolver = createResolver(import.meta.url);
-    const runtimeDir = resolver.resolve("./runtime");
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
     const generatedTheme = addTemplate({
@@ -119,10 +128,6 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
 
-    addTypeTemplate({
-      filename: "types/theme-customizer.d.ts",
-      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
-    });
     const appConfig = nuxt.options.appConfig as {
       ui?: { colors?: Record<string, string> };
     };
@@ -173,6 +178,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
 
     nuxt.options.build.transpile.push(runtimeDir);
+
     end();
   }
 });
