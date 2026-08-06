@@ -7,7 +7,7 @@
   "scripts": {
     "dev:utils": "pnpm --filter module-utils dev",
     "build:utils": "pnpm --filter module-utils build",
-    "dev:prepare": "pnpm --filter './modules/*' exec nuxt-module-build build --stub && pnpm --filter './modules/*' exec nuxt-module-build prepare && pnpm --filter './modules/*/playground' exec nuxt prepare",
+    "dev:prepare": "pnpm --recursive --if-present run dev:prepare",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint .",

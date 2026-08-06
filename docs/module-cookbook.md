@@ -116,26 +116,27 @@ Expose a module-level convenience script for local development:
 ```json
 {
   "scripts": {
-    "predev:playground": "nuxt-module-build build --stub",
-    "dev:playground": "nuxt dev playground"
+    "dev": "npm run dev:prepare && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground"
   }
 }
 ```
 
-The predev:playground lifecycle script runs once whenever the playground
-session starts. The --stub build makes the package entrypoint resolve back to
-the module's src/ files, so Nuxt can watch runtime source files during
-development. This avoids manually rebuilding the module before every
-playground session.
+Run `dev:prepare` before starting the playground. It creates the development
+stub for the package entrypoint, prepares the module, and generates the
+playground's Nuxt types. The `dev` script then starts the playground, while
+`dev:build` builds the playground for a production-style check. Keep these
+scripts aligned with the starter module convention.
 
 Run it from the module directory or through the workspace filter:
 
 ```sh
 cd modules/<module-name>
-pnpm dev:playground
+pnpm dev
 
 # Or from the repository root:
-pnpm --filter @onderwijsin/nuxt-example dev:playground
+pnpm --filter @onderwijsin/nuxt-example dev
 ```
 
 The playground is also part of the workspace validation contract. Run its
@@ -343,6 +344,26 @@ addComponentsDir({ path: resolver.resolve(runtimeDir, "app", "components") });
 Runtime files should import their Vue or framework dependencies explicitly when
 they are also unit-tested as package source. This makes the runtime behavior
 clear and avoids relying on application-only auto-imports during tests.
+
+### Published runtime files cannot rely on auto-imports
+
+Published modules must not rely on Nuxt auto-imports from files inside their
+`src/runtime/` directory. Auto-imports are not enabled for files in
+`node_modules`—where a published module is installed—for performance reasons.
+An import that works in the local playground can therefore fail for consumers.
+
+Runtime files must import dependencies explicitly, using `#imports` or another
+stable package or Nuxt alias where appropriate:
+
+```ts
+import { useRuntimeConfig } from "#imports";
+import { ref } from "vue";
+```
+
+The module may still register consumer-facing composables and components with
+`addImportsDir` and `addComponentsDir`; those registrations make the APIs
+available to the consuming application. They do not make unqualified
+auto-imports available inside the published module's own runtime files.
 
 ### Type templates
 
