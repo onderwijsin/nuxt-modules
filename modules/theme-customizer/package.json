@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-theme-customizer",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Nuxt module for runtime theme selection and custom color editing in Nuxt UI.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

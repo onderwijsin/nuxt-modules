@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- 8f2ed27: replace $fetch with ofetch in google fonts client
+
 ## 0.2.2
 
 ### Patch Changes
