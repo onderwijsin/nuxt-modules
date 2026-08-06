@@ -91,25 +91,21 @@ tarball is the source of truth for release validation.
 
 ## 🤖 Module implementation prompt
 
-The authoritative implementation guidance is the
-[`docs/module-cookbook/`](docs/module-cookbook/package-anatomy.md). Use this prompt when asking an
-agent to create or update a module:
+Use this prompt when asking an agent to create, migrate, or update a module:
 
 ```text
-## Guidelines
-Use the `authoring-nuxt-modules` skill, and read the documentation in `docs/module-cookbook/`.
+Use the `authoring-nuxt-modules` skill for this task.
+Start with `docs/module-cookbook/package-anatomy.md` and follow only the relevant articles linked
+in its Further Reading section. Treat those resources and nearby module implementations as the
+source of truth; do not recreate their guidance here.
 
-These resources are the authoritative contract for
-module layout, metadata, Nuxt registration, runtime code, shared utilities,
-playgrounds, tests, documentation, and validation.
+Inspect the affected module and a comparable module before changing code. Keep the implementation
+scoped, preserve existing contracts unless the request says otherwise, and update the matching
+consumer documentation when the public API changes.
 
-Create or update the
-module requested below using the repository's existing conventions. Inspect
-nearby implementations before introducing patterns, keep the change scoped,
-preserve compatibility unless explicitly asked otherwise, and run the
-relevant validation commands from the cookbook.
+Run the relevant validation from `docs/workspace.md`. Do not commit changes or generated output.
 
-## Module request
+Module request:
 <describe the module or change here>
 ```
 
