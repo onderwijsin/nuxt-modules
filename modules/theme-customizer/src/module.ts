@@ -17,7 +17,8 @@ import {
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
-  validateModuleOptions
+  validateModuleOptions,
+  isPrepareMode
 } from "module-utils";
 import { version } from "../package.json";
 import { parseThemeOptions, themeOptionsShape } from "./config/options.schema";
@@ -63,7 +64,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   },
   defaults: (nuxt) => ({
-    enabled: nuxt.options.dev,
+    enabled: nuxt.options.dev || isPrepareMode(nuxt),
     googleFonts: {
       families: [
         "Public Sans",
@@ -82,17 +83,24 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   }),
   setup(rawOptions, nuxt) {
+    const resolver = createResolver(import.meta.url);
+    const runtimeDir = resolver.resolve("./runtime");
+
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
 
     start();
+
     if (!isEnabled()) return;
 
     validateModuleOptions(rawOptions, themeOptionsShape, log);
     const options = parseThemeOptions(rawOptions);
 
-    const resolver = createResolver(import.meta.url);
-    const runtimeDir = resolver.resolve("./runtime");
+    addTypeTemplate({
+      filename: "types/theme-customizer.d.ts",
+      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
+    });
+
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
     const generatedTheme = addTemplate({
@@ -119,10 +127,6 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
 
-    addTypeTemplate({
-      filename: "types/theme-customizer.d.ts",
-      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
-    });
     const appConfig = nuxt.options.appConfig as {
       ui?: { colors?: Record<string, string> };
     };
@@ -174,18 +178,6 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     nuxt.options.build.transpile.push(runtimeDir);
 
-    addTypeTemplate({
-      filename: "types/my-module.d.ts",
-      getContents: () => `
-declare module 'nuxt/schema' { 
-  interface PublicRuntimeConfig { 
-    thisExists: { 
-      thisToo: string 
-    }
-  }
-} 
-export {}`
-    });
     end();
   }
 });
