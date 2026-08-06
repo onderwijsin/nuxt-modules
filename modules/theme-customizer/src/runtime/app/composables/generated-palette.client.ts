@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { $fetch, reactive, useAppConfig, useRuntimeConfig, useState } from "#imports";
+import { reactive, useAppConfig, useRuntimeConfig, useState } from "#imports";
+import { ofetch } from "ofetch";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, hexColorSchema } from "../utils/theme";
@@ -106,7 +107,7 @@ export function useGeneratedPalette() {
 
     let response: unknown;
     try {
-      response = await $fetch<unknown>("/api/theme/palette", {
+      response = await ofetch<unknown>("/api/theme/palette", {
         query: { hex: parsedHex.data }
       });
     } catch {

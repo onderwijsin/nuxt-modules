@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fetchPalette = vi.hoisted(() => vi.fn());
 const getQuery = vi.hoisted(() => vi.fn());
 
-vi.mock("ofetch", () => ({ $fetch: fetchPalette }));
+vi.mock("ofetch", () => ({ ofetch: fetchPalette }));
 vi.mock("h3", async (importOriginal) => ({
   ...(await importOriginal<typeof import("h3")>()),
   getQuery

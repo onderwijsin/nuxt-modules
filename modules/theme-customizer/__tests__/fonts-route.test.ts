@@ -4,7 +4,7 @@ const fetchFonts = vi.hoisted(() => vi.fn());
 const getQuery = vi.hoisted(() => vi.fn());
 const useRuntimeConfig = vi.hoisted(() => vi.fn());
 
-vi.mock("ofetch", () => ({ $fetch: fetchFonts }));
+vi.mock("ofetch", () => ({ ofetch: fetchFonts }));
 vi.mock("nitropack/runtime", () => ({ useRuntimeConfig }));
 vi.mock("h3", async (importOriginal) => ({
   ...(await importOriginal<typeof import("h3")>()),

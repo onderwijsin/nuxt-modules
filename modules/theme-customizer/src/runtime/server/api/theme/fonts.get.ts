@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { $fetch } from "ofetch";
+import { ofetch } from "ofetch";
 import { defineEventHandler as h3DefineEventHandler, getQuery as h3GetQuery } from "h3";
 import { useRuntimeConfig } from "nitropack/runtime";
 
@@ -31,7 +31,7 @@ export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> =>
 
   if (!cachedFonts) {
     try {
-      const response = await $fetch<unknown>("https://www.googleapis.com/webfonts/v1/webfonts", {
+      const response = await ofetch<unknown>("https://www.googleapis.com/webfonts/v1/webfonts", {
         query: { capability: "WOFF2", key: apiKey, sort: "popularity" }
       });
       const parsed = googleFontsResponseSchema.safeParse(response);
