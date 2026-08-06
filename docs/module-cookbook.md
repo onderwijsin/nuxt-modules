@@ -390,6 +390,9 @@ entrypoint and the `src/runtime/` tree. It does not copy arbitrary files from
 other source directories such as `src/types/`. A file referenced by
 `addTypeTemplate({ src })` is resolved from the built package when the
 consumer's Nuxt application starts, so it must exist in `dist/`.
+After building, verify the declaration is present at
+`dist/runtime/types/example.d.ts`; a template source that is absent from the
+published `dist/` tree will fail when a consumer loads the module.
 
 Use `getContents` only when the declaration must be generated from consumer
 options or other build-time values. Static declarations should remain files so
