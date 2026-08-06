@@ -48,9 +48,10 @@ describe("text module", () => {
       from: "./runtime/app/composables/text"
     });
     expect(kit.addPlugin).toHaveBeenCalledWith("./runtime/app/plugins/text");
-    expect(kit.addTypeTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ filename: "types/static-text.d.ts" })
-    );
+    expect(kit.addTypeTemplate).toHaveBeenCalledWith({
+      filename: "types/static-text.d.ts",
+      src: "./runtime/types/static-text.d.ts"
+    });
   });
 
   it("removes a leading ./ before resolving the content path", () => {

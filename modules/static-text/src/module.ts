@@ -74,7 +74,7 @@ export default defineNuxtModule<ModuleOptions>({
     addPlugin(resolver.resolve(runtimeAppDir, "plugins/text"));
     addTypeTemplate({
       filename: "types/static-text.d.ts",
-      src: resolver.resolve("./types/static-text.d.ts")
+      src: resolver.resolve(runtimeDir, "types/static-text.d.ts")
     });
   }
 });
