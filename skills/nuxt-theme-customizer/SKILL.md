@@ -118,17 +118,6 @@ The module also provides `/thema` for palette inspection and editing. Its user
 interface is Dutch. Configured palettes, custom colors, groups, and active
 selections are persisted in browser `localStorage`, not cookies.
 
-For destructive actions, use the auto-imported `useConfirmDialog()` composable
-instead of `window.confirm()`:
-
-```ts
-const confirm = useConfirmDialog();
-
-if (await confirm({ title: "Kleur verwijderen?", color: "error" })) {
-  removeColor();
-}
-```
-
 For generated palettes, the module provides
 `GET /api/theme/palette?hex=%23abcdef`, which proxies ColorFYI. The response
 contains a six-digit `hex` value and exactly eleven `{ level, hex }` shade
