@@ -17,8 +17,7 @@ import {
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
-  validateModuleOptions,
-  isPrepareMode
+  validateModuleOptions
 } from "module-utils";
 import { version } from "../package.json";
 import { parseThemeOptions, themeOptionsShape } from "./config/options.schema";
@@ -64,7 +63,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   },
   defaults: (nuxt) => ({
-    enabled: nuxt.options.dev || isPrepareMode(nuxt),
+    enabled: nuxt.options.dev,
     googleFonts: {
       families: [
         "Public Sans",
@@ -86,6 +85,13 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
+    // Type declarations are needed by the module's own `nuxt prepare` run,
+    // which does not provide consumer options or enable runtime setup.
+    addTypeTemplate({
+      filename: "types/theme-customizer.d.ts",
+      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
+    });
+
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
 
@@ -95,11 +101,6 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     validateModuleOptions(rawOptions, themeOptionsShape, log);
     const options = parseThemeOptions(rawOptions);
-
-    addTypeTemplate({
-      filename: "types/theme-customizer.d.ts",
-      src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
-    });
 
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);

@@ -147,13 +147,16 @@ describe("theme customizer module", () => {
     expect(kit.extendPages).toHaveBeenCalled();
   });
 
-  it("skips all registration when disabled", () => {
+  it("registers type declarations but skips runtime registration when disabled", () => {
     const nuxt = { options: { dev: true, build: { transpile: [] } } };
 
     moduleDefinition.setup({ enabled: false }, nuxt as never);
 
     expect(nuxt.options.build.transpile).toEqual([]);
-    expect(kit.addTypeTemplate).not.toHaveBeenCalled();
+    expect(kit.addTypeTemplate).toHaveBeenCalledWith({
+      filename: "types/theme-customizer.d.ts",
+      src: "./runtime/types/theme-customizer.d.ts"
+    });
     expect(kit.addComponentsDir).not.toHaveBeenCalled();
   });
 

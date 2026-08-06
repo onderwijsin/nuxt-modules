@@ -380,6 +380,11 @@ addTypeTemplate({
 });
 ```
 
+Register type templates before any `enabled` guard. `nuxt prepare` runs with
+`dev: false`; a module whose runtime behavior is enabled only in development
+would otherwise skip the registration, leaving the module's own `.nuxt/types`
+without its declaration.
+
 This location is required because `nuxt-module-build` publishes the module
 entrypoint and the `src/runtime/` tree. It does not copy arbitrary files from
 other source directories such as `src/types/`. A file referenced by
