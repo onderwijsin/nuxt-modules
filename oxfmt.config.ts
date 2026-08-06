@@ -2,6 +2,15 @@ import { defineConfig } from "oxfmt";
 
 export default defineConfig({
   trailingComma: "none",
+  overrides: [
+    {
+      files: ["*.md"],
+      options: {
+        printWidth: 100,
+        proseWrap: "always"
+      }
+    }
+  ],
   ignorePatterns: [
     ".idea/",
     ".next/",
@@ -9,6 +18,7 @@ export default defineConfig({
     "CHANGELOG.md",
     "dist",
     ".nuxt",
+    ".changeset",
     "nuxt/.nuxt",
     ".output",
     "*.tgz",
