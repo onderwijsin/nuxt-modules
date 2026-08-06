@@ -41,11 +41,8 @@ npx skills add onderwijsin/nuxt-modules
 To install only one skill, pass its name:
 
 ```sh
-npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
-npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
-npx skills add onderwijsin/nuxt-modules --skill nuxt-static-text
-npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
-npx skills add onderwijsin/nuxt-modules --skill nuxt-device
+npx skills add onderwijsin/nuxt-modules --skill "<module-name>"
+# npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
 ```
 
 These skills provide module-specific guidance, API references, examples, and troubleshooting for
@@ -62,17 +59,14 @@ pnpm build
 Run the module playground during development:
 
 ```sh
-pnpm --filter @onderwijsin/nuxt-ui-form-extensions dev:playground
-pnpm --filter @onderwijsin/nuxt-static-text dev:playground
-pnpm --filter @onderwijsin/nuxt-theme-customizer dev:playground
-pnpm --filter device-playground dev
+pnpm --filter @onderwijsin/nuxt-loops-renderer dev
 ```
 
 Run playground checks directly when iterating:
 
 ```sh
-pnpm --filter ui-form-extensions-playground typecheck
-pnpm --filter ui-form-extensions-playground build
+pnpm --filter loops-renderer-playground typecheck
+pnpm --filter loops-renderer-playground build
 ```
 
 Each module owns an isolated playground. A shared integration playground will only be introduced
@@ -102,16 +96,20 @@ The authoritative implementation guidance is the
 agent to create or update a module:
 
 ```text
-Read docs/module-cookbook/package-anatomy.md and the relevant linked cookbook
-articles as the authoritative guide for
+## Guidelines
+Use the `authoring-nuxt-modules` skill, and read the documentation in `docs/module-cookbook/`.
+
+These resources are the authoritative contract for
 module layout, metadata, Nuxt registration, runtime code, shared utilities,
-playgrounds, tests, documentation, and validation. Create or update the
+playgrounds, tests, documentation, and validation.
+
+Create or update the
 module requested below using the repository's existing conventions. Inspect
 nearby implementations before introducing patterns, keep the change scoped,
 preserve compatibility unless explicitly asked otherwise, and run the
 relevant validation commands from the cookbook.
 
-Module request:
+## Module request
 <describe the module or change here>
 ```
 
