@@ -3,6 +3,7 @@ import { z } from "zod";
 import { useClipboard, useToast, shallowRef, useRuntimeConfig, computed } from "#imports";
 
 import { useThemeCustomizerConfirmDialog } from "../composables/confirm-dialog";
+import { useFormModal } from "../composables/form-modal";
 
 import { type CustomThemeColor, useThemeCustomizerStore } from "../stores/theme-customizer";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";
@@ -10,6 +11,7 @@ import type { ThemeShade } from "../types";
 
 const store = useThemeCustomizerStore();
 const confirm = useThemeCustomizerConfirmDialog();
+const formModal = useFormModal();
 const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
 
@@ -68,6 +70,25 @@ function createGroup(name: string) {
 
   groupError.value = undefined;
   group.value = createdGroup;
+}
+
+/**
+ * Opens the name form and persists a custom color rename.
+ * @param color Custom color to rename.
+ * @returns A promise that resolves after the modal closes.
+ */
+async function renameColor(color: CustomThemeColor) {
+  const value = await formModal({
+    title: "Kleur hernoemen",
+    label: "Naam",
+    initialValue: color.name,
+    validate: (name) => {
+      const parsed = nameSchema.safeParse(name);
+      return parsed.success ? undefined : parsed.error.issues[0]?.message;
+    }
+  });
+
+  if (value) store.renameColor(color.id, value);
 }
 
 /**
@@ -147,7 +168,18 @@ async function deleteColor(color: CustomThemeColor) {
       <article v-for="color in store.colors" :key="color.id" class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 class="font-semibold text-highlighted">{{ color.name }}</h3>
+            <div class="flex items-center gap-1">
+              <h3 class="font-semibold text-highlighted">{{ color.name }}</h3>
+              <UButton
+                :aria-label="`Hernoem ${color.name}`"
+                icon="i-lucide-pencil"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                class="ml-1 opacity-60"
+                @click="renameColor(color)"
+              />
+            </div>
             <p class="text-sm text-muted">{{ color.group }}</p>
           </div>
           <div class="flex gap-2">

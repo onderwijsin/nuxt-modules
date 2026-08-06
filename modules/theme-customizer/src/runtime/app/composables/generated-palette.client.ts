@@ -48,7 +48,12 @@ export function useGeneratedPalette() {
    * @returns The default palette token, or an empty string when none is configured.
    */
   function defaultPaletteToken(group: string) {
+    const configuredDefault = runtimeConfig.public.themeCustomizer.defaults?.[group];
     return (
+      (typeof configuredDefault === "string" &&
+      runtimeConfig.public.themeCustomizer.groups[group]?.includes(configuredDefault)
+        ? configuredDefault
+        : undefined) ??
       builtInDefaultTokens[group] ??
       runtimeConfig.public.themeCustomizer.groups[group]?.[0] ??
       appConfig.ui.colors[group] ??

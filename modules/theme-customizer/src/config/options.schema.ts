@@ -28,6 +28,13 @@ export const themeOptionsShape = {
         .transform((families) => [...new Set(families)])
         .optional()
     })
+    .optional(),
+  defaults: z
+    .object({
+      font: z.string().trim().min(1).max(100).optional(),
+      radius: z.number().finite().nonnegative().optional()
+    })
+    .catchall(z.string().trim().min(1).max(100))
     .optional()
 };
 
@@ -35,7 +42,7 @@ export const themeOptionsSchema = z
   .looseObject(themeOptionsShape)
   .superRefine((options, context) => {
     for (const [name, value] of Object.entries(options)) {
-      if (name === "enabled" || name === "googleFonts") continue;
+      if (name === "enabled" || name === "googleFonts" || name === "defaults") continue;
 
       const result = themePaletteSchema.safeParse(value);
       if (!result.success) {

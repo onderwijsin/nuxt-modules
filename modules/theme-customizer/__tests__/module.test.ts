@@ -141,7 +141,8 @@ describe("theme customizer module", () => {
         neutral: [],
         accent: ["coral"]
       },
-      googleFonts: { families: [] }
+      googleFonts: { families: [] },
+      defaults: { font: "Public Sans" }
     });
     expect(nuxt.options.ui.theme.colors).toEqual(["accent"]);
     expect(kit.extendPages).toHaveBeenCalled();

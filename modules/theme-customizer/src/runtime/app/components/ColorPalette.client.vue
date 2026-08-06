@@ -1,5 +1,8 @@
 <script lang="ts" setup>
 import { computed, useClipboard, useToast } from "#imports";
+import { useFormModal } from "../composables/form-modal";
+import { useThemeCustomizerStore } from "../stores/theme-customizer";
+import { z } from "zod";
 import type { ThemePaletteShade } from "../composables/generated-palette.client";
 import { normalizeCssColorToHex } from "../utils/color";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";
@@ -25,7 +28,14 @@ const rows = computed(() =>
 );
 
 const toast = useToast();
+const formModal = useFormModal();
+const store = useThemeCustomizerStore();
 const { copy } = useClipboard({ legacy: true });
+const groupNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Geef je kleurgroep een naam.")
+  .regex(/[\p{L}\p{N}]/u, "Gebruik minstens één letter of cijfer.");
 
 let colorContext: CanvasRenderingContext2D | null | undefined;
 
@@ -60,6 +70,28 @@ async function copyColor(group: string, shade: number) {
 }
 
 /**
+ * Opens the name form and persists a runtime group rename.
+ * @param group Runtime group to rename.
+ * @returns A promise that resolves after the modal closes.
+ */
+async function renameGroup(group: string) {
+  if (!store.isRuntimeGroup(group)) return;
+
+  const value = await formModal({
+    title: "Kleurgroep hernoemen",
+    label: "Naam",
+    initialValue: colorLabel(group),
+    validate: (name) => {
+      const parsed = groupNameSchema.safeParse(name);
+      if (!parsed.success) return parsed.error.issues[0]?.message;
+      return undefined;
+    }
+  });
+
+  if (value) store.renameGroup(group, value);
+}
+
+/**
  * Returns whether a generated shade matches the custom source hex for its row.
  * @param group Theme color group containing the shade.
  * @param shade Theme shade level to compare.
@@ -78,7 +110,7 @@ function isCustomShade(group: string, shade: number) {
 <template>
   <section aria-label="Kleurpalette" class="overflow-visible">
     <div class="min-w-[48rem]">
-      <div class="grid grid-cols-[7rem_repeat(11,minmax(0,1fr))] gap-2">
+      <div class="grid grid-cols-[7rem_repeat(11,minmax(0,1fr))] gap-2 gap-y-8">
         <div aria-hidden="true" />
         <div
           v-for="shade in THEME_SHADES"
@@ -91,8 +123,18 @@ function isCustomShade(group: string, shade: number) {
         <template v-for="row in rows" :key="row.group">
           <div class="flex items-center text-sm font-semibold text-highlighted">
             {{ row.label }}
+            <UButton
+              v-if="store.isRuntimeGroup(row.group)"
+              :aria-label="`Hernoem ${row.label}`"
+              icon="i-lucide-pencil"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="ml-1 opacity-60"
+              @click="renameGroup(row.group)"
+            />
           </div>
-          <div v-if="row.empty" class="col-span-11 relative mb-6 grid grid-cols-11 gap-2">
+          <div v-if="row.empty" class="col-span-11 relative grid grid-cols-11 gap-2">
             <div
               v-for="shade in THEME_SHADES"
               :key="shade"

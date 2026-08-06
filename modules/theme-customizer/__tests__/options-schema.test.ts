@@ -45,6 +45,27 @@ describe("theme option validation", () => {
     });
   });
 
+  it("accepts typed initial defaults for fonts, radius, and color groups", () => {
+    const result = themeOptionsSchema.safeParse({
+      primary: { ocean: palette },
+      defaults: { primary: "ocean", font: " Inter ", radius: 0.375, accent: "violet" }
+    });
+
+    expect(result.success).toBe(true);
+    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+      defaults: { primary: "ocean", font: "Inter", radius: 0.375, accent: "violet" }
+    });
+  });
+
+  it("rejects invalid initial defaults", () => {
+    expect(
+      themeOptionsSchema.safeParse({
+        primary: { ocean: palette },
+        defaults: { radius: -1, primary: 42 }
+      }).success
+    ).toBe(false);
+  });
+
   it("requires a primary palette when enabled", () => {
     const result = themeOptionsSchema.safeParse({ enabled: true, primary: {} });
 

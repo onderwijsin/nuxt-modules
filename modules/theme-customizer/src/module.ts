@@ -31,7 +31,13 @@ import {
 import type { ThemeCustomizerOptions } from "./types";
 
 export { THEME_SHADES } from "./types";
-export type { ThemeFontOption, ThemeGoogleFontsOptions, ThemePalette, ThemeShade } from "./types";
+export type {
+  ThemeCustomizerDefaults,
+  ThemeFontOption,
+  ThemeGoogleFontsOptions,
+  ThemePalette,
+  ThemeShade
+} from "./types";
 /** Maps a theme color group to its named palettes. */
 export type { ThemeColorGroups, ThemeCustomizerOptions } from "./types";
 
@@ -104,10 +110,11 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
+    const defaults = options.defaults ?? {};
     const generatedTheme = addTemplate({
       filename: "theme-customizer.generated.css",
       write: true,
-      getContents: () => generateThemeCss(groups, neutralTheme)
+      getContents: () => generateThemeCss(groups, neutralTheme, defaults)
     });
 
     nuxt.options.css.push(generatedTheme.dst);
@@ -122,6 +129,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       groups: configuredRuntimeGroups(groups) as never,
       googleFonts: {
         families: options.googleFonts?.families ?? []
+      },
+      defaults: {
+        ...defaults,
+        font: defaults.font ?? options.googleFonts?.families?.[0] ?? "Public Sans"
       }
     };
     if (options.googleFonts?.apiKey) {
@@ -129,10 +140,11 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
 
     const appConfig = nuxt.options.appConfig as {
-      ui?: { colors?: Record<string, string> };
+      ui?: { colors?: Record<string, string>; radius?: number };
     };
     appConfig.ui ??= {};
-    appConfig.ui.colors = configuredAppColors(groups, appConfig.ui.colors);
+    appConfig.ui.colors = configuredAppColors(groups, appConfig.ui.colors, defaults);
+    if (defaults.radius !== undefined) appConfig.ui.radius = defaults.radius;
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app/components"),
       pathPrefix: false
@@ -144,6 +156,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     addImports({
       name: "useThemeCustomizerConfirmDialog",
       from: resolver.resolve(runtimeDir, "app/composables/confirm-dialog")
+    });
+    addImports({
+      name: "useFormModal",
+      from: resolver.resolve(runtimeDir, "app/composables/form-modal")
     });
     addImports({
       name: "useThemeCustomizerStore",
