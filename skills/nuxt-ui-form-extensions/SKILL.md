@@ -1,11 +1,17 @@
 ---
 name: nuxt-ui-form-extensions
-description: Use when building, reviewing, debugging, or extending forms with @onderwijsin/nuxt-ui-form-extensions in a Nuxt 4 application. It teaches agents how to install the module, use the auto-imported useDraftForm composable with Nuxt UI forms, preserve local edits while canonical state changes, handle dirty/submitting state, map validated submissions, and recover from failed saves.
+description:
+  Use when building, reviewing, debugging, or extending forms with
+  @onderwijsin/nuxt-ui-form-extensions in a Nuxt 4 application. It teaches agents how to install the
+  module, use the auto-imported useDraftForm composable with Nuxt UI forms, preserve local edits
+  while canonical state changes, handle dirty/submitting state, map validated submissions, and
+  recover from failed saves.
 ---
 
 # Nuxt UI Form Extensions
 
-Build forms that keep a local editable draft separate from canonical application state. The module currently provides one composable, `useDraftForm`, designed for Nuxt 4 + Nuxt UI forms.
+Build forms that keep a local editable draft separate from canonical application state. The module
+currently provides one composable, `useDraftForm`, designed for Nuxt 4 + Nuxt UI forms.
 
 ## Install and register
 
@@ -20,7 +26,8 @@ export default defineNuxtConfig({
 });
 ```
 
-The composable is auto-imported. The module registers `@nuxt/ui` as a Nuxt module dependency, but the application still needs the normal Nuxt UI/Tailwind setup. It targets Nuxt 4 and Node.js 22+.
+The composable is auto-imported. The module registers `@nuxt/ui` as a Nuxt module dependency, but
+the application still needs the normal Nuxt UI/Tailwind setup. It targets Nuxt 4 and Node.js 22+.
 
 ## The draft-form model
 
@@ -28,9 +35,12 @@ Use three distinct concepts:
 
 - **Source:** canonical state returned by a store, route payload, or API query.
 - **Draft:** the reactive local object bound to inputs.
-- **Submission:** the validated payload sent to the save function; it may be the same shape as the draft or a separate DTO.
+- **Submission:** the validated payload sent to the save function; it may be the same shape as the
+  draft or a separate DTO.
 
-The composable deep-clones the source. Editing `state` therefore never mutates canonical state. While the draft is clean, source changes replace the draft. Once the user edits locally, source changes are deliberately ignored so a refresh cannot destroy unsaved work.
+The composable deep-clones the source. Editing `state` therefore never mutates canonical state.
+While the draft is clean, source changes replace the draft. Once the user edits locally, source
+changes are deliberately ignored so a refresh cannot destroy unsaved work.
 
 ## Quick start with Nuxt UI
 
@@ -81,7 +91,8 @@ async function onSubmit(event: FormSubmitEvent<Profile>) {
 </template>
 ```
 
-Do not call `save` directly from the button handler. Route successful and failed persistence through `submit` so `saving`, the clean snapshot, and reset behavior stay consistent.
+Do not call `save` directly from the button handler. Route successful and failed persistence through
+`submit` so `saving`, the clean snapshot, and reset behavior stay consistent.
 
 ## Public API
 
@@ -141,7 +152,9 @@ await form.submit({
 });
 ```
 
-Validate with the application’s form/schema boundary before `submit`; `useDraftForm` manages draft lifecycle, not business validation or API error typing. `save` should reject for transport, authorization, conflict, or server-validation failures.
+Validate with the application’s form/schema boundary before `submit`; `useDraftForm` manages draft
+lifecycle, not business validation or API error typing. `save` should reject for transport,
+authorization, conflict, or server-validation failures.
 
 ## Synchronization semantics
 
@@ -154,26 +167,42 @@ Validate with the application’s form/schema boundary before `submit`; `useDraf
 | `submit` resolves                              | Draft is replaced from the latest `getSource()` value and becomes clean. |
 | `submit` rejects                               | `onError` runs; draft and dirty state are preserved.                     |
 
-This is intentionally not a conflict-resolution system. If a dirty draft must be discarded, change the source lifecycle/key or expose an application-level reset that replaces the canonical input and remounts the form. Do not mutate the internal clean snapshot.
+This is intentionally not a conflict-resolution system. If a dirty draft must be discarded, change
+the source lifecycle/key or expose an application-level reset that replaces the canonical input and
+remounts the form. Do not mutate the internal clean snapshot.
 
 ## Data-shape and runtime constraints
 
-- `TDraft` must be an object suitable for `structuredClone`; ordinary records, arrays, and `Date` values are supported.
+- `TDraft` must be an object suitable for `structuredClone`; ordinary records, arrays, and `Date`
+  values are supported.
 - The implementation unwraps Vue proxies recursively before cloning.
-- Dirty comparison is recursive for plain objects and does not depend on object key insertion order. Treat exotic class instances, functions, and non-plain custom prototypes as unsuitable draft state.
+- Dirty comparison is recursive for plain objects and does not depend on object key insertion order.
+  Treat exotic class instances, functions, and non-plain custom prototypes as unsuitable draft
+  state.
 - Keep `getSource` stable and reactive: `getSource: () => store.profile` or `() => source.value`.
-- Use `shallowRef`/store state for the canonical object when appropriate; never use the draft object as the source.
-- Disable duplicate submissions in the UI with `saving` and/or a disabled submit button. The composable exposes state but does not cancel or serialize concurrent calls for you.
+- Use `shallowRef`/store state for the canonical object when appropriate; never use the draft object
+  as the source.
+- Disable duplicate submissions in the UI with `saving` and/or a disabled submit button. The
+  composable exposes state but does not cancel or serialize concurrent calls for you.
 
 ## Troubleshooting checklist
 
-- **Inputs mutate the source:** verify `:state="state"` and `v-model="state.field"`; do not bind inputs to the source directly.
-- **Source refresh overwrites edits:** verify the draft was not accidentally recreated on every render and that `getSource` returns the canonical state, not `state`.
-- **Dirty state never changes:** check that edits are made through the reactive `state` and that the draft uses supported plain data.
-- **Success leaves the form dirty:** ensure `save` resolves only after persistence and that `getSource()` returns the updated canonical value.
-- **Failed save loses input:** do not replace the source or remount the form in `onError`; `submit` intentionally retains the draft.
-- **Loading stays visible:** make sure `save` resolves or rejects and is not swallowing a promise; `saving` is reset after either outcome.
+- **Inputs mutate the source:** verify `:state="state"` and `v-model="state.field"`; do not bind
+  inputs to the source directly.
+- **Source refresh overwrites edits:** verify the draft was not accidentally recreated on every
+  render and that `getSource` returns the canonical state, not `state`.
+- **Dirty state never changes:** check that edits are made through the reactive `state` and that the
+  draft uses supported plain data.
+- **Success leaves the form dirty:** ensure `save` resolves only after persistence and that
+  `getSource()` returns the updated canonical value.
+- **Failed save loses input:** do not replace the source or remount the form in `onError`; `submit`
+  intentionally retains the draft.
+- **Loading stays visible:** make sure `save` resolves or rejects and is not swallowing a promise;
+  `saving` is reset after either outcome.
 
 ## Extension and testing guidance
 
-For consumers, keep validation, toast UX, conflict policy, and API error mapping in the application. For module changes, preserve the generic `TDraft`/`TSubmission` contract and test nested cloning, clean-source synchronization, dirty-source preservation, successful reset, failed-save retention, and `saving` cleanup.
+For consumers, keep validation, toast UX, conflict policy, and API error mapping in the application.
+For module changes, preserve the generic `TDraft`/`TSubmission` contract and test nested cloning,
+clean-source synchronization, dirty-source preservation, successful reset, failed-save retention,
+and `saving` cleanup.

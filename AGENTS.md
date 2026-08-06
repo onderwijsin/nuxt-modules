@@ -57,14 +57,15 @@ When multiple valid solutions exist, prefer:
   are not part of the task
 - **MUST** use Zod for boundary validation where applicable
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
-- **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's public API surface changes, alongside the module README
+- **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's
+  public API surface changes, alongside the module README
 
 ### Package Manager Contract
 
 - This repository is pinned to the package manager declared in `package.json`
 - Agents must invoke PNPM as `corepack pnpm ...` instead of plain `pnpm ...`
-- Agents must treat any untracked or modified `.pnpm-store/**` content as a problem to avoid, not
-  as a normal byproduct of their work
+- Agents must treat any untracked or modified `.pnpm-store/**` content as a problem to avoid, not as
+  a normal byproduct of their work
 - Agents must not add `.npmrc` settings, shell exports, or command flags that redirect the PNPM
   store into the repository
 - If dependency work is explicitly required, agents must keep the existing lockfile and
@@ -104,17 +105,19 @@ A task is **ONLY** complete when **ALL** applicable items are satisfied:
 3. TypeScript checks pass with `pnpm typecheck`
 4. Unit tests pass with `pnpm test`
 5. Documentation updated in `docs/` (single source of truth)
-6. When a module's public API surface changes, the corresponding installable consumer skill in `skills/` and module README are updated
+6. When a module's public API surface changes, the corresponding installable consumer skill in
+   `skills/` and module README are updated
 7. All code written or touched has proper JSDoc where applicable
 8. Runtime contracts remain backward-compatible unless explicitly requested
 
-**Important:** After completing the above, the agent **MUST NOT** commit the changes, unless explicitly requested. Instead, the
-agent **MUST** provide a summary of the work done, including:
+**Important:** After completing the above, the agent **MUST NOT** commit the changes, unless
+explicitly requested. Instead, the agent **MUST** provide a summary of the work done, including:
 
 - What changed
 - Impact on contracts and behavior
 - Open risks or follow-up work
-- A ready to copy commit message following the conventional commit rules (eg `'feat(core): add new utility'`)
+- A ready to copy commit message following the conventional commit rules (eg
+  `'feat(core): add new utility'`)
 
 It is the responsibility of the human collaborator to review, approve, and commit the changes.
 

@@ -2,9 +2,8 @@
 
 # Nuxt Modules
 
-This repository is a collection of standalone Nuxt 4 modules maintained by
-_Onderwijs in_. The modules are opinionated building blocks for
-use in internal _Onderwijs in_ projects.
+This repository is a collection of standalone Nuxt 4 modules maintained by _Onderwijs in_. The
+modules are opinionated building blocks for use in internal _Onderwijs in_ projects.
 
 ## 📦 What's in the box?
 
@@ -22,8 +21,8 @@ use in internal _Onderwijs in_ projects.
 - pnpm 11.13.1 through Corepack.
 - gitleaks v8.x
 
-Run `corepack enable` once to activate the pinned pnpm version, then install
-the workspace dependencies:
+Run `corepack enable` once to activate the pinned pnpm version, then install the workspace
+dependencies:
 
 ```sh
 corepack enable
@@ -47,8 +46,8 @@ npx skills add onderwijsin/nuxt-modules --skill nuxt-static-text
 npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
 ```
 
-These skills provide module-specific guidance, API references, examples, and
-troubleshooting for agents working in consuming Nuxt applications.
+These skills provide module-specific guidance, API references, examples, and troubleshooting for
+agents working in consuming Nuxt applications.
 
 ## 🚀 Getting Started
 
@@ -73,9 +72,8 @@ pnpm --filter ui-form-extensions-playground typecheck
 pnpm --filter ui-form-extensions-playground build
 ```
 
-Each module owns an isolated playground. A shared integration playground will
-only be introduced when multiple modules have a supported interaction that
-needs to be validated together.
+Each module owns an isolated playground. A shared integration playground will only be introduced
+when multiple modules have a supported interaction that needs to be validated together.
 
 ## ✅ Validation
 
@@ -90,19 +88,19 @@ pnpm build
 pnpm validate:packages
 ```
 
-For read-only checks, use `pnpm format:check` and `pnpm lint`. CI additionally
-packs each publishable module, checks the tarball for private workspace
-leakage, and runs Publint. The package tarball is the source of truth for
-release validation.
+For read-only checks, use `pnpm format:check` and `pnpm lint`. CI additionally packs each
+publishable module, checks the tarball for private workspace leakage, and runs Publint. The package
+tarball is the source of truth for release validation.
 
 ## 🤖 Module implementation prompt
 
-The authoritative implementation guidance is
-[`docs/module-cookbook.md`](docs/module-cookbook.md). Use this prompt when
-asking an agent to create or update a module:
+The authoritative implementation guidance is the
+[`docs/module-cookbook/`](docs/module-cookbook/package-anatomy.md). Use this prompt when asking an
+agent to create or update a module:
 
 ```text
-Read docs/module-cookbook.md and follow it as the authoritative guide for
+Read docs/module-cookbook/package-anatomy.md and the relevant linked cookbook
+articles as the authoritative guide for
 module layout, metadata, Nuxt registration, runtime code, shared utilities,
 playgrounds, tests, documentation, and validation. Create or update the
 module requested below using the repository's existing conventions. Inspect
@@ -125,10 +123,10 @@ This project contains various private packages as internal dependencies.
 
 ## 📚 Documentation
 
-- [`docs/module-cookbook.md`](docs/module-cookbook.md) — authoritative module
-  implementation patterns.
+- [`docs/module-cookbook/package-anatomy.md`](docs/module-cookbook/package-anatomy.md) —
+  authoritative module cookbook.
 - [`docs/contributing.md`](docs/contributing.md) — contributor workflow.
-- [`docs/tooling.md`](docs/tooling.md) — repository tools and commands.
+- [`docs/workspace.md`](docs/workspace.md) — workspace, tools, and commands.
 - [`docs/publishing.md`](docs/publishing.md) — release checks and publishing.
 
 ## 🚢 Publishing
@@ -140,21 +138,18 @@ pnpm changeset
 pnpm changeset:status
 ```
 
-Select the affected package, choose the SemVer impact, and write the release
-note. Changesets posts the proposed release impact on the pull request;
-documentation-only and CI-only changes may use the `no-changeset` label.
-Developers do not need to version or publish locally.
+Select the affected package, choose the SemVer impact, and write the release note. Changesets posts
+the proposed release impact on the pull request; documentation-only and CI-only changes may use the
+`no-changeset` label. Developers do not need to version or publish locally.
 
-After review and merge, publishing is a manual two-stage flow from `main`.
-**Prepare release** consumes the Changesets, versions affected packages,
-updates changelogs, appends links to the included commits, and opens or updates
-a release pull request without publishing. After that pull request is merged,
-**Publish release** rebuilds and validates the packages, publishes through
+After review and merge, publishing is a manual two-stage flow from `main`. **Prepare release**
+consumes the Changesets, versions affected packages, updates changelogs, appends links to the
+included commits, and opens or updates a release pull request without publishing. After that pull
+request is merged, **Publish release** rebuilds and validates the packages, publishes through
 Changesets, and creates package-specific tags and GitHub Releases.
 
-The `NPM_TOKEN` GitHub secret is required for publishing and is never stored
-in the repository. See [`docs/publishing.md`](docs/publishing.md) for the
-complete release procedure and rerun behavior.
+The `NPM_TOKEN` GitHub secret is required for publishing and is never stored in the repository. See
+[`docs/publishing.md`](docs/publishing.md) for the complete release procedure and rerun behavior.
 
 ## 📄 License
 

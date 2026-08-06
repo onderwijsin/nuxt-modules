@@ -2,11 +2,10 @@
 
 # @onderwijsin/nuxt-ui-form-extensions
 
-Nuxt UI form extensions for Nuxt 4. The module provides a small foundation for
-building forms that keep local edits separate from canonical application state.
+Nuxt UI form extensions for Nuxt 4. The module provides a small foundation for building forms that
+keep local edits separate from canonical application state.
 
-The module will likely grow over time with additional form utilities as common
-patterns emerge.
+The module will likely grow over time with additional form utilities as common patterns emerge.
 
 ## Module features
 
@@ -38,9 +37,9 @@ Install the consumer-facing skill for this module with:
 npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
 ```
 
-`@nuxt/ui` is installed and initialized as a module dependency automatically.
-The consuming application should also follow the [Nuxt UI installation
-guide](https://ui.nuxt.com/docs/getting-started/installation/nuxt) for its
+`@nuxt/ui` is installed and initialized as a module dependency automatically. The consuming
+application should also follow the
+[Nuxt UI installation guide](https://ui.nuxt.com/docs/getting-started/installation/nuxt) for its
 Tailwind CSS setup.
 
 ## Compatibility
