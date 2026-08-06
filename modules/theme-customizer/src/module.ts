@@ -173,6 +173,19 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
 
     nuxt.options.build.transpile.push(runtimeDir);
+
+    addTypeTemplate({
+      filename: "types/my-module.d.ts",
+      getContents: () => `
+declare module 'nuxt/schema' { 
+  interface PublicRuntimeConfig { 
+    thisExists: { 
+      thisToo: string 
+    }
+  }
+} 
+export {}`
+    });
     end();
   }
 });
