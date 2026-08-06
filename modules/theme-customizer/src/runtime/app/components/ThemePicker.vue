@@ -4,7 +4,7 @@ import { useThemeCustomizerStore } from "../stores/theme-customizer";
 import { NEUTRAL_COLORS } from "../utils/constants";
 import { colorLabel } from "../utils/theme";
 import type { AppConfig } from "nuxt/schema";
-import { useConfirmDialog } from "../composables/confirm-dialog";
+import { useThemeCustomizerConfirmDialog } from "../composables/confirm-dialog";
 
 import { computed, reactive, useAppConfig, useRuntimeConfig } from "#imports";
 
@@ -15,7 +15,7 @@ const runtimeConfig = useRuntimeConfig();
 const { errors, generatePalette, loading, removeGeneratedPalette, resetPalette } =
   useGeneratedPalette();
 const themeCustomizer = useThemeCustomizerStore();
-const confirm = useConfirmDialog();
+const confirm = useThemeCustomizerConfirmDialog();
 const groups = computed(() =>
   themeCustomizer.colorGroups().map((name) => {
     const runtimeGroup = themeCustomizer.isRuntimeGroup(name);

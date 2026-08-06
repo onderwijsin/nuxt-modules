@@ -2,14 +2,14 @@
 import { z } from "zod";
 import { useClipboard, useToast, shallowRef, useRuntimeConfig, computed } from "#imports";
 
-import { useConfirmDialog } from "../composables/confirm-dialog";
+import { useThemeCustomizerConfirmDialog } from "../composables/confirm-dialog";
 
 import { type CustomThemeColor, useThemeCustomizerStore } from "../stores/theme-customizer";
 import { adjacentThemeShade, colorLabel, THEME_SHADES, themeTextClass } from "../utils/theme";
 import type { ThemeShade } from "../types";
 
 const store = useThemeCustomizerStore();
-const confirm = useConfirmDialog();
+const confirm = useThemeCustomizerConfirmDialog();
 const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
 

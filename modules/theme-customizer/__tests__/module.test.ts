@@ -122,7 +122,7 @@ describe("theme customizer module", () => {
       mode: "client"
     });
     expect(kit.addImports).toHaveBeenCalledWith({
-      name: "useConfirmDialog",
+      name: "useThemeCustomizerConfirmDialog",
       from: "./runtime/app/composables/confirm-dialog"
     });
     expect(kit.addServerHandler).toHaveBeenCalledWith({

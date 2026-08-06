@@ -180,21 +180,12 @@ the module does not use cookies.
 The following APIs are automatically imported:
 
 - `ThemePicker`, `FontPicker`, `ColorPalette`, `ThemeCustomizer`, `HexInput`, and `RadiusInput`;
-- `Confirmation`;
+- `ThemeCustomizerConfirmation`;
 - `useGeneratedPalette()`;
-- `useConfirmDialog()`;
+- `useThemeCustomizerConfirmDialog()`;
 - `useThemeCustomizerStore()`.
 
-Use `useConfirmDialog()` for destructive actions that should match the module's
-small Dutch confirmation modal:
-
-```ts
-const confirm = useConfirmDialog();
-
-if (await confirm({ title: "Kleur verwijderen?", color: "error" })) {
-  removeColor();
-}
-```
+````
 
 ## Agent skill
 
@@ -202,7 +193,7 @@ Install the consumer skill with:
 
 ```sh
 npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
-```
+````
 
 ## Compatibility
 

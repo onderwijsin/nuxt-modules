@@ -118,6 +118,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     if (options.googleFonts?.apiKey) {
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
+
     addTypeTemplate({
       filename: "types/theme-customizer.d.ts",
       src: resolver.resolve(runtimeDir, "types/theme-customizer.d.ts")
@@ -136,7 +137,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       from: resolver.resolve(runtimeDir, "app/composables/generated-palette.client")
     });
     addImports({
-      name: "useConfirmDialog",
+      name: "useThemeCustomizerConfirmDialog",
       from: resolver.resolve(runtimeDir, "app/composables/confirm-dialog")
     });
     addImports({
