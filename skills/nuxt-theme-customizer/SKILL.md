@@ -95,6 +95,25 @@ export default defineNuxtConfig({
 Without an API key, the picker uses configured `families`; the module defaults
 this option to its curated 12-font list.
 
+Initial selections can be configured with `defaults`. The first configured
+Google Font family is used when `defaults.font` is omitted. Color defaults use
+group names and must reference a palette configured in that group; otherwise
+the first palette is used. `defaults.radius` is measured in rem:
+
+```ts
+export default defineNuxtConfig({
+  themeCustomizer: {
+    primary: { ocean: oceanPalette, forest: forestPalette },
+    googleFonts: { families: ["Inter", "DM Sans"] },
+    defaults: {
+      primary: "forest",
+      font: "Inter",
+      radius: 0.375
+    }
+  }
+});
+```
+
 ### Acquiring a Google Fonts API key
 
 The key is optional and is only required for the complete Google Fonts
@@ -117,6 +136,9 @@ control. See Google's [Web Fonts Developer API guide](https://developers.google.
 The module also provides `/thema` for palette inspection and editing. Its user
 interface is Dutch. Configured palettes, custom colors, groups, and active
 selections are persisted in browser `localStorage`, not cookies.
+
+The `/thema` editor also lets users rename custom colors and runtime-created
+groups through the edit buttons beside their names.
 
 For generated palettes, the module provides
 `GET /api/theme/palette?hex=%23abcdef`, which proxies ColorFYI. The response
