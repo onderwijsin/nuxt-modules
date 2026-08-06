@@ -1,0 +1,5 @@
+{
+  "name": "static-text-e2e-fixture",
+  "private": true,
+  "type": "module"
+}

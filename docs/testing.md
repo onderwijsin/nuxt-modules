@@ -104,8 +104,10 @@ runtime plugins, or application build output. Use a minimal fixture that
 proves the behavior and assert what a consumer can observe.
 
 Do not add integration or end-to-end tests solely to increase coverage. The
-repository currently has focused unit tests and no integration or end-to-end
-suite yet.
+repository has focused Nuxt Test Utils fixture coverage for each publishable
+module. Keep assertions limited to runtime behavior that depends on Nuxt,
+such as registered components, auto-imports, runtime plugins, pages, and
+server handlers.
 
 ## Test locations
 
@@ -127,6 +129,12 @@ modules/<module-name>/__tests__/
 ├── integration/
 └── fixtures/
 ```
+
+The module fixtures in this repository are intentionally minimal Nuxt apps.
+Configure the module from its source entrypoint in `fixtures/<name>/nuxt.config.ts`,
+then call `setup` and `$fetch` from `@nuxt/test-utils/e2e` in the owning module's
+`e2e.test.ts`. This follows Nuxt's fixture-based E2E workflow and keeps each
+test isolated from playground-only configuration.
 
 Do not place module tests in the root test directory or in a shared package.
 Shared helpers belong in `packages/test-utils`; tests for those helpers belong
