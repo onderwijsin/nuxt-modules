@@ -16,9 +16,9 @@ pnpm changeset:status
 
 Select every affected publishable package, choose the appropriate SemVer
 impact, and write a concise release note. Commit the generated
-`.changeset/<name>.md` file with the code change. Pull request CI checks that a
-Changeset is present; documentation-only or CI-only changes may use the
-`no-changeset` label instead.
+`.changeset/<name>.md` file with the code change. Changesets posts a status
+comment on the pull request showing the release impact. Documentation-only or
+CI-only changes may use the `no-changeset` label instead.
 
 The local Changeset is input to the release process. Its summary remains the
 curated release note; the configured `@changesets/changelog-git` generator also
@@ -61,7 +61,7 @@ the publish artefact itself.
 
 | Stage    | Check                           | Purpose                                                                                                   |
 | -------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Every PR | Changeset policy                | Requires a Changeset unless the `no-changeset` label is present.                                          |
+| Every PR | Changeset status                | Posts the proposed package releases and highlights a missing Changeset without blocking the PR.           |
 | Every PR | Format, lint, typecheck, tests  | Validates source quality and behavior.                                                                    |
 | Every PR | Recursive build                 | Builds shared utilities, modules, and playgrounds.                                                        |
 | Every PR | Package metadata                | Checks public access, repository metadata, Node support, required files, and private dependency bundling. |

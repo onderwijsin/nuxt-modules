@@ -1,0 +1,35 @@
+name: Changeset status
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions: {}
+
+concurrency:
+  group: changeset-status-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      comment-body: ${{ steps.changesets.outputs.comment-body }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Generate Changeset status
+        id: changesets
+        uses: changesets/action/pr-status@v1
+
+  comment:
+    needs: status
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment Changeset status
+        uses: changesets/action/pr-comment@v1
+        with:
+          body: ${{ needs.status.outputs.comment-body }}
