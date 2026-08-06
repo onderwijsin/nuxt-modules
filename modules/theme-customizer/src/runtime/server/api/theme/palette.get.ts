@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { $fetch } from "ofetch";
+import { ofetch } from "ofetch";
 import { createError, defineEventHandler, getQuery } from "h3";
 
 const hexSchema = z.string().regex(/^#[\da-f]{6}$/i, {
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   }
 
   try {
-    return await $fetch<unknown>(
+    return await ofetch<unknown>(
       `https://colorfyi.com/api/shades/${parsedHex.data.slice(1).toUpperCase()}/`
     );
   } catch (error) {
