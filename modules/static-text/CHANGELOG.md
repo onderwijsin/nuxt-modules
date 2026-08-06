@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- 018ad25: Fix type template location and prevent type write skip in prepare mode
+
 ## 0.2.1
 
 ### Patch Changes
