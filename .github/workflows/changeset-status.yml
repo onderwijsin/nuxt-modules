@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  status:
+  changeset_status:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,8 +23,8 @@ jobs:
         id: changesets
         uses: changesets/action/pr-status@v1
 
-  comment:
-    needs: status
+  changeset_comment:
+    needs: changeset_status
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -32,4 +32,4 @@ jobs:
       - name: Comment Changeset status
         uses: changesets/action/pr-comment@v1
         with:
-          body: ${{ needs.status.outputs.comment-body }}
+          body: ${{ needs.changeset_status.outputs.comment-body }}
