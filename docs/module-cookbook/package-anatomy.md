@@ -67,3 +67,13 @@ modules/<module-name>/
 Register `./modules/<module-name>` in the consuming app's `nuxt.config.ts`. Local modules still use
 `defineNuxtModule`, `createResolver`, and Nuxt Kit utilities. Document options and runtime exports,
 but do not turn them into installable packages unless requested.
+
+## Further Reading
+
+- [Documentation and consumer skills](documentation-and-skills.md)
+- [Migrating local modules](migrating-local-modules.md)
+- [Module entrypoint and runtime registration](module-entrypoint.md)
+- [Module utilities](module-utils.md)
+- [Playground conventions](playground.md)
+- [Patterns, conventions, and gotchas](patterns-and-conventions.md)
+- [Testing modules](testing.md)

@@ -13,6 +13,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
 | `@onderwijsin/nuxt-loops-renderer`     | Nuxt module for rendering Loops parsed LMX email content.                                      |
 | `@onderwijsin/nuxt-theme-customizer`   | Runtime theme picker and custom color editor for Nuxt UI.                                      |
+| `@onderwijsin/nuxt-device`             | SSR-aware device, browser, operating-system, and crawler detection.                            |
 
 ## 🧱 Requirements
 
@@ -40,10 +41,8 @@ npx skills add onderwijsin/nuxt-modules
 To install only one skill, pass its name:
 
 ```sh
-npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
-npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
-npx skills add onderwijsin/nuxt-modules --skill nuxt-static-text
-npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
+npx skills add onderwijsin/nuxt-modules --skill "<module-name>"
+# npx skills add onderwijsin/nuxt-modules --skill nuxt-loops-renderer
 ```
 
 These skills provide module-specific guidance, API references, examples, and troubleshooting for
@@ -60,16 +59,14 @@ pnpm build
 Run the module playground during development:
 
 ```sh
-pnpm --filter @onderwijsin/nuxt-ui-form-extensions dev:playground
-pnpm --filter @onderwijsin/nuxt-static-text dev:playground
-pnpm --filter @onderwijsin/nuxt-theme-customizer dev:playground
+pnpm --filter @onderwijsin/nuxt-loops-renderer dev
 ```
 
 Run playground checks directly when iterating:
 
 ```sh
-pnpm --filter ui-form-extensions-playground typecheck
-pnpm --filter ui-form-extensions-playground build
+pnpm --filter loops-renderer-playground typecheck
+pnpm --filter loops-renderer-playground build
 ```
 
 Each module owns an isolated playground. A shared integration playground will only be introduced
@@ -94,19 +91,19 @@ tarball is the source of truth for release validation.
 
 ## 🤖 Module implementation prompt
 
-The authoritative implementation guidance is the
-[`docs/module-cookbook/`](docs/module-cookbook/package-anatomy.md). Use this prompt when asking an
-agent to create or update a module:
+Use this prompt when asking an agent to create, migrate, or update a module:
 
 ```text
-Read docs/module-cookbook/package-anatomy.md and the relevant linked cookbook
-articles as the authoritative guide for
-module layout, metadata, Nuxt registration, runtime code, shared utilities,
-playgrounds, tests, documentation, and validation. Create or update the
-module requested below using the repository's existing conventions. Inspect
-nearby implementations before introducing patterns, keep the change scoped,
-preserve compatibility unless explicitly asked otherwise, and run the
-relevant validation commands from the cookbook.
+Use the `authoring-nuxt-modules` skill for this task.
+Start with `docs/module-cookbook/package-anatomy.md` and follow only the relevant articles linked
+in its Further Reading section. Treat those resources and nearby module implementations as the
+source of truth; do not recreate their guidance here.
+
+Inspect the affected module and a comparable module before changing code. Keep the implementation
+scoped, preserve existing contracts unless the request says otherwise, and update the matching
+consumer documentation when the public API changes.
+
+Run the relevant validation from `docs/workspace.md`. Do not commit changes or generated output.
 
 Module request:
 <describe the module or change here>

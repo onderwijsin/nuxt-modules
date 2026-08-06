@@ -40,21 +40,6 @@ When multiple valid solutions exist, prefer:
 - **MUST NOT** add tests solely to meet coverage thresholds - tests should only be added for known
   risks or regression prevention
 - **MUST NOT** add global type stubs to fix TypeScript issues unless specifically requested
-- **MUST** invoke PNPM as `corepack pnpm ...` instead of plain `pnpm ...`
-- **MUST NOT** create, configure, select, or use a repository-local PNPM store, including
-  `.pnpm-store/`, `node_modules/.pnpm/`, or any other store path below the repository
-- **MUST NOT** set, unset, or override PNPM's `store-dir` through a config file, environment
-  variable, CLI flag, or `pnpm config` command
-- **MUST NOT** change global or project PNPM configuration, including the configured store path
-- **MUST NOT** run `pnpm install`, `pnpm add`, `pnpm remove`, `pnpm update`, or any command that
-  mutates `node_modules`, the PNPM store, or the lockfile unless the current task explicitly
-  requires dependency or package-manager work
-- **MUST NOT** use `--store-dir`, `store-dir=`, `PNPM_STORE_DIR`, or an equivalent override
-- **MUST** use the existing PNPM store configuration and leave dependency-linking state unchanged
-  when running checks or scripts
-- **MUST** use the project-pinned package manager via Corepack when running PNPM-related commands
-- **MUST** prefer inspection commands that do not modify dependency state when dependency changes
-  are not part of the task
 - **MUST** use Zod for boundary validation where applicable
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
 - **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's
@@ -62,16 +47,22 @@ When multiple valid solutions exist, prefer:
 
 ### Package Manager Contract
 
-- This repository is pinned to the package manager declared in `package.json`
-- Agents must invoke PNPM as `corepack pnpm ...` instead of plain `pnpm ...`
-- Agents must treat any untracked or modified `.pnpm-store/**` content as a problem to avoid, not as
-  a normal byproduct of their work
-- Agents must not add `.npmrc` settings, shell exports, or command flags that redirect the PNPM
-  store into the repository
-- If dependency work is explicitly required, agents must keep the existing lockfile and
-  `node_modules` topology stable unless the requested change genuinely requires updates
-- If PNPM store behavior is unexpected, agents must stop and report the cause instead of continuing
-  with more package-manager mutations
+- Use the exact PNPM version declared in `package.json`, invoked as `corepack pnpm ...`.
+- Agents must work in an isolated checkout or Git worktree with its own `node_modules`.
+- Never install dependencies or modify, delete, relink, or repair `node_modules` in the human
+  collaborator's primary checkout.
+- In the isolated checkout, do not reuse `node_modules` created by another environment. Remove it
+  and run:
+  ```sh
+  corepack pnpm install --frozen-lockfile
+  ```
+- Do not override PNPM's configured store or create a repository-local store such as `.pnpm-store/`.
+  `node_modules/.pnpm/` is PNPM's normal virtual store and is allowed.
+- Only run dependency-mutating commands when the task requires dependency changes. Otherwise, keep
+  `node_modules`, `pnpm-lock.yaml`, and PNPM configuration unchanged.
+- If isolation is unavailable or PNPM reports a store mismatch, stop and report it rather than
+  modifying the primary checkout.
+- In user-facing documentation, use `pnpm ...` unless Corepack itself is relevant.
 
 ### Working Principles
 
@@ -82,7 +73,6 @@ When multiple valid solutions exist, prefer:
 - Read only the documentation relevant to the files or systems you are modifying
 - Keep scope tight — avoid opportunistic refactors
 - Preserve existing route and file naming contracts unless explicitly asked to change them
-- in user facing docs, assume corepack is enabled, thus `pnpm ...` is allowed
 
 ---
 
