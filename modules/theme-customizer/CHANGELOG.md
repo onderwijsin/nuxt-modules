@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- f87eda6: Rename confirm dialog component and composable to namespaced files to prevent conflicts with consumers
+- c39e4bc: Finetune prepare and packaging scripts
+
 ## 0.2.0
 
 ### Minor Changes

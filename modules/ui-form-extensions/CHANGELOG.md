@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- c39e4bc: Finetune prepare and packaging scripts
+
 ## 0.2.0
 
 ### Minor Changes
