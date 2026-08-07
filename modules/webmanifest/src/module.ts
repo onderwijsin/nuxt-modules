@@ -47,7 +47,7 @@ export default defineNuxtModule<ModuleOptions>({
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);
     start();
-    if (nuxt.options.dev || !isEnabled()) return;
+    if (!isEnabled()) return;
 
     const validatedOptions = validateModuleOptions(
       options,

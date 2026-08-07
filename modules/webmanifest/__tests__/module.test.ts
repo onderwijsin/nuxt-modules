@@ -49,8 +49,11 @@ describe("webmanifest module", () => {
     });
   });
 
-  it("does not generate in development or when disabled", () => {
+  it("generates in development and skips when disabled", () => {
     definition.setup({ enabled: true }, createNuxt(true) as never);
+    expect(kit.addTemplate).toHaveBeenCalled();
+
+    vi.clearAllMocks();
     definition.setup({ enabled: false }, createNuxt() as never);
     expect(kit.addTemplate).not.toHaveBeenCalled();
   });

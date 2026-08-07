@@ -10,7 +10,7 @@ Generate a rich `app.webmanifest` with zero configuration for Nuxt 4 application
 
 ## Behavior
 
-- Disabled in dev mode.
+- Generates in development and production so the manifest link is available while developing.
 - Generates the manifest into build templates and exposes it as a public asset.
 - Adds `<link rel="manifest" href="/app.webmanifest">`.
 - Explicit `manifest.icons` bypasses automatic icon generation.

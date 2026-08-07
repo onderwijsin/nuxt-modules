@@ -21,13 +21,18 @@ interface GenerationOptions {
 const getSizes = (size: Size) => `${size}x${size}`;
 
 function getSource(config: IconConfig, source: string, size: Size, format: Format): string {
-  const filename = `${source}.${format}`;
+  const filename = /\.[a-z0-9]+$/i.test(source) ? source : `${source}.${format}`;
   if ((config.provider ?? "ipx") === "ipx") {
     const path = filename.startsWith("/") ? filename : `/${filename}`;
     return `/_ipx/w_${size},h_${size},c_scale${path}`;
   }
 
   return `${config.baseURL?.replace(/\/$/, "") ?? ""}/w_${size},h_${size},c_scale/${filename}`;
+}
+
+function getImageType(source: string, format: Format): string {
+  const extension = source.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  return `image/${extension ?? format}`;
 }
 
 /**
@@ -45,14 +50,14 @@ export function generatePwaIcons({ sizes, formats, config }: GenerationOptions):
       icons.push({
         src: getSource(config, config.appIcon, size, format),
         sizes: getSizes(size),
-        type: `image/${format}`,
+        type: getImageType(config.appIcon, format),
         purpose: "any"
       });
       if (config.maskableAppIcon) {
         icons.push({
           src: getSource(config, config.maskableAppIcon, size, format),
           sizes: getSizes(size),
-          type: `image/${format}`,
+          type: getImageType(config.maskableAppIcon, format),
           purpose: "maskable"
         });
       }
