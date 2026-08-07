@@ -2,6 +2,7 @@ import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { useStorage } from "nitropack/runtime";
 import { ofetch } from "ofetch";
+import { attempt } from "module-utils/shared";
 
 import type {
   HealthCheckResult,
@@ -53,21 +54,23 @@ async function runComponent(
   threshold?: HealthCheckThreshold
 ): Promise<HealthCheckResult> {
   const startedAt = performance.now();
-  try {
-    const result = await component.handler({ event });
-    const normalizedResult = result ?? {};
+  const operationResult = await attempt(async () => {
+    const handlerResult = await component.handler({ event });
+    const normalizedResult = handlerResult ?? {};
     const responseTimeMs = Math.round(performance.now() - startedAt);
     const status =
       normalizedResult.status ??
       resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
     return { ...normalizedResult, status, responseTimeMs };
-  } catch (error) {
+  });
+  if (operationResult.error !== null) {
     return {
       status: "error",
       responseTimeMs: Math.round(performance.now() - startedAt),
-      error: getErrorMessage(error)
+      error: getErrorMessage(operationResult.error)
     };
   }
+  return operationResult.data as HealthCheckResult;
 }
 
 /** Performs a write/read/delete probe against Nitro's named cache storage. */
@@ -75,16 +78,16 @@ async function checkCache(): Promise<void> {
   const storage = useStorage("cache");
   const value = { health: Date.now() };
   const key = `${CACHE_HEALTH_KEY_PREFIX}:${value.health}`;
-  try {
+  const result = await attempt(async () => {
     await storage.setItem(key, value);
     const stored = await storage.getItem<{ health?: number } | null>(key);
     if (!stored || stored.health !== value.health) {
       throw new Error("Cache storage returned an unexpected value");
     }
-  } finally {
-    // Health probes must not leave test keys behind, even when the read fails.
-    void storage.removeItem(key).catch(() => undefined);
-  }
+  });
+  // Health probes must not leave test keys behind, even when the read fails.
+  void attempt(() => storage.removeItem(key));
+  if (result.error !== null) throw result.error;
 }
 
 /**

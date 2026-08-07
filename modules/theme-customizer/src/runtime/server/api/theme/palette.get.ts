@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ofetch } from "ofetch";
 import { createError, defineEventHandler, getQuery } from "h3";
+import { attempt } from "module-utils/shared";
 
 const hexSchema = z.string().regex(/^#[\da-f]{6}$/i, {
   error: "Invalid hex color"
@@ -19,12 +20,12 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     throw createError({ statusCode: 400, statusMessage: "Invalid hex color" });
   }
 
-  try {
-    return await ofetch<unknown>(
-      `https://colorfyi.com/api/shades/${parsedHex.data.slice(1).toUpperCase()}/`
-    );
-  } catch (error) {
-    console.error("Failed to generate ColorFYI theme palette", error);
+  const result = await attempt(() =>
+    ofetch<unknown>(`https://colorfyi.com/api/shades/${parsedHex.data.slice(1).toUpperCase()}/`)
+  );
+  if (result.error !== null) {
+    console.error("Failed to generate ColorFYI theme palette", result.error);
     throw createError({ statusCode: 502, statusMessage: "Unable to generate color palette" });
   }
+  return result.data;
 });

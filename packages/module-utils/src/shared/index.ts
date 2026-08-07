@@ -1,3 +1,5 @@
+export { attempt, attemptWithRetry } from "./attempt";
+export type { AttemptResult, AttemptRetryOptions } from "./attempt";
 export {
   resolveModuleName,
   resolveLoggerScope,
