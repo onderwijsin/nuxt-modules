@@ -189,6 +189,21 @@ driver such as Redis when the application runs on multiple instances. Duplicate 
 idempotent and always return success, so the endpoint does not reveal mailing-list membership.
 Provider requests have a five-second timeout. Mailchimp uses immediate `subscribed` status.
 
+Without `nitro.storage.shield`, the rate limiter works in memory but its counters and bans reset
+when the application restarts. To persist them for a single-instance deployment, configure storage:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    storage: {
+      shield: { driver: "fs", base: "./shield" }
+    }
+  }
+});
+```
+
+Use a shared storage driver such as Redis for multiple application instances.
+
 Single-list request:
 
 ```ts
