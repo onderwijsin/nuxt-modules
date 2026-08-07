@@ -14,24 +14,37 @@ vi.mock("@nuxt/kit", () => ({
   useLogger: () => logger
 }));
 
-vi.mock("module-utils/shared", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("module-utils/shared")>()),
-  moduleSetup: (_name: string, options: { enabled?: boolean }) => ({
-    start: vi.fn(),
-    end: vi.fn(),
-    isEnabled: () => options.enabled !== false
-  }),
-  resolveLoggerScope: () => "newsletter-signup",
-  resolveModuleName: () => "@onderwijsin/nuxt-newsletter-signup",
-  transpileRuntime: (nuxt: { options: { build: { transpile: string[] } } }, path: string) => {
-    nuxt.options.build.transpile.push(path);
-  },
-  validateModuleOptions: (options: Record<string, unknown>) => ({
-    enabled: true,
-    endpoint: { enabled: true, url: "/api/newsletter/signup" },
-    ...options
-  })
-}));
+vi.mock("module-utils/shared", async (importOriginal) => {
+  const original = await importOriginal<typeof import("module-utils/shared")>();
+
+  return {
+    ...original,
+    moduleSetup: (_name: string, options: { enabled?: boolean }) => ({
+      start: vi.fn(),
+      end: vi.fn(),
+      isEnabled: () => options.enabled !== false
+    }),
+    resolveLoggerScope: () => "newsletter-signup",
+    resolveModuleName: () => "@onderwijsin/nuxt-newsletter-signup",
+    transpileRuntime: (nuxt: { options: { build: { transpile: string[] } } }, path: string) => {
+      nuxt.options.build.transpile.push(path);
+    },
+    validateModuleOptions: (
+      options: Record<string, unknown>,
+      schema: Parameters<typeof original.validateModuleOptions>[1],
+      log: Parameters<typeof original.validateModuleOptions>[2]
+    ) =>
+      original.validateModuleOptions(
+        {
+          enabled: true,
+          endpoint: { enabled: true, url: "/api/newsletter/signup" },
+          ...options
+        },
+        schema,
+        log
+      )
+  };
+});
 
 function createNuxt() {
   return {
