@@ -50,7 +50,7 @@ describe("webmanifest utilities", () => {
     });
   });
 
-  it("uses Nuxt Image Cloudinary baseURL without reading public config", () => {
+  it("uses Nuxt Image Cloudinary baseURL", () => {
     const value = nuxt({
       image: {
         provider: "cloudinary",
