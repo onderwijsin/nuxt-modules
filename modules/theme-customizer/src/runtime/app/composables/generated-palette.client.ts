@@ -28,6 +28,7 @@ const paletteResponseSchema = z.object({
  */
 export function useGeneratedPalette() {
   const appConfig = useAppConfig();
+  const colors = appConfig.ui.colors as Record<string, string>;
   const runtime = createThemeRuntimeAdapter(appConfig);
   const runtimeConfig = useRuntimeConfig();
   const generatedTokenNames = useState<Record<string, string>>(
@@ -56,7 +57,7 @@ export function useGeneratedPalette() {
         : undefined) ??
       builtInDefaultTokens[group] ??
       runtimeConfig.public.themeCustomizer.groups[group]?.[0] ??
-      appConfig.ui.colors[group] ??
+      colors[group] ??
       ""
     );
   }

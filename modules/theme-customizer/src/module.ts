@@ -190,7 +190,8 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
     extendRouteRules("/thema", {
       cache: false,
-      prerender: false
+      prerender: false,
+      ssr: false
     });
 
     nuxt.options.build.transpile.push(runtimeDir);

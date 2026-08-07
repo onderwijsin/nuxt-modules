@@ -13,10 +13,12 @@ type RuntimeColor = {
  * @returns Runtime theme operations for reading and applying CSS theme tokens.
  */
 export function createThemeRuntimeAdapter(appConfig: ThemeAppConfig) {
+  const colors = appConfig.ui.colors as Record<string, string>;
+
   function readDefaultShade(group: string, token: string, shade: number) {
     if (!import.meta.client) return "#ffffff";
 
-    const activeToken = token || appConfig.ui.colors[group] || appConfig.ui.colors.primary;
+    const activeToken = token || colors[group] || colors.primary;
     const value = getComputedStyle(document.documentElement)
       .getPropertyValue(`--color-${activeToken}-${shade}`)
       .trim();
@@ -73,7 +75,7 @@ export function createThemeRuntimeAdapter(appConfig: ThemeAppConfig) {
 
   function setActiveColor(group: string, token: string) {
     if (!token) return;
-    appConfig.ui.colors[group] = token;
+    colors[group] = token;
     applyGroupColor(group, token);
   }
 
