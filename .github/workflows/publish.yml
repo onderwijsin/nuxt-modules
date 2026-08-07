@@ -80,4 +80,4 @@ jobs:
       releases: ${{ needs.publish.outputs.releases }}
     secrets:
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+      SLACK_DEPLOYMENTS_CHANNEL_ID: ${{ secrets.SLACK_DEPLOYMENTS_CHANNEL_ID }}
