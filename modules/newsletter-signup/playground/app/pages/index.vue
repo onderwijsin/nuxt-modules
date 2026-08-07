@@ -4,7 +4,7 @@ import * as z from "zod";
 
 const config = useRuntimeConfig();
 const toast = useToast();
-const { signup, handleSignupError, isAlreadyExistsError } = useNewsletterSignup();
+const { signup, handleSignupError } = useNewsletterSignup();
 
 const schema = z.object({
   email: z.email("Vul een geldig e-mailadres in."),
@@ -52,7 +52,6 @@ async function submit(event: FormSubmitEvent<SignupForm>) {
     });
   } catch (error: unknown) {
     handleSignupError(error);
-    if (isAlreadyExistsError(error)) submitted.value = false;
   } finally {
     loading.value = false;
   }

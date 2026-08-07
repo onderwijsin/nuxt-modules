@@ -23,7 +23,6 @@ Options are configured under `device`:
 | ------------------ | --------- | --------------- | --------------------------------------------------------------------------------- |
 | `enabled`          | `boolean` | `true`          | Disables module setup when `false`.                                               |
 | `defaultUserAgent` | `string`  | Chrome on macOS | User agent used when no request header is available, such as during prerendering. |
-| `refreshOnResize`  | `boolean` | `false`         | Recalculates client flags after a window resize.                                  |
 
 ## Use device flags
 

@@ -35,6 +35,7 @@ describe("newsletter provider adapters", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("https://app.loops.so/api/v1/contacts/update", {
       method: "PUT",
+      timeout: 5000,
       headers: { Authorization: "Bearer loops-key" },
       body: {
         email: "ada@example.com",
@@ -47,15 +48,11 @@ describe("newsletter provider adapters", () => {
     });
   });
 
-  it("maps a Loops conflict to the already-subscribed error", async () => {
+  it("treats an existing Loops subscription as successful", async () => {
     fetchMock.mockRejectedValue(Object.assign(new Error("conflict"), { status: 409 }));
 
-    await expect(subscribeToLoops(input, "loops-list", loopsConfig)).rejects.toMatchObject({
-      statusCode: 429,
-      data: {
-        code: NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists,
-        httpStatusCode: 429
-      }
+    await expect(subscribeToLoops(input, "loops-list", loopsConfig)).resolves.toEqual({
+      success: true
     });
   });
 
@@ -106,6 +103,7 @@ describe("newsletter provider adapters", () => {
       "https://us5.api.mailchimp.com/3.0/lists/audience-b/members",
       {
         method: "POST",
+        timeout: 5000,
         headers: {
           Authorization: "apikey mailchimp-key",
           "Content-Type": "application/json"
@@ -124,7 +122,7 @@ describe("newsletter provider adapters", () => {
     );
   });
 
-  it("maps Mailchimp member-exists responses to the already-subscribed error", async () => {
+  it("treats an existing Mailchimp subscription as successful", async () => {
     fetchMock.mockRejectedValue(
       Object.assign(new Error("member exists"), {
         status: 400,
@@ -134,12 +132,8 @@ describe("newsletter provider adapters", () => {
 
     await expect(
       subscribeToMailchimp(input, "audience-a", "us4", mailchimpConfig)
-    ).rejects.toMatchObject({
-      statusCode: 429,
-      data: {
-        code: NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists,
-        httpStatusCode: 429
-      }
+    ).resolves.toEqual({
+      success: true
     });
   });
 

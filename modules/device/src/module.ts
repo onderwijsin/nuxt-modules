@@ -25,8 +25,7 @@ const DEFAULT_USER_AGENT =
 
 const DEFAULTS = {
   enabled: true,
-  defaultUserAgent: DEFAULT_USER_AGENT,
-  refreshOnResize: false
+  defaultUserAgent: DEFAULT_USER_AGENT
 } satisfies Required<ModuleOptions>;
 
 /** Registers request-aware device detection and the generated crawler matcher. */

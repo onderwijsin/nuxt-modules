@@ -27,14 +27,12 @@ Configure it under `device` when needed:
 ```ts
 export default defineNuxtConfig({
   device: {
-    defaultUserAgent: "Mozilla/5.0 (compatible; prerender)",
-    refreshOnResize: true
+    defaultUserAgent: "Mozilla/5.0 (compatible; prerender)"
   }
 });
 ```
 
 `enabled` defaults to `true`, `defaultUserAgent` is used when no request user agent exists, and
-`refreshOnResize` defaults to `false`.
 
 ## Use the composable
 

@@ -1,7 +1,4 @@
 export default defineNuxtConfig({
   compatibilityDate: "2026-08-07",
-  modules: ["@onderwijsin/nuxt-device"],
-  device: {
-    refreshOnResize: true
-  }
+  modules: ["@onderwijsin/nuxt-device"]
 });

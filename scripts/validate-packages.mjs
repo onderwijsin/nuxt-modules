@@ -2,11 +2,19 @@
  * @fileoverview Validates publishable package metadata and private dependency bundling.
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const failures = [];
+
+function findOutputFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return findOutputFiles(path);
+    return /\.(?:[cm]?js|[cm]?ts)$/u.test(entry.name) && statSync(path).isFile() ? [path] : [];
+  });
+}
 
 for (const entry of readdirSync(join(root, "modules"), { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
@@ -35,11 +43,14 @@ for (const entry of readdirSync(join(root, "modules"), { withFileTypes: true }))
     if (privatePackage in runtimeDependencies)
       failures.push(`${name}: private ${privatePackage} must not be a runtime dependency`);
   }
-  if (existsSync(join(directory, "dist/module.mjs"))) {
-    const output = readFileSync(join(directory, "dist/module.mjs"), "utf8");
-    for (const privatePackage of ["module-utils", "test-utils"]) {
-      if (new RegExp(`from\\s+["']${privatePackage}["']`).test(output))
-        failures.push(`${name}: dist/module.mjs leaks ${privatePackage}`);
+  const distDirectory = join(directory, "dist");
+  if (existsSync(distDirectory)) {
+    for (const file of findOutputFiles(distDirectory)) {
+      const output = readFileSync(file, "utf8");
+      for (const privatePackage of ["module-utils", "test-utils"]) {
+        if (new RegExp(`from\\s+["']${privatePackage}["']`).test(output))
+          failures.push(`${name}: ${file.slice(directory.length + 1)} leaks ${privatePackage}`);
+      }
     }
   }
 }

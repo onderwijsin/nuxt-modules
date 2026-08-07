@@ -17,7 +17,10 @@ import fs from "node:fs";
 function getInput(name, required = false) {
   const normalizedName = `INPUT_${name.replaceAll("-", "_").toUpperCase()}`;
   const githubName = `INPUT_${name.toUpperCase()}`;
-  const value = process.env[normalizedName]?.trim() ?? process.env[githubName]?.trim() ?? "";
+  const value =
+    [process.env[normalizedName], process.env[githubName]]
+      .map((input) => input?.trim())
+      .find(Boolean) ?? "";
   if (required && !value) throw new Error(`Input "${name}" is required.`);
   return value;
 }
@@ -154,7 +157,10 @@ function buildPayload(releases, channelId, actor, repository, runUrl, prefixRepo
 function main() {
   try {
     const releasesInput = getInput("releases", true);
-    const channelId = getInput("channel-id", true);
+    const channelId =
+      getInput("channel-id") ||
+      process.env.SLACK_CHANNEL_ID?.trim() ||
+      getInput("channel-id", true);
     const payloadFilePath = getInput("payload-file-path", true);
     const repository = process.env.GITHUB_REPOSITORY;
     const actor = process.env.GITHUB_ACTOR;

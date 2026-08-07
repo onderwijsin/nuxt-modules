@@ -10,7 +10,7 @@ import type {
   HealthStatus,
   HealthcheckComponentDefinition,
   SystemHealthResponse
-} from "../../../types/health";
+} from "../../types/health";
 
 const CACHE_HEALTH_KEY_PREFIX = "healthcheck:system";
 
@@ -21,7 +21,8 @@ const CACHE_HEALTH_KEY_PREFIX = "healthcheck:system";
  * @returns A safe error message for the health response.
  */
 function getErrorMessage(error: unknown): string {
-  return error instanceof Error && error.message ? error.message : "Unknown error";
+  console.error("Healthcheck component failed", error);
+  return "Health check failed";
 }
 
 /**
@@ -46,22 +47,39 @@ function resolveThresholdStatus(
  * @param component - Component definition to execute.
  * @param event - Nitro request event passed to the component handler.
  * @param threshold - Module-level threshold overriding the component default.
+ * @param timeoutMs - Maximum time allotted to the component handler.
  * @returns A normalized component result with status and response time.
  */
 async function runComponent(
   component: HealthcheckComponentDefinition,
   event: H3Event,
-  threshold?: HealthCheckThreshold
+  threshold: HealthCheckThreshold | undefined,
+  timeoutMs: number
 ): Promise<HealthCheckResult> {
   const startedAt = performance.now();
   const operationResult = await attempt(async () => {
-    const handlerResult = await component.handler({ event });
-    const normalizedResult = handlerResult ?? {};
-    const responseTimeMs = Math.round(performance.now() - startedAt);
-    const status =
-      normalizedResult.status ??
-      resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
-    return { ...normalizedResult, status, responseTimeMs };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const handlerResult = await Promise.race([
+        component.handler({ event, signal: controller.signal }),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener(
+            "abort",
+            () => reject(new Error("Health check timed out")),
+            { once: true }
+          );
+        })
+      ]);
+      const normalizedResult = handlerResult ?? {};
+      const responseTimeMs = Math.round(performance.now() - startedAt);
+      const status =
+        normalizedResult.status ??
+        resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
+      return { ...normalizedResult, status, responseTimeMs };
+    } finally {
+      clearTimeout(timeout);
+    }
   });
   if (operationResult.error !== null || !operationResult.data) {
     return {
@@ -85,8 +103,7 @@ async function checkCache(): Promise<void> {
       throw new Error("Cache storage returned an unexpected value");
     }
   });
-  // Health probes must not leave test keys behind, even when the read fails.
-  void attempt(() => storage.removeItem(key));
+  await storage.removeItem(key);
   if (result.error !== null) throw result.error;
 }
 
@@ -144,11 +161,18 @@ export async function getSystemHealth(
 ): Promise<SystemHealthResponse> {
   const config = useRuntimeConfig(event).healthcheck;
   const definitions = new Map<string, HealthcheckComponentDefinition>();
-  if (config.cache?.enabled) definitions.set("cache", { handler: checkCache });
+  if (config.cache?.enabled)
+    definitions.set("cache", { handler: checkCache, timeoutMs: config.cache.timeoutMs });
   if (config.cloudinary?.enabled)
-    definitions.set("cloudinary", { handler: ({ event }) => checkCloudinary(event) });
+    definitions.set("cloudinary", {
+      handler: ({ event }) => checkCloudinary(event),
+      timeoutMs: config.cloudinary.timeoutMs
+    });
   if (config.directus?.enabled)
-    definitions.set("directus", { handler: ({ event }) => checkDirectus(event) });
+    definitions.set("directus", {
+      handler: ({ event }) => checkDirectus(event),
+      timeoutMs: config.directus.timeoutMs
+    });
   for (const [name, component] of customComponents) {
     definitions.set(name, component);
   }
@@ -164,7 +188,10 @@ export async function getSystemHealth(
             : name === "directus"
               ? config.directus?.threshold
               : undefined;
-      return [name, await runComponent(component, event, threshold)] as const;
+      return [
+        name,
+        await runComponent(component, event, threshold, component.timeoutMs ?? config.timeoutMs)
+      ] as const;
     })
   );
   const components = fromEntries(entries);

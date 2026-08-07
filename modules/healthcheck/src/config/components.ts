@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { basename, extname, join, relative, resolve } from "node:path";
 
 const COMPONENT_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".mts"]);
@@ -58,20 +58,6 @@ export function discoverHealthcheckComponents(directory: string): DiscoveredComp
       );
     }
     names.set(component.name, component.path);
-
-    const source = readFileSync(component.path, "utf8");
-    if (!/export\s+default\s+defineHealthcheckComponent\s*\(/u.test(source)) {
-      throw new Error(
-        `Invalid healthcheck component "${relative(directory, component.path)}". ` +
-          "It must default-export defineHealthcheckComponent({ handler })."
-      );
-    }
-    if (!/defineHealthcheckComponent\s*\(\s*\{[\s\S]*?\bhandler\s*(?::|,)/u.test(source)) {
-      throw new Error(
-        `Invalid healthcheck component "${relative(directory, component.path)}". ` +
-          "Its defineHealthcheckComponent object must include a handler."
-      );
-    }
   }
 
   return components;

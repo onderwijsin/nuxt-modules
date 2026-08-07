@@ -1,16 +1,10 @@
 import turnstileModule from "../../../src/module";
-import { fileURLToPath } from "node:url";
 
 export default defineNuxtConfig({
-  alias: {
-    "@nuxtjs/turnstile/runtime/server/utils/verify.js": fileURLToPath(
-      new URL("./server/fixture-verify.ts", import.meta.url)
-    )
-  },
   modules: [turnstileModule],
   turnstile: {
     siteKey: "fixture-site-key",
-    secretKey: "fixture-secret-key",
+    secretKey: "",
     adminToken: "fixture-admin-token",
     adminHeaderName: "x-fixture-admin"
   }

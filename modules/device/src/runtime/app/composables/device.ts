@@ -134,13 +134,12 @@ function patchDevice(target: Device, next: Device): void {
  * Resolves and caches device/browser capability flags for the current request/client.
  *
  * On server, flags are derived from request headers. On client, flags are derived
- * from `navigator.userAgent` and optionally refreshed on resize.
+ * from `navigator.userAgent`.
  *
  * @returns Reactive device flag object.
  */
 export function useDevice(): Device {
   const _device = useState<Device | null>("device_flags", () => null);
-  const _hasListener = useState<boolean>("device_flags_resize_listener", () => false);
 
   const runtimeConfig = useRuntimeConfig();
   const defaultUserAgent = runtimeConfig.public.device.defaultUserAgent;
@@ -171,17 +170,6 @@ export function useDevice(): Device {
 
   const flags = reactive(generateFlags(ua.value, headers.value));
   _device.value = flags;
-
-  // Optional: refresh on resize (client)
-  if (import.meta.client && runtimeConfig.public.device.refreshOnResize && !_hasListener.value) {
-    _hasListener.value = true;
-    window.addEventListener("resize", () => {
-      window.setTimeout(() => {
-        const next = generateFlags(navigator.userAgent ?? defaultUserAgent, {});
-        patchDevice(flags, next);
-      }, 50);
-    });
-  }
 
   return flags;
 }

@@ -1,0 +1,5 @@
+{
+  "name": "turnstile-production-e2e-fixture",
+  "private": true,
+  "type": "module"
+}

@@ -45,7 +45,7 @@ describe("webmanifest utilities", () => {
   it("generates IPX icons when Nuxt Image uses the IPX provider", () => {
     const manifest = generateWebManifest(baseOptions, nuxt() as never);
     expect(manifest.icons?.[0]).toMatchObject({
-      src: "/_ipx/w_16,h_16,c_scale/icons/app.png",
+      src: "/_ipx/f_png,w_16,h_16,c_scale/icons/app",
       type: "image/png"
     });
   });
@@ -58,7 +58,7 @@ describe("webmanifest utilities", () => {
       }
     });
     expect(generateWebManifest(baseOptions, value as never).icons?.[0]?.src).toContain(
-      "https://res.cloudinary.com/demo/image/upload/w_16,h_16,c_scale/icons/app.png"
+      "https://res.cloudinary.com/demo/image/upload/f_png,w_16,h_16,c_scale/icons/app"
     );
   });
 
@@ -129,5 +129,18 @@ describe("webmanifest utilities", () => {
     });
     expect(icons).toHaveLength(2);
     expect(icons[1]?.purpose).toBe("maskable");
+  });
+
+  it("requests the requested output format even for sources with extensions", () => {
+    const icons = generatePwaIcons({
+      sizes: [192],
+      formats: ["png"],
+      config: { provider: "ipx", appIcon: "/icons/logo.svg" }
+    });
+
+    expect(icons[0]).toMatchObject({
+      src: "/_ipx/f_png,w_192,h_192,c_scale/icons/logo.svg",
+      type: "image/png"
+    });
   });
 });

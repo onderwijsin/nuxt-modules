@@ -56,6 +56,9 @@ export function useDraftForm<TDraft extends object, TSubmission>(
    * @returns Nothing.
    */
   function replaceState(nextState: TDraft): void {
+    for (const key of Object.keys(state)) {
+      if (!Object.hasOwn(nextState, key)) delete (state as Record<string, unknown>)[key];
+    }
     Object.assign(state, copyDraft(nextState));
     initialState.value = copyDraft(state);
   }
@@ -112,6 +115,13 @@ function toRawDeep<T>(value: T): T {
  */
 function isDraftEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) return true;
+  if (left instanceof Date && right instanceof Date) return left.getTime() === right.getTime();
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return (
+      left.length === right.length &&
+      left.every((value, index) => isDraftEqual(value, right[index]))
+    );
+  }
   if (!isPlainObject(left) || !isPlainObject(right)) return false;
 
   const leftKeys = Object.keys(left);

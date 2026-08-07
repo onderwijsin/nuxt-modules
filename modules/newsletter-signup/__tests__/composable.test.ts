@@ -33,33 +33,26 @@ describe("useNewsletterSignup", () => {
     });
   });
 
-  it("extracts normalized errors and identifies duplicate signups", () => {
-    const { getErrorCode, isAlreadyExistsError } = useNewsletterSignup();
+  it("extracts normalized public errors", () => {
+    const { getErrorCode } = useNewsletterSignup();
     const error = {
       data: {
         data: {
-          code: ERROR_CODES.alreadyExists,
-          httpStatusCode: 429
+          code: ERROR_CODES.invalidInput,
+          httpStatusCode: 400
         }
       }
     };
 
-    expect(getErrorCode(error)).toBe(ERROR_CODES.alreadyExists);
-    expect(isAlreadyExistsError(error)).toBe(true);
+    expect(getErrorCode(error)).toBe(ERROR_CODES.invalidInput);
     expect(getErrorCode({ data: { code: "unknown" } })).toBeUndefined();
     expect(getErrorCode(undefined)).toBeUndefined();
   });
 
-  it("shows the Dutch duplicate, invalid-input, and general error toasts", () => {
+  it("shows Dutch invalid-input and general error toasts", () => {
     const { handleSignupError } = useNewsletterSignup();
     const createError = (code: string, httpStatusCode: number) => ({
       data: { code, httpStatusCode }
-    });
-
-    expect(handleSignupError(createError(ERROR_CODES.alreadyExists, 429))).toBe(true);
-    expect(toastAdd).toHaveBeenLastCalledWith({
-      title: "Je bent al ingeschreven",
-      color: "warning"
     });
 
     expect(handleSignupError(createError(ERROR_CODES.invalidInput, 400))).toBe(true);

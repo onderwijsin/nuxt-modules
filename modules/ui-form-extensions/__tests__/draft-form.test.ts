@@ -6,6 +6,9 @@ import { useDraftForm } from "../src/runtime/app/composables/draft-form";
 interface ProfileDraft {
   name: string;
   address: { city: string };
+  tags?: string[];
+  birthday?: Date;
+  company?: string;
 }
 
 function createForm(source: Ref<ProfileDraft>) {
@@ -41,6 +44,34 @@ describe("useDraftForm", () => {
 
     expect(form.state).toEqual(source.value);
     expect(form.isDirty.value).toBe(false);
+  });
+
+  it("starts clean and remains comparable with arrays and dates", () => {
+    const source = ref<ProfileDraft>({
+      name: "Ada",
+      address: { city: "London" },
+      tags: ["math", "code"],
+      birthday: new Date("1815-12-10T00:00:00.000Z")
+    });
+    const form = createForm(source);
+
+    expect(form.isDirty.value).toBe(false);
+    form.state.tags?.push("science");
+    expect(form.isDirty.value).toBe(true);
+  });
+
+  it("removes draft properties no longer present in the canonical source", async () => {
+    const source = ref<ProfileDraft>({
+      name: "Ada",
+      address: { city: "London" },
+      company: "Analytical Engines"
+    });
+    const form = createForm(source);
+
+    source.value = { name: "Ada", address: { city: "London" } };
+    await nextTick();
+
+    expect(form.state).not.toHaveProperty("company");
   });
 
   it("does not overwrite a dirty draft when the source changes", async () => {

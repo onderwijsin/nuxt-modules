@@ -18,11 +18,13 @@ export interface HealthCheckResult extends HealthcheckComponentResult {
 
 export interface HealthcheckComponentContext {
   event: import("h3").H3Event;
+  signal: AbortSignal;
 }
 
 export interface HealthcheckComponentDefinition {
   handler: (context: HealthcheckComponentContext) => Promise<HealthcheckComponentResult | void>;
   threshold?: HealthCheckThreshold;
+  timeoutMs?: number;
 }
 
 export interface SystemHealthResponse {

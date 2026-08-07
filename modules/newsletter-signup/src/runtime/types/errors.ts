@@ -2,24 +2,21 @@ import { z } from "zod";
 
 /** Stable error categories returned by the signup endpoint. */
 export const NEWSLETTER_SIGNUP_ERROR_CODES: {
-  readonly alreadyExists: "NEWSLETTER_SIGNUP_ALREADY_EXISTS";
   readonly invalidInput: "NEWSLETTER_SIGNUP_INVALID_INPUT";
   readonly server: "NEWSLETTER_SIGNUP_SERVER_ERROR";
   readonly configuration: "NEWSLETTER_SIGNUP_CONFIGURATION_ERROR";
   readonly provider: "NEWSLETTER_SIGNUP_PROVIDER_ERROR";
 } = {
-  alreadyExists: "NEWSLETTER_SIGNUP_ALREADY_EXISTS",
   invalidInput: "NEWSLETTER_SIGNUP_INVALID_INPUT",
   server: "NEWSLETTER_SIGNUP_SERVER_ERROR",
   configuration: "NEWSLETTER_SIGNUP_CONFIGURATION_ERROR",
   provider: "NEWSLETTER_SIGNUP_PROVIDER_ERROR"
 };
 
-/** Short public alias for consumers that prefer `ERROR_CODES.alreadyExists`. */
+/** Short public alias for consumers that prefer `ERROR_CODES.invalidInput`. */
 export const ERROR_CODES = NEWSLETTER_SIGNUP_ERROR_CODES;
 
 export const newsletterSignupErrorCodeSchema = z.enum([
-  "NEWSLETTER_SIGNUP_ALREADY_EXISTS",
   "NEWSLETTER_SIGNUP_INVALID_INPUT",
   "NEWSLETTER_SIGNUP_SERVER_ERROR",
   "NEWSLETTER_SIGNUP_CONFIGURATION_ERROR",

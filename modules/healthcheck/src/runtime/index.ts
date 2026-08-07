@@ -1,4 +1,4 @@
-import type { HealthcheckComponentDefinition } from "../types/health";
+import type { HealthcheckComponentDefinition } from "./types/health";
 
 /**
  * Defines a server-side healthcheck component for `server/healthcheck/**`.
@@ -49,7 +49,14 @@ export function normalizeHealthcheckComponent(
     }
   }
 
+  if (
+    candidate.timeoutMs !== undefined &&
+    (!Number.isInteger(candidate.timeoutMs) || candidate.timeoutMs <= 0)
+  ) {
+    throw new Error(`Healthcheck component "${name}" in ${source} has an invalid timeoutMs.`);
+  }
+
   return candidate as HealthcheckComponentDefinition;
 }
 
-export type { HealthcheckComponentDefinition, HealthcheckComponentResult } from "../types/health";
+export type { HealthcheckComponentDefinition, HealthcheckComponentResult } from "./types/health";

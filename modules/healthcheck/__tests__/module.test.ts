@@ -22,6 +22,7 @@ vi.mock("module-utils/shared", async (importOriginal) => ({
     if (options.directus?.baseUrl === "not-a-url") throw new Error("Invalid module options");
     return {
       enabled: true,
+      timeoutMs: 5000,
       cache: { enabled: true },
       cloudinary: { enabled: false },
       directus: { enabled: false },
@@ -65,6 +66,7 @@ describe("healthcheck module setup", () => {
 
     expect(nuxt.options.runtimeConfig.healthcheck).toEqual({
       enabled: true,
+      timeoutMs: 5000,
       cache: { enabled: true },
       cloudinary: { enabled: false },
       directus: { enabled: true, baseUrl: "https://directus.example.com" }

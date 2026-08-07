@@ -59,13 +59,12 @@ describe("device module setup contract", () => {
       }
     };
 
-    deviceModule.setup({ enabled: true, refreshOnResize: true }, nuxt);
+    deviceModule.setup({ enabled: true }, nuxt);
 
     expect(nuxt.options.runtimeConfig.public.device).toEqual({
       enabled: true,
       defaultUserAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36",
-      refreshOnResize: true
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36"
     });
     expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
     expect(addImportsDir).toHaveBeenCalledWith("./runtime/app/composables");
