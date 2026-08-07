@@ -11,13 +11,14 @@ function selectProvider(provider: NewsletterProvider): NewsletterProvider {
   return provider;
 }
 
-const SELECTED_PROVIDER = selectProvider("mailchimp");
+const SELECTED_PROVIDER = selectProvider("loops");
 
-const loopsListId = process.env.LOOPS_LIST_ID!;
-const loopsApiKey = process.env.LOOPS_API_KEY!;
-const mailchimpListId = process.env.MAILCHIMP_AUDIENCE_ID!;
-const mailchimpApiKey = process.env.MAILCHIMP_API_KEY!;
-const mailchimpServer = process.env.MAILCHIMP_SERVER!;
+// The fallback values are mainly there for CI (otherwise module options validation fails)
+const loopsListId = process.env.LOOPS_LIST_ID ?? "loops-list-id";
+const loopsApiKey = process.env.LOOPS_API_KEY ?? "loops-api-key";
+const mailchimpListId = process.env.MAILCHIMP_AUDIENCE_ID ?? "mailchimp-audience-id";
+const mailchimpApiKey = process.env.MAILCHIMP_API_KEY ?? "mailchimp-api-key";
+const mailchimpServer = process.env.MAILCHIMP_SERVER ?? "mailchimp-server";
 
 const loopsConfig = {
   provider: "loops",
