@@ -1,6 +1,7 @@
 import type { H3Event } from "h3";
 import { createError, getRequestHeader } from "h3";
-import { useRuntimeConfig, verifyTurnstileToken } from "#imports";
+import { useRuntimeConfig } from "#imports";
+import { verifyTurnstileToken } from "@nuxtjs/turnstile/runtime/server/utils/verify.js";
 import { isAdmin } from "module-utils";
 import type { TurnstileErrorCode, TurnstileErrorData } from "../../types/errors";
 import { TURNSTILE_TOKEN_HEADER } from "../../constants";
