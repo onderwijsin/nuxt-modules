@@ -10,7 +10,7 @@ import type {
 import defu from "defu";
 
 import type { WebManifest, WebManifestShortcut } from "../types/manifest";
-import type { ResolvedModuleOptions } from "../types/options";
+import type { ModuleOptions } from "../types/options";
 import { generatePwaIcons } from "./generate-icons";
 
 type SchemaIdentity =
@@ -63,10 +63,7 @@ function getStrings(value: unknown, key: string): string[] | undefined {
  * @param nuxt - The current Nuxt configuration.
  * @returns The resolved icon configuration and user-facing warnings.
  */
-export function resolveIconConfig(
-  options: ResolvedModuleOptions,
-  nuxt: Nuxt
-): IconConfigResolution {
+export function resolveIconConfig(options: ModuleOptions, nuxt: Nuxt): IconConfigResolution {
   const imageOptions = nuxt.options as typeof nuxt.options & {
     image?: { provider?: string; cloudinary?: { baseURL?: string } };
   };
@@ -132,7 +129,7 @@ export function resolveIconConfig(
  * @returns The generated web app manifest.
  */
 export function generateWebManifest(
-  options: ResolvedModuleOptions,
+  options: ModuleOptions,
   nuxt: Nuxt,
   iconResolution: IconConfigResolution = resolveIconConfig(options, nuxt)
 ): WebManifest {
@@ -179,5 +176,5 @@ export function generateWebManifest(
     start_url: `${appUrl}?source=pwa`,
     scope: appUrl,
     lang: nuxt.options.app.head?.htmlAttrs?.lang ?? site?.currentLocale ?? site?.defaultLocale
-  });
+  }) as WebManifest;
 }

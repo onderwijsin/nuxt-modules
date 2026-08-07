@@ -1,9 +1,15 @@
 import { addTemplate, defineNuxtModule, useLogger } from "@nuxt/kit";
 import { defu } from "defu";
 import { join } from "pathe";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  validateModuleOptions
+} from "module-utils";
 
-import type { ModuleOptions, ResolvedModuleOptions } from "./types/options";
+import { moduleOptionsShape } from "./config/options.schema";
+import type { ModuleOptions } from "./types/options";
 import { generateWebManifest, resolveIconConfig } from "./utils";
 
 const MODULE_KEY = "webmanifest";
@@ -22,7 +28,7 @@ const DEFAULTS = {
     orientation: "portrait",
     display: "standalone"
   }
-} satisfies ResolvedModuleOptions;
+} satisfies ModuleOptions;
 
 /** Registers the generated web app manifest and its public asset. */
 export default defineNuxtModule<ModuleOptions>({
@@ -33,9 +39,9 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: DEFAULTS,
   moduleDependencies: {
-    "@nuxt/image": { version: "2.1.0" },
-    "nuxt-site-config": { version: "4.2.0" },
-    "nuxt-schema-org": { version: "6.2.8" }
+    "@nuxt/image": { version: ">=2.0.0" },
+    "nuxt-site-config": { version: ">=4.0.0" },
+    "nuxt-schema-org": { version: ">=6.0.0" }
   },
   setup(options, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
@@ -43,13 +49,17 @@ export default defineNuxtModule<ModuleOptions>({
     start();
     if (nuxt.options.dev || !isEnabled()) return;
 
-    const resolvedOptions = options as ResolvedModuleOptions;
-    const iconResolution = resolvedOptions.manifest?.icons
+    const validatedOptions = validateModuleOptions(
+      options,
+      moduleOptionsShape,
+      log
+    ) as ModuleOptions;
+    const iconResolution = validatedOptions.manifest?.icons
       ? { warnings: [] }
-      : resolveIconConfig(resolvedOptions, nuxt);
+      : resolveIconConfig(validatedOptions, nuxt);
     for (const warning of iconResolution.warnings) log.warn(warning);
 
-    const manifest = generateWebManifest(resolvedOptions, nuxt, iconResolution);
+    const manifest = generateWebManifest(validatedOptions, nuxt, iconResolution);
     addTemplate({
       filename: "templates/webmanifest/app.webmanifest",
       getContents: () => JSON.stringify(manifest, null, 2),
@@ -64,7 +74,7 @@ export default defineNuxtModule<ModuleOptions>({
     });
     nuxt.options.app = defu(nuxt.options.app, {
       head: { link: [{ rel: "manifest", href: "/app.webmanifest" }] }
-    });
+    }) as typeof nuxt.options.app;
     end();
   }
 });

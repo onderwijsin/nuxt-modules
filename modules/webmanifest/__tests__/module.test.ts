@@ -43,9 +43,9 @@ describe("webmanifest module", () => {
       compatibility: { nuxt: "^4.0.0" }
     });
     expect(definition.moduleDependencies).toEqual({
-      "@nuxt/image": { version: "2.1.0" },
-      "nuxt-site-config": { version: "4.2.0" },
-      "nuxt-schema-org": { version: "6.2.8" }
+      "@nuxt/image": { version: ">=2.0.0" },
+      "nuxt-site-config": { version: ">=4.0.0" },
+      "nuxt-schema-org": { version: ">=6.0.0" }
     });
   });
 

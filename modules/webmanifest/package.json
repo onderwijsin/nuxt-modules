@@ -41,7 +41,8 @@
     "defu": "catalog:",
     "nuxt-schema-org": "catalog:",
     "nuxt-site-config": "catalog:",
-    "pathe": "catalog:"
+    "pathe": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",

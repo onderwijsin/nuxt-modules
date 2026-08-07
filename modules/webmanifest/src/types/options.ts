@@ -16,7 +16,3 @@ export interface ModuleOptions {
   /** Manifest values. Explicit icons disable automatic icon generation. */
   manifest?: WebManifest;
 }
-
-export type ResolvedModuleOptions = Omit<Required<ModuleOptions>, "icons"> & {
-  icons?: NonNullable<ModuleOptions["icons"]>;
-};
