@@ -7,8 +7,10 @@ import {
   addTemplate,
   addTypeTemplate,
   createResolver,
-  defineNuxtModule
+  defineNuxtModule,
+  useLogger
 } from "@nuxt/kit";
+import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
 import { z } from "zod";
 
 import optionsSchema from "./config/options.schema";
@@ -16,10 +18,11 @@ import { version } from "../package.json";
 
 export type { TextDictionary, TextKey, TextTranslator } from "./types/dictionary";
 
-const MODULE_NAME = "@onderwijsin/nuxt-static-text";
 const MODULE_KEY = "staticText";
+const MODULE_NAME = resolveModuleName(MODULE_KEY);
 
 const DEFAULTS = {
+  enabled: true,
   content: "assets/ui/content"
 } satisfies ModuleOptions;
 
@@ -43,6 +46,11 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: DEFAULTS,
   setup(options, nuxt) {
+    const log = useLogger(resolveLoggerScope(MODULE_KEY));
+    const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);
+
+    start();
+
     const result = moduleOptionsSchema.safeParse(options);
 
     if (!result.success) {
@@ -54,6 +62,14 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
     const runtimeAppDir = resolver.resolve(runtimeDir, "app");
+
+    addTypeTemplate({
+      filename: "types/static-text.d.ts",
+      src: resolver.resolve(runtimeDir, "types/static-text.d.ts")
+    });
+
+    if (!isEnabled()) return;
+
     const contentPath = resolve(
       nuxt.options.srcDir,
       normalizeContentPath(result.data.content ?? DEFAULTS.content)
@@ -72,9 +88,6 @@ export default defineNuxtModule<ModuleOptions>({
       from: resolver.resolve(runtimeAppDir, "composables/text")
     });
     addPlugin(resolver.resolve(runtimeAppDir, "plugins/text"));
-    addTypeTemplate({
-      filename: "types/static-text.d.ts",
-      src: resolver.resolve(runtimeDir, "types/static-text.d.ts")
-    });
+    end();
   }
 });

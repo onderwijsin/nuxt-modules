@@ -1,0 +1,16 @@
+{
+  "name": "turnstile-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/ui": "catalog:",
+    "@nuxtjs/turnstile": "catalog:",
+    "@onderwijsin/nuxt-turnstile": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}

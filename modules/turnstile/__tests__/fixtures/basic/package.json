@@ -1,0 +1,5 @@
+{
+  "name": "turnstile-e2e-fixture",
+  "private": true,
+  "type": "module"
+}

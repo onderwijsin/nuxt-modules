@@ -1,5 +1,5 @@
 import { addComponentsDir, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils";
+import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types";

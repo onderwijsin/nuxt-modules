@@ -6,7 +6,15 @@ import {
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
-} from "../src/index";
+} from "../src/shared/index";
+import { hasMatchingRequestToken, isAdmin } from "../src/server/index";
+
+vi.mock("h3", () => ({
+  getRequestHeader: (
+    event: { node?: { req?: { headers?: Record<string, string> } } },
+    name: string
+  ) => event.node?.req?.headers?.[name.toLowerCase()]
+}));
 
 describe("module naming helpers", () => {
   it("resolves a config key to the repository module name", () => {
@@ -22,6 +30,28 @@ describe("isPrepareMode", () => {
   it("returns whether Nuxt is preparing the project", () => {
     expect(isPrepareMode({ options: { _prepare: true } } as never)).toBe(true);
     expect(isPrepareMode({ options: { _prepare: false } } as never)).toBe(false);
+  });
+});
+
+describe("request token helpers", () => {
+  const event = (headers: Record<string, string>) => ({ node: { req: { headers } } }) as never;
+
+  it("matches a configured header token", () => {
+    expect(
+      hasMatchingRequestToken(event({ "x-admin-token": "secret" }), "secret", "x-admin-token")
+    ).toBe(true);
+  });
+
+  it("matches bearer tokens and rejects other schemes or tokens", () => {
+    expect(
+      hasMatchingRequestToken(event({ authorization: "Bearer secret" }), "secret", "x-admin-token")
+    ).toBe(true);
+    expect(
+      hasMatchingRequestToken(event({ authorization: "Basic secret" }), "secret", "x-admin-token")
+    ).toBe(false);
+    expect(isAdmin(event({ authorization: "Bearer wrong" }), "secret", "x-admin-token")).toBe(
+      false
+    );
   });
 });
 

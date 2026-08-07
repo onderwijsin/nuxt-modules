@@ -16,6 +16,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | `@onderwijsin/nuxt-device`             | SSR-aware device, browser, operating-system, and crawler detection.                            |
 | `@onderwijsin/nuxt-webmanifest`        | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
 | `@onderwijsin/nuxt-healthcheck`        | Configurable system health endpoints with built-in and custom server-side checks.              |
+| `@onderwijsin/nuxt-turnstile`          | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
 
 ## 🧱 Requirements
 

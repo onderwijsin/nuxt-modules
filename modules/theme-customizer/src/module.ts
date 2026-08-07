@@ -18,7 +18,7 @@ import {
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
-} from "module-utils";
+} from "module-utils/shared";
 import { version } from "../package.json";
 import { parseThemeOptions, themeOptionsShape } from "./config/options.schema";
 import {

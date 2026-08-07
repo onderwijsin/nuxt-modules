@@ -5,17 +5,27 @@ const kit = vi.hoisted(() => ({
   addPlugin: vi.fn(),
   addTemplate: vi.fn((template: { filename: string }) => ({ dst: `./${template.filename}` })),
   addTypeTemplate: vi.fn(),
+  useLogger: vi.fn(() => ({ start: vi.fn(), success: vi.fn(), info: vi.fn() })),
   createResolver: vi.fn(() => ({ resolve: vi.fn((...parts: string[]) => parts.join("/")) })),
   defineNuxtModule: vi.fn((definition) => definition)
 }));
 
 vi.mock("@nuxt/kit", () => kit);
+vi.mock("module-utils/shared", () => ({
+  moduleSetup: vi.fn((_name: string, options: { enabled?: boolean }) => ({
+    start: vi.fn(),
+    end: vi.fn(),
+    isEnabled: () => options.enabled !== false
+  })),
+  resolveLoggerScope: vi.fn(() => "static-text"),
+  resolveModuleName: vi.fn(() => "@onderwijsin/nuxt-static-text")
+}));
 
 import textModule from "../src/module";
 
 const moduleDefinition = textModule as unknown as {
   meta: { name: string; configKey: string; compatibility: { nuxt: string } };
-  setup: (options: { content?: string }, nuxt: never) => void;
+  setup: (options: { enabled?: boolean; content?: string }, nuxt: never) => void;
 };
 
 describe("text module", () => {
@@ -89,4 +99,18 @@ describe("text module", () => {
       );
     }
   );
+
+  it("skips runtime registration when disabled", () => {
+    const nuxt = { options: { srcDir: "/project/app", build: { transpile: [] } } };
+
+    moduleDefinition.setup({ enabled: false }, nuxt as never);
+
+    expect(kit.addTemplate).not.toHaveBeenCalled();
+    expect(kit.addImports).not.toHaveBeenCalled();
+    expect(kit.addPlugin).not.toHaveBeenCalled();
+    expect(kit.addTypeTemplate).toHaveBeenCalledWith({
+      filename: "types/static-text.d.ts",
+      src: "./runtime/types/static-text.d.ts"
+    });
+  });
 });
