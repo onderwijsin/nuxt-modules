@@ -47,7 +47,14 @@ and are not already published.
 
 When publishing succeeds, the action creates the package-specific Changesets git tags and a GitHub
 Release for each tag. Re-running the workflow is safe: already published versions and existing
-GitHub Releases are skipped.
+GitHub Releases are skipped. The published package list is then passed to the local reusable Slack
+notification workflow, which posts one Block Kit message containing a link to each GitHub Release.
+
+The notification action accepts the native Changesets `publishedPackages` shape
+(`{ name, version }`) and also supports the legacy string-array and structured `{ tag, githubURL }`
+formats. It is kept dependency-free and runs directly from
+`.github/actions/slack-notification/index.js`; no compiled `dist` directory is required. Configure
+the `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` repository secrets to enable the notification.
 
 ## Checks performed
 
