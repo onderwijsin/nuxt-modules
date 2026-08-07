@@ -113,6 +113,7 @@ export default defineNuxtConfig({
 });
 ```
 
+The module is enabled by default. Set `staticText.enabled` to `false` to skip runtime registration.
 `content` is optional and must be a relative path from `app/`. Both `assets/ui/content` and
 `./assets/ui/content` are valid; the module removes the leading `./` before resolving the path.
 Absolute paths, parent-directory paths, backslash-separated paths, spaces, brackets, and other
