@@ -1,6 +1,7 @@
 import type { Device } from "#build/types/device";
 import { useRequestHeaders, useRuntimeConfig, useState } from "#imports";
 import { reactive, ref } from "vue";
+import { toEntries } from "module-utils/shared";
 
 import {
   REGEX_CRAWLER,
@@ -122,7 +123,7 @@ function generateFlags(userAgent: string, headers: Record<string, string> = {}):
 
 function patchDevice(target: Device, next: Device): void {
   // Keep the same reactive reference, just mutate keys
-  for (const [k, v] of Object.entries(next) as [keyof Device, Device[keyof Device]][]) {
+  for (const [k, v] of toEntries(next)) {
     target[k] = v as never;
   }
 }

@@ -1,4 +1,5 @@
 import { builtInDefaultTokens, THEME_SHADES } from "../runtime/app/utils/theme";
+import { fromEntries, toEntries } from "module-utils/shared";
 import type {
   ThemeColorGroups,
   ThemeCustomizerDefaults,
@@ -29,7 +30,7 @@ function isThemeColorGroup(value: unknown): value is Record<string, ThemePalette
 export function configuredGroups(options: ThemeCustomizerOptions): ThemeColorGroups {
   const groups: ThemeColorGroups = {};
 
-  for (const [name, value] of Object.entries(options)) {
+  for (const [name, value] of toEntries(options)) {
     if (name !== "googleFonts" && name !== "defaults" && isThemeColorGroup(value)) {
       groups[name] = value;
     }
@@ -44,8 +45,8 @@ export function configuredGroups(options: ThemeCustomizerOptions): ThemeColorGro
  * @returns Group names and their configured palette tokens.
  */
 export function configuredRuntimeGroups(groups: ThemeColorGroups) {
-  return Object.fromEntries(
-    Object.entries({
+  return fromEntries(
+    toEntries({
       primary: groups.primary ?? {},
       neutral: groups.neutral ?? {},
       ...groups
@@ -78,8 +79,8 @@ export function configuredAppColors(
   colors: Record<string, string> = {},
   configuredDefaults: ThemeCustomizerDefaults = {}
 ) {
-  const defaults = Object.fromEntries(
-    Object.entries(groups).flatMap(([group, palettes]) => {
+  const defaults = fromEntries(
+    toEntries(groups).flatMap(([group, palettes]) => {
       const configuredToken = configuredDefaults[group];
       const token =
         typeof configuredToken === "string" && configuredToken in palettes
@@ -105,12 +106,12 @@ export function generateThemeCss(
   configuredDefaults: ThemeCustomizerDefaults = {}
 ): string {
   const tokens = Object.values(groups).flatMap((group) =>
-    Object.entries(group).flatMap(([name, palette]) =>
+    toEntries(group).flatMap(([name, palette]) =>
       THEME_SHADES.map((shade) => `  --color-${name}-${shade}: ${palette[shade]};`)
     )
   );
   const neutralRoot = neutralTheme.replace("@theme static", ":root");
-  const groupTokens = Object.entries(groups).flatMap(([group, palettes]) => {
+  const groupTokens = toEntries(groups).flatMap(([group, palettes]) => {
     const configuredToken = configuredDefaults[group];
     const builtInToken = builtInDefaultTokens[group];
     const token =

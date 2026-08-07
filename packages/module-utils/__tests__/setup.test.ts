@@ -3,10 +3,12 @@ import { z } from "zod";
 import {
   attempt,
   attemptWithRetry,
+  fromEntries,
   isPrepareMode,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  toEntries,
   validateModuleOptions
 } from "../src/shared/index";
 import { hasMatchingRequestToken, isAdmin } from "../src/server/index";
@@ -25,6 +27,18 @@ describe("module naming helpers", () => {
 
   it("resolves a config key to a logger scope", () => {
     expect(resolveLoggerScope("uiFormExtensions")).toBe("ui-form-extensions");
+  });
+});
+
+describe("typed entry helpers", () => {
+  it("returns typed object entries and rebuilds an object", () => {
+    const entries = toEntries({ enabled: true, retries: 2 });
+
+    expect(entries).toEqual([
+      ["enabled", true],
+      ["retries", 2]
+    ]);
+    expect(fromEntries(entries)).toEqual({ enabled: true, retries: 2 });
   });
 });
 

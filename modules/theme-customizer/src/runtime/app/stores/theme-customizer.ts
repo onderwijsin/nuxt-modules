@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { kebabCase, titleCase } from "scule";
 import { reactive, ref } from "#imports";
 import { useAppConfig, useRuntimeConfig } from "nuxt/app";
+import { fromEntries } from "module-utils/shared";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, THEME_SHADES } from "../utils/theme";
@@ -194,9 +195,9 @@ export const useThemeCustomizerStore = defineStore(
         name: normalizedName,
         group,
         token,
-        shades: Object.fromEntries(
-          THEME_SHADES.map((shade) => [shade, readDefaultShade(group, shade)])
-        ) as Record<ThemeShade, string>
+        shades: fromEntries(
+          THEME_SHADES.map((shade) => [shade, readDefaultShade(group, shade)] as const)
+        )
       };
 
       colors.value.push(color);

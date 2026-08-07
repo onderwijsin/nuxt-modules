@@ -13,12 +13,22 @@ The source layout mirrors these boundaries: `src/shared/`, `src/server/`, and th
 
 ```ts
 import {
+  fromEntries,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  toEntries,
   transpileRuntime,
   validateModuleOptions
 } from "module-utils/shared";
+```
+
+Use `toEntries` and `fromEntries` for typed equivalents of `Object.entries` and
+`Object.fromEntries`:
+
+```ts
+const entries = toEntries(options);
+const optionsByName = fromEntries(entries);
 ```
 
 When a module registers published runtime code, add its runtime directory to Nuxt's transpilation

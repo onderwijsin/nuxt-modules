@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fromEntries } from "module-utils/shared";
 
 const kit = vi.hoisted(() => ({
   addComponentsDir: vi.fn(),
@@ -27,7 +28,7 @@ const moduleDefinition = themeCustomizerModule as unknown as {
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
 
-const palette = Object.fromEntries(
+const palette = fromEntries(
   [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#ff0000"])
 ) as ThemePalette;
 

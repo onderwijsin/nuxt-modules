@@ -14,9 +14,11 @@ import {
   useLogger
 } from "@nuxt/kit";
 import {
+  fromEntries,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  toEntries,
   transpileRuntime,
   validateModuleOptions
 } from "module-utils/shared";
@@ -147,9 +149,9 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     const appConfig = nuxt.options.appConfig;
     const appConfigUi = appConfig.ui ?? {};
-    const existingColors = Object.fromEntries(
-      Object.entries(appConfigUi.colors ?? {}).filter(
-        (entry): entry is [string, string] => typeof entry[1] === "string"
+    const existingColors = fromEntries<string, string>(
+      toEntries(appConfigUi.colors ?? {}).flatMap(([key, value]) =>
+        typeof value === "string" ? [[key, value] as const] : []
       )
     );
     Object.assign(appConfigUi, {

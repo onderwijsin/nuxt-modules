@@ -1,12 +1,10 @@
 import { z } from "zod";
+import { fromEntries, toEntries } from "module-utils/shared";
 
 import { hexColorSchema, THEME_SHADES } from "../runtime/app/utils/theme";
 
 const palette = z.object(
-  Object.fromEntries(THEME_SHADES.map((shade) => [shade, hexColorSchema])) as Record<
-    (typeof THEME_SHADES)[number],
-    typeof hexColorSchema
-  >
+  fromEntries(THEME_SHADES.map((shade) => [shade, hexColorSchema] as const))
 );
 
 export const themePaletteSchema = z.record(z.string(), palette);
@@ -40,7 +38,7 @@ export const themeOptionsShape = {
 export const themeOptionsSchema = z
   .looseObject(themeOptionsShape)
   .superRefine((options, context) => {
-    for (const [name, value] of Object.entries(options)) {
+    for (const [name, value] of toEntries(options)) {
       if (name === "enabled" || name === "googleFonts" || name === "defaults") continue;
 
       const result = themePaletteSchema.safeParse(value);
