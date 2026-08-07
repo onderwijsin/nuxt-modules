@@ -69,7 +69,8 @@ export default defineNuxtModule<ModuleOptions>({
         siteKey: options.siteKey
       }
     );
-    const optionsWithTurnstile = nuxt.options as typeof nuxt.options & { turnstile?: unknown };
+    const optionsWithTurnstile = nuxt.options;
+
     optionsWithTurnstile.turnstile = defu(optionsWithTurnstile.turnstile, {
       siteKey: options.siteKey
     });

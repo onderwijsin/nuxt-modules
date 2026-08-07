@@ -118,10 +118,16 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
 
     nuxt.options.css.push(generatedTheme.dst);
-    const nuxtOptions = nuxt.options as typeof nuxt.options & {
-      ui?: { theme?: { colors?: string[] } };
-    };
+    const nuxtOptions = nuxt.options;
     nuxtOptions.ui ??= {};
+
+    if (!nuxtOptions.ui) {
+      // if ui is set to false (eg consumer disabled the module), throw error
+      throw new Error(
+        "The '@nuxt/ui' module is required but disabled. Please enable it, or also disable the theme customizer module"
+      );
+    }
+
     nuxtOptions.ui.theme ??= {};
     nuxtOptions.ui.theme.colors = configuredUiColors(groups, nuxtOptions.ui.theme.colors);
 

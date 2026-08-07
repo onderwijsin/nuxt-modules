@@ -1,25 +1,9 @@
 import type { Nuxt } from "@nuxt/schema";
-import type {
-  LocalBusiness,
-  LocalBusinessSimple,
-  Organization,
-  OrganizationSimple,
-  Person,
-  PersonSimple
-} from "nuxt-schema-org/schema";
 import defu from "defu";
 
 import type { WebManifest, WebManifestShortcut } from "../types/manifest";
 import type { ModuleOptions } from "../types/options";
 import { generatePwaIcons } from "./generate-icons";
-
-type SchemaIdentity =
-  | Person
-  | Organization
-  | LocalBusiness
-  | OrganizationSimple
-  | PersonSimple
-  | LocalBusinessSimple;
 
 /** Resolved icon source configuration used by the manifest generator. */
 export interface ResolvedIconConfig {
@@ -64,10 +48,17 @@ function getStrings(value: unknown, key: string): string[] | undefined {
  * @returns The resolved icon configuration and user-facing warnings.
  */
 export function resolveIconConfig(options: ModuleOptions, nuxt: Nuxt): IconConfigResolution {
-  const imageOptions = nuxt.options as typeof nuxt.options & {
-    image?: { provider?: string; cloudinary?: { baseURL?: string } };
-  };
-  const provider = imageOptions.image?.provider;
+  const imageOptions = nuxt.options;
+
+  if (!imageOptions.image || typeof imageOptions.image.provider !== "string") {
+    return {
+      warnings: [
+        'Webmanifest icons were skipped because Nuxt Image is not configured. Configure image.provider as "ipx" or "cloudinary".'
+      ]
+    };
+  }
+
+  const provider = imageOptions.image.provider as "ipx" | "cloudinary";
   const warnings: string[] = [];
 
   if (provider !== "ipx" && provider !== "cloudinary") {
@@ -133,18 +124,10 @@ export function generateWebManifest(
   nuxt: Nuxt,
   iconResolution: IconConfigResolution = resolveIconConfig(options, nuxt)
 ): WebManifest {
-  const nuxtOptions = nuxt.options as typeof nuxt.options & {
-    schemaOrg?: { identity?: SchemaIdentity };
-    site?: {
-      url?: string;
-      name?: string;
-      description?: string;
-      currentLocale?: string;
-      defaultLocale?: string;
-    };
-  };
-  const identity = nuxtOptions.schemaOrg?.identity;
-  const site = nuxtOptions.site;
+  const nuxtOptions = nuxt.options;
+
+  const identity = nuxtOptions.schemaOrg ? nuxtOptions.schemaOrg?.identity : undefined;
+  const site = nuxtOptions.site ? nuxtOptions.site : undefined;
   const manifestFromIdentity: Partial<WebManifest> = {
     name: getString(identity, "name") ?? getString(identity, "alternateName"),
     short_name: getString(identity, "alternateName") ?? getString(identity, "name"),
