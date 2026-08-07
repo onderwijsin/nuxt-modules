@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- ae69b48: Retain user-agent operating-system flags when Cloudflare supplies device classification.
+
 ## 1.0.0
 
 ### Major Changes

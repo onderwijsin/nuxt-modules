@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+### Patch Changes
+
+- ae69b48: Preserve edits made while a draft save is in flight and ignore concurrent submissions.
+
 ## 0.2.3
 
 ### Patch Changes

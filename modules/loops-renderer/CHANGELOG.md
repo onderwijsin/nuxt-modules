@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- ae69b48: Avoid registering renderer dependencies when the module is disabled.
+
 ## 0.2.2
 
 ### Patch Changes

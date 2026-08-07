@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- ae69b48: Respect Nuxt application base URLs in generated manifest links and defaults.
+
 ## 0.2.2
 
 ### Patch Changes

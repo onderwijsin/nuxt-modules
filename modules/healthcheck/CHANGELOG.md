@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- ae69b48: Apply configured healthcheck timeouts to built-in Cloudinary and Directus requests.
+
 ## 0.3.0
 
 ### Minor Changes
