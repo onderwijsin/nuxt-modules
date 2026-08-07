@@ -13,6 +13,10 @@ a new contract is explicit.
   through module configuration instead.
 - Use Zod at external boundaries that need runtime validation.
 - Use `ofetch` for outbound runtime HTTP requests; do not call native `fetch` directly.
+- Declare every runtime import used by published server code directly in `dependencies` (for example
+  `h3`, `nitropack`, and `ofetch`) and source exact versions through the workspace catalog.
+- Import Nitro runtime helpers explicitly from their runtime entrypoints, such as `useStorage` from
+  `nitropack/runtime`; do not rely on untyped server auto-imports in published runtime files.
 - Preserve Node server and Cloudflare Workers compatibility.
 - Do not change public options, exports, component props, auto-imports, or registration behavior
   without an explicit compatibility decision.

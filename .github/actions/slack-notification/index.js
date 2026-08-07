@@ -120,17 +120,19 @@ function formatReleaseLink(release, repository, prefixRepo) {
  * Builds the Slack Block Kit payload.
  *
  * @param {{tag: string, githubURL: string}[]} releases - Normalized releases.
+ * @param {string} channelId - Slack channel ID.
  * @param {string} actor - GitHub actor.
  * @param {string} repository - Repository in owner/name format.
  * @param {string} runUrl - Workflow run URL.
  * @param {boolean} prefixRepo - Whether to prefix unscoped tags.
- * @returns {{text: string, blocks: object[]}} Slack payload.
+ * @returns {{channel: string, text: string, blocks: object[]}} Slack payload.
  */
-function buildPayload(releases, actor, repository, runUrl, prefixRepo) {
+function buildPayload(releases, channelId, actor, repository, runUrl, prefixRepo) {
   const packageLines = releases
     .map((release) => formatReleaseLink(release, repository, prefixRepo))
     .join("\n");
   return {
+    channel: channelId,
     text: "New release created",
     blocks: [
       { type: "header", text: { type: "plain_text", text: "🚀 New release created" } },
@@ -152,6 +154,7 @@ function buildPayload(releases, actor, repository, runUrl, prefixRepo) {
 function main() {
   try {
     const releasesInput = getInput("releases", true);
+    const channelId = getInput("channel-id", true);
     const payloadFilePath = getInput("payload-file-path", true);
     const repository = process.env.GITHUB_REPOSITORY;
     const actor = process.env.GITHUB_ACTOR;
@@ -173,7 +176,7 @@ function main() {
     const runUrl = `${serverUrl}/${repository}/actions/runs/${runId}`;
     fs.writeFileSync(
       payloadFilePath,
-      `${JSON.stringify(buildPayload(normalized, actor, repository, runUrl, prefixRepo), null, 2)}\n`
+      `${JSON.stringify(buildPayload(normalized, channelId, actor, repository, runUrl, prefixRepo), null, 2)}\n`
     );
     info(`Slack payload written to ${payloadFilePath}`);
     info(`Included ${normalized.length} release(s).`);

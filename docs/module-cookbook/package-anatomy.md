@@ -84,6 +84,19 @@ Do not use a `#build` alias from published server runtime files. If runtime code
 consumer imports, generate the complete server handler or plugin and register its generated file
 with Nuxt Kit from the module entrypoint.
 
+If the package exposes a runtime subpath, playground preparation must happen after a full module
+build so that the emitted runtime `.js` and `.d.ts` files exist. A clean bootstrap can use:
+
+```text
+nuxt-module-build build --stub
+nuxt-module-build prepare
+nuxt-module-build build
+nuxt prepare playground
+```
+
+The stub build is important when the module `tsconfig.json` extends `./.nuxt/tsconfig.json`; a full
+build before preparation fails on a clean checkout because that generated file does not exist yet.
+
 ## Local modules
 
 Local modules inside a consuming Nuxt application do not need package metadata, module-builder
