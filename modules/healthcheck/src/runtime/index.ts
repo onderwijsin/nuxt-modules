@@ -1,4 +1,4 @@
-import type { HealthcheckComponentDefinition } from "../types/health";
+import type { HealthcheckComponentDefinition } from "./types/health";
 
 /**
  * Defines a server-side healthcheck component for `server/healthcheck/**`.
@@ -59,4 +59,4 @@ export function normalizeHealthcheckComponent(
   return candidate as HealthcheckComponentDefinition;
 }
 
-export type { HealthcheckComponentDefinition, HealthcheckComponentResult } from "../types/health";
+export type { HealthcheckComponentDefinition, HealthcheckComponentResult } from "./types/health";

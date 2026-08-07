@@ -10,7 +10,7 @@ import type {
   HealthStatus,
   HealthcheckComponentDefinition,
   SystemHealthResponse
-} from "../../../types/health";
+} from "../../types/health";
 
 const CACHE_HEALTH_KEY_PREFIX = "healthcheck:system";
 
