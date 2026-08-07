@@ -25,6 +25,7 @@
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
+    "h3": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

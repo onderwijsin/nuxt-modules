@@ -6,3 +6,4 @@ export {
   validateModuleOptions
 } from "./setup";
 export type { BaseModuleOptions } from "./setup";
+export { hasMatchingRequestToken, isAdmin } from "./token";
