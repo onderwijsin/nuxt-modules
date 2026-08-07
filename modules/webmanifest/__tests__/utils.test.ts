@@ -117,7 +117,7 @@ describe("webmanifest utilities", () => {
       },
       nuxt() as never
     );
-    expect(manifest.shortcuts?.[0]?.icons).toHaveLength(1);
+    expect(manifest.shortcuts?.[0]?.icons).toHaveLength(2);
     expect(manifest.shortcuts?.[1]?.icons).toEqual([{ src: "/custom.png" }]);
   });
 

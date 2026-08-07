@@ -9,8 +9,8 @@ export default defineNuxtConfig({
   },
   schemaOrg: {
     identity: {
-      alternateName: "Fixture app",
-      name: "FA"
+      name: "Fixture app",
+      alternateName: "FA"
     }
   },
   webmanifest: {

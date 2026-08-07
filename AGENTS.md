@@ -113,6 +113,23 @@ explicitly requested. Instead, the agent **MUST** provide a summary of the work 
 
 It is the responsibility of the human collaborator to review, approve, and commit the changes.
 
+### Required handoff format
+
+Every final handoff MUST include all of the following, even when validation fails or the change is
+small:
+
+- List based summary of what changed
+- Validation performed and any blocked or failing checks
+- Impact on contracts and behavior (if any)
+- Open risks or follow-up work (if any)
+- A ready-to-copy Conventional Commit message in a fenced code block
+
+Use this final line format for the commit message:
+
+```text
+<type>(<scope>): <subject>
+```
+
 ---
 
 ## Git

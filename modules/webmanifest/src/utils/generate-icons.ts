@@ -27,7 +27,8 @@ function getSource(config: IconConfig, source: string, size: Size, format: Forma
     return `/_ipx/w_${size},h_${size},c_scale${path}`;
   }
 
-  return `${config.baseURL?.replace(/\/$/, "") ?? ""}/w_${size},h_${size},c_scale/${filename}`;
+  const cloudinaryFilename = filename.replace(/^\/+/, "");
+  return `${config.baseURL?.replace(/\/$/, "") ?? ""}/w_${size},h_${size},c_scale/${cloudinaryFilename}`;
 }
 
 function getImageType(source: string, format: Format): string {
