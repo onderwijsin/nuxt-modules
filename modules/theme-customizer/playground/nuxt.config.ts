@@ -85,7 +85,7 @@ const amber = {
 };
 
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-05",
+  compatibilityDate: "2026-08-07",
   modules: ["@onderwijsin/nuxt-theme-customizer", "@nuxt/ui"],
   css: ["~/assets/main.css"],
   ui: {

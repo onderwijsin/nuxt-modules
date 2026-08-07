@@ -19,9 +19,13 @@ public package name. Extend Nuxt's generated configuration with
 
 ```ts
 export default defineNuxtConfig({
+  compatibilityDate: "2026-08-07",
   modules: ["@onderwijsin/nuxt-example"]
 });
 ```
+
+Every playground must set `compatibilityDate: "2026-08-07"` in its `nuxt.config.ts`. Keep this date
+aligned with the repository’s required Nuxt compatibility baseline.
 
 Use the established scripts:
 
