@@ -14,7 +14,7 @@ import {
   validateModuleOptions
 } from "module-utils/shared";
 import { version } from "../package.json";
-import { newsletterSignupOptionsShape } from "./config/options.schema";
+import { newsletterSignupOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";
 
 const MODULE_KEY = "newsletterSignup";
@@ -38,8 +38,7 @@ export default defineNuxtModule<ModuleOptions>({
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
-    const options = validateModuleOptions(rawOptions, newsletterSignupOptionsShape, log);
-    validateNewsletterSignupOptions(options, log);
+    const options = validateModuleOptions(rawOptions, newsletterSignupOptionsSchema, log);
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
@@ -60,6 +59,7 @@ export default defineNuxtModule<ModuleOptions>({
       };
     }
     nuxt.options.runtimeConfig.public.newsletterSignup = publicNewsletterSignup;
+
     transpileRuntime(nuxt, runtimeDir);
     addImports({
       name: "useNewsletterSignup",
@@ -70,34 +70,3 @@ export default defineNuxtModule<ModuleOptions>({
     end();
   }
 });
-
-function validateNewsletterSignupOptions(
-  options: ModuleOptions,
-  log: { info: (message: string) => void }
-): void {
-  if (options.endpoint?.enabled === false && !options.endpoint.url) {
-    log.info("endpoint.url is required when endpoint registration is disabled");
-    throw new Error("Invalid module options ☝. Exiting.");
-  }
-
-  const hasProviderConfiguration = Boolean(
-    options.provider || options.apiKey || options.server || options.lists || options.fields
-  );
-  if (!hasProviderConfiguration) return;
-
-  if (options.provider === "mailchimp") {
-    if (!options.lists?.options?.length && !options.server) {
-      log.info("server is required for Mailchimp when no per-audience server is configured");
-      throw new Error("Invalid module options ☝. Exiting.");
-    }
-    if (options.lists?.options?.some((option) => !option.server)) {
-      log.info("Each Mailchimp list option requires its server value");
-      throw new Error("Invalid module options ☝. Exiting.");
-    }
-  }
-
-  if (!options.lists?.default && !options.lists?.options?.length) {
-    log.info("Configure lists.default or lists.options");
-    throw new Error("Invalid module options ☝. Exiting.");
-  }
-}

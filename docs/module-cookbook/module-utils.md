@@ -90,9 +90,27 @@ because importing server helpers would make `h3` part of otherwise build-time or
 graphs. The reserved `module-utils/app` entrypoint is intentionally empty until client-runtime
 helpers are needed.
 
-Define constrained option fields as a plain Zod object in the module's
-`src/config/options.schema.ts`; the helper adds the shared `enabled` field. Do not introduce a
-schema just for optional TypeScript types.
+Define the complete module options as a Zod schema in the module's `src/config/options.schema.ts`,
+including the shared `enabled` field. Name the schema `<moduleName>OptionsSchema`, for example
+`turnstileOptionsSchema`, and pass that schema directly to `validateModuleOptions`:
+
+```ts
+import { turnstileOptionsSchema } from "./config/options.schema";
+
+const options = validateModuleOptions(rawOptions, turnstileOptionsSchema, log);
+```
+
+`validateModuleOptions` only performs the parse and logs a uniform error before throwing; it does
+not extend or otherwise modify the supplied schema. The returned value is typed from the schema's
+output. Do not introduce a schema just for optional TypeScript types.
+
+Use the shared `enabled` field when a module's enabled option defaults to `true`:
+
+```ts
+import { enabled } from "module-utils/shared";
+
+const schema = z.object({ enabled, otherOption: z.string() });
+```
 
 Declare `module-utils` as a `workspace:*` build dependency. It bundles its own runtime graph with
 tsup; consuming modules must explicitly inline it in `build.config.ts` so packed modules contain no

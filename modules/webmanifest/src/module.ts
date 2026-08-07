@@ -8,7 +8,7 @@ import {
   validateModuleOptions
 } from "module-utils/shared";
 
-import { moduleOptionsShape } from "./config/options.schema";
+import { webmanifestOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";
 import { generateWebManifest, resolveIconConfig } from "./utils";
 
@@ -43,19 +43,19 @@ export default defineNuxtModule<ModuleOptions>({
     "nuxt-site-config": { version: ">=4.0.0" },
     "nuxt-schema-org": { version: ">=6.0.0" }
   },
-  setup(options, nuxt) {
+  setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
-    const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);
+    const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
     if (!isEnabled()) return;
 
-    const validatedOptions = validateModuleOptions(options, moduleOptionsShape, log);
-    const iconResolution = validatedOptions.manifest?.icons
+    const options = validateModuleOptions(rawOptions, webmanifestOptionsSchema, log);
+    const iconResolution = options.manifest?.icons
       ? { warnings: [] }
-      : resolveIconConfig(validatedOptions, nuxt);
+      : resolveIconConfig(options, nuxt);
     for (const warning of iconResolution.warnings) log.warn(warning);
 
-    const manifest = generateWebManifest(validatedOptions, nuxt, iconResolution);
+    const manifest = generateWebManifest(options, nuxt, iconResolution);
     addTemplate({
       filename: "templates/webmanifest/app.webmanifest",
       getContents: () => JSON.stringify(manifest, null, 2),

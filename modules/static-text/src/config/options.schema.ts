@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { enabled } from "module-utils/shared";
 
 const relativeContentPathError =
   "content must be a relative path such as assets/ui/content or ./assets/ui/content";
@@ -14,6 +15,7 @@ function isRelativeContentPath(value: string): boolean {
 }
 
 /** Runtime validation for the text module options. */
-export default {
+export const staticTextOptionsSchema = z.object({
+  enabled,
   content: z.string().refine(isRelativeContentPath, { error: relativeContentPathError }).optional()
-};
+});

@@ -11,7 +11,8 @@ const kit = vi.hoisted(() => ({
 }));
 
 vi.mock("@nuxt/kit", () => kit);
-vi.mock("module-utils/shared", () => ({
+vi.mock("module-utils/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("module-utils/shared")>()),
   transpileRuntime: (nuxt: any, runtimeDir: string) =>
     nuxt.options.build.transpile.push(runtimeDir),
   validateModuleOptions: (options: Record<string, any>) => {

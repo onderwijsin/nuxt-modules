@@ -2,11 +2,15 @@ import { kebabCase } from "scule";
 import type { Nuxt } from "@nuxt/schema";
 import type { ConsolaInstance } from "consola";
 import { z } from "zod";
+import type { ZodType } from "zod";
 
 export interface BaseModuleOptions {
   /** Indicates if the module is enabled */
   enabled?: boolean;
 }
+
+/** Shared schema for the module enabled option. */
+export const enabled = z.boolean().default(true);
 
 /**
  * Resolves a config key to a namespaced Nuxt module name.
@@ -72,21 +76,20 @@ export function moduleSetup<T extends BaseModuleOptions>(
 /**
  * Validates module options against a Zod schema.
  * @param options - The module options.
- * @param schema - The module-specific Zod shape.
+ * @param schema - The complete module-specific Zod schema, including `enabled`.
  * @param log - The module logger.
  * @returns The validated options.
  * @throws When validation fails.
  */
-export function validateModuleOptions<T extends BaseModuleOptions, S extends z.ZodRawShape>(
-  options: T,
+export function validateModuleOptions<S extends ZodType>(
+  options: unknown,
   schema: S,
   log: ConsolaInstance
-): z.infer<z.ZodObject<{ enabled: z.ZodDefault<z.ZodBoolean> } & S>> {
-  const mergedSchema = z.looseObject({ enabled: z.boolean().default(true) }).extend(schema);
-  const result = mergedSchema.safeParse(options);
+): z.output<S> {
+  const result = schema.safeParse(options);
 
   if (result.success) {
-    return result.data as z.infer<z.ZodObject<{ enabled: z.ZodDefault<z.ZodBoolean> } & S>>;
+    return result.data;
   }
 
   log.info(z.prettifyError(result.error));

@@ -1,2 +1,0 @@
-- does handle signup error also handle memberExists?
-- option validtion

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { enabled } from "module-utils/shared";
 
 const nonEmptyString = z.string().trim().min(1);
 
@@ -22,7 +23,7 @@ const thresholdSchema = z
   });
 
 const componentOptionsSchema = z.strictObject({
-  enabled: z.boolean().default(true),
+  enabled,
   threshold: thresholdSchema.optional()
 });
 
@@ -41,7 +42,7 @@ const directusOptionsSchema = z.strictObject({
 });
 
 /** Runtime validation shape for all public healthcheck module options. */
-export const healthcheckOptionsShape = {
+const healthcheckOptionsShape = {
   cache: componentOptionsSchema.optional(),
   cloudinary: cloudinaryOptionsSchema.optional(),
   directus: directusOptionsSchema.optional()
@@ -49,7 +50,7 @@ export const healthcheckOptionsShape = {
 
 /** Runtime validation schema for all public healthcheck module options. */
 export const healthcheckOptionsSchema = z.strictObject({
-  enabled: z.boolean().default(true),
+  enabled,
   ...healthcheckOptionsShape
 });
 

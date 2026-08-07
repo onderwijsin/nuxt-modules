@@ -23,7 +23,7 @@ import {
   validateModuleOptions
 } from "module-utils/shared";
 import { version } from "../package.json";
-import { themeOptionsShape } from "./config/options.schema";
+import { themeOptionsSchema } from "./config/options.schema";
 import {
   configuredAppColors,
   configuredGroups,
@@ -108,7 +108,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     if (!isEnabled()) return;
 
-    const options = validateModuleOptions(rawOptions, themeOptionsShape, log);
+    const options = validateModuleOptions(rawOptions, themeOptionsSchema, log);
 
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
