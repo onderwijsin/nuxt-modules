@@ -4,8 +4,14 @@ import { useRuntimeConfig } from "#imports";
 import { verifyTurnstileToken } from "@nuxtjs/turnstile/runtime/server/utils/verify.js";
 import { isAdmin } from "module-utils/server";
 import { attempt } from "module-utils/shared";
+import { z } from "zod";
 import type { TurnstileErrorCode, TurnstileErrorData } from "../../types/errors";
 import { TURNSTILE_TOKEN_HEADER } from "../../constants";
+
+const turnstileVerificationSchema = z.object({
+  success: z.boolean(),
+  action: z.string().optional()
+});
 
 /**
  * Validates the Turnstile token from a protected request.
@@ -52,7 +58,15 @@ export async function assertTurnstileToken(event: H3Event, expectedAction: strin
       cause: result.error
     });
   }
-  const verification = result.data as { success: boolean; action?: string };
+  const verificationResult = turnstileVerificationSchema.safeParse(result.data);
+  if (!verificationResult.success)
+    throw createError({
+      statusCode: 502,
+      statusMessage: "Turnstile validation returned an invalid response",
+      data: createTurnstileErrorData("TURNSTILE_VALIDATION_UNAVAILABLE", expectedAction),
+      cause: verificationResult.error
+    });
+  const verification = verificationResult.data;
   if (!verification.success)
     throw createTurnstileError(
       403,
