@@ -15,6 +15,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | `@onderwijsin/nuxt-theme-customizer`   | Runtime theme picker and custom color editor for Nuxt UI.                                      |
 | `@onderwijsin/nuxt-device`             | SSR-aware device, browser, operating-system, and crawler detection.                            |
 | `@onderwijsin/nuxt-webmanifest`        | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
+| `@onderwijsin/nuxt-healthcheck`        | Configurable system health endpoints with built-in and custom server-side checks.              |
 
 ## 🧱 Requirements
 
