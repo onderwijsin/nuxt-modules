@@ -13,6 +13,7 @@ The module will likely grow over time with additional form utilities as common p
 - Dirty-state tracking detects nested changes without mutating the source.
 - Clean drafts follow source changes, while dirty drafts preserve local edits.
 - Submission state and failed-save handling are included for async persistence.
+- Concurrent submit calls are ignored while a save is pending, and edits made while saving are kept.
 - Form composables are auto-imported by the Nuxt module.
 
 ## Installation

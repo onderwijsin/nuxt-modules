@@ -22,13 +22,13 @@ export default defineNuxtConfig({
 
 The module's options are:
 
-| Option            | Default           | Purpose                                           |
-| ----------------- | ----------------- | ------------------------------------------------- |
-| `enabled`         | `true`            | Enables or disables module setup                  |
-| `siteKey`         | `""`              | Public key used by the Turnstile widget           |
-| `secretKey`       | `""`              | Server-only key used for verification             |
-| `adminToken`      | `""`              | Optional trusted token that bypasses verification |
-| `adminHeaderName` | `"x-admin-token"` | Header accepted for `adminToken`                  |
+| Option            | Default           | Purpose                                               |
+| ----------------- | ----------------- | ----------------------------------------------------- |
+| `enabled`         | `true`            | Enables or disables module setup and its dependencies |
+| `siteKey`         | `""`              | Public key used by the Turnstile widget               |
+| `secretKey`       | `""`              | Server-only key used for verification                 |
+| `adminToken`      | `""`              | Optional trusted token that bypasses verification     |
+| `adminHeaderName` | `"x-admin-token"` | Header accepted for `adminToken`                      |
 
 `siteKey` is public and is also passed to `@nuxtjs/turnstile`. Keep `secretKey` and `adminToken`
 private. In production, prefer `NUXT_TURNSTILE_SECRET_KEY` for the private runtime value. The

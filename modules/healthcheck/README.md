@@ -77,9 +77,11 @@ export default defineHealthcheckComponent({
 
 The handler receives `{ event, signal }`, may return optional `details`, and should throw when its
 service is unavailable. Every check has a 5000ms budget by default; set module, built-in, or
-component `timeoutMs` to override it and pass `signal` to abortable downstream calls. A returned
-`status` may be used for an explicit `ok`, `warn`, or `error` result. The module validates filenames
-while scanning and validates imported component shapes before the health endpoint runs.
+component `timeoutMs` to override it and pass `signal` to abortable downstream calls. The built-in
+Cloudinary and Directus probes use that same signal, so their network requests are cancelled at the
+configured timeout. A returned `status` may be used for an explicit `ok`, `warn`, or `error` result.
+The module validates filenames while scanning and validates imported component shapes before the
+health endpoint runs.
 
 Custom component files are server-only. Do not return secrets or credentials in `details`.
 

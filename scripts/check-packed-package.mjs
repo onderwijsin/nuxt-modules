@@ -37,7 +37,7 @@ const moduleEntry = spawnSync("tar", ["-xOzf", archive, "package/dist/module.mjs
 });
 if (
   moduleEntry.status !== 0 ||
-  /from\s+["'](?:module-utils|test-utils)["']/.test(moduleEntry.stdout)
+  /from\s+["'](?:module-utils|test-utils)(?:\/[^"']*)?["']/.test(moduleEntry.stdout)
 ) {
   console.error("Packed package is missing its entrypoint or leaks a private workspace import.");
   process.exit(1);

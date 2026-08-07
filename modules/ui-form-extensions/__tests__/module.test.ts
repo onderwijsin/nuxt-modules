@@ -16,7 +16,9 @@ vi.mock("@nuxt/kit", () => kit);
 import formExtensionsModule from "../src/module";
 
 const moduleDefinition = formExtensionsModule as unknown as {
-  moduleDependencies: Record<string, unknown>;
+  moduleDependencies: (nuxt: {
+    options: { uiFormExtensions?: { enabled?: boolean } | false };
+  }) => Record<string, unknown>;
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
 
@@ -27,9 +29,12 @@ describe("ui form extensions module", () => {
   });
 
   it("declares Nuxt UI as a module dependency", () => {
-    expect(moduleDefinition.moduleDependencies).toEqual({
+    expect(moduleDefinition.moduleDependencies({ options: {} })).toEqual({
       "@nuxt/ui": { version: ">=4.0.0" }
     });
+    expect(
+      moduleDefinition.moduleDependencies({ options: { uiFormExtensions: { enabled: false } } })
+    ).toEqual({});
   });
 
   it("registers the composables directory for enabled modules", () => {

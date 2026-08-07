@@ -45,9 +45,9 @@
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
     "@nuxt/ui": "catalog:",
+    "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
     "defu": "catalog:",
     "h3": "catalog:",
-    "nuxt-api-shield": "catalog:",
     "ofetch": "catalog:",
     "zod": "catalog:"
   },

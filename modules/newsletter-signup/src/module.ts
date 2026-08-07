@@ -6,7 +6,6 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
-import type { ModuleDependencies, Nuxt } from "@nuxt/schema";
 import {
   moduleSetup,
   resolveLoggerScope,
@@ -34,27 +33,8 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
-  moduleDependencies: (nuxt: Nuxt): ModuleDependencies => {
-    const newsletterSignup = nuxt.options.newsletterSignup;
-    const endpoint = newsletterSignup === false ? undefined : newsletterSignup?.endpoint;
-    const endpointEnabled = endpoint?.enabled !== false;
-
-    return {
-      "@nuxt/ui": { version: ">=4.0.0" },
-      ...(endpointEnabled
-        ? {
-            "nuxt-api-shield": {
-              version: ">=1.0.0",
-              overrides: {
-                limit: { max: 5, duration: 60, ban: 900 },
-                delayOnBan: false,
-                retryAfterHeader: true,
-                routes: [endpoint?.url ?? DEFAULTS.endpoint.url]
-              }
-            }
-          }
-        : {})
-    };
+  moduleDependencies: {
+    "@nuxt/ui": { version: ">=4.0.0" }
   },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
@@ -74,8 +54,10 @@ export default defineNuxtModule<ModuleOptions>({
     const options = validateModuleOptions(rawOptions, newsletterSignupOptionsSchema, log);
 
     nuxt.options.runtimeConfig.newsletterSignup = options;
+    const endpointUrl =
+      options.endpoint?.enabled === false ? options.endpoint.url : DEFAULTS.endpoint.url;
     const publicNewsletterSignup = nuxt.options.runtimeConfig.public.newsletterSignup ?? {
-      endpoint: { url: options.endpoint?.url ?? DEFAULTS.endpoint.url }
+      endpoint: { url: endpointUrl }
     };
     if (options.lists && !publicNewsletterSignup.lists) {
       publicNewsletterSignup.lists = {

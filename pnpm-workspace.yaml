@@ -26,7 +26,6 @@ catalog:
   "@vueuse/core": 14.4.0
   "@vueuse/nuxt": 14.4.0
   "@nuxtjs/turnstile": 1.1.3
-  nuxt-api-shield: 1.0.0
   pinia: 4.0.2
   pinia-plugin-persistedstate: 4.7.1
   "@onderwijsin/loops-core": 1.3.0

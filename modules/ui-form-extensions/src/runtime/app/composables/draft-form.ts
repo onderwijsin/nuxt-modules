@@ -37,16 +37,20 @@ export function useDraftForm<TDraft extends object, TSubmission>(
    * @returns A promise that settles after persistence and draft reset handling complete.
    */
   async function submit(submission: TSubmission): Promise<void> {
-    saving.value = true;
+    if (saving.value) return;
 
-    const result = await attempt(async () => {
-      await options.save(submission);
-      replaceState(options.getSource());
-    });
-    if (result.error !== null) {
-      options.onError();
+    saving.value = true;
+    const submittedDraft = copyDraft(state);
+    try {
+      const result = await attempt(() => options.save(submission));
+      if (result.error !== null) {
+        options.onError();
+        return;
+      }
+      if (isDraftEqual(state, submittedDraft)) replaceState(options.getSource());
+    } finally {
+      saving.value = false;
     }
-    saving.value = false;
   }
 
   /**

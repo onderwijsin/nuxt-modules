@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const runtimeConfig = vi.hoisted(() => ({
   healthcheck: {
     timeoutMs: 5,
-    cache: { enabled: false }
+    cache: { enabled: false },
+    directus: { enabled: false, baseUrl: "", timeoutMs: 5 }
   }
 }));
 const storage = vi.hoisted(() => ({
@@ -11,6 +12,7 @@ const storage = vi.hoisted(() => ({
   removeItem: vi.fn(),
   setItem: vi.fn()
 }));
+const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("#imports", () => ({
   useRuntimeConfig: () => runtimeConfig
@@ -18,15 +20,21 @@ vi.mock("#imports", () => ({
 vi.mock("nitropack/runtime", () => ({
   useStorage: () => storage
 }));
+vi.mock("ofetch", () => ({ ofetch: fetchMock }));
 
 import { getSystemHealth } from "../src/runtime/server/utils/health";
 
 describe("getSystemHealth", () => {
   beforeEach(() => {
-    runtimeConfig.healthcheck = { timeoutMs: 5, cache: { enabled: false } };
+    runtimeConfig.healthcheck = {
+      timeoutMs: 5,
+      cache: { enabled: false },
+      directus: { enabled: false, baseUrl: "", timeoutMs: 5 }
+    };
     storage.getItem.mockReset();
     storage.removeItem.mockReset();
     storage.setItem.mockReset();
+    fetchMock.mockReset();
   });
 
   it("settles timed-out checks and never exposes thrown error messages", async () => {
@@ -79,6 +87,26 @@ describe("getSystemHealth", () => {
     expect(health.components.cache?.status).toBe("error");
     expect(storage.removeItem).toHaveBeenCalledOnce();
     expect(cleanupComplete).toBe(true);
+    error.mockRestore();
+  });
+
+  it("aborts built-in HTTP probes at their configured timeout", async () => {
+    runtimeConfig.healthcheck = {
+      timeoutMs: 50,
+      cache: { enabled: false },
+      directus: { enabled: true, baseUrl: "https://directus.example.com", timeoutMs: 5 }
+    };
+    let signal: AbortSignal | undefined;
+    fetchMock.mockImplementation((_url: string, options: { signal: AbortSignal }) => {
+      signal = options.signal;
+      return new Promise(() => undefined);
+    });
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const health = await Reflect.apply(getSystemHealth, undefined, [{}]);
+
+    expect(health.components.directus?.status).toBe("error");
+    expect(signal?.aborted).toBe(true);
     error.mockRestore();
   });
 });

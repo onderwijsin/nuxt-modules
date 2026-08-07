@@ -19,7 +19,9 @@ import { resolveIconConfig } from "../src/utils";
 
 const definition = webmanifestModule as unknown as {
   meta: Record<string, unknown>;
-  moduleDependencies: Record<string, unknown>;
+  moduleDependencies: (nuxt: {
+    options: { webmanifest?: { enabled?: boolean } };
+  }) => Record<string, unknown>;
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
 
@@ -28,7 +30,7 @@ const createNuxt = (dev = false) => ({
     dev,
     buildDir: ".nuxt",
     runtimeConfig: { public: { siteUrl: "https://example.com" } },
-    app: {} as { head?: { link?: unknown[] } },
+    app: {} as { baseURL?: string; head?: { link?: unknown[] } },
     nitro: {} as { publicAssets?: unknown[] }
   }
 });
@@ -42,11 +44,14 @@ describe("webmanifest module", () => {
       configKey: "webmanifest",
       compatibility: { nuxt: "^4.0.0" }
     });
-    expect(definition.moduleDependencies).toEqual({
+    expect(definition.moduleDependencies({ options: {} })).toEqual({
       "@nuxt/image": { version: ">=2.0.0" },
       "nuxt-site-config": { version: ">=4.0.0" },
       "nuxt-schema-org": { version: ">=6.0.0" }
     });
+    expect(definition.moduleDependencies({ options: { webmanifest: { enabled: false } } })).toEqual(
+      {}
+    );
   });
 
   it("generates in development and skips when disabled", () => {
@@ -69,6 +74,16 @@ describe("webmanifest module", () => {
       expect.arrayContaining([expect.objectContaining({ maxAge: 60 * 60 * 24 * 7 })])
     );
     expect(nuxt.options.app.head?.link).toEqual([{ rel: "manifest", href: "/app.webmanifest" }]);
+  });
+
+  it("uses Nuxt's base URL for the manifest link", () => {
+    const nuxt = createNuxt();
+    nuxt.options.app.baseURL = "/portal/";
+    definition.setup({ enabled: true, manifest: {} }, nuxt as never);
+
+    expect(nuxt.options.app.head?.link).toEqual([
+      { rel: "manifest", href: "/portal/app.webmanifest" }
+    ]);
   });
 
   it("logs icon configuration warnings from module setup", async () => {

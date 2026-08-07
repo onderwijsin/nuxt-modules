@@ -1,0 +1,14 @@
+{
+  "name": "simple-rate-limiter-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}

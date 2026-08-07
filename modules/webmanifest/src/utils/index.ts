@@ -134,7 +134,11 @@ export function generateWebManifest(
     description: getString(identity, "description"),
     categories: getStrings(identity, "keywords")
   };
-  const appUrl = site?.url ?? nuxt.options.runtimeConfig.public.siteUrl ?? "/";
+  const configuredAppUrl = site?.url ?? nuxt.options.runtimeConfig.public.siteUrl;
+  const appUrl = typeof configuredAppUrl === "string" ? configuredAppUrl : "/";
+  const configuredBaseURL = nuxt.options.app.baseURL;
+  const baseURL = typeof configuredBaseURL === "string" ? configuredBaseURL : "/";
+  const scopedAppUrl = baseURL === "/" ? appUrl : new URL(baseURL, appUrl).toString();
   const generatedIcons = iconResolution.config
     ? generatePwaIcons({
         sizes: [16, 32, 48, 96, 144, 192, 512],
@@ -156,8 +160,9 @@ export function generateWebManifest(
   return defu({ ...manifest, icons: manifestIcons, shortcuts }, manifestFromIdentity, {
     name: site?.name,
     description: site?.description,
-    start_url: `${appUrl}?source=pwa`,
-    scope: appUrl,
+    start_url:
+      baseURL === "/" ? `${appUrl}?source=pwa` : new URL("?source=pwa", scopedAppUrl).toString(),
+    scope: scopedAppUrl,
     lang: nuxt.options.app.head?.htmlAttrs?.lang ?? site?.currentLocale ?? site?.defaultLocale
   }) as WebManifest;
 }

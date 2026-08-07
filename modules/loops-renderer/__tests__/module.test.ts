@@ -17,7 +17,9 @@ import loopsRendererModule from "../src/module";
 
 const moduleDefinition = loopsRendererModule as unknown as {
   meta: { name: string; configKey: string; compatibility: { nuxt: string } };
-  moduleDependencies: Record<string, unknown>;
+  moduleDependencies: (nuxt: {
+    options: { loopsRenderer?: { enabled?: boolean } | false };
+  }) => Record<string, unknown>;
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
 
@@ -36,9 +38,12 @@ describe("loops renderer module", () => {
   });
 
   it("declares Nuxt UI as a module dependency", () => {
-    expect(moduleDefinition.moduleDependencies).toEqual({
+    expect(moduleDefinition.moduleDependencies({ options: {} })).toEqual({
       "@nuxt/ui": { version: ">=4.0.0" }
     });
+    expect(
+      moduleDefinition.moduleDependencies({ options: { loopsRenderer: { enabled: false } } })
+    ).toEqual({});
   });
 
   it("defaults inline styles on in Nuxt app config", () => {

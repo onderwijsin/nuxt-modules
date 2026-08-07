@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody } from "h3";
 import { useRuntimeConfig } from "#imports";
+import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 import { z } from "zod";
 import { FIELD_NAMES } from "../../../shared";
 import type { NewsletterSignupInput } from "../../../shared";
@@ -29,6 +30,16 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event).newsletterSignup;
   if (!config?.apiKey || !config?.provider) {
     throw createNewsletterSignupError(500, NEWSLETTER_SIGNUP_ERROR_CODES.configuration);
+  }
+
+  const { bannedUntil } = await enforceRateLimit(event, { max: 5, duration: 60, ban: 900 });
+  if (bannedUntil !== undefined) {
+    throw createNewsletterSignupError(
+      429,
+      NEWSLETTER_SIGNUP_ERROR_CODES.rateLimited,
+      undefined,
+      bannedUntil
+    );
   }
 
   const body = await readBody<Record<string, unknown>>(event);

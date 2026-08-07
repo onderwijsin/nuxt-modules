@@ -9,10 +9,10 @@ Use this skill when integrating `@onderwijsin/nuxt-theme-customizer` into a Nuxt
 
 ## Requirements
 
-When the module is enabled, configure at least one complete named palette under
-`themeCustomizer.primary`. There is no default primary color. Every palette must define the eleven
-Tailwind shades `50`, `100`, `200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, and `950` as
-six-digit HEX values.
+When the module is enabled, it registers its required Nuxt UI, Pinia, persisted-state, and VueUse
+dependencies. Configure at least one complete named palette under `themeCustomizer.primary`. There
+is no default primary color. Every palette must define the eleven Tailwind shades `50`, `100`,
+`200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, and `950` as six-digit HEX values.
 
 ## Setup
 

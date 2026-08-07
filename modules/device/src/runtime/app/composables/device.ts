@@ -42,11 +42,17 @@ const getBrowserName = (ua: string): string => {
 
 // ---- Core generation --------------------------------------------------------
 
-function generateFlags(userAgent: string, headers: Record<string, string> = {}): Device {
+/**
+ * Generates device, operating-system, browser, and crawler flags from request data.
+ * @param userAgent - User agent reported by the browser or CDN.
+ * @param headers - Request headers that may supply trusted CDN device classification.
+ * @returns The complete device flag set.
+ */
+export function generateFlags(userAgent: string, headers: Record<string, string> = {}): Device {
   let mobile = false;
   let mobileOrTablet = false;
-  let ios = false;
-  let android = false;
+  let ios = isIos(userAgent);
+  let android = isAndroid(userAgent);
 
   /* v8 ignore start -- server header variants are validated in runtime integration, not unit environment */
   if (userAgent === "Amazon CloudFront") {
@@ -62,6 +68,7 @@ function generateFlags(userAgent: string, headers: Record<string, string> = {}):
       mobile = false;
       mobileOrTablet = false;
     }
+    // CloudFront provides OS flags that are more reliable than its synthetic user agent.
     if (headers["cloudfront-is-ios-viewer"] === "true") ios = true;
     if (headers["cloudfront-is-android-viewer"] === "true") android = true;
   } else if (headers["cf-device-type"]) {
@@ -84,8 +91,6 @@ function generateFlags(userAgent: string, headers: Record<string, string> = {}):
     /* v8 ignore stop */
     mobile = isMobile(userAgent);
     mobileOrTablet = isMobileOrTablet(userAgent);
-    ios = isIos(userAgent);
-    android = isAndroid(userAgent);
   }
 
   const windows = isWindows(userAgent);

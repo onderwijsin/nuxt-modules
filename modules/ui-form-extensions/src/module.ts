@@ -1,4 +1,5 @@
 import { defineNuxtModule, useLogger, createResolver, addImportsDir } from "@nuxt/kit";
+import type { ModuleDependencies } from "@nuxt/schema";
 import { resolveModuleName, resolveLoggerScope, moduleSetup } from "module-utils/shared";
 
 import { version } from "../package.json";
@@ -19,11 +20,14 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: "^4.0.0"
     }
   },
-  moduleDependencies: {
-    "@nuxt/ui": {
-      version: ">=4.0.0"
-    }
-  },
+  moduleDependencies: (nuxt): ModuleDependencies =>
+    nuxt.options.uiFormExtensions === false || nuxt.options.uiFormExtensions?.enabled === false
+      ? {}
+      : {
+          "@nuxt/ui": {
+            version: ">=4.0.0"
+          }
+        },
   setup(options, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);

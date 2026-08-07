@@ -72,15 +72,15 @@ newsletterSignup: {
   provider: "loops",
   apiKey: "your-loops-api-key",
   endpoint: {
-    enabled: true,
-    url: "/api/newsletter/signup"
+    enabled: true
   },
   lists: { default: "your-list-id" }
 }
 ```
 
-Consumers that already have the handler in another Nuxt application can disable local handler
-registration and point the composable at that application instead:
+The local route is always `/api/newsletter/signup`; `endpoint.url` is ignored while local
+registration is enabled. Consumers that already have the handler in another Nuxt application can
+disable local handler registration and point the composable at that application instead:
 
 ```ts
 newsletterSignup: {
@@ -183,20 +183,22 @@ endpoint.
 
 The module generates `POST /api/newsletter/signup`.
 
-The local endpoint is protected by `nuxt-api-shield`: each IP may make five requests per minute and
-is then banned for 15 minutes. Configure Nitro's `shield` storage for production; use a shared
-driver such as Redis when the application runs on multiple instances. Duplicate subscriptions are
-idempotent and always return success, so the endpoint does not reveal mailing-list membership.
-Provider requests have a five-second timeout. Mailchimp uses immediate `subscribed` status.
+The local endpoint uses `@onderwijsin/nuxt-simple-rate-limiter`: each IP may make five requests per
+minute and is then banned for 15 minutes. It does not configure or override an application's API
+Shield settings. The limiter is not registered when `endpoint.enabled` is `false`. Configure Nitro
+storage for production; use a shared driver such as Redis when the application runs on multiple
+instances. Duplicate subscriptions are idempotent and always return success, so the endpoint does
+not reveal mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses
+immediate `subscribed` status.
 
-Without `nitro.storage.shield`, the rate limiter works in memory but its counters and bans reset
+Without persistent Nitro storage, the rate limiter works in memory but its counters and bans reset
 when the application restarts. To persist them for a single-instance deployment, configure storage:
 
 ```ts
 export default defineNuxtConfig({
   nitro: {
     storage: {
-      shield: { driver: "fs", base: "./shield" }
+      "newsletter-signup": { driver: "fs", base: "./newsletter-signup" }
     }
   }
 });
@@ -284,12 +286,12 @@ try {
 
 The endpoint normalizes provider failures into these client-facing HTTP statuses:
 
-| Status | Meaning                                               |
-| ------ | ----------------------------------------------------- |
-| `400`  | Invalid request or invalid configured list selection  |
-| `429`  | Rate limited by the local endpoint's abuse protection |
-| `500`  | Module configuration is incomplete                    |
-| `5xx`  | Provider or server failure                            |
+| Status | Meaning                                                                                                 |
+| ------ | ------------------------------------------------------------------------------------------------------- |
+| `400`  | Invalid request or invalid configured list selection                                                    |
+| `429`  | Rate limited by the local endpoint's abuse protection; `data.bannedUntil` is present for an active ban. |
+| `500`  | Module configuration is incomplete                                                                      |
+| `5xx`  | Provider or server failure                                                                              |
 
 The API key is never returned in endpoint responses or exposed through public runtime config.
 

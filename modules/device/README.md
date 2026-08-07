@@ -44,8 +44,9 @@ The object includes `userAgent`, `isMobile`, `isMobileOrTablet`, `isTablet`, `is
 `isDesktopOrTablet`, `isIos`, `isAndroid`, `isWindows`, `isLinux`, `isMacOS`, `isApple`, `isSafari`,
 `isFirefox`, `isEdge`, `isChrome`, `isSamsung`, and `isCrawler`.
 
-On the server, CloudFront and Cloudflare device headers take precedence over user-agent parsing. On
-the client, the browser's `navigator.userAgent` is used after hydration.
+On the server, CloudFront and Cloudflare device headers take precedence for device class, while the
+user agent continues to provide browser and operating-system flags. On the client, the browser's
+`navigator.userAgent` is used after hydration.
 
 ## Compatibility and boundaries
 

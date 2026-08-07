@@ -12,10 +12,11 @@ Generate a rich `app.webmanifest` with zero configuration for Nuxt 4 application
 
 - Generates in development and production so the manifest link is available while developing.
 - Generates the manifest into build templates and exposes it as a public asset.
-- Adds `<link rel="manifest" href="/app.webmanifest">`.
+- Adds `<link rel="manifest">` at Nuxt's configured `app.baseURL` (for example,
+  `/portal/app.webmanifest`).
 - Explicit `manifest.icons` bypasses automatic icon generation.
 - Automatically registers `@nuxt/image`, `nuxt-site-config`, and `nuxt-schema-org` as module
-  dependencies.
+  dependencies while enabled.
 
 ## Configuration
 
@@ -57,6 +58,9 @@ When `image.provider` is `"ipx"`, the module generates `/_ipx`-style manifest UR
 If `favicon` or `appIcon` is missing, the other is used as a fallback. If both are missing,
 `maskableAppIcon` is used for both. A missing maskable icon only omits maskable entries. Unsupported
 providers or missing icon sources produce a warning and skip automatic icon generation.
+
+When manifest `scope` and `start_url` are not configured explicitly, they are derived from the
+application's `app.baseURL`, so subpath deployments remain inside the application mount point.
 
 ## Notes
 

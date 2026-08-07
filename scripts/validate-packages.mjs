@@ -48,7 +48,7 @@ for (const entry of readdirSync(join(root, "modules"), { withFileTypes: true }))
     for (const file of findOutputFiles(distDirectory)) {
       const output = readFileSync(file, "utf8");
       for (const privatePackage of ["module-utils", "test-utils"]) {
-        if (new RegExp(`from\\s+["']${privatePackage}["']`).test(output))
+        if (new RegExp(`from\\s+["']${privatePackage}(?:/[^"']*)?["']`).test(output))
           failures.push(`${name}: ${file.slice(directory.length + 1)} leaks ${privatePackage}`);
       }
     }

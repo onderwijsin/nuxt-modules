@@ -23,7 +23,9 @@ import type { ThemePalette } from "../src/types";
 
 const moduleDefinition = themeCustomizerModule as unknown as {
   meta: Record<string, unknown>;
-  moduleDependencies: Record<string, unknown>;
+  moduleDependencies: (nuxt: {
+    options: { themeCustomizer?: { enabled?: boolean } | false };
+  }) => Record<string, unknown>;
   defaults: (nuxt: { options: { dev: boolean } }) => Record<string, unknown>;
   setup: (options: Record<string, unknown>, nuxt: never) => void;
 };
@@ -83,12 +85,15 @@ describe("theme customizer module", () => {
       configKey: "themeCustomizer",
       compatibility: { nuxt: "^4.0.0" }
     });
-    expect(moduleDefinition.moduleDependencies).toMatchObject({
+    expect(moduleDefinition.moduleDependencies({ options: {} })).toMatchObject({
       "@nuxt/ui": { version: "^4.6.1" },
       "@pinia/nuxt": { version: "^1.0.1" },
       "pinia-plugin-persistedstate": { version: "^4.7.1" },
       "@vueuse/nuxt": { version: "^14.3.0" }
     });
+    expect(
+      moduleDefinition.moduleDependencies({ options: { themeCustomizer: { enabled: false } } })
+    ).toEqual({});
   });
 
   it("registers runtime assets and preserves custom groups", () => {

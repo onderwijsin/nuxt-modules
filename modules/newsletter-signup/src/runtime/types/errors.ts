@@ -6,11 +6,13 @@ export const NEWSLETTER_SIGNUP_ERROR_CODES: {
   readonly server: "NEWSLETTER_SIGNUP_SERVER_ERROR";
   readonly configuration: "NEWSLETTER_SIGNUP_CONFIGURATION_ERROR";
   readonly provider: "NEWSLETTER_SIGNUP_PROVIDER_ERROR";
+  readonly rateLimited: "NEWSLETTER_SIGNUP_RATE_LIMITED";
 } = {
   invalidInput: "NEWSLETTER_SIGNUP_INVALID_INPUT",
   server: "NEWSLETTER_SIGNUP_SERVER_ERROR",
   configuration: "NEWSLETTER_SIGNUP_CONFIGURATION_ERROR",
-  provider: "NEWSLETTER_SIGNUP_PROVIDER_ERROR"
+  provider: "NEWSLETTER_SIGNUP_PROVIDER_ERROR",
+  rateLimited: "NEWSLETTER_SIGNUP_RATE_LIMITED"
 };
 
 /** Short public alias for consumers that prefer `ERROR_CODES.invalidInput`. */
@@ -20,12 +22,14 @@ export const newsletterSignupErrorCodeSchema = z.enum([
   "NEWSLETTER_SIGNUP_INVALID_INPUT",
   "NEWSLETTER_SIGNUP_SERVER_ERROR",
   "NEWSLETTER_SIGNUP_CONFIGURATION_ERROR",
-  "NEWSLETTER_SIGNUP_PROVIDER_ERROR"
+  "NEWSLETTER_SIGNUP_PROVIDER_ERROR",
+  "NEWSLETTER_SIGNUP_RATE_LIMITED"
 ]);
 
 export const newsletterSignupErrorDataSchema = z.object({
   code: newsletterSignupErrorCodeSchema,
-  httpStatusCode: z.number().int()
+  httpStatusCode: z.number().int(),
+  bannedUntil: z.number().int().positive().optional()
 });
 
 export type NewsletterSignupErrorCode = z.infer<typeof newsletterSignupErrorCodeSchema>;

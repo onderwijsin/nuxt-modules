@@ -28,6 +28,12 @@ export default defineBuildConfig({
 });
 ```
 
+Nuxt Module Builder copies `src/runtime` files without bundling their dependencies. Modules with
+runtime imports must run `inlineModuleUtilsRuntime` in their `mkdist:done` build hook; it copies the
+utility output into `dist/runtime/module-utils` and rewrites those runtime imports to the bundled
+copy. Run `pnpm validate:packages` after building packages to catch a private import that reaches
+`dist/`.
+
 ## Utility reference
 
 The following table lists the public runtime utilities and their import locations. The signatures
