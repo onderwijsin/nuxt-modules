@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
+    "@nuxt/test-utils": "catalog:",
     "module-utils": "workspace:*",
     "nuxt": "catalog:",
     "typescript": "catalog:",
