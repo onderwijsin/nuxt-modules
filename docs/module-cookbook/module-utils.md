@@ -1,50 +1,59 @@
 # Working with `module-utils`
 
-`packages/module-utils` is the private package for reusable, module-agnostic helpers: module naming,
-logger scopes, prepare-mode detection, setup lifecycle behavior, and option validation. Keep
-module-specific behavior in its owning module; promote code only after it is genuinely reusable.
+`packages/module-utils` is a private, module-agnostic utility package used by modules in this
+repository. It contains build-time Nuxt module helpers, typed object-entry helpers, Zod option
+validation, retryable operation helpers, and server-only request-token checks. It is bundled into
+consuming modules at build time; application authors must not import it directly.
 
-Use its public subpath exports, not source paths. Module entrypoints should import
-`resolveModuleName`, `resolveLoggerScope`, `moduleSetup`, and, where validation is needed,
-`validateModuleOptions` from `module-utils/shared`:
+## Runtime subpaths
 
-The source layout mirrors these boundaries: `src/shared/`, `src/server/`, and the reserved
-`src/app/` directory each expose an `index.ts` entrypoint.
+Use the public package subpaths rather than source paths:
 
-```ts
-import {
-  fromEntries,
-  moduleSetup,
-  resolveLoggerScope,
-  resolveModuleName,
-  toEntries,
-  transpileRuntime,
-  validateModuleOptions
-} from "module-utils/shared";
-```
+| Subpath               | Contents                                   | Intended use                                                           |
+| --------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| `module-utils`        | Compatibility alias for the shared exports | Existing shared-only imports; prefer `module-utils/shared` in new code |
+| `module-utils/shared` | Build-time and framework-neutral helpers   | Module entrypoints, config, and runtime code that does not need `h3`   |
+| `module-utils/server` | H3 request-token helpers                   | Server routes and server utilities only                                |
+| `module-utils/app`    | Reserved client-runtime entrypoint         | Do not import; it currently has no public helpers                      |
+| `module-utils/types`  | Shared TypeScript types                    | Type-only imports such as `BaseModuleOptions`                          |
 
-Use `toEntries` and `fromEntries` for typed equivalents of `Object.entries` and
-`Object.fromEntries`:
+The `server` subpath is separate so importing token helpers does not add `h3` to build-time or
+app-only dependency graphs. The package root currently re-exports the shared entrypoint for
+compatibility, but it must not be used for server helpers. `module-utils` is private and should be
+inlined by each published module's build configuration:
 
 ```ts
-const entries = toEntries(options);
-const optionsByName = fromEntries(entries);
+export default defineBuildConfig({
+  rollup: { inlineDependencies: ["module-utils"] }
+});
 ```
 
-When a module registers published runtime code, add its runtime directory to Nuxt's transpilation
-list with `transpileRuntime(nuxt, runtimeDir)`. This keeps the registration consistent across
-modules; it is only needed for modules that ship a runtime directory consumed by Nuxt.
+## Utility reference
 
-Server-only token helpers come from `module-utils/server`:
+The following table lists the public runtime utilities and their import locations. The signatures
+use the source-level generic types; type-only exports are listed separately below.
 
-```ts
-import { isAdmin } from "module-utils/server";
-```
+| Utility                   | Calling signature                                                                                                                                                  | Import from           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| `attempt`                 | `attempt<T>(operation: () => T \| Promise<T>): Promise<AttemptResult<T>>`                                                                                          | `module-utils/shared` |
+| `attemptWithRetry`        | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `module-utils/shared` |
+| `toEntries`               | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `module-utils/shared` |
+| `fromEntries`             | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `module-utils/shared` |
+| `resolveModuleName`       | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `module-utils/shared` |
+| `resolveLoggerScope`      | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `module-utils/shared` |
+| `isPrepareMode`           | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `module-utils/shared` |
+| `transpileRuntime`        | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `module-utils/shared` |
+| `moduleSetup`             | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `module-utils/shared` |
+| `validateModuleOptions`   | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `module-utils/shared` |
+| `enabled`                 | Zod schema: `z.boolean().default(true)`                                                                                                                            | `module-utils/shared` |
+| `hasMatchingRequestToken` | `hasMatchingRequestToken(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                 | `module-utils/server` |
+| `isAdmin`                 | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `module-utils/server` |
 
-## Attempted operations and retries
+## `attempt`
 
-Use `attempt` in module runtime code when an expected operation failure should be represented as
-data rather than thrown immediately:
+`attempt` executes a synchronous or asynchronous operation and represents failure as data instead of
+throwing immediately. Successful results contain `data` and `error: null`; failed results contain
+`data: null` and the captured `error`.
 
 ```ts
 import { attempt } from "module-utils/shared";
@@ -54,16 +63,17 @@ if (result.error !== null) {
   logger.error(result.error);
   return fallback;
 }
-
 return result.data;
 ```
 
-The result is a discriminated union: successful operations have `data` and `error: null`, while
-failed operations have `data: null` and the captured `error`. This also handles synchronous throws
-from the operation. Do not use `attempt` to silently discard failures that must remain visible to a
-caller; rethrow or map the error after inspecting the result.
+Inspect the error and rethrow or map it when the failure cannot safely be hidden from the caller.
 
-For idempotent work that is safe to repeat, use `attemptWithRetry` with bounded exponential backoff:
+## `attemptWithRetry`
+
+`attemptWithRetry` repeats an operation until it succeeds or reaches a bounded retry budget. It
+defaults to three total attempts, a 250 millisecond initial delay, and exponential backoff. Set
+`exponentialBackoff: false` for a fixed delay. Use it only for idempotent operations with transient
+failures.
 
 ```ts
 import { attemptWithRetry } from "module-utils/shared";
@@ -75,54 +85,141 @@ const result = await attemptWithRetry(() => ofetch<Data>(url), {
 });
 ```
 
-`attempts` is the total operation count, defaulting to `3`. `delayMs` is the initial delay before a
-retry, defaulting to `250` milliseconds. `exponentialBackoff` defaults to `true` and doubles each
-subsequent delay; set it to `false` for a fixed delay. The final result preserves the successful
-value or the last captured error. Only retry operations that are idempotent and whose failure is
-transient.
+## `toEntries`
 
-These helpers are private repository utilities bundled into modules at build time. Never reference
-`module-utils`, `attempt`, or `attemptWithRetry` in consumer-facing READMEs, installable skills, or
-copyable application examples: consuming apps do not have access to this private package.
-
-The package root is retained as a shared-only compatibility alias. Do not use it for server helpers,
-because importing server helpers would make `h3` part of otherwise build-time or app-only dependency
-graphs. The reserved `module-utils/app` entrypoint is intentionally empty until client-runtime
-helpers are needed.
-
-Define constrained option fields as a plain Zod object in the module's
-`src/config/options.schema.ts`; the helper adds the shared `enabled` field. Do not introduce a
-schema just for optional TypeScript types.
-
-Declare `module-utils` as a `workspace:*` build dependency. It bundles its own runtime graph with
-tsup; consuming modules must explicitly inline it in `build.config.ts` so packed modules contain no
-private import:
+`toEntries` is a typed equivalent of `Object.entries`, preserving the object's key and value types
+for iteration or transformation.
 
 ```ts
-export default defineBuildConfig({
-  rollup: { inlineDependencies: ["module-utils"] }
-});
+import { toEntries } from "module-utils/shared";
+
+const entries = toEntries(options);
 ```
 
-Build `module-utils` before consuming modules and inspect `dist/module.mjs` or the tarball after a
-build. Its tests live in `packages/module-utils/__tests__/`. Never import `test-utils` from
-published runtime code.
+## `fromEntries`
 
-## Shared admin-token bypass
+`fromEntries` creates a typed object from an iterable of key/value pairs. Use it with `toEntries`
+when transforming option or configuration maps.
 
-Server-facing modules that need a trusted-service bypass should use the shared request-token helpers
-instead of copying application-specific authorization code. Export `hasMatchingRequestToken` for a
-generic token check and `isAdmin` when the token represents an administrator credential:
+```ts
+import { fromEntries, toEntries } from "module-utils/shared";
+
+const optionsByName = fromEntries(toEntries(options));
+```
+
+## `resolveModuleName`
+
+`resolveModuleName` converts a module config key into the repository's namespaced package name. For
+example, `resolveModuleName("turnstile")` returns `@onderwijsin/nuxt-turnstile`.
+
+```ts
+import { resolveModuleName } from "module-utils/shared";
+
+const moduleName = resolveModuleName("turnstile");
+```
+
+## `resolveLoggerScope`
+
+`resolveLoggerScope` converts a module key to the kebab-case scope used by Nuxt's logger.
+
+```ts
+import { resolveLoggerScope } from "module-utils/shared";
+
+const log = useLogger(resolveLoggerScope("themeCustomizer"));
+```
+
+## `isPrepareMode`
+
+`isPrepareMode` reports whether Nuxt is preparing a project. Use it when setup work must distinguish
+Nuxt preparation from a normal module load.
+
+```ts
+import { isPrepareMode } from "module-utils/shared";
+
+if (isPrepareMode(nuxt)) return;
+```
+
+## `transpileRuntime`
+
+`transpileRuntime` adds a module's runtime directory to Nuxt's transpilation list. Call it for
+modules that publish runtime code consumed by Nuxt.
+
+```ts
+import { transpileRuntime } from "module-utils/shared";
+
+transpileRuntime(nuxt, runtimeDir);
+```
+
+## `moduleSetup`
+
+`moduleSetup` provides consistent lifecycle logging and an enabled check for a module. Its returned
+`start` and `end` functions log loading state; `isEnabled` logs and returns `false` when
+`options.enabled === false`.
+
+```ts
+import { moduleSetup } from "module-utils/shared";
+
+const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);
+start();
+if (!isEnabled()) return;
+// Register the module.
+end();
+```
+
+## `validateModuleOptions`
+
+`validateModuleOptions` parses complete module options with a supplied Zod schema. It returns the
+schema output, logs a formatted validation error, and throws a uniform error when parsing fails. It
+does not extend or modify the schema.
+
+```ts
+import { validateModuleOptions } from "module-utils/shared";
+import { turnstileOptionsSchema } from "./config/options.schema";
+
+const options = validateModuleOptions(rawOptions, turnstileOptionsSchema, log);
+```
+
+Define the complete module schema, including the shared `enabled` field, in
+`src/config/options.schema.ts`.
+
+## `enabled`
+
+`enabled` is the shared Zod schema for modules whose enabled option defaults to `true`. Compose it
+into the module's own schema rather than defining a second enabled default.
+
+```ts
+import { enabled } from "module-utils/shared";
+
+const schema = z.object({ enabled, otherOption: z.string() });
+```
+
+## `hasMatchingRequestToken`
+
+`hasMatchingRequestToken` checks a configured token in a named request header or in
+`Authorization: Bearer <token>`. It returns `false` for missing or empty configured tokens.
+
+```ts
+import { hasMatchingRequestToken } from "module-utils/server";
+
+if (hasMatchingRequestToken(event, runtimeConfig.module.token, "x-module-token")) return;
+```
+
+## `isAdmin`
+
+`isAdmin` is the administrator-specific name for the same header-or-bearer token check. Use it for
+trusted bypasses in server-facing modules. Keep the expected token in private runtime configuration;
+never expose it through `runtimeConfig.public`, logs, client bundles, or hard-coded aliases.
 
 ```ts
 import { isAdmin } from "module-utils/server";
 
-if (isAdmin(event, runtimeConfig.module.adminToken, runtimeConfig.module.adminHeaderName)) {
-  return;
-}
+if (isAdmin(event, runtimeConfig.module.adminToken, runtimeConfig.module.adminHeaderName)) return;
 ```
 
-Both helpers accept either the configured header or `Authorization: Bearer <token>`. A module using
-this pattern should expose both values as options, default the header name to a documented stable
-value, and store the token only in private runtime configuration. Never place the bypass token in
-`runtimeConfig.public`, logs, client bundles, or a hard-coded consumer alias.
+## Shared types and module integration
+
+The package also exports `AttemptResult` and `AttemptRetryOptions` from `module-utils/shared`, and
+`BaseModuleOptions` from `module-utils/shared` or `module-utils/types`. Use type-only imports for
+these contracts. Declare `module-utils` as a `workspace:*` build dependency, build it before
+consuming modules, and inspect the generated bundle or tarball to ensure no private import remains.
+Never import `test-utils` from published runtime code.

@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   attempt,
   attemptWithRetry,
+  enabled,
   fromEntries,
   isPrepareMode,
   moduleSetup,
@@ -39,6 +40,13 @@ describe("typed entry helpers", () => {
       ["retries", 2]
     ]);
     expect(fromEntries(entries)).toEqual({ enabled: true, retries: 2 });
+  });
+});
+
+describe("shared option schemas", () => {
+  it("defaults the shared enabled option to true", () => {
+    expect(enabled.parse(undefined)).toBe(true);
+    expect(enabled.parse(false)).toBe(false);
   });
 });
 
@@ -159,7 +167,11 @@ describe("validateModuleOptions", () => {
     const log = { info: vi.fn() };
     const result = validateModuleOptions(
       { name: "example" },
-      { name: z.string(), retries: z.number().default(2) },
+      z.object({
+        enabled: z.boolean().default(true),
+        name: z.string(),
+        retries: z.number().default(2)
+      }),
       log as never
     );
 
@@ -172,9 +184,13 @@ describe("validateModuleOptions", () => {
   it("validates the merged schema and logs invalid options", () => {
     const log = { info: vi.fn() };
 
-    expect(() => validateModuleOptions({ name: 42 }, { name: z.string() }, log as never)).toThrow(
-      "Invalid module options ☝. Exiting."
-    );
+    expect(() =>
+      validateModuleOptions(
+        { enabled: true, name: 42 },
+        z.object({ enabled: z.boolean(), name: z.string() }),
+        log as never
+      )
+    ).toThrow("Invalid module options ☝. Exiting.");
     expect(log.info).toHaveBeenCalled();
   });
 
@@ -183,7 +199,7 @@ describe("validateModuleOptions", () => {
 
     const result = validateModuleOptions(
       { enabled: false, mode: "production" },
-      { mode: z.enum(["development", "production"]) },
+      z.object({ enabled: z.boolean(), mode: z.enum(["development", "production"]) }),
       log as never
     );
 

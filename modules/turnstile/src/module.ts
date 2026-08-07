@@ -16,7 +16,7 @@ import {
 } from "module-utils/shared";
 
 import { version } from "../package.json";
-import { turnstileOptionsShape } from "./config/options.schema";
+import { turnstileOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";
 
 const MODULE_KEY = "turnstile";
@@ -47,7 +47,7 @@ export default defineNuxtModule<ModuleOptions>({
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
 
-    const options = validateModuleOptions(rawOptions, turnstileOptionsShape, log);
+    const options = validateModuleOptions(rawOptions, turnstileOptionsSchema, log);
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
@@ -69,11 +69,12 @@ export default defineNuxtModule<ModuleOptions>({
         siteKey: options.siteKey
       }
     );
-    const optionsWithTurnstile = nuxt.options;
 
-    optionsWithTurnstile.turnstile = defu(optionsWithTurnstile.turnstile, {
-      siteKey: options.siteKey
-    });
+    if (!nuxt.options.turnstile) {
+      nuxt.options.turnstile = {};
+    }
+    nuxt.options.turnstile.siteKey ??= options.siteKey;
+
     transpileRuntime(nuxt, runtimeDir);
     addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));
     addServerScanDir(resolver.resolve(runtimeDir, "server"));

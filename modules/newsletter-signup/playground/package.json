@@ -1,0 +1,15 @@
+{
+  "name": "newsletter-signup-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@nuxt/ui": "catalog:",
+    "@onderwijsin/nuxt-newsletter-signup": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}

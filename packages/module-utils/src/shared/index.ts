@@ -7,6 +7,7 @@ export {
   isPrepareMode,
   transpileRuntime,
   moduleSetup,
-  validateModuleOptions
+  validateModuleOptions,
+  enabled
 } from "./setup";
 export type { BaseModuleOptions } from "./setup";

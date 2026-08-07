@@ -7,16 +7,17 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 
 ## 📦 What's in the box?
 
-| Package                                | Description                                                                                    |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `@onderwijsin/nuxt-static-text`        | Type-safe static text tokens for Nuxt applications. Compatible with Vue i18n syntax.           |
-| `@onderwijsin/nuxt-ui-form-extensions` | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
-| `@onderwijsin/nuxt-loops-renderer`     | Nuxt module for rendering Loops parsed LMX email content.                                      |
-| `@onderwijsin/nuxt-theme-customizer`   | Runtime theme picker and custom color editor for Nuxt UI.                                      |
-| `@onderwijsin/nuxt-device`             | SSR-aware device, browser, operating-system, and crawler detection.                            |
-| `@onderwijsin/nuxt-webmanifest`        | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
-| `@onderwijsin/nuxt-healthcheck`        | Configurable system health endpoints with built-in and custom server-side checks.              |
-| `@onderwijsin/nuxt-turnstile`          | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
+| Package                                                                        | Description                                                                                    |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)               | Type-safe static text tokens for Nuxt applications. Compatible with Vue i18n syntax.           |
+| [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md) | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
+| [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)         | Nuxt module for rendering Loops parsed LMX email content.                                      |
+| [`@onderwijsin/nuxt-theme-customizer`](modules/theme-customizer/README.md)     | Runtime theme picker and custom color editor for Nuxt UI.                                      |
+| [`@onderwijsin/nuxt-device`](modules/device/README.md)                         | SSR-aware device, browser, operating-system, and crawler detection.                            |
+| [`@onderwijsin/nuxt-webmanifest`](modules/webmanifest/README.md)               | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
+| [`@onderwijsin/nuxt-healthcheck`](modules/healthcheck/README.md)               | Configurable system health endpoints with built-in and custom server-side checks.              |
+| [`@onderwijsin/nuxt-turnstile`](modules/turnstile/README.md)                   | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
+| [`@onderwijsin/nuxt-newsletter-signup`](modules/newsletter-signup/README.md)   | Provider-independent newsletter signup with Loops and Mailchimp adapters.                      |
 
 ## 🧱 Requirements
 
@@ -127,7 +128,9 @@ This project contains various private packages as internal dependencies.
   authoritative module cookbook.
 - [`docs/contributing.md`](docs/contributing.md) — contributor workflow.
 - [`docs/workspace.md`](docs/workspace.md) — workspace, tools, and commands.
+- [`docs/testing.md`](docs/testing.md) — Vitest implementation and patterns.
 - [`docs/publishing.md`](docs/publishing.md) — release checks and publishing.
+- [`docs/actions.md`](docs/actions.md) — Guidelines for writing custom actions.
 
 ## 🚢 Publishing
 

@@ -18,7 +18,7 @@ import {
   validateModuleOptions
 } from "module-utils/shared";
 
-import optionsSchema from "./config/options.schema";
+import { staticTextOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";
 
 export type { TextDictionary, TextKey, TextTranslator } from "./types/dictionary";
@@ -54,7 +54,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     start();
 
-    const validatedOptions = validateModuleOptions(options, optionsSchema, log);
+    const validatedOptions = validateModuleOptions(options, staticTextOptionsSchema, log);
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");

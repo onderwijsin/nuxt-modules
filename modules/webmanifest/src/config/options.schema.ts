@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { enabled } from "module-utils/shared";
 
-/** Runtime validation shape for webmanifest module options. */
-export const moduleOptionsShape = {
+/** Runtime validation schema for webmanifest module options. */
+export const webmanifestOptionsSchema = z.strictObject({
+  enabled,
   icons: z
     .object({
       favicon: z.string().trim().min(1).optional(),
@@ -10,4 +12,4 @@ export const moduleOptionsShape = {
     })
     .optional(),
   manifest: z.record(z.string(), z.unknown()).optional()
-};
+});

@@ -40,10 +40,14 @@ When multiple valid solutions exist, prefer:
 - **MUST NOT** add tests solely to meet coverage thresholds - tests should only be added for known
   risks or regression prevention
 - **MUST NOT** add global type stubs to fix TypeScript issues unless specifically requested
+- **MUST NOT** use TypeScript type assertions or casts; model the types correctly instead
 - **MUST** use Zod for boundary validation where applicable
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
 - **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's
   public API surface changes, alongside the module README
+- **MUST** update `docs/module-cookbook/module-utils.md` whenever work changes, documents, or relies
+  on `packages/module-utils`, so the cookbook remains synchronized with the actual utility exports
+  and runtime subpaths
 
 ### Package Manager Contract
 

@@ -22,7 +22,7 @@ import {
   discoverHealthcheckComponents,
   generateHealthcheckComponentHandler
 } from "./config/components";
-import { healthcheckOptionsShape } from "./config/options.schema";
+import { healthcheckOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types/options";
 
@@ -49,7 +49,7 @@ export default defineNuxtModule<ModuleOptions>({
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
 
-    const options = validateModuleOptions(rawOptions, healthcheckOptionsShape, log);
+    const options = validateModuleOptions(rawOptions, healthcheckOptionsSchema, log);
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");

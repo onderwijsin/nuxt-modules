@@ -14,7 +14,8 @@ vi.mock("@nuxt/kit", () => ({
   defineNuxtModule: (definition: unknown) => definition
 }));
 
-vi.mock("module-utils/shared", () => ({
+vi.mock("module-utils/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("module-utils/shared")>()),
   transpileRuntime: (nuxt: any, runtimeDir: string) =>
     nuxt.options.build.transpile.push(runtimeDir),
   validateModuleOptions: (options: Record<string, unknown>) => ({
@@ -43,7 +44,7 @@ vi.mock("defu", () => ({
 
 vi.mock("zod", () => ({
   z: {
-    boolean: () => ({}),
+    boolean: () => ({ default: () => ({}) }),
     string: () => ({ min: () => ({}) }),
     object: () => ({
       safeParse: (value: unknown) => ({ success: true, data: value })

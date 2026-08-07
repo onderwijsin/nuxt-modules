@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fromEntries, toEntries } from "module-utils/shared";
+import { enabled, fromEntries, toEntries } from "module-utils/shared";
 
 import { hexColorSchema, THEME_SHADES } from "../runtime/app/utils/theme";
 
@@ -9,34 +9,39 @@ const palette = z.object(
 
 export const themePaletteSchema = z.record(z.string(), palette);
 
+const googleFontsOptionsSchema = z.object({
+  apiKey: z.string().trim().min(1).optional(),
+  families: z
+    .array(z.string().trim().min(1).max(100))
+    .max(100)
+    .transform((families) => [...new Set(families)])
+    .optional()
+});
+
+const themeDefaultsSchema = z
+  .object({
+    font: z.string().trim().min(1).max(100).optional(),
+    radius: z.number().finite().nonnegative().optional()
+  })
+  .catchall(z.string().trim().min(1).max(100));
+
 /** Runtime validation for configured theme palettes. */
-export const themeOptionsShape = {
+const themeOptionsShape = {
+  enabled,
   primary: themePaletteSchema.refine((palettes) => Object.keys(palettes).length > 0, {
     error: "Configureer minstens één palet in de primaire kleurgroep."
   }),
   secondary: themePaletteSchema.optional(),
   neutral: themePaletteSchema.optional(),
-  googleFonts: z
-    .object({
-      apiKey: z.string().trim().min(1).optional(),
-      families: z
-        .array(z.string().trim().min(1).max(100))
-        .max(100)
-        .transform((families) => [...new Set(families)])
-        .optional()
-    })
-    .optional(),
-  defaults: z
-    .object({
-      font: z.string().trim().min(1).max(100).optional(),
-      radius: z.number().finite().nonnegative().optional()
-    })
-    .catchall(z.string().trim().min(1).max(100))
-    .optional()
+  googleFonts: googleFontsOptionsSchema.optional(),
+  defaults: themeDefaultsSchema.optional()
 };
 
 export const themeOptionsSchema = z
-  .looseObject(themeOptionsShape)
+  .object(themeOptionsShape)
+  .catchall(
+    z.union([z.boolean(), themePaletteSchema, googleFontsOptionsSchema, themeDefaultsSchema])
+  )
   .superRefine((options, context) => {
     for (const [name, value] of toEntries(options)) {
       if (name === "enabled" || name === "googleFonts" || name === "defaults") continue;
