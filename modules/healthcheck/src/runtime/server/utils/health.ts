@@ -63,14 +63,14 @@ async function runComponent(
       resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
     return { ...normalizedResult, status, responseTimeMs };
   });
-  if (operationResult.error !== null) {
+  if (operationResult.error !== null || !operationResult.data) {
     return {
       status: "error",
       responseTimeMs: Math.round(performance.now() - startedAt),
-      error: getErrorMessage(operationResult.error)
+      error: getErrorMessage(operationResult.error ?? new Error("Unknown error"))
     };
   }
-  return operationResult.data as HealthCheckResult;
+  return operationResult.data;
 }
 
 /** Performs a write/read/delete probe against Nitro's named cache storage. */
@@ -149,7 +149,7 @@ export async function getSystemHealth(
     definitions.set("cloudinary", { handler: ({ event }) => checkCloudinary(event) });
   if (config.directus?.enabled)
     definitions.set("directus", { handler: ({ event }) => checkDirectus(event) });
-  for (const [name, component] of customComponents as Map<string, HealthcheckComponentDefinition>) {
+  for (const [name, component] of customComponents) {
     definitions.set(name, component);
   }
 

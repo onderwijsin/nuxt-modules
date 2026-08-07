@@ -126,7 +126,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     nuxtOptions.ui.theme.colors = configuredUiColors(groups, nuxtOptions.ui.theme.colors);
 
     nuxt.options.runtimeConfig.public.themeCustomizer = {
-      groups: configuredRuntimeGroups(groups) as never,
+      groups: configuredRuntimeGroups(groups),
       googleFonts: {
         families: options.googleFonts?.families ?? []
       },

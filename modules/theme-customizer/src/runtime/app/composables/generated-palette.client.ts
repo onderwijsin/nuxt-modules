@@ -29,7 +29,7 @@ const paletteResponseSchema = z.object({
  */
 export function useGeneratedPalette() {
   const appConfig = useAppConfig();
-  const colors = appConfig.ui.colors as Record<string, string>;
+  const colors = appConfig.ui.colors;
   const runtime = createThemeRuntimeAdapter(appConfig);
   const runtimeConfig = useRuntimeConfig();
   const generatedTokenNames = useState<Record<string, string>>(

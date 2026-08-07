@@ -12,7 +12,7 @@ export type ThemeFontOption = {
 /** Runtime app configuration consumed by the theme customizer. */
 export type ThemeAppConfig = {
   ui: {
-    colors: object;
+    colors: Record<string, string>;
   };
 };
 
