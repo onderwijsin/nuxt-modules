@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- ae69b48: Avoid registering Turnstile dependencies when the module is disabled.
+
 ## 0.2.1
 
 ### Patch Changes

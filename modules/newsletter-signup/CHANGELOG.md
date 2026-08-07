@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- 48013e2: Add a path-scoped, server-side rate limiter and use it for newsletter signup protection.
+- ae69b48: Keep newsletter rate limiting local to the endpoint without overriding consumer API Shield settings.
+- Updated dependencies [48013e2]
+  - @onderwijsin/nuxt-simple-rate-limiter@0.2.0
+
 ## 1.0.0
 
 ### Major Changes

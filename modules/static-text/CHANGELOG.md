@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+### Patch Changes
+
+- ae69b48: Document the `$t` incompatibility with Vue I18n and Nuxt I18n.
+
 ## 0.2.3
 
 ### Patch Changes

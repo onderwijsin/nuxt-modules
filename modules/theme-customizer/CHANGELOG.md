@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.8
+
+### Patch Changes
+
+- ae69b48: Avoid registering theme customizer dependencies when the module is disabled.
+
 ## 0.2.7
 
 ### Patch Changes
