@@ -12,7 +12,7 @@
     "format:check": "oxfmt --check .",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "build": "pnpm --recursive --if-present run build",
+    "build": "pnpm --filter './modules/*' --if-present run build",
     "typecheck": "pnpm --recursive --if-present run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
