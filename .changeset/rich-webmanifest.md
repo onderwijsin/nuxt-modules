@@ -2,5 +2,6 @@
 "@onderwijsin/nuxt-webmanifest": minor
 ---
 
-Migrate the webmanifest module into a publishable package with zero-config Site Config and
-Schema.org metadata, Cloudinary/IPX icon generation, explicit icon overrides, and Nuxt e2e tests.
+Add the publishable webmanifest module with zero-config Site Config and Schema.org metadata,
+Cloudinary/IPX icon generation, explicit icon overrides, development-time manifest links, and Nuxt
+e2e tests.
