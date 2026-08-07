@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-healthcheck",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Nuxt module that exposes configurable system health endpoints.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

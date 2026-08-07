@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- 70ff6f1: Refactor module option validation to parse complete module-owned Zod schemas directly, with uniform validation error logging and typed validated options.
+- 1800ad7: adopt shared module setup pattern
+- 8bb6cd7: Added shared module utilities for runtime transpilation, typed object entry conversion, and consistent option validation. Updated consuming modules to use the shared helpers, preserve arbitrary option keys, and remove duplicated setup/validation logic. No public consumer API changes.
+
 ## 0.2.2
 
 ### Patch Changes
