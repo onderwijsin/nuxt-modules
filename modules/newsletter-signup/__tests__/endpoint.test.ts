@@ -5,6 +5,7 @@ const body = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
 const readBodyMock = vi.hoisted(() => vi.fn(async () => body.value));
 const loopsMock = vi.hoisted(() => vi.fn(async () => ({ success: true })));
 const mailchimpMock = vi.hoisted(() => vi.fn(async () => ({ success: true })));
+const storage = vi.hoisted(() => new Map<string, unknown>());
 
 vi.mock("#imports", () => ({
   useRuntimeConfig: () => runtimeConfig.value
@@ -12,8 +13,15 @@ vi.mock("#imports", () => ({
 vi.mock("h3", () => ({
   defineEventHandler: (handler: unknown) => handler,
   readBody: readBodyMock,
+  getRequestIP: () => "127.0.0.1",
   createError: ({ statusCode, statusMessage, data }: Record<string, unknown>) =>
     Object.assign(new Error(String(statusMessage)), { statusCode, statusMessage, data })
+}));
+vi.mock("nitropack/runtime", () => ({
+  useStorage: () => ({
+    getItem: async (key: string) => storage.get(key),
+    setItem: async (key: string, value: unknown) => storage.set(key, value)
+  })
 }));
 vi.mock("../src/runtime/server/providers/loops", () => ({
   subscribeToLoops: loopsMock
@@ -33,6 +41,7 @@ describe("newsletter signup endpoint", () => {
     readBodyMock.mockClear();
     loopsMock.mockClear();
     mailchimpMock.mockClear();
+    storage.clear();
   });
 
   it("returns a configuration error when provider credentials are missing", async () => {

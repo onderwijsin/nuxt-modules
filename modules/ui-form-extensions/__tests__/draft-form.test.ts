@@ -11,6 +11,14 @@ interface ProfileDraft {
   company?: string;
 }
 
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 function createForm(source: Ref<ProfileDraft>) {
   return useDraftForm<ProfileDraft, ProfileDraft>({
     getSource: () => source.value,
@@ -121,6 +129,58 @@ describe("useDraftForm", () => {
     expect(onError).toHaveBeenCalledOnce();
     expect(form.state.name).toBe("Unsent");
     expect(form.isDirty.value).toBe(true);
+    expect(form.saving.value).toBe(false);
+  });
+
+  it("preserves edits made while a save is pending", async () => {
+    const source = ref<ProfileDraft>({ name: "Ada", address: { city: "London" } });
+    const pending = deferred<void>();
+    const form = useDraftForm({
+      getSource: () => source.value,
+      save: vi.fn(() => pending.promise),
+      onError: vi.fn()
+    });
+
+    form.state.name = "Alice";
+    const submission = form.submit({ name: "Alice", address: { city: "London" } });
+    form.state.name = "Alice Cooper";
+    pending.resolve();
+    await submission;
+
+    expect(form.state.name).toBe("Alice Cooper");
+    expect(form.isDirty.value).toBe(true);
+    expect(form.saving.value).toBe(false);
+  });
+
+  it("ignores concurrent submissions", async () => {
+    const source = ref<ProfileDraft>({ name: "Ada", address: { city: "London" } });
+    const pending = deferred<void>();
+    const save = vi.fn(() => pending.promise);
+    const form = useDraftForm({ getSource: () => source.value, save, onError: vi.fn() });
+
+    const first = form.submit({ name: "Ada", address: { city: "London" } });
+    const second = form.submit({ name: "Ada", address: { city: "London" } });
+    pending.resolve();
+    await Promise.all([first, second]);
+
+    expect(save).toHaveBeenCalledOnce();
+  });
+
+  it("cleans up saving when error handling throws", async () => {
+    const source = ref<ProfileDraft>({ name: "Ada", address: { city: "London" } });
+    const form = useDraftForm({
+      getSource: () => source.value,
+      save: vi.fn(async () => {
+        throw new Error("failed");
+      }),
+      onError: () => {
+        throw new Error("toast failed");
+      }
+    });
+
+    await expect(form.submit({ name: "Ada", address: { city: "London" } })).rejects.toThrow(
+      "toast failed"
+    );
     expect(form.saving.value).toBe(false);
   });
 });

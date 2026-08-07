@@ -111,8 +111,9 @@ async function checkCache(): Promise<void> {
  * Performs Cloudinary's authenticated account ping.
  *
  * @param event - Nitro request event used to read private runtime configuration.
+ * @param signal - Abort signal owned by the configured component timeout.
  */
-async function checkCloudinary(event: H3Event): Promise<void> {
+async function checkCloudinary(event: H3Event, signal: AbortSignal): Promise<void> {
   const config = useRuntimeConfig(event).healthcheck.cloudinary;
   const cloudName = config?.cloudName?.trim();
   const apiKey = config?.apiKey?.trim();
@@ -123,7 +124,7 @@ async function checkCloudinary(event: H3Event): Promise<void> {
   const authorization = btoa(`${apiKey}:${apiSecret}`);
   await ofetch(`https://api.cloudinary.com/v1_1/${cloudName}/ping`, {
     retry: 0,
-    timeout: 5000,
+    signal,
     headers: { authorization: `Basic ${authorization}` }
   });
 }
@@ -132,13 +133,14 @@ async function checkCloudinary(event: H3Event): Promise<void> {
  * Performs Directus's server ping endpoint check.
  *
  * @param event - Nitro request event used to read private runtime configuration.
+ * @param signal - Abort signal owned by the configured component timeout.
  */
-async function checkDirectus(event: H3Event): Promise<void> {
+async function checkDirectus(event: H3Event, signal: AbortSignal): Promise<void> {
   const baseUrl = useRuntimeConfig(event).healthcheck.directus?.baseUrl?.trim();
   if (!baseUrl) throw new Error("Directus baseUrl is required");
   await ofetch(new URL("/server/ping", baseUrl).toString(), {
     retry: 0,
-    timeout: 5000
+    signal
   });
 }
 
@@ -165,12 +167,12 @@ export async function getSystemHealth(
     definitions.set("cache", { handler: checkCache, timeoutMs: config.cache.timeoutMs });
   if (config.cloudinary?.enabled)
     definitions.set("cloudinary", {
-      handler: ({ event }) => checkCloudinary(event),
+      handler: ({ event, signal }) => checkCloudinary(event, signal),
       timeoutMs: config.cloudinary.timeoutMs
     });
   if (config.directus?.enabled)
     definitions.set("directus", {
-      handler: ({ event }) => checkDirectus(event),
+      handler: ({ event, signal }) => checkDirectus(event, signal),
       timeoutMs: config.directus.timeoutMs
     });
   for (const [name, component] of customComponents) {

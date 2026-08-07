@@ -129,7 +129,7 @@ export default defineNuxtConfig({
 
 | Option              | Type                      | Default             | Notes                                                           |
 | ------------------- | ------------------------- | ------------------- | --------------------------------------------------------------- |
-| `enabled`           | `boolean`                 | `true`              | Set false to skip runtime registration.                         |
+| `enabled`           | `boolean`                 | `true`              | Set false to skip runtime registration and module dependencies. |
 | `applyInlineStyles` | `boolean`                 | `true`              | Applies validated LMX presentation attributes as inline styles. |
 | `evaluate`          | `EvaluateLoopsLmxOptions` | all fallbacks false | Controls invalid/missing conditional evaluation.                |
 

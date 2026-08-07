@@ -47,7 +47,6 @@
     "@nuxt/ui": "catalog:",
     "defu": "catalog:",
     "h3": "catalog:",
-    "nuxt-api-shield": "catalog:",
     "ofetch": "catalog:",
     "zod": "catalog:"
   },

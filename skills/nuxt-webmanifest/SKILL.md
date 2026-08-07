@@ -19,8 +19,8 @@ export default defineNuxtConfig({
 });
 ```
 
-The module registers `@nuxt/image`, `nuxt-site-config`, and `nuxt-schema-org` as module
-dependencies. It derives `name`, `short_name`, and `categories` from `schemaOrg.identity`, and
+The module registers `@nuxt/image`, `nuxt-site-config`, and `nuxt-schema-org` as module dependencies
+while enabled. It derives `name`, `short_name`, and `categories` from `schemaOrg.identity`, and
 `name`/`description` from the global `site` configuration. Multi-tenancy is not supported.
 
 Set icon sources and explicit manifest values under `webmanifest`. Supplying `manifest.icons`
@@ -44,3 +44,6 @@ export default defineNuxtConfig({
 
 With `image.provider: "ipx"`, the module emits Nuxt Image IPX URLs. For Cloudinary, it uses
 `image.cloudinary.baseURL`. The module never reads environment variables directly.
+
+The manifest link, default scope, and default start URL respect Nuxt's `app.baseURL`. For example,
+an application mounted at `/portal/` exposes `/portal/app.webmanifest`.

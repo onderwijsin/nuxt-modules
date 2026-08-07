@@ -98,6 +98,28 @@ describe("device composable", () => {
     expect(flags.isWindows).toBe(true);
   });
 
+  it.each([
+    [
+      "iPhone",
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1",
+      "isIos"
+    ],
+    [
+      "Android",
+      "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/124.0",
+      "isAndroid"
+    ]
+  ])(
+    "keeps %s OS detection when Cloudflare classifies the device",
+    async (_, userAgent, osFlag) => {
+      const { generateFlags } = await loadUseDevice();
+      const flags = generateFlags(userAgent, { "cf-device-type": "mobile" });
+
+      expect(flags.isMobile).toBe(true);
+      expect(flags[osFlag as "isIos" | "isAndroid"]).toBe(true);
+    }
+  );
+
   it("detects crawler and linux/android/browser flags", async () => {
     const { useDevice } = await loadUseDevice({
       userAgent: "Mozilla/5.0 (Linux; Android 14) AppleWebKit Chrome/124.0 GoogleBot",

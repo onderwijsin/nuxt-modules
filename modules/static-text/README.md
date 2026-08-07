@@ -100,6 +100,9 @@ The module registers a Nuxt plugin that provides the same translator as `$t`:
 `$t` is also type-augmented on `NuxtApp` and Vue component instance properties, so the same key and
 placeholder checks apply in templates.
 
+`$t` is intentionally owned by this module and cannot be used concurrently with Vue I18n or Nuxt
+I18n. If the application needs multiple languages, use Vue I18n instead.
+
 ## Configuration
 
 Override the dictionary location under the `staticText` key:

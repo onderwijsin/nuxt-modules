@@ -44,5 +44,6 @@ Available flags are `isMobile`, `isMobileOrTablet`, `isTablet`, `isDesktop`, `is
 `isIos`, `isAndroid`, `isWindows`, `isLinux`, `isMacOS`, `isApple`, `isSafari`, `isFirefox`,
 `isEdge`, `isChrome`, `isSamsung`, and `isCrawler`. The original `userAgent` is also returned.
 
-Server detection uses CloudFront and Cloudflare device headers where present, otherwise it parses
-the request user agent. Client hydration uses `navigator.userAgent`.
+Server detection uses CloudFront and Cloudflare headers for device class where present, while the
+request user agent still supplies browser and operating-system flags. Client hydration uses
+`navigator.userAgent`.

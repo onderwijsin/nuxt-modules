@@ -85,22 +85,24 @@ describe("newsletter signup module setup", () => {
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
   });
 
-  it("declares nuxt-api-shield as a route-scoped module dependency", async () => {
+  it("does not override consumer API Shield configuration", async () => {
     const module = (await import("../src/module")).default;
-    const dependencies = module.moduleDependencies({
-      options: { newsletterSignup: { endpoint: { url: "/newsletter" } } }
-    });
+    const dependencies = module.moduleDependencies;
 
     expect(dependencies).toMatchObject({
-      "nuxt-api-shield": {
-        version: ">=1.0.0",
-        overrides: {
-          limit: { max: 5, duration: 60, ban: 900 },
-          delayOnBan: false,
-          retryAfterHeader: true,
-          routes: ["/newsletter"]
-        }
-      }
+      "@nuxt/ui": { version: ">=4.0.0" }
+    });
+    expect(dependencies).not.toHaveProperty("nuxt-api-shield");
+  });
+
+  it("ignores endpoint.url while the local endpoint is enabled", async () => {
+    const module = (await import("../src/module")).default;
+    const nuxt = createNuxt();
+
+    await module.setup({ endpoint: { enabled: true, url: "/not-used" } }, nuxt);
+
+    expect(nuxt.options.runtimeConfig.public.newsletterSignup).toEqual({
+      endpoint: { url: "/api/newsletter/signup" }
     });
   });
 

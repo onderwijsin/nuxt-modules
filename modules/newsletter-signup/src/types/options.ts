@@ -23,7 +23,7 @@ export interface NewsletterFieldConfig {
 export interface NewsletterEndpointConfig {
   /** Registers the local `POST /api/newsletter/signup` handler. */
   enabled?: boolean;
-  /** URL used by `useNewsletterSignup().signup`, local or remote. */
+  /** Remote URL used by `useNewsletterSignup().signup` when local registration is disabled. */
   url?: string;
 }
 

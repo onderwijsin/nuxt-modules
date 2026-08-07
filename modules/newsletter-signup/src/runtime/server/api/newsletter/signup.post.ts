@@ -1,5 +1,6 @@
-import { defineEventHandler, readBody } from "h3";
+import { defineEventHandler, getRequestIP, readBody } from "h3";
 import { useRuntimeConfig } from "#imports";
+import { useStorage } from "nitropack/runtime";
 import { z } from "zod";
 import { FIELD_NAMES } from "../../../shared";
 import type { NewsletterSignupInput } from "../../../shared";
@@ -20,6 +21,45 @@ const signupSchema = z
   })
   .strict();
 
+const RATE_LIMIT_MAX_REQUESTS = 5;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_BAN_MS = 15 * 60_000;
+
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+  bannedUntil?: number;
+}
+
+/**
+ * Applies the local newsletter endpoint's per-IP abuse protection.
+ * @param event - Incoming H3 request event.
+ */
+async function enforceRateLimit(event: Parameters<typeof getRequestIP>[0]): Promise<void> {
+  const ip = getRequestIP(event, { xForwardedFor: true }) ?? "unknown";
+  const storage = useStorage<RateLimitEntry>("newsletter-signup:rate-limit");
+  const key = encodeURIComponent(ip);
+  const now = Date.now();
+  const current = await storage.getItem(key);
+
+  if (current?.bannedUntil && current.bannedUntil > now) {
+    throw createNewsletterSignupError(429, NEWSLETTER_SIGNUP_ERROR_CODES.rateLimited);
+  }
+
+  const entry: RateLimitEntry =
+    !current || current.resetAt <= now
+      ? { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS }
+      : { count: current.count + 1, resetAt: current.resetAt };
+
+  if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+    entry.bannedUntil = now + RATE_LIMIT_BAN_MS;
+    await storage.setItem(key, entry);
+    throw createNewsletterSignupError(429, NEWSLETTER_SIGNUP_ERROR_CODES.rateLimited);
+  }
+
+  await storage.setItem(key, entry);
+}
+
 /**
  * Handles provider-independent newsletter signup requests.
  * @param event - Incoming H3 request event.
@@ -30,6 +70,8 @@ export default defineEventHandler(async (event) => {
   if (!config?.apiKey || !config?.provider) {
     throw createNewsletterSignupError(500, NEWSLETTER_SIGNUP_ERROR_CODES.configuration);
   }
+
+  await enforceRateLimit(event);
 
   const body = await readBody<Record<string, unknown>>(event);
   const fields: Record<string, NewsletterFieldConfig> = config.fields ?? {};

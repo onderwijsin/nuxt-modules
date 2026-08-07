@@ -164,7 +164,9 @@ authorization, conflict, or server-validation failures.
 | User edits any nested plain object/array field | Canonical source is unchanged; `isDirty` becomes true.                   |
 | Source changes while clean                     | Draft is replaced from the new source; remains clean.                    |
 | Source changes while dirty                     | Local draft is preserved; `isDirty` remains true.                        |
-| `submit` resolves                              | Draft is replaced from the latest `getSource()` value and becomes clean. |
+| `submit` resolves without newer local edits    | Draft is replaced from the latest `getSource()` value and becomes clean. |
+| User edits while `submit` is pending           | The newer local draft is preserved and remains dirty.                    |
+| A second `submit` occurs while saving          | It is ignored; the in-flight save remains authoritative.                 |
 | `submit` rejects                               | `onError` runs; draft and dirty state are preserved.                     |
 
 This is intentionally not a conflict-resolution system. If a dirty draft must be discarded, change
@@ -182,8 +184,8 @@ remounts the form. Do not mutate the internal clean snapshot.
 - Keep `getSource` stable and reactive: `getSource: () => store.profile` or `() => source.value`.
 - Use `shallowRef`/store state for the canonical object when appropriate; never use the draft object
   as the source.
-- Disable duplicate submissions in the UI with `saving` and/or a disabled submit button. The
-  composable exposes state but does not cancel or serialize concurrent calls for you.
+- Bind `saving` to the submit button for clear feedback. The composable also ignores concurrent
+  submit calls, so an older operation cannot reset state after a newer one.
 
 ## Troubleshooting checklist
 

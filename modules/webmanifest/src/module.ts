@@ -1,4 +1,5 @@
 import { addTemplate, defineNuxtModule, useLogger } from "@nuxt/kit";
+import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import { join } from "pathe";
 import {
@@ -38,11 +39,14 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
-  moduleDependencies: {
-    "@nuxt/image": { version: ">=2.0.0" },
-    "nuxt-site-config": { version: ">=4.0.0" },
-    "nuxt-schema-org": { version: ">=6.0.0" }
-  },
+  moduleDependencies: (nuxt): ModuleDependencies =>
+    nuxt.options.webmanifest === false || nuxt.options.webmanifest?.enabled === false
+      ? {}
+      : {
+          "@nuxt/image": { version: ">=2.0.0" },
+          "nuxt-site-config": { version: ">=4.0.0" },
+          "nuxt-schema-org": { version: ">=6.0.0" }
+        },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
@@ -71,7 +75,10 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.app.head ??= {};
     nuxt.options.app.head.link ??= [];
-    nuxt.options.app.head.link.push({ rel: "manifest", href: "/app.webmanifest" });
+    const configuredBaseURL = nuxt.options.app.baseURL;
+    const baseURL = typeof configuredBaseURL === "string" ? configuredBaseURL : "/";
+    const manifestHref = `${baseURL.replace(/\/?$/u, "/")}app.webmanifest`;
+    nuxt.options.app.head.link.push({ rel: "manifest", href: manifestHref });
 
     end();
   }

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import type { ModuleDependencies } from "@nuxt/schema";
 
 import {
   addComponentsDir,
@@ -57,20 +58,23 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       nuxt: "^4.0.0"
     }
   },
-  moduleDependencies: {
-    "@nuxt/ui": {
-      version: "^4.6.1"
-    },
-    "@pinia/nuxt": {
-      version: "^1.0.1"
-    },
-    "pinia-plugin-persistedstate": {
-      version: "^4.7.1"
-    },
-    "@vueuse/nuxt": {
-      version: "^14.3.0"
-    }
-  },
+  moduleDependencies: (nuxt): ModuleDependencies =>
+    nuxt.options.themeCustomizer === false || nuxt.options.themeCustomizer?.enabled === false
+      ? {}
+      : {
+          "@nuxt/ui": {
+            version: "^4.6.1"
+          },
+          "@pinia/nuxt": {
+            version: "^1.0.1"
+          },
+          "pinia-plugin-persistedstate": {
+            version: "^4.7.1"
+          },
+          "@vueuse/nuxt": {
+            version: "^14.3.0"
+          }
+        },
   defaults: (nuxt) => ({
     enabled: nuxt.options.dev,
     googleFonts: {

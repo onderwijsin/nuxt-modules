@@ -81,9 +81,6 @@ catalogs:
     nuxt:
       specifier: 4.5.2
       version: 4.5.2
-    nuxt-api-shield:
-      specifier: 1.0.0
-      version: 1.0.0
     nuxt-schema-org:
       specifier: 6.2.8
       version: 6.2.8
@@ -374,9 +371,6 @@ importers:
       h3:
         specifier: 'catalog:'
         version: 1.15.11
-      nuxt-api-shield:
-        specifier: 'catalog:'
-        version: 1.0.0(magic-string@1.1.0)(magicast@0.5.4)(oxc-parser@0.140.0)(rolldown@1.2.2)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.1)(yaml@2.9.0)))
       ofetch:
         specifier: 'catalog:'
         version: 1.5.1
@@ -5068,9 +5062,6 @@ packages:
 
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
-
-  nuxt-api-shield@1.0.0:
-    resolution: {integrity: sha512-mV2E3A/oefzN6V7z4sN3tSbCjBjkzakNBU+tDzJc4kZLInJRTxSN2JUa4724MMWCd0CYzVv3+HHkc/dJ7DHWoA==}
 
   nuxt-schema-org@6.2.8:
     resolution: {integrity: sha512-gjOnLZLBt6WMXYbW1UmbVG72z7RCLFBk3EsKZP1mfePhgeDtXwgtceTgPntXDcNB3qEHeeeG9H7qlI3yNzv1nw==}
@@ -11921,17 +11912,6 @@ snapshots:
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
-
-  nuxt-api-shield@1.0.0(magic-string@1.1.0)(magicast@0.5.4)(oxc-parser@0.140.0)(rolldown@1.2.2)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.1)(yaml@2.9.0))):
-    dependencies:
-      '@nuxt/kit': 4.5.2(magic-string@1.1.0)(magicast@0.5.4)(oxc-parser@0.140.0)(rolldown@1.2.2)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.1)(yaml@2.9.0)))
-      defu: 6.1.7
-    transitivePeerDependencies:
-      - magic-string
-      - magicast
-      - oxc-parser
-      - rolldown
-      - unplugin
 
   nuxt-schema-org@6.2.8(9af10beb75f5b2989cca962c44aeb8e4):
     dependencies:

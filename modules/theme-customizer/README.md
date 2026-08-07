@@ -82,13 +82,13 @@ module options.
 
 The `enabled` option defaults to `nuxt.options.dev`, so production builds are opted in explicitly:
 
-| Option        | Default               | Description                                     |
-| ------------- | --------------------- | ----------------------------------------------- |
-| `enabled`     | `nuxt.options.dev`    | Registers the module when `true`.               |
-| `primary`     | Required when enabled | Named palettes for the primary role.            |
-| `secondary`   | —                     | Optional named palettes for the secondary role. |
-| `neutral`     | —                     | Optional additional neutral palettes.           |
-| Custom groups | —                     | Any additional named palette group.             |
+| Option        | Default               | Description                                            |
+| ------------- | --------------------- | ------------------------------------------------------ |
+| `enabled`     | `nuxt.options.dev`    | Registers the module and its dependencies when `true`. |
+| `primary`     | Required when enabled | Named palettes for the primary role.                   |
+| `secondary`   | —                     | Optional named palettes for the secondary role.        |
+| `neutral`     | —                     | Optional additional neutral palettes.                  |
+| Custom groups | —                     | Any additional named palette group.                    |
 
 Initial selections can be configured with `defaults`. A color-group default must name a palette from
 that group; otherwise the first palette is used. When `googleFonts.families` is configured, its

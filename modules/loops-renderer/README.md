@@ -115,11 +115,11 @@ export default defineNuxtConfig({
 
 Available module options are:
 
-| Option              | Default   | Description                                                    |
-| ------------------- | --------- | -------------------------------------------------------------- |
-| `enabled`           | `true`    | Set to `false` to skip runtime registration.                   |
-| `applyInlineStyles` | `true`    | Apply validated LMX presentation attributes as inline styles.  |
-| `evaluate`          | See above | Fallbacks for missing variables and invalid conditional rules. |
+| Option              | Default   | Description                                                          |
+| ------------------- | --------- | -------------------------------------------------------------------- |
+| `enabled`           | `true`    | Set to `false` to skip runtime registration and module dependencies. |
+| `applyInlineStyles` | `true`    | Apply validated LMX presentation attributes as inline styles.        |
+| `evaluate`          | See above | Fallbacks for missing variables and invalid conditional rules.       |
 
 The same `applyInlineStyles` and `evaluate` options can be overridden for an individual
 `LoopsRenderer` with its `config` prop. `debug` is a per-renderer option and is intended for

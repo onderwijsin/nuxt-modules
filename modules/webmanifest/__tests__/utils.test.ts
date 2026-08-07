@@ -42,6 +42,16 @@ describe("webmanifest utilities", () => {
     expect(manifest.lang).toBe("en");
   });
 
+  it("scopes manifest defaults to Nuxt's application base URL", () => {
+    const manifest = generateWebManifest(
+      baseOptions,
+      nuxt({ app: { baseURL: "/portal/", head: { htmlAttrs: { lang: "en" } } } }) as never
+    );
+
+    expect(manifest.scope).toBe("https://site.example/portal/");
+    expect(manifest.start_url).toBe("https://site.example/portal/?source=pwa");
+  });
+
   it("generates IPX icons when Nuxt Image uses the IPX provider", () => {
     const manifest = generateWebManifest(baseOptions, nuxt() as never);
     expect(manifest.icons?.[0]).toMatchObject({

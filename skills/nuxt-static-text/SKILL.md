@@ -79,3 +79,6 @@ Templates can use the Vue-compatible `$t` helper:
 
 Unknown keys throw at runtime. Missing placeholder values remain visible as `{name}` so incomplete
 content is not silently hidden.
+
+`$t` is owned by this module. Do not install it alongside Vue I18n or Nuxt I18n; use Vue I18n for
+multilingual applications.

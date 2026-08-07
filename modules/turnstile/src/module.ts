@@ -6,6 +6,7 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
+import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import {
   moduleSetup,
@@ -38,10 +39,13 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
-  moduleDependencies: {
-    "@nuxt/ui": { version: ">=4.0.0" },
-    "@nuxtjs/turnstile": { version: ">=1.1.3" }
-  },
+  moduleDependencies: (nuxt): ModuleDependencies =>
+    nuxt.options.turnstile === false || nuxt.options.turnstile?.enabled === false
+      ? {}
+      : {
+          "@nuxt/ui": { version: ">=4.0.0" },
+          "@nuxtjs/turnstile": { version: ">=1.1.3" }
+        },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
