@@ -48,7 +48,7 @@ export async function subscribeToLoops(
     console.error({ status, providerData });
 
     if (status === 409) {
-      throw createNewsletterSignupError(429, NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists, error);
+      throw createNewsletterSignupError(409, NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists, error);
     }
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);

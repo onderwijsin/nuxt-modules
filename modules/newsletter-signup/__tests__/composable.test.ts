@@ -39,7 +39,7 @@ describe("useNewsletterSignup", () => {
       data: {
         data: {
           code: ERROR_CODES.alreadyExists,
-          httpStatusCode: 429
+          httpStatusCode: 409
         }
       }
     };
@@ -56,7 +56,7 @@ describe("useNewsletterSignup", () => {
       data: { code, httpStatusCode }
     });
 
-    expect(handleSignupError(createError(ERROR_CODES.alreadyExists, 429))).toBe(true);
+    expect(handleSignupError(createError(ERROR_CODES.alreadyExists, 409))).toBe(true);
     expect(toastAdd).toHaveBeenLastCalledWith({
       title: "Je bent al ingeschreven",
       color: "warning"

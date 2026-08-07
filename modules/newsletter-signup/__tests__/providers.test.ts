@@ -51,10 +51,10 @@ describe("newsletter provider adapters", () => {
     fetchMock.mockRejectedValue(Object.assign(new Error("conflict"), { status: 409 }));
 
     await expect(subscribeToLoops(input, "loops-list", loopsConfig)).rejects.toMatchObject({
-      statusCode: 429,
+      statusCode: 409,
       data: {
         code: NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists,
-        httpStatusCode: 429
+        httpStatusCode: 409
       }
     });
   });
