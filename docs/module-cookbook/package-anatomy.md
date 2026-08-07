@@ -52,6 +52,38 @@ The packed tarball, rather than a workspace symlink, is the release source of tr
 retain private workspace imports. Publish a CSS `style` export when the module exposes runtime
 Tailwind classes; see [module entrypoint](module-entrypoint.md#runtime-css).
 
+### Runtime subpath exports
+
+When a module exposes a consumer-facing server or runtime helper in addition to its Nuxt module
+entrypoint, publish it through an explicit package subpath. Keep the helper under `src/runtime/` so
+the module builder emits it alongside the other runtime files, and point the export at the emitted
+`.js` and `.d.ts` files:
+
+```json
+{
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js"
+    }
+  }
+}
+```
+
+Consumers can then import the runtime-only API without loading the Nuxt module entrypoint:
+
+```ts
+import { defineExampleComponent } from "@onderwijsin/nuxt-example/runtime";
+```
+
+Do not use a `#build` alias from published server runtime files. If runtime code needs generated
+consumer imports, generate the complete server handler or plugin and register its generated file
+with Nuxt Kit from the module entrypoint.
+
 ## Local modules
 
 Local modules inside a consuming Nuxt application do not need package metadata, module-builder

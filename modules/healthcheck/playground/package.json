@@ -1,0 +1,14 @@
+{
+  "name": "healthcheck-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-healthcheck": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}
