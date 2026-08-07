@@ -28,7 +28,8 @@ export const newsletterSignupErrorCodeSchema = z.enum([
 
 export const newsletterSignupErrorDataSchema = z.object({
   code: newsletterSignupErrorCodeSchema,
-  httpStatusCode: z.number().int()
+  httpStatusCode: z.number().int(),
+  bannedUntil: z.number().int().positive().optional()
 });
 
 export type NewsletterSignupErrorCode = z.infer<typeof newsletterSignupErrorCodeSchema>;

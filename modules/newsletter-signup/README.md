@@ -183,12 +183,12 @@ endpoint.
 
 The module generates `POST /api/newsletter/signup`.
 
-The local endpoint has module-owned abuse protection: each IP may make five requests per minute and
-is then banned for 15 minutes. It does not configure or override an application's API Shield
-settings. Configure Nitro storage for production; use a shared driver such as Redis when the
-application runs on multiple instances. The limiter is not registered when `endpoint.enabled` is
-`false`. Duplicate subscriptions are idempotent and always return success, so the endpoint does not
-reveal mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses
+The local endpoint uses `@onderwijsin/nuxt-simple-rate-limiter`: each IP may make five requests per
+minute and is then banned for 15 minutes. It does not configure or override an application's API
+Shield settings. The limiter is not registered when `endpoint.enabled` is `false`. Configure Nitro
+storage for production; use a shared driver such as Redis when the application runs on multiple
+instances. Duplicate subscriptions are idempotent and always return success, so the endpoint does
+not reveal mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses
 immediate `subscribed` status.
 
 Without persistent Nitro storage, the rate limiter works in memory but its counters and bans reset
@@ -286,12 +286,12 @@ try {
 
 The endpoint normalizes provider failures into these client-facing HTTP statuses:
 
-| Status | Meaning                                               |
-| ------ | ----------------------------------------------------- |
-| `400`  | Invalid request or invalid configured list selection  |
-| `429`  | Rate limited by the local endpoint's abuse protection |
-| `500`  | Module configuration is incomplete                    |
-| `5xx`  | Provider or server failure                            |
+| Status | Meaning                                                                                                 |
+| ------ | ------------------------------------------------------------------------------------------------------- |
+| `400`  | Invalid request or invalid configured list selection                                                    |
+| `429`  | Rate limited by the local endpoint's abuse protection; `data.bannedUntil` is present for an active ban. |
+| `500`  | Module configuration is incomplete                                                                      |
+| `5xx`  | Provider or server failure                                                                              |
 
 The API key is never returned in endpoint responses or exposed through public runtime config.
 

@@ -1,7 +1,7 @@
 {
-  "name": "@onderwijsin/nuxt-newsletter-signup",
-  "version": "1.0.0",
-  "description": "Provider-independent newsletter signup endpoint for Nuxt.",
+  "name": "@onderwijsin/nuxt-simple-rate-limiter",
+  "version": "0.1.0",
+  "description": "Path-scoped server-side rate limiting for Nuxt.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
     "url": "https://github.com/onderwijsin/nuxt-modules/issues"
@@ -10,7 +10,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
-    "directory": "modules/newsletter-signup"
+    "directory": "modules/simple-rate-limiter"
   },
   "files": [
     "dist"
@@ -26,10 +26,6 @@
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js"
-    },
-    "./runtime/server": {
-      "types": "./dist/runtime/server/index.d.ts",
-      "import": "./dist/runtime/server/index.js"
     }
   },
   "publishConfig": {
@@ -37,23 +33,18 @@
   },
   "scripts": {
     "build": "nuxt-module-build build",
-    "typecheck": "tsc --noEmit --project tsconfig.json",
     "dev": "pnpm run dev:prepare && nuxt dev playground",
-    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground"
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
     "@nuxt/kit": "catalog:",
-    "@nuxt/schema": "catalog:",
-    "@nuxt/ui": "catalog:",
-    "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
-    "defu": "catalog:",
     "h3": "catalog:",
-    "ofetch": "catalog:",
+    "nitropack": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
-    "module-utils": "workspace:*",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"

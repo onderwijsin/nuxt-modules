@@ -7,14 +7,20 @@ import { isRecord } from "../../shared";
  * @param statusCode - HTTP status exposed to the client.
  * @param code - Stable public error code.
  * @param cause - Original provider or validation error.
+ * @param bannedUntil - Unix-millisecond expiry when the client is temporarily banned.
  * @returns H3-compatible error.
  */
 export function createNewsletterSignupError(
   statusCode: number,
   code: NewsletterSignupErrorCode,
-  cause?: unknown
+  cause?: unknown,
+  bannedUntil?: number
 ): Error {
-  const data: NewsletterSignupErrorData = { code, httpStatusCode: statusCode };
+  const data: NewsletterSignupErrorData = {
+    code,
+    httpStatusCode: statusCode,
+    ...(bannedUntil === undefined ? {} : { bannedUntil })
+  };
   return createError({
     statusCode,
     statusMessage: code,

@@ -5,7 +5,7 @@ const body = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
 const readBodyMock = vi.hoisted(() => vi.fn(async () => body.value));
 const loopsMock = vi.hoisted(() => vi.fn(async () => ({ success: true })));
 const mailchimpMock = vi.hoisted(() => vi.fn(async () => ({ success: true })));
-const storage = vi.hoisted(() => new Map<string, unknown>());
+const enforceRateLimitMock = vi.hoisted(() => vi.fn(async () => ({})));
 
 vi.mock("#imports", () => ({
   useRuntimeConfig: () => runtimeConfig.value
@@ -13,15 +13,11 @@ vi.mock("#imports", () => ({
 vi.mock("h3", () => ({
   defineEventHandler: (handler: unknown) => handler,
   readBody: readBodyMock,
-  getRequestIP: () => "127.0.0.1",
   createError: ({ statusCode, statusMessage, data }: Record<string, unknown>) =>
     Object.assign(new Error(String(statusMessage)), { statusCode, statusMessage, data })
 }));
-vi.mock("nitropack/runtime", () => ({
-  useStorage: () => ({
-    getItem: async (key: string) => storage.get(key),
-    setItem: async (key: string, value: unknown) => storage.set(key, value)
-  })
+vi.mock("@onderwijsin/nuxt-simple-rate-limiter/runtime", () => ({
+  enforceRateLimit: enforceRateLimitMock
 }));
 vi.mock("../src/runtime/server/providers/loops", () => ({
   subscribeToLoops: loopsMock
@@ -41,7 +37,7 @@ describe("newsletter signup endpoint", () => {
     readBodyMock.mockClear();
     loopsMock.mockClear();
     mailchimpMock.mockClear();
-    storage.clear();
+    enforceRateLimitMock.mockClear();
   });
 
   it("returns a configuration error when provider credentials are missing", async () => {
@@ -90,6 +86,7 @@ describe("newsletter signup endpoint", () => {
     const handler = await loadHandler();
 
     await expect(handler({})).resolves.toEqual({ success: true });
+    expect(enforceRateLimitMock).toHaveBeenCalledWith({}, { max: 5, duration: 60, ban: 900 });
     expect(loopsMock).toHaveBeenCalledWith(
       {
         email: "ada@example.com",
@@ -123,6 +120,23 @@ describe("newsletter signup endpoint", () => {
       "us5",
       config
     );
+  });
+
+  it("includes the ban expiry in rate-limited responses", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "main" } }
+    };
+    enforceRateLimitMock.mockResolvedValueOnce({ bannedUntil: 1_800_000_000_000 });
+    const handler = await loadHandler();
+
+    await expect(handler({})).rejects.toMatchObject({
+      statusCode: 429,
+      data: {
+        code: "NEWSLETTER_SIGNUP_RATE_LIMITED",
+        bannedUntil: 1_800_000_000_000
+      }
+    });
+    expect(loopsMock).not.toHaveBeenCalled();
   });
 
   it("returns a configuration error when Mailchimp has no server", async () => {

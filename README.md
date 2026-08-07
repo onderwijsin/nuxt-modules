@@ -7,17 +7,18 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 
 ## 📦 What's in the box?
 
-| Package                                                                        | Description                                                                                    |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)               | Type-safe static text tokens for Nuxt applications. Compatible with Vue i18n syntax.           |
-| [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md) | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
-| [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)         | Nuxt module for rendering Loops parsed LMX email content.                                      |
-| [`@onderwijsin/nuxt-theme-customizer`](modules/theme-customizer/README.md)     | Runtime theme picker and custom color editor for Nuxt UI.                                      |
-| [`@onderwijsin/nuxt-device`](modules/device/README.md)                         | SSR-aware device, browser, operating-system, and crawler detection.                            |
-| [`@onderwijsin/nuxt-webmanifest`](modules/webmanifest/README.md)               | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
-| [`@onderwijsin/nuxt-healthcheck`](modules/healthcheck/README.md)               | Configurable system health endpoints with built-in and custom server-side checks.              |
-| [`@onderwijsin/nuxt-turnstile`](modules/turnstile/README.md)                   | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
-| [`@onderwijsin/nuxt-newsletter-signup`](modules/newsletter-signup/README.md)   | Provider-independent newsletter signup with Loops and Mailchimp adapters.                      |
+| Package                                                                          | Description                                                                                    |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)                 | Type-safe static text tokens with a Vue I18n-like `$t` API.                                    |
+| [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md)   | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
+| [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)           | Nuxt module for rendering Loops parsed LMX email content.                                      |
+| [`@onderwijsin/nuxt-theme-customizer`](modules/theme-customizer/README.md)       | Runtime theme picker and custom color editor for Nuxt UI.                                      |
+| [`@onderwijsin/nuxt-device`](modules/device/README.md)                           | SSR-aware device, browser, operating-system, and crawler detection.                            |
+| [`@onderwijsin/nuxt-webmanifest`](modules/webmanifest/README.md)                 | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
+| [`@onderwijsin/nuxt-healthcheck`](modules/healthcheck/README.md)                 | Configurable system health endpoints with built-in and custom server-side checks.              |
+| [`@onderwijsin/nuxt-turnstile`](modules/turnstile/README.md)                     | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
+| [`@onderwijsin/nuxt-newsletter-signup`](modules/newsletter-signup/README.md)     | Provider-independent newsletter signup with Loops and Mailchimp adapters.                      |
+| [`@onderwijsin/nuxt-simple-rate-limiter`](modules/simple-rate-limiter/README.md) | Path-scoped, per-IP server-side rate limiting for Nuxt endpoints.                              |
 
 ## 🧱 Requirements
 
