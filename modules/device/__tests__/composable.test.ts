@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 async function loadUseDevice(options?: {
   headers?: Record<string, string>;
   defaultUserAgent?: string;
-  refreshOnResize?: boolean;
   userAgent?: string;
 }) {
   vi.resetModules();
@@ -16,8 +15,7 @@ async function loadUseDevice(options?: {
         device: {
           defaultUserAgent:
             options?.defaultUserAgent ??
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 Safari/605.1.15",
-          refreshOnResize: options?.refreshOnResize ?? false
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 Safari/605.1.15"
         }
       }
     }),
@@ -126,24 +124,6 @@ describe("device composable", () => {
 
     expect(second).toBe(first);
     expect(second.userAgent).toBe(firstUa);
-  });
-
-  it("does not register resize listener in unit environment", async () => {
-    const addEventListener = vi.fn();
-    const setTimeout = vi.fn((cb: () => void) => cb());
-    vi.stubGlobal("window", { addEventListener, setTimeout });
-    vi.stubGlobal("navigator", {
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0"
-    });
-
-    const { useDevice } = await loadUseDevice({ refreshOnResize: true });
-    const flags = useDevice();
-    expect(addEventListener).not.toHaveBeenCalled();
-    expect(setTimeout).not.toHaveBeenCalled();
-    expect(typeof flags.isDesktop).toBe("boolean");
-
-    useDevice();
-    expect(addEventListener).toHaveBeenCalledTimes(0);
   });
 
   it("detects firefox and samsung browsers", async () => {

@@ -26,6 +26,10 @@
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js"
+    },
+    "./runtime/server": {
+      "types": "./dist/runtime/server/index.d.ts",
+      "import": "./dist/runtime/server/index.js"
     }
   },
   "publishConfig": {
@@ -43,6 +47,7 @@
     "@nuxt/ui": "catalog:",
     "defu": "catalog:",
     "h3": "catalog:",
+    "nuxt-api-shield": "catalog:",
     "ofetch": "catalog:",
     "zod": "catalog:"
   },

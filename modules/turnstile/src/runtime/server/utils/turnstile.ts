@@ -74,7 +74,7 @@ export async function assertTurnstileToken(event: H3Event, expectedAction: strin
       "TURNSTILE_VALIDATION_FAILED",
       expectedAction
     );
-  if (verification.action && verification.action !== expectedAction)
+  if (verification.action !== expectedAction)
     throw createTurnstileError(
       403,
       "Turnstile action does not match",

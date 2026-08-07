@@ -36,6 +36,7 @@ export async function subscribeToMailchimp(
       `https://${server}.api.mailchimp.com/3.0/lists/${encodeURIComponent(listId)}/members`,
       {
         method: "POST",
+        timeout: 5000,
         headers: {
           Authorization: `apikey ${config.apiKey}`,
           "Content-Type": "application/json"
@@ -59,7 +60,7 @@ export async function subscribeToMailchimp(
     console.error({ status, data });
 
     if (data?.title === "Member Exists" || data?.detail === "Member Exists") {
-      throw createNewsletterSignupError(429, NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists, error);
+      return { success: true };
     }
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);

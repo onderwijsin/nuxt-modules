@@ -94,6 +94,11 @@ This still provides `useNewsletterSignup()`; it only prevents this module from r
 server route. The remote URL must accept the same request payload and return the same normalized
 error contract.
 
+The local endpoint uses `nuxt-api-shield` to limit each IP to five requests per minute and ban it
+for 15 minutes after exhaustion. Configure Nitro `shield` storage with a shared driver in
+multi-instance production deployments. Duplicate subscriptions are intentionally idempotent and
+provider requests time out after five seconds.
+
 For multiple selectable lists or audiences:
 
 ```ts

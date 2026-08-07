@@ -6,6 +6,7 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
+import type { ModuleDependencies, Nuxt } from "@nuxt/schema";
 import {
   moduleSetup,
   resolveLoggerScope,
@@ -33,7 +34,28 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
-  moduleDependencies: { "@nuxt/ui": { version: ">=4.0.0" } },
+  moduleDependencies: (nuxt: Nuxt): ModuleDependencies => {
+    const newsletterSignup = nuxt.options.newsletterSignup;
+    const endpoint = newsletterSignup === false ? undefined : newsletterSignup?.endpoint;
+    const endpointEnabled = endpoint?.enabled !== false;
+
+    return {
+      "@nuxt/ui": { version: ">=4.0.0" },
+      ...(endpointEnabled
+        ? {
+            "nuxt-api-shield": {
+              version: ">=1.0.0",
+              overrides: {
+                limit: { max: 5, duration: 60, ban: 900 },
+                delayOnBan: false,
+                retryAfterHeader: true,
+                routes: [endpoint?.url ?? DEFAULTS.endpoint.url]
+              }
+            }
+          }
+        : {})
+    };
+  },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
@@ -68,8 +90,9 @@ export default defineNuxtModule<ModuleOptions>({
       name: "useNewsletterSignup",
       from: resolver.resolve(runtimeDir, "app/composables/newsletterSignup")
     });
-    if (options.endpoint?.enabled !== false)
+    if (options.endpoint?.enabled !== false) {
       addServerScanDir(resolver.resolve(runtimeDir, "server"));
+    }
     end();
   }
 });

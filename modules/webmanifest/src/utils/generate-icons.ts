@@ -21,19 +21,17 @@ interface GenerationOptions {
 const getSizes = (size: Size) => `${size}x${size}`;
 
 function getSource(config: IconConfig, source: string, size: Size, format: Format): string {
-  const filename = /\.[a-z0-9]+$/i.test(source) ? source : `${source}.${format}`;
   if ((config.provider ?? "ipx") === "ipx") {
-    const path = filename.startsWith("/") ? filename : `/${filename}`;
-    return `/_ipx/w_${size},h_${size},c_scale${path}`;
+    const path = source.startsWith("/") ? source : `/${source}`;
+    return `/_ipx/f_${format},w_${size},h_${size},c_scale${path}`;
   }
 
-  const cloudinaryFilename = filename.replace(/^\/+/, "");
-  return `${config.baseURL?.replace(/\/$/, "") ?? ""}/w_${size},h_${size},c_scale/${cloudinaryFilename}`;
+  const cloudinaryFilename = source.replace(/^\/+/, "");
+  return `${config.baseURL?.replace(/\/$/, "") ?? ""}/f_${format},w_${size},h_${size},c_scale/${cloudinaryFilename}`;
 }
 
-function getImageType(source: string, format: Format): string {
-  const extension = source.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
-  return `image/${extension ?? format}`;
+function getImageType(format: Format): string {
+  return `image/${format}`;
 }
 
 /**
@@ -51,14 +49,14 @@ export function generatePwaIcons({ sizes, formats, config }: GenerationOptions):
       icons.push({
         src: getSource(config, config.appIcon, size, format),
         sizes: getSizes(size),
-        type: getImageType(config.appIcon, format),
+        type: getImageType(format),
         purpose: "any"
       });
       if (config.maskableAppIcon) {
         icons.push({
           src: getSource(config, config.maskableAppIcon, size, format),
           sizes: getSizes(size),
-          type: getImageType(config.maskableAppIcon, format),
+          type: getImageType(format),
           purpose: "maskable"
         });
       }

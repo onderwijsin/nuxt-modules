@@ -32,12 +32,14 @@ describe("healthcheck component discovery", () => {
     ]);
   });
 
-  it("rejects components without the required default helper export", () => {
+  it("defers export-shape validation until the imported component is normalized", () => {
     const directory = createComponent(
       "database.ts",
       "export default { handler: async () => ({}) }"
     );
-    expect(() => discoverHealthcheckComponents(directory)).toThrow(/must default-export/);
+    expect(discoverHealthcheckComponents(directory)).toEqual([
+      { name: "database", path: join(directory, "database.ts") }
+    ]);
   });
 
   it("rejects names that collide with built-ins", () => {

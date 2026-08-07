@@ -4,6 +4,7 @@ import { kebabCase, titleCase } from "scule";
 import { reactive, ref } from "#imports";
 import { useAppConfig, useRuntimeConfig } from "nuxt/app";
 import { fromEntries } from "module-utils/shared";
+import { z } from "zod";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, THEME_SHADES } from "../utils/theme";
@@ -23,6 +24,23 @@ export type CustomThemeColor = {
 };
 
 type PersistedThemeColor = CustomThemeColor & { role?: ThemeColorGroup };
+const PERSISTED_THEME_VERSION = 1;
+const persistedThemeSchema = z.object({
+  version: z.number().int().nonnegative().optional(),
+  colors: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      group: z.string().optional(),
+      role: z.string().optional(),
+      token: z.string(),
+      shades: z.record(z.string(), z.string())
+    })
+  ),
+  groups: z.array(z.string()),
+  activeColors: z.record(z.string(), z.string()),
+  font: z.string()
+});
 
 /**
  * Stores persisted custom theme colors and applies their runtime CSS variables.
@@ -32,6 +50,7 @@ export const useThemeCustomizerStore = defineStore(
   "themeCustomizer",
   () => {
     const colors = ref<PersistedThemeColor[]>([]);
+    const version = ref(PERSISTED_THEME_VERSION);
     const groups = ref<ThemeColorGroup[]>([]);
     const activeColors = reactive<Record<ThemeColorGroup, string>>({});
 
@@ -143,6 +162,20 @@ export const useThemeCustomizerStore = defineStore(
      * @returns Nothing.
      */
     function applyPersistedTheme() {
+      const persisted = persistedThemeSchema.safeParse({
+        version: version.value,
+        colors: colors.value,
+        groups: groups.value,
+        activeColors,
+        font: font.value
+      });
+      if (!persisted.success) {
+        colors.value = [];
+        groups.value = [];
+        for (const group of Object.keys(activeColors)) delete activeColors[group];
+        font.value = runtimeConfig.public.themeCustomizer.defaults?.font ?? DEFAULT_THEME_FONT;
+      }
+      version.value = PERSISTED_THEME_VERSION;
       const usedTokens = new Set<string>();
 
       for (const color of colors.value) {
@@ -187,9 +220,7 @@ export const useThemeCustomizerStore = defineStore(
     function addColor(name: string, group: ThemeColorGroup) {
       const normalizedName = normalizeColorName(name);
       const baseToken = `custom-${toTokenSegment(group)}-${toTokenSegment(normalizedName)}`;
-      const token = colors.value.some((color) => color.token === baseToken)
-        ? `${baseToken}-${colors.value.length + 1}`
-        : baseToken;
+      const token = resolveUniqueToken(baseToken);
       const color: CustomThemeColor = {
         id: `${token}-${Date.now()}`,
         name: normalizedName,
@@ -217,11 +248,7 @@ export const useThemeCustomizerStore = defineStore(
 
       const normalizedName = normalizeColorName(name);
       const baseToken = `custom-${toTokenSegment(color.group)}-${toTokenSegment(normalizedName)}`;
-      let token = baseToken;
-      let suffix = 2;
-      while (colors.value.some((item) => item.id !== id && item.token === token)) {
-        token = `${baseToken}-${suffix++}`;
-      }
+      const token = resolveUniqueToken(baseToken, id);
 
       const previousToken = color.token;
       color.name = normalizedName;
@@ -324,6 +351,21 @@ export const useThemeCustomizerStore = defineStore(
     }
 
     /**
+     * Resolves a CSS token that does not collide with another persisted color.
+     * @param baseToken Candidate token before collision suffixing.
+     * @param excludedId Existing color allowed to retain its token during renaming.
+     * @returns A token unique among persisted colors.
+     */
+    function resolveUniqueToken(baseToken: string, excludedId?: string) {
+      let token = baseToken;
+      let suffix = 2;
+      while (colors.value.some((color) => color.id !== excludedId && color.token === token)) {
+        token = `${baseToken}-${suffix++}`;
+      }
+      return token;
+    }
+
+    /**
      * Selects and applies a Google Font family.
      * @param value Font family to activate.
      * @returns Nothing; invalid family names are ignored.
@@ -352,13 +394,14 @@ export const useThemeCustomizerStore = defineStore(
       font,
       setFont,
       setActiveColor,
-      updateShade
+      updateShade,
+      version
     };
   },
   {
     persist: {
       storage: piniaPluginPersistedstate.localStorage(),
-      pick: ["colors", "groups", "activeColors", "font"]
+      pick: ["version", "colors", "groups", "activeColors", "font"]
     }
   }
 );

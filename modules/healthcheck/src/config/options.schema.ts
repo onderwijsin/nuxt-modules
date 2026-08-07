@@ -24,7 +24,8 @@ const thresholdSchema = z
 
 const componentOptionsSchema = z.strictObject({
   enabled,
-  threshold: thresholdSchema.optional()
+  threshold: thresholdSchema.optional(),
+  timeoutMs: z.number().int().positive().optional()
 });
 
 const cloudinaryOptionsSchema = z.strictObject({
@@ -32,13 +33,15 @@ const cloudinaryOptionsSchema = z.strictObject({
   cloudName: nonEmptyString.optional(),
   apiKey: nonEmptyString.optional(),
   apiSecret: nonEmptyString.optional(),
-  threshold: thresholdSchema.optional()
+  threshold: thresholdSchema.optional(),
+  timeoutMs: z.number().int().positive().optional()
 });
 
 const directusOptionsSchema = z.strictObject({
   enabled: z.boolean().default(false),
   baseUrl: z.url().optional(),
-  threshold: thresholdSchema.optional()
+  threshold: thresholdSchema.optional(),
+  timeoutMs: z.number().int().positive().optional()
 });
 
 /** Runtime validation shape for all public healthcheck module options. */
@@ -51,6 +54,7 @@ const healthcheckOptionsShape = {
 /** Runtime validation schema for all public healthcheck module options. */
 export const healthcheckOptionsSchema = z.strictObject({
   enabled,
+  timeoutMs: z.number().int().positive().default(5000),
   ...healthcheckOptionsShape
 });
 

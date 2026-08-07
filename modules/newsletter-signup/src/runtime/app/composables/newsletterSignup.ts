@@ -1,11 +1,7 @@
 import { $fetch } from "ofetch";
 import { useRuntimeConfig, useToast } from "#imports";
 import { isRecord } from "../../shared";
-import {
-  ERROR_CODES,
-  NEWSLETTER_SIGNUP_ERROR_CODES,
-  newsletterSignupErrorDataSchema
-} from "../../types/errors";
+import { ERROR_CODES, newsletterSignupErrorDataSchema } from "../../types/errors";
 import type { NewsletterSignupErrorCode } from "../../types/errors";
 
 /** Public request payload accepted by the generated signup endpoint. */
@@ -39,15 +35,9 @@ export function useNewsletterSignup() {
     return parsed.success ? parsed.data.code : undefined;
   }
 
-  function isAlreadyExistsError(error: unknown): boolean {
-    return getErrorCode(error) === NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists;
-  }
-
   function handleSignupError(error: unknown): boolean {
     const code = getErrorCode(error);
-    if (code === NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists) {
-      toast.add({ title: "Je bent al ingeschreven", color: "warning" });
-    } else if (code === NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput) {
+    if (code === ERROR_CODES.invalidInput) {
       toast.add({ title: "Ongeldige invoer", color: "error" });
     } else {
       toast.add({ title: "Er ging iets mis, probeer het nog een keer", color: "error" });
@@ -55,7 +45,7 @@ export function useNewsletterSignup() {
     return true;
   }
 
-  return { signup, getErrorCode, isAlreadyExistsError, handleSignupError, ERROR_CODES };
+  return { signup, getErrorCode, handleSignupError, ERROR_CODES };
 }
 
 function extractErrorData(error: unknown): unknown {

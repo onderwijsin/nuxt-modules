@@ -34,6 +34,7 @@ export async function subscribeToLoops(
   const result = await attempt(async () => {
     const response = await $fetch("https://app.loops.so/api/v1/contacts/update", {
       method: "PUT",
+      timeout: 5000,
       headers: { Authorization: `Bearer ${config.apiKey}` },
       body
     });
@@ -48,7 +49,7 @@ export async function subscribeToLoops(
     console.error({ status, providerData });
 
     if (status === 409) {
-      throw createNewsletterSignupError(409, NEWSLETTER_SIGNUP_ERROR_CODES.alreadyExists, error);
+      return { success: true };
     }
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);

@@ -68,7 +68,7 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    module.setup({ enabled: true }, nuxt);
+    await module.setup({ enabled: true }, nuxt);
 
     expect(nuxt.options.runtimeConfig.newsletterSignup).toEqual({
       enabled: true,
@@ -85,11 +85,30 @@ describe("newsletter signup module setup", () => {
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
   });
 
+  it("declares nuxt-api-shield as a route-scoped module dependency", async () => {
+    const module = (await import("../src/module")).default;
+    const dependencies = module.moduleDependencies({
+      options: { newsletterSignup: { endpoint: { url: "/newsletter" } } }
+    });
+
+    expect(dependencies).toMatchObject({
+      "nuxt-api-shield": {
+        version: ">=1.0.0",
+        overrides: {
+          limit: { max: 5, duration: 60, ban: 900 },
+          delayOnBan: false,
+          retryAfterHeader: true,
+          routes: ["/newsletter"]
+        }
+      }
+    });
+  });
+
   it("keeps the composable while using a remote endpoint", async () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    module.setup(
+    await module.setup(
       {
         endpoint: {
           enabled: false,
@@ -110,7 +129,7 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    module.setup(
+    await module.setup(
       {
         provider: "mailchimp",
         apiKey: "secret-key",
@@ -195,7 +214,7 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    module.setup({ enabled: false }, nuxt);
+    await module.setup({ enabled: false }, nuxt);
 
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(addImports).not.toHaveBeenCalled();

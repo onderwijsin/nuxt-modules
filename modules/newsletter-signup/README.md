@@ -183,6 +183,12 @@ endpoint.
 
 The module generates `POST /api/newsletter/signup`.
 
+The local endpoint is protected by `nuxt-api-shield`: each IP may make five requests per minute and
+is then banned for 15 minutes. Configure Nitro's `shield` storage for production; use a shared
+driver such as Redis when the application runs on multiple instances. Duplicate subscriptions are
+idempotent and always return success, so the endpoint does not reveal mailing-list membership.
+Provider requests have a five-second timeout. Mailchimp uses immediate `subscribed` status.
+
 Single-list request:
 
 ```ts
@@ -239,23 +245,19 @@ async function submit() {
 
 `handleSignupError` uses Nuxt UI toasts with Dutch messages:
 
-- Duplicate subscription: `Je bent al ingeschreven`
 - Invalid input: `Ongeldige invoer`
 - Provider or server failure: `Er ging iets mis, probeer het nog een keer`
 
 For custom handling, use the helpers returned by the composable:
 
 ```ts
-const { signup, getErrorCode, isAlreadyExistsError, handleSignupError, ERROR_CODES } =
-  useNewsletterSignup();
+const { signup, getErrorCode, handleSignupError, ERROR_CODES } = useNewsletterSignup();
 
 try {
   await signup(payload);
   showSuccessMessage();
 } catch (error) {
-  if (isAlreadyExistsError(error)) {
-    showAlreadySubscribedMessage();
-  } else if (getErrorCode(error) === ERROR_CODES.invalidInput) {
+  if (getErrorCode(error) === ERROR_CODES.invalidInput) {
     showValidationMessage();
   } else {
     handleSignupError(error);
@@ -267,11 +269,14 @@ try {
 
 The endpoint normalizes provider failures into these client-facing HTTP statuses:
 
-| Status | Meaning                                                                   |
-| ------ | ------------------------------------------------------------------------- |
-| `400`  | Invalid request or invalid configured list selection                      |
-| `429`  | The email is already subscribed, when the provider reports that condition |
-| `500`  | Module configuration is incomplete                                        |
-| `5xx`  | Provider or server failure                                                |
+| Status | Meaning                                               |
+| ------ | ----------------------------------------------------- |
+| `400`  | Invalid request or invalid configured list selection  |
+| `429`  | Rate limited by the local endpoint's abuse protection |
+| `500`  | Module configuration is incomplete                    |
+| `5xx`  | Provider or server failure                            |
 
 The API key is never returned in endpoint responses or exposed through public runtime config.
+
+The `@onderwijsin/nuxt-newsletter-signup/runtime` export is browser-safe. Server error helpers are
+available from `@onderwijsin/nuxt-newsletter-signup/runtime/server`.

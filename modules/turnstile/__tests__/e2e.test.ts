@@ -75,13 +75,11 @@ describe("turnstile module", async () => {
     ).resolves.toEqual({ ok: true });
   });
 
-  it("accepts a successful verifier response without an action", async () => {
-    await expect(
-      $fetch("/api/turnstile/validate", {
-        method: "POST",
-        headers: { "x-turnstile-token": "fixture-success-without-action" }
-      })
-    ).resolves.toEqual({ ok: true });
+  it("rejects a successful verifier response without an action", async () => {
+    await expectTurnstileError("fixture-success-without-action", 403, {
+      code: "TURNSTILE_ACTION_MISMATCH",
+      expectedAction: "fixture"
+    });
   });
 
   it("maps verifier transport failures to 502", async () => {

@@ -64,6 +64,16 @@ describe("useThemeCustomizerStore", () => {
     expect(runtime.applyColor).toHaveBeenCalledWith(color);
   });
 
+  it("keeps tokens unique after deleting a duplicate color", () => {
+    const store = useThemeCustomizerStore();
+    store.addColor("Ocean", "primary");
+    const deleted = store.addColor("Ocean", "primary");
+    const retained = store.addColor("Ocean", "primary");
+    store.removeColor(deleted.id);
+
+    expect(store.addColor("Ocean", "primary").token).not.toBe(retained.token);
+  });
+
   it("initializes the configured default font and palette", () => {
     runtimeConfig.public.themeCustomizer.defaults = { font: "Inter", primary: "ocean" };
 
@@ -72,6 +82,33 @@ describe("useThemeCustomizerStore", () => {
     expect(store.font).toBe("Inter");
     store.applyPersistedTheme();
     expect(runtime.setActiveColor).toHaveBeenCalledWith("primary", "ocean");
+  });
+
+  it("discards malformed persisted state before applying runtime theme values", () => {
+    const store = useThemeCustomizerStore();
+    Reflect.set(store, "colors", [{ id: "broken", name: null, token: "broken", shades: "oops" }]);
+    Reflect.set(store, "font", { invalid: true });
+
+    store.applyPersistedTheme();
+
+    expect(store.colors).toEqual([]);
+    expect(store.groups).toEqual([]);
+    expect(store.font).toBe("Public Sans");
+    expect(store.version).toBe(1);
+    expect(runtime.applyColor).not.toHaveBeenCalled();
+  });
+
+  it("migrates legacy role-based persisted colors to groups", () => {
+    const store = useThemeCustomizerStore();
+    Reflect.set(store, "colors", [
+      { id: "legacy", name: "Ocean", role: "primary", token: "legacy", shades: {} }
+    ]);
+
+    store.applyPersistedTheme();
+
+    expect(store.colors[0]).toMatchObject({ group: "primary", token: "custom-primary-ocean" });
+    expect(store.colors[0]).not.toHaveProperty("role");
+    expect(runtime.applyColor).toHaveBeenCalledOnce();
   });
 
   it("sanitizes and activates runtime groups", () => {
