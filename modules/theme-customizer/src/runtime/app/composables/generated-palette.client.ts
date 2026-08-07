@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { reactive, useAppConfig, useRuntimeConfig, useState } from "#imports";
 import { ofetch } from "ofetch";
+import { attempt } from "module-utils/shared";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, hexColorSchema } from "../utils/theme";
@@ -28,7 +29,7 @@ const paletteResponseSchema = z.object({
  */
 export function useGeneratedPalette() {
   const appConfig = useAppConfig();
-  const colors = appConfig.ui.colors as Record<string, string>;
+  const colors = appConfig.ui.colors;
   const runtime = createThemeRuntimeAdapter(appConfig);
   const runtimeConfig = useRuntimeConfig();
   const generatedTokenNames = useState<Record<string, string>>(
@@ -111,14 +112,12 @@ export function useGeneratedPalette() {
     loading[group] = true;
     delete errors[group];
 
-    let response: unknown;
-    try {
-      response = await ofetch<unknown>("/api/theme/palette", {
+    const result = await attempt(() =>
+      ofetch<unknown>("/api/theme/palette", {
         query: { hex: parsedHex.data }
-      });
-    } catch {
-      response = undefined;
-    }
+      })
+    );
+    const response = result.data;
     if (!response) {
       errors[group] = "Het kleurenpalet kon niet worden opgehaald. Probeer het opnieuw.";
       loading[group] = false;

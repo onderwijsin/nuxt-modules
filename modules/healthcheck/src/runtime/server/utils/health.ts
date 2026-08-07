@@ -2,6 +2,7 @@ import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { useStorage } from "nitropack/runtime";
 import { ofetch } from "ofetch";
+import { attempt, fromEntries } from "module-utils/shared";
 
 import type {
   HealthCheckResult,
@@ -53,21 +54,23 @@ async function runComponent(
   threshold?: HealthCheckThreshold
 ): Promise<HealthCheckResult> {
   const startedAt = performance.now();
-  try {
-    const result = await component.handler({ event });
-    const normalizedResult = result ?? {};
+  const operationResult = await attempt(async () => {
+    const handlerResult = await component.handler({ event });
+    const normalizedResult = handlerResult ?? {};
     const responseTimeMs = Math.round(performance.now() - startedAt);
     const status =
       normalizedResult.status ??
       resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
     return { ...normalizedResult, status, responseTimeMs };
-  } catch (error) {
+  });
+  if (operationResult.error !== null || !operationResult.data) {
     return {
       status: "error",
       responseTimeMs: Math.round(performance.now() - startedAt),
-      error: getErrorMessage(error)
+      error: getErrorMessage(operationResult.error ?? new Error("Unknown error"))
     };
   }
+  return operationResult.data;
 }
 
 /** Performs a write/read/delete probe against Nitro's named cache storage. */
@@ -75,16 +78,16 @@ async function checkCache(): Promise<void> {
   const storage = useStorage("cache");
   const value = { health: Date.now() };
   const key = `${CACHE_HEALTH_KEY_PREFIX}:${value.health}`;
-  try {
+  const result = await attempt(async () => {
     await storage.setItem(key, value);
     const stored = await storage.getItem<{ health?: number } | null>(key);
     if (!stored || stored.health !== value.health) {
       throw new Error("Cache storage returned an unexpected value");
     }
-  } finally {
-    // Health probes must not leave test keys behind, even when the read fails.
-    void storage.removeItem(key).catch(() => undefined);
-  }
+  });
+  // Health probes must not leave test keys behind, even when the read fails.
+  void attempt(() => storage.removeItem(key));
+  if (result.error !== null) throw result.error;
 }
 
 /**
@@ -146,7 +149,7 @@ export async function getSystemHealth(
     definitions.set("cloudinary", { handler: ({ event }) => checkCloudinary(event) });
   if (config.directus?.enabled)
     definitions.set("directus", { handler: ({ event }) => checkDirectus(event) });
-  for (const [name, component] of customComponents as Map<string, HealthcheckComponentDefinition>) {
+  for (const [name, component] of customComponents) {
     definitions.set(name, component);
   }
 
@@ -164,7 +167,7 @@ export async function getSystemHealth(
       return [name, await runComponent(component, event, threshold)] as const;
     })
   );
-  const components = Object.fromEntries(entries);
+  const components = fromEntries(entries);
   return {
     status: resolveOverallStatus(Object.values(components)),
     timestamp: new Date().toISOString(),

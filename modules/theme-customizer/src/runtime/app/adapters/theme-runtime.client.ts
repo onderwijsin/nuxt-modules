@@ -13,7 +13,7 @@ type RuntimeColor = {
  * @returns Runtime theme operations for reading and applying CSS theme tokens.
  */
 export function createThemeRuntimeAdapter(appConfig: ThemeAppConfig) {
-  const colors = appConfig.ui.colors as Record<string, string>;
+  const colors = appConfig.ui.colors;
 
   function readDefaultShade(group: string, token: string, shade: number) {
     if (!import.meta.client) return "#ffffff";

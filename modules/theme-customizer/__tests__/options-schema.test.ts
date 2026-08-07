@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { fromEntries } from "module-utils/shared";
 
-import { parseThemeOptions, themeOptionsSchema } from "../src/config/options.schema";
+import { themeOptionsSchema } from "../src/config/options.schema";
 import type { ThemePalette } from "../src/types";
 
-const palette = Object.fromEntries(
+const palette = fromEntries(
   [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#123456"])
 ) as ThemePalette;
 
@@ -15,7 +16,7 @@ describe("theme option validation", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+    expect(result.success && result.data).toMatchObject({
       primary: { ocean: palette },
       accent: { violet: palette }
     });
@@ -28,7 +29,7 @@ describe("theme option validation", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+    expect(result.success && result.data).toMatchObject({
       googleFonts: { apiKey: "test-key" }
     });
   });
@@ -40,7 +41,7 @@ describe("theme option validation", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+    expect(result.success && result.data).toMatchObject({
       googleFonts: { families: ["Inter", "DM Sans"] }
     });
   });
@@ -52,7 +53,7 @@ describe("theme option validation", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(parseThemeOptions(result.success ? result.data : {})).toMatchObject({
+    expect(result.success && result.data).toMatchObject({
       defaults: { primary: "ocean", font: "Inter", radius: 0.375, accent: "violet" }
     });
   });

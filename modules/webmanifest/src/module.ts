@@ -49,11 +49,7 @@ export default defineNuxtModule<ModuleOptions>({
     start();
     if (!isEnabled()) return;
 
-    const validatedOptions = validateModuleOptions(
-      options,
-      moduleOptionsShape,
-      log
-    ) as ModuleOptions;
+    const validatedOptions = validateModuleOptions(options, moduleOptionsShape, log);
     const iconResolution = validatedOptions.manifest?.icons
       ? { warnings: [] }
       : resolveIconConfig(validatedOptions, nuxt);
@@ -72,9 +68,11 @@ export default defineNuxtModule<ModuleOptions>({
         { maxAge: 60 * 60 * 24 * 7, dir: join(nuxt.options.buildDir, "templates", "webmanifest") }
       ]
     });
-    nuxt.options.app = defu(nuxt.options.app, {
-      head: { link: [{ rel: "manifest", href: "/app.webmanifest" }] }
-    }) as typeof nuxt.options.app;
+
+    nuxt.options.app.head ??= {};
+    nuxt.options.app.head.link ??= [];
+    nuxt.options.app.head.link.push({ rel: "manifest", href: "/app.webmanifest" });
+
     end();
   }
 });

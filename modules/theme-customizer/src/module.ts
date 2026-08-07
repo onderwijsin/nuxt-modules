@@ -14,13 +14,16 @@ import {
   useLogger
 } from "@nuxt/kit";
 import {
+  fromEntries,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  toEntries,
+  transpileRuntime,
   validateModuleOptions
 } from "module-utils/shared";
 import { version } from "../package.json";
-import { parseThemeOptions, themeOptionsShape } from "./config/options.schema";
+import { themeOptionsShape } from "./config/options.schema";
 import {
   configuredAppColors,
   configuredGroups,
@@ -105,8 +108,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     if (!isEnabled()) return;
 
-    validateModuleOptions(rawOptions, themeOptionsShape, log);
-    const options = parseThemeOptions(rawOptions);
+    const options = validateModuleOptions(rawOptions, themeOptionsShape, log);
 
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
@@ -118,15 +120,21 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
 
     nuxt.options.css.push(generatedTheme.dst);
-    const nuxtOptions = nuxt.options as typeof nuxt.options & {
-      ui?: { theme?: { colors?: string[] } };
-    };
+    const nuxtOptions = nuxt.options;
     nuxtOptions.ui ??= {};
+
+    if (!nuxtOptions.ui) {
+      // if ui is set to false (eg consumer disabled the module), throw error
+      throw new Error(
+        "The '@nuxt/ui' module is required but disabled. Please enable it, or also disable the theme customizer module"
+      );
+    }
+
     nuxtOptions.ui.theme ??= {};
     nuxtOptions.ui.theme.colors = configuredUiColors(groups, nuxtOptions.ui.theme.colors);
 
     nuxt.options.runtimeConfig.public.themeCustomizer = {
-      groups: configuredRuntimeGroups(groups) as never,
+      groups: configuredRuntimeGroups(groups),
       googleFonts: {
         families: options.googleFonts?.families ?? []
       },
@@ -139,12 +147,18 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
 
-    const appConfig = nuxt.options.appConfig as {
-      ui?: { colors?: Record<string, string>; radius?: number };
-    };
-    appConfig.ui ??= {};
-    appConfig.ui.colors = configuredAppColors(groups, appConfig.ui.colors, defaults);
-    if (defaults.radius !== undefined) appConfig.ui.radius = defaults.radius;
+    const appConfig = nuxt.options.appConfig;
+    const appConfigUi = appConfig.ui ?? {};
+    const existingColors = fromEntries<string, string>(
+      toEntries(appConfigUi.colors ?? {}).flatMap(([key, value]) =>
+        typeof value === "string" ? [[key, value] as const] : []
+      )
+    );
+    Object.assign(appConfigUi, {
+      colors: configuredAppColors(groups, existingColors, defaults),
+      ...(defaults.radius !== undefined ? { radius: defaults.radius } : {})
+    });
+    Object.assign(appConfig, { ui: appConfigUi });
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app/components"),
       pathPrefix: false
@@ -194,7 +208,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       ssr: false
     });
 
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
 
     end();
   }

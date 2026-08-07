@@ -12,6 +12,20 @@ const kit = vi.hoisted(() => ({
 
 vi.mock("@nuxt/kit", () => kit);
 vi.mock("module-utils/shared", () => ({
+  transpileRuntime: (nuxt: any, runtimeDir: string) =>
+    nuxt.options.build.transpile.push(runtimeDir),
+  validateModuleOptions: (options: Record<string, any>) => {
+    if (
+      typeof options.content === "string" &&
+      (options.content.startsWith("/") ||
+        options.content.startsWith("../") ||
+        options.content.includes("\\") ||
+        options.content.includes("["))
+    ) {
+      throw new Error("Invalid module options");
+    }
+    return { enabled: true, ...options };
+  },
   moduleSetup: vi.fn((_name: string, options: { enabled?: boolean }) => ({
     start: vi.fn(),
     end: vi.fn(),
@@ -95,7 +109,7 @@ describe("text module", () => {
       const nuxt = { options: { srcDir: "/project/app", build: { transpile: [] } } };
 
       expect(() => moduleDefinition.setup({ content }, nuxt as never)).toThrow(
-        "Invalid @onderwijsin/nuxt-static-text options"
+        "Invalid module options"
       );
     }
   );

@@ -1,4 +1,5 @@
 import { computed, reactive, shallowRef, toRaw, watch } from "#imports";
+import { attempt, toEntries } from "module-utils/shared";
 
 /** Options for a form that keeps a local editable draft. */
 interface UseDraftFormOptions<TDraft extends object, TSubmission> {
@@ -38,10 +39,11 @@ export function useDraftForm<TDraft extends object, TSubmission>(
   async function submit(submission: TSubmission): Promise<void> {
     saving.value = true;
 
-    try {
+    const result = await attempt(async () => {
       await options.save(submission);
       replaceState(options.getSource());
-    } catch {
+    });
+    if (result.error !== null) {
       options.onError();
     }
     saving.value = false;
@@ -91,7 +93,7 @@ function toRawDeep<T>(value: T): T {
   if (isPlainObject(rawValue)) {
     const copy: Record<string, unknown> = {};
 
-    for (const [key, item] of Object.entries(rawValue)) {
+    for (const [key, item] of toEntries<Record<string, unknown>>(rawValue)) {
       copy[key] = toRawDeep(item);
     }
 

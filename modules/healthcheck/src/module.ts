@@ -10,15 +10,21 @@ import {
   useLogger
 } from "@nuxt/kit";
 import { defu } from "defu";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  transpileRuntime,
+  validateModuleOptions
+} from "module-utils/shared";
 
 import {
   discoverHealthcheckComponents,
   generateHealthcheckComponentHandler
 } from "./config/components";
-import { healthcheckOptionsSchema } from "./config/options.schema";
+import { healthcheckOptionsShape } from "./config/options.schema";
 import { version } from "../package.json";
-import type { ModuleOptions, ResolvedModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./types/options";
 
 const MODULE_KEY = "healthcheck";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
@@ -43,12 +49,7 @@ export default defineNuxtModule<ModuleOptions>({
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
 
-    const parsed = healthcheckOptionsSchema.safeParse(defu(rawOptions, DEFAULTS));
-    if (!parsed.success) {
-      log.error(`Invalid ${MODULE_NAME} options:\n${parsed.error.message}`);
-      throw new Error(`Invalid ${MODULE_NAME} options. See the validation errors above.`);
-    }
-    const options = parsed.data as ResolvedModuleOptions;
+    const options = validateModuleOptions(rawOptions, healthcheckOptionsShape, log);
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
@@ -79,7 +80,7 @@ export default defineNuxtModule<ModuleOptions>({
       cloudinary: options.cloudinary,
       directus: options.directus
     });
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
 
     addServerHandler({
       route: "/api/system/ping",

@@ -40,12 +40,17 @@ const directusOptionsSchema = z.strictObject({
   threshold: thresholdSchema.optional()
 });
 
-/** Runtime validation schema for all public healthcheck module options. */
-export const healthcheckOptionsSchema = z.strictObject({
-  enabled: z.boolean().default(true),
+/** Runtime validation shape for all public healthcheck module options. */
+export const healthcheckOptionsShape = {
   cache: componentOptionsSchema.optional(),
   cloudinary: cloudinaryOptionsSchema.optional(),
   directus: directusOptionsSchema.optional()
+};
+
+/** Runtime validation schema for all public healthcheck module options. */
+export const healthcheckOptionsSchema = z.strictObject({
+  enabled: z.boolean().default(true),
+  ...healthcheckOptionsShape
 });
 
 export type HealthcheckOptionsSchema = typeof healthcheckOptionsSchema;

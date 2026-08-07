@@ -3,6 +3,7 @@ import { createError, getRequestHeader } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { verifyTurnstileToken } from "@nuxtjs/turnstile/runtime/server/utils/verify.js";
 import { isAdmin } from "module-utils/server";
+import { attempt } from "module-utils/shared";
 import type { TurnstileErrorCode, TurnstileErrorData } from "../../types/errors";
 import { TURNSTILE_TOKEN_HEADER } from "../../constants";
 
@@ -41,18 +42,17 @@ export async function assertTurnstileToken(event: H3Event, expectedAction: strin
       expectedAction
     );
 
-  let verification: { success: boolean; action?: string };
-  try {
-    verification = await verifyTurnstileToken(token);
-  } catch (error: unknown) {
-    if (isErrorWithStatusCode(error)) throw error;
+  const result = await attempt(() => verifyTurnstileToken(token));
+  if (result.error !== null) {
+    if (isErrorWithStatusCode(result.error)) throw result.error;
     throw createError({
       statusCode: 502,
       statusMessage: "Turnstile validation could not be performed",
       data: createTurnstileErrorData("TURNSTILE_VALIDATION_UNAVAILABLE", expectedAction),
-      cause: error
+      cause: result.error
     });
   }
+  const verification = result.data as { success: boolean; action?: string };
   if (!verification.success)
     throw createTurnstileError(
       403,

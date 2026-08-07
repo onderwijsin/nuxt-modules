@@ -15,6 +15,5 @@ function isRelativeContentPath(value: string): boolean {
 
 /** Runtime validation for the text module options. */
 export default {
-  enabled: z.boolean().optional(),
   content: z.string().refine(isRelativeContentPath, { error: relativeContentPathError }).optional()
 };

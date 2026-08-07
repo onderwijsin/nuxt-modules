@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ofetch } from "ofetch";
 import { defineEventHandler as h3DefineEventHandler, getQuery as h3GetQuery } from "h3";
 import { useRuntimeConfig } from "nitropack/runtime";
+import { attempt } from "module-utils/shared";
 
 type ThemeFontOption = {
   label: string;
@@ -30,16 +31,18 @@ export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> =>
   if (!apiKey) return filterFonts(fallbackFonts, query.q);
 
   if (!cachedFonts) {
-    try {
-      const response = await ofetch<unknown>("https://www.googleapis.com/webfonts/v1/webfonts", {
+    const result = await attempt(() =>
+      ofetch<unknown>("https://www.googleapis.com/webfonts/v1/webfonts", {
         query: { capability: "WOFF2", key: apiKey, sort: "popularity" }
-      });
-      const parsed = googleFontsResponseSchema.safeParse(response);
+      })
+    );
+    if (result.error !== null) {
+      console.error("Failed to fetch Google Fonts metadata", result.error);
+    } else {
+      const parsed = googleFontsResponseSchema.safeParse(result.data);
       if (parsed.success) {
         cachedFonts = parsed.data.items.map(({ family }) => ({ label: family, value: family }));
       }
-    } catch (error) {
-      console.error("Failed to fetch Google Fonts metadata", error);
     }
   }
 

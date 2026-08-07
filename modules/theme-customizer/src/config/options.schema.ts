@@ -1,13 +1,10 @@
 import { z } from "zod";
+import { fromEntries, toEntries } from "module-utils/shared";
 
 import { hexColorSchema, THEME_SHADES } from "../runtime/app/utils/theme";
-import type { ThemeCustomizerOptions } from "../types";
 
 const palette = z.object(
-  Object.fromEntries(THEME_SHADES.map((shade) => [shade, hexColorSchema])) as Record<
-    (typeof THEME_SHADES)[number],
-    typeof hexColorSchema
-  >
+  fromEntries(THEME_SHADES.map((shade) => [shade, hexColorSchema] as const))
 );
 
 export const themePaletteSchema = z.record(z.string(), palette);
@@ -41,7 +38,7 @@ export const themeOptionsShape = {
 export const themeOptionsSchema = z
   .looseObject(themeOptionsShape)
   .superRefine((options, context) => {
-    for (const [name, value] of Object.entries(options)) {
+    for (const [name, value] of toEntries(options)) {
       if (name === "enabled" || name === "googleFonts" || name === "defaults") continue;
 
       const result = themePaletteSchema.safeParse(value);
@@ -54,15 +51,3 @@ export const themeOptionsSchema = z
       }
     }
   });
-
-/**
- * Parses all known and custom theme groups into the module option shape.
- * @param options Raw module options to validate and parse.
- * @returns Validated theme customizer options.
- */
-export function parseThemeOptions(options: unknown): ThemeCustomizerOptions {
-  const result = themeOptionsSchema.safeParse(options);
-  if (!result.success) throw new Error("Invalid module options ☝. Exiting.");
-
-  return result.data as ThemeCustomizerOptions;
-}

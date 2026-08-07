@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
+  attempt,
+  attemptWithRetry,
+  fromEntries,
   isPrepareMode,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  toEntries,
   validateModuleOptions
 } from "../src/shared/index";
 import { hasMatchingRequestToken, isAdmin } from "../src/server/index";
@@ -23,6 +27,76 @@ describe("module naming helpers", () => {
 
   it("resolves a config key to a logger scope", () => {
     expect(resolveLoggerScope("uiFormExtensions")).toBe("ui-form-extensions");
+  });
+});
+
+describe("typed entry helpers", () => {
+  it("returns typed object entries and rebuilds an object", () => {
+    const entries = toEntries({ enabled: true, retries: 2 });
+
+    expect(entries).toEqual([
+      ["enabled", true],
+      ["retries", 2]
+    ]);
+    expect(fromEntries(entries)).toEqual({ enabled: true, retries: 2 });
+  });
+});
+
+describe("attempt helpers", () => {
+  it("returns successful operation data", async () => {
+    await expect(attempt(() => "done")).resolves.toEqual({ data: "done", error: null });
+  });
+
+  it("returns rejected operation errors as data", async () => {
+    const error = new Error("failed");
+
+    await expect(attempt(() => Promise.reject(error))).resolves.toEqual({ data: null, error });
+  });
+
+  it("retries with exponential backoff until the operation succeeds", async () => {
+    vi.useFakeTimers();
+    const operation = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error("first"))
+      .mockRejectedValueOnce(new Error("second"))
+      .mockResolvedValue("done");
+
+    const resultPromise = attemptWithRetry(operation, { attempts: 3, delayMs: 10 });
+
+    await vi.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(20);
+
+    await expect(resultPromise).resolves.toEqual({ data: "done", error: null });
+    expect(operation).toHaveBeenCalledTimes(3);
+    vi.useRealTimers();
+  });
+
+  it("returns the final error when the retry budget is exhausted", async () => {
+    const error = new Error("failed");
+    const operation = vi.fn().mockRejectedValue(error);
+
+    await expect(attemptWithRetry(operation, { attempts: 2, delayMs: 0 })).resolves.toEqual({
+      data: null,
+      error
+    });
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses a fixed delay when exponential backoff is disabled", async () => {
+    vi.useFakeTimers();
+    const operation = vi.fn().mockRejectedValue(new Error("failed"));
+    const resultPromise = attemptWithRetry(operation, {
+      attempts: 3,
+      delayMs: 10,
+      exponentialBackoff: false
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(10);
+
+    await expect(resultPromise).resolves.toMatchObject({ data: null });
+    expect(operation).toHaveBeenCalledTimes(3);
+    vi.useRealTimers();
   });
 });
 

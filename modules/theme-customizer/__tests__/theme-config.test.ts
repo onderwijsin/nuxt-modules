@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { fromEntries } from "module-utils/shared";
 
 import {
   configuredAppColors,
@@ -9,7 +10,7 @@ import {
 } from "../src/config/theme";
 import type { ThemePalette } from "../src/types";
 
-const palette = Object.fromEntries(
+const palette = fromEntries(
   [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#123456"])
 ) as ThemePalette;
 
