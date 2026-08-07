@@ -1,10 +1,10 @@
 # @onderwijsin/nuxt-turnstile
 
-Nuxt 4 integration for Cloudflare Turnstile. It configures `@nuxtjs/turnstile`, provides the
-auto-imported `useTurnstile()` composable with Nuxt UI toast feedback, and exposes a server helper
-for action-aware token validation.
+Nuxt 4 integration for action-aware Cloudflare Turnstile protection. The module registers
+`@nuxtjs/turnstile` and `@nuxt/ui`, exposes the auto-imported `useTurnstile()` composable, and
+provides server helpers for validating single-use Turnstile tokens before a protected operation.
 
-## Installation
+## Installation and configuration
 
 ```sh
 pnpm add @onderwijsin/nuxt-turnstile
@@ -20,24 +20,120 @@ export default defineNuxtConfig({
 });
 ```
 
-The module registers `@nuxtjs/turnstile` and `@nuxt/ui` as Nuxt module dependencies. The normal Nuxt
-UI stylesheet setup is still required. `siteKey` is public; keep `secretKey` server-only and
-override it at runtime with `NUXT_TURNSTILE_SECRET_KEY` when appropriate.
+The module's options are:
 
-Trusted administrator requests can bypass Turnstile with `adminToken` and `adminHeaderName` (default
-`x-admin-token`). The token is private runtime configuration; `Authorization: Bearer <token>` is
-also accepted.
+| Option            | Default           | Purpose                                           |
+| ----------------- | ----------------- | ------------------------------------------------- |
+| `enabled`         | `true`            | Enables or disables module setup                  |
+| `siteKey`         | `""`              | Public key used by the Turnstile widget           |
+| `secretKey`       | `""`              | Server-only key used for verification             |
+| `adminToken`      | `""`              | Optional trusted token that bypasses verification |
+| `adminHeaderName` | `"x-admin-token"` | Header accepted for `adminToken`                  |
 
-## Public API
+`siteKey` is public and is also passed to `@nuxtjs/turnstile`. Keep `secretKey` and `adminToken`
+private. In production, prefer `NUXT_TURNSTILE_SECRET_KEY` for the private runtime value. The
+module's dependency registration also requires the consuming app's normal Nuxt UI stylesheet setup.
 
-- `useTurnstile()` is auto-imported in app code.
-- `assertTurnstileToken(event, expectedAction)` is exported from
-  `@onderwijsin/nuxt-turnstile/runtime`.
-- `TURNSTILE_TOKEN_HEADER` is exported from the runtime subpath and is `x-turnstile-token`.
-- Turnstile error types and helpers are exported from the runtime subpath.
+## Protecting a form
+
+Render `NuxtTurnstile`, choose a stable action for the operation, wait for a token, and forward it
+in `x-turnstile-token`. `useTurnstile()` is auto-imported and provides token lifecycle helpers plus
+Nuxt UI toast feedback.
+
+```vue
+<script setup lang="ts">
+import { TURNSTILE_TOKEN_HEADER } from "@onderwijsin/nuxt-turnstile/runtime";
+
+const token = ref<string>();
+const widget = useTemplateRef<{ reset: () => void }>("turnstile");
+const { getTokenWithRetry, isEnabled, showMissingTokenErrorHint, captureTurnstileError } =
+  useTurnstile();
+
+async function onSubmit() {
+  const currentToken = await getTokenWithRetry();
+  if (isEnabled.value && !currentToken) {
+    showMissingTokenErrorHint();
+    return;
+  }
+
+  try {
+    await $fetch("/api/user/session", {
+      method: "POST",
+      body: { email: "user@example.com" },
+      headers: currentToken ? { [TURNSTILE_TOKEN_HEADER]: currentToken } : undefined
+    });
+  } catch (error) {
+    if (!captureTurnstileError(error)) throw error;
+  } finally {
+    widget.value?.reset();
+  }
+}
+</script>
+
+<template>
+  <form @submit.prevent="onSubmit">
+    <NuxtTurnstile
+      ref="turnstile"
+      v-model="token"
+      :options="{ action: 'magic-link', appearance: 'interaction-only' }"
+    />
+    <UButton type="submit" label="Send magic link" />
+  </form>
+</template>
+```
+
+Use `getToken()` when the widget is already ready, or `getTokenWithRetry()` when submission may race
+with widget initialization. Reset the widget after every processed submission because Turnstile
+tokens are single-use.
+
+## Protecting a server route
+
+Call `assertTurnstileToken` before application validation, persistence, delivery, or other protected
+work. The expected action must match the widget action.
+
+```ts
+import { z } from "zod";
+import { assertTurnstileToken } from "@onderwijsin/nuxt-turnstile/runtime";
+
+export default defineEventHandler(async (event) => {
+  await assertTurnstileToken(event, "magic-link");
+  const body = await readValidatedBody(event, z.object({ email: z.email() }).parse);
+
+  return await sendMagicLink(body.email);
+});
+```
+
+The helper reads `x-turnstile-token` and verifies it through `@nuxtjs/turnstile`. It rejects
+missing, failed, unavailable, or mismatched-action tokens. In development, an absent secret leaves
+local forms usable; in production, it produces `TURNSTILE_SERVER_MISCONFIGURED`.
+
+## Trusted administrator bypass
+
+Configure `adminToken` for trusted server-to-server or administrative requests. The configured
+`adminHeaderName` and `Authorization: Bearer <token>` are both accepted. This bypass is checked
+before Turnstile verification; do not expose the token in public runtime config, client code, logs,
+or application aliases.
+
+## Runtime exports
+
+The `@onderwijsin/nuxt-turnstile/runtime` subpath is the explicit runtime API and does not require
+loading the Nuxt module entrypoint. It exports:
+
+- `TURNSTILE_TOKEN_HEADER` (`"x-turnstile-token"`)
+- `assertTurnstileToken`
+- `createTurnstileError`
+- `createTurnstileErrorData`
+- `isErrorWithStatusCode`
+- `TurnstileErrorCode` and `TurnstileErrorData` types
+
+Stable error codes are `TURNSTILE_TOKEN_MISSING`, `TURNSTILE_VALIDATION_FAILED`,
+`TURNSTILE_ACTION_MISMATCH`, `TURNSTILE_VALIDATION_UNAVAILABLE`, and
+`TURNSTILE_SERVER_MISCONFIGURED`. Apply authorization and business validation in the consuming route
+after Turnstile succeeds; the module does not replace the route's existing submit or business logic.
 
 ## Compatibility
 
-- Nuxt 4 and Node.js 22+
+- Nuxt 4
+- Node.js 22+
 - Node and Cloudflare Workers-compatible server runtime
 - No Sentry dependency or telemetry is included

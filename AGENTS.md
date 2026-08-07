@@ -45,6 +45,9 @@ When multiple valid solutions exist, prefer:
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
 - **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's
   public API surface changes, alongside the module README
+- **MUST** update `docs/module-cookbook/module-utils.md` whenever work changes, documents, or relies
+  on `packages/module-utils`, so the cookbook remains synchronized with the actual utility exports
+  and runtime subpaths
 
 ### Package Manager Contract
 
