@@ -33,14 +33,15 @@ When multiple valid solutions exist, prefer:
 - **MUST NOT** implement workarounds, quick fixes, or symptom-masking changes without explicit
   permission; fixes must address the verified root cause
 - **MUST NOT** edit files under `.husky/**` unless explicitly requested in the current task
-- **MUST NOT** edit anything under `.agents/skills/**` unless explicitly requested
+- **MUST NOT** edit anything under `.agents/skills/**` unless explicitly requested.
 - **MUST NOT** add dependencies unless explicitly requested and demonstrated to improve codebase
   health and quality
 - **MUST NOT** change Vitest coverage include paths unless explicitly requested
 - **MUST NOT** add tests solely to meet coverage thresholds - tests should only be added for known
   risks or regression prevention
 - **MUST NOT** add global type stubs to fix TypeScript issues unless specifically requested
-- **MUST NOT** use TypeScript type assertions or casts; model the types correctly instead
+- **MUST NOT** introduce TypeScript type assertions or casts unless explicitly requested or approved
+  by the human maintainer; model the types correctly instead
 - **MUST** use Zod for boundary validation where applicable
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
 - **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's
@@ -96,7 +97,7 @@ Ask for clarification instead of guessing when:
 
 A task is **ONLY** complete when **ALL** applicable items are satisfied:
 
-1. Formatting applied with `pnpm fmt`
+1. Formatting applied with `pnpm format`
 2. Lint autofixes applied and lint passes with `pnpm lint:fix`
 3. TypeScript checks pass with `pnpm typecheck`
 4. Unit tests pass with `pnpm test`
