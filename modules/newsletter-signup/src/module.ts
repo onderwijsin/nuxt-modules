@@ -38,8 +38,7 @@ export default defineNuxtModule<ModuleOptions>({
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
-    validateNewsletterSignupOptions(rawOptions, log);
-    const options = validateModuleOptions(rawOptions, newsletterSignupOptionsSchema, log);
+
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
@@ -48,6 +47,9 @@ export default defineNuxtModule<ModuleOptions>({
       src: resolver.resolve(runtimeDir, "types/config.d.ts")
     });
     if (!isEnabled()) return;
+
+    validateNewsletterSignupOptions(rawOptions, log);
+    const options = validateModuleOptions(rawOptions, newsletterSignupOptionsSchema, log);
 
     nuxt.options.runtimeConfig.newsletterSignup = options;
     const publicNewsletterSignup = nuxt.options.runtimeConfig.public.newsletterSignup ?? {
