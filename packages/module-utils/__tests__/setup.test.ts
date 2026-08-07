@@ -2,13 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   isPrepareMode,
-  hasMatchingRequestToken,
-  isAdmin,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
-} from "../src/index";
+} from "../src/shared/index";
+import { hasMatchingRequestToken, isAdmin } from "../src/server/index";
 
 vi.mock("h3", () => ({
   getRequestHeader: (

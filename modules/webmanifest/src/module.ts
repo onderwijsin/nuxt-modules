@@ -6,7 +6,7 @@ import {
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
-} from "module-utils";
+} from "module-utils/shared";
 
 import { moduleOptionsShape } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";

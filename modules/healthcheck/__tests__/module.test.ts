@@ -14,7 +14,7 @@ vi.mock("@nuxt/kit", () => ({
   useLogger: () => logger
 }));
 
-vi.mock("module-utils", () => ({
+vi.mock("module-utils/shared", () => ({
   moduleSetup: (_name: string, options: { enabled?: boolean }) => ({
     start: vi.fn(),
     end: vi.fn(),

@@ -7,7 +7,7 @@ import {
   useLogger
 } from "@nuxt/kit";
 import { defu } from "defu";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils";
+import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
 
 import { version } from "../package.json";
 import { turnstileOptionsSchema } from "./config/options.schema";

@@ -2,11 +2,11 @@ import type { H3Event } from "h3";
 import { getRequestHeader } from "h3";
 
 /**
- * Checks whether a request contains the expected token in a dedicated header or bearer token.
- * @param event - H3 event carrying request headers.
- * @param token - Expected secret token.
- * @param headerName - Custom header name that may carry the token.
- * @returns Whether the request token matches the expected token.
+ * Checks whether a request token matches a configured header or bearer token.
+ * @param event - The H3 request event.
+ * @param token - The expected token.
+ * @param headerName - The custom token header name.
+ * @returns Whether the token matches.
  */
 export function hasMatchingRequestToken(
   event: H3Event,
@@ -31,10 +31,10 @@ export function hasMatchingRequestToken(
 
 /**
  * Checks whether a request carries a valid administrator token.
- * @param event - H3 event carrying request headers.
- * @param token - Configured administrator token.
- * @param headerName - Configured administrator header name.
- * @returns Whether the request is authenticated as an administrator.
+ * @param event - The H3 request event.
+ * @param token - The expected administrator token.
+ * @param headerName - The custom token header name.
+ * @returns Whether the token matches.
  */
 export function isAdmin(event: H3Event, token: string | undefined, headerName: string): boolean {
   return hasMatchingRequestToken(event, token, headerName);

@@ -1,1 +1,1 @@
-export type { BaseModuleOptions } from "./setup";
+export type { BaseModuleOptions } from "./shared/setup";

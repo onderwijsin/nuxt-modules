@@ -4,8 +4,33 @@
 logger scopes, prepare-mode detection, setup lifecycle behavior, and option validation. Keep
 module-specific behavior in its owning module; promote code only after it is genuinely reusable.
 
-Use its public exports, not source paths. A typical setup uses `resolveModuleName`,
-`resolveLoggerScope`, `moduleSetup`, and, where validation is needed, `validateModuleOptions`.
+Use its public subpath exports, not source paths. Module entrypoints should import
+`resolveModuleName`, `resolveLoggerScope`, `moduleSetup`, and, where validation is needed,
+`validateModuleOptions` from `module-utils/shared`:
+
+The source layout mirrors these boundaries: `src/shared/`, `src/server/`, and the reserved
+`src/app/` directory each expose an `index.ts` entrypoint.
+
+```ts
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  validateModuleOptions
+} from "module-utils/shared";
+```
+
+Server-only token helpers come from `module-utils/server`:
+
+```ts
+import { isAdmin } from "module-utils/server";
+```
+
+The package root is retained as a shared-only compatibility alias. Do not use it for server helpers,
+because importing server helpers would make `h3` part of otherwise build-time or app-only dependency
+graphs. The reserved `module-utils/app` entrypoint is intentionally empty until client-runtime
+helpers are needed.
+
 Define constrained option fields as a plain Zod object in the module's
 `src/config/options.schema.ts`; the helper adds the shared `enabled` field. Do not introduce a
 schema just for optional TypeScript types.
@@ -31,7 +56,7 @@ instead of copying application-specific authorization code. Export `hasMatchingR
 generic token check and `isAdmin` when the token represents an administrator credential:
 
 ```ts
-import { isAdmin } from "module-utils";
+import { isAdmin } from "module-utils/server";
 
 if (isAdmin(event, runtimeConfig.module.adminToken, runtimeConfig.module.adminHeaderName)) {
   return;
