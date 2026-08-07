@@ -15,6 +15,18 @@ vi.mock("@nuxt/kit", () => ({
 }));
 
 vi.mock("module-utils/shared", () => ({
+  transpileRuntime: (nuxt: any, runtimeDir: string) =>
+    nuxt.options.build.transpile.push(runtimeDir),
+  validateModuleOptions: (options: Record<string, any>) => {
+    if (options.directus?.baseUrl === "not-a-url") throw new Error("Invalid module options");
+    return {
+      enabled: true,
+      cache: { enabled: true },
+      cloudinary: { enabled: false },
+      directus: { enabled: false },
+      ...options
+    };
+  },
   moduleSetup: (_name: string, options: { enabled?: boolean }) => ({
     start: vi.fn(),
     end: vi.fn(),
@@ -78,7 +90,7 @@ describe("healthcheck module setup", () => {
           }
         }
       )
-    ).toThrow(/Invalid @onderwijsin\/nuxt-healthcheck options/);
+    ).toThrow(/Invalid module options/);
   });
 
   it("skips runtime registration when disabled after validating options", async () => {

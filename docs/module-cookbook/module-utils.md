@@ -16,9 +16,14 @@ import {
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  transpileRuntime,
   validateModuleOptions
 } from "module-utils/shared";
 ```
+
+When a module registers published runtime code, add its runtime directory to Nuxt's transpilation
+list with `transpileRuntime(nuxt, runtimeDir)`. This keeps the registration consistent across
+modules; it is only needed for modules that ship a runtime directory consumed by Nuxt.
 
 Server-only token helpers come from `module-utils/server`:
 

@@ -17,10 +17,11 @@ import {
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
+  transpileRuntime,
   validateModuleOptions
 } from "module-utils/shared";
 import { version } from "../package.json";
-import { parseThemeOptions, themeOptionsShape } from "./config/options.schema";
+import { themeOptionsShape } from "./config/options.schema";
 import {
   configuredAppColors,
   configuredGroups,
@@ -105,8 +106,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     if (!isEnabled()) return;
 
-    validateModuleOptions(rawOptions, themeOptionsShape, log);
-    const options = parseThemeOptions(rawOptions);
+    const options = validateModuleOptions(rawOptions, themeOptionsShape, log);
 
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
@@ -194,7 +194,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       ssr: false
     });
 
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
 
     end();
   }

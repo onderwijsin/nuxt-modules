@@ -36,6 +36,15 @@ export function isPrepareMode(nuxt: Nuxt): boolean {
 }
 
 /**
+ * Adds a module's runtime directory to Nuxt's transpilation list.
+ * @param nuxt - The Nuxt context being configured.
+ * @param runtimeDir - Absolute path to the module runtime directory.
+ */
+export function transpileRuntime(nuxt: Nuxt, runtimeDir: string): void {
+  nuxt.options.build.transpile.push(runtimeDir);
+}
+
+/**
  * Creates shared lifecycle helpers for a Nuxt module.
  * @param MODULE_NAME - The module name.
  * @param options - The module options.
@@ -72,11 +81,13 @@ export function validateModuleOptions<T extends BaseModuleOptions, S extends z.Z
   options: T,
   schema: S,
   log: ConsolaInstance
-) {
-  const mergedSchema = z.object({ enabled: z.boolean().default(true) }).extend(schema);
+): z.infer<z.ZodObject<{ enabled: z.ZodDefault<z.ZodBoolean> } & S>> {
+  const mergedSchema = z.looseObject({ enabled: z.boolean().default(true) }).extend(schema);
   const result = mergedSchema.safeParse(options);
 
-  if (result.success) return result.data;
+  if (result.success) {
+    return result.data as z.infer<z.ZodObject<{ enabled: z.ZodDefault<z.ZodBoolean> } & S>>;
+  }
 
   log.info(z.prettifyError(result.error));
   throw new Error("Invalid module options ☝. Exiting.");

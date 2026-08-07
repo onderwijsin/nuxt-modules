@@ -4,6 +4,7 @@ export {
   resolveModuleName,
   resolveLoggerScope,
   isPrepareMode,
+  transpileRuntime,
   moduleSetup,
   validateModuleOptions
 } from "./setup";

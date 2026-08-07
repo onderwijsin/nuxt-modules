@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { hexColorSchema, THEME_SHADES } from "../runtime/app/utils/theme";
-import type { ThemeCustomizerOptions } from "../types";
 
 const palette = z.object(
   Object.fromEntries(THEME_SHADES.map((shade) => [shade, hexColorSchema])) as Record<
@@ -54,15 +53,3 @@ export const themeOptionsSchema = z
       }
     }
   });
-
-/**
- * Parses all known and custom theme groups into the module option shape.
- * @param options Raw module options to validate and parse.
- * @returns Validated theme customizer options.
- */
-export function parseThemeOptions(options: unknown): ThemeCustomizerOptions {
-  const result = themeOptionsSchema.safeParse(options);
-  if (!result.success) throw new Error("Invalid module options ☝. Exiting.");
-
-  return result.data as ThemeCustomizerOptions;
-}

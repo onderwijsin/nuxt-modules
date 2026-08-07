@@ -10,8 +10,13 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
-import { z } from "zod";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  transpileRuntime,
+  validateModuleOptions
+} from "module-utils/shared";
 
 import optionsSchema from "./config/options.schema";
 import { version } from "../package.json";
@@ -25,8 +30,6 @@ const DEFAULTS = {
   enabled: true,
   content: "assets/ui/content"
 } satisfies ModuleOptions;
-
-const moduleOptionsSchema = z.object(optionsSchema);
 
 function normalizeContentPath(content: string): string {
   return content.startsWith("./") ? content.slice(2) : content;
@@ -51,13 +54,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     start();
 
-    const result = moduleOptionsSchema.safeParse(options);
-
-    if (!result.success) {
-      throw new Error(
-        `Invalid @onderwijsin/nuxt-static-text options: ${z.prettifyError(result.error)}`
-      );
-    }
+    const validatedOptions = validateModuleOptions(options, optionsSchema, log);
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
@@ -72,10 +69,10 @@ export default defineNuxtModule<ModuleOptions>({
 
     const contentPath = resolve(
       nuxt.options.srcDir,
-      normalizeContentPath(result.data.content ?? DEFAULTS.content)
+      normalizeContentPath(validatedOptions.content ?? DEFAULTS.content)
     );
 
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
 
     addTemplate({
       filename: "static-text-content.ts",

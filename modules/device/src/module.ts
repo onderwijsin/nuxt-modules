@@ -8,7 +8,12 @@ import {
 } from "@nuxt/kit";
 import crawlers from "crawler-user-agents" with { type: "json" };
 import { defu } from "defu";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  transpileRuntime
+} from "module-utils/shared";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types/options";
@@ -58,7 +63,7 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt.options.runtimeConfig.public.device,
       resolvedOptions
     );
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
     addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));
 
     addTemplate({

@@ -15,6 +15,16 @@ vi.mock("@nuxt/kit", () => ({
 }));
 
 vi.mock("module-utils/shared", () => ({
+  transpileRuntime: (nuxt: any, runtimeDir: string) =>
+    nuxt.options.build.transpile.push(runtimeDir),
+  validateModuleOptions: (options: Record<string, unknown>) => ({
+    enabled: true,
+    siteKey: "",
+    secretKey: "",
+    adminToken: "",
+    adminHeaderName: "x-admin-token",
+    ...options
+  }),
   moduleSetup: (_name: string, options: { enabled?: boolean }, log: typeof logger) => ({
     start: () => log.start(),
     end: () => log.success(),

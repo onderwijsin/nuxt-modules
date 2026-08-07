@@ -23,6 +23,8 @@ vi.mock("@nuxt/kit", () => ({
 }));
 
 vi.mock("module-utils/shared", () => ({
+  transpileRuntime: (nuxt: any, runtimeDir: string) =>
+    nuxt.options.build.transpile.push(runtimeDir),
   moduleSetup: (_name: string, options: { enabled?: boolean }) => ({
     start: vi.fn(),
     end: vi.fn(),

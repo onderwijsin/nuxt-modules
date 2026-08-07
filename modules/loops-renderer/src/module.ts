@@ -1,5 +1,10 @@
 import { addComponentsDir, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  transpileRuntime
+} from "module-utils/shared";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types";
@@ -47,7 +52,7 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app", "components"),
       pathPrefix: false

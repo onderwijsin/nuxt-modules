@@ -7,10 +7,16 @@ import {
   useLogger
 } from "@nuxt/kit";
 import { defu } from "defu";
-import { moduleSetup, resolveLoggerScope, resolveModuleName } from "module-utils/shared";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  transpileRuntime,
+  validateModuleOptions
+} from "module-utils/shared";
 
 import { version } from "../package.json";
-import { turnstileOptionsSchema } from "./config/options.schema";
+import { turnstileOptionsShape } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";
 
 const MODULE_KEY = "turnstile";
@@ -41,12 +47,7 @@ export default defineNuxtModule<ModuleOptions>({
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
 
-    const parsed = turnstileOptionsSchema.safeParse(defu(rawOptions, DEFAULTS));
-    if (!parsed.success) {
-      log.error(`Invalid ${MODULE_NAME} options: ${parsed.error.message}`);
-      throw new Error(`Invalid ${MODULE_NAME} options. See the validation errors above.`);
-    }
-    const options = parsed.data;
+    const options = validateModuleOptions(rawOptions, turnstileOptionsShape, log);
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
@@ -72,7 +73,7 @@ export default defineNuxtModule<ModuleOptions>({
     optionsWithTurnstile.turnstile = defu(optionsWithTurnstile.turnstile, {
       siteKey: options.siteKey
     });
-    nuxt.options.build.transpile.push(runtimeDir);
+    transpileRuntime(nuxt, runtimeDir);
     addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));
     addServerScanDir(resolver.resolve(runtimeDir, "server"));
 
