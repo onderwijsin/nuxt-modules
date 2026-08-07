@@ -145,12 +145,18 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
 
-    const appConfig = nuxt.options.appConfig as {
-      ui?: { colors?: Record<string, string>; radius?: number };
-    };
-    appConfig.ui ??= {};
-    appConfig.ui.colors = configuredAppColors(groups, appConfig.ui.colors, defaults);
-    if (defaults.radius !== undefined) appConfig.ui.radius = defaults.radius;
+    const appConfig = nuxt.options.appConfig;
+    const appConfigUi = appConfig.ui ?? {};
+    const existingColors = Object.fromEntries(
+      Object.entries(appConfigUi.colors ?? {}).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string"
+      )
+    );
+    Object.assign(appConfigUi, {
+      colors: configuredAppColors(groups, existingColors, defaults),
+      ...(defaults.radius !== undefined ? { radius: defaults.radius } : {})
+    });
+    Object.assign(appConfig, { ui: appConfigUi });
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app/components"),
       pathPrefix: false
