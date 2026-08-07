@@ -19,9 +19,9 @@ export default defineNuxtConfig({
 
 ## Use in a server handler
 
-```ts
-import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
+After registering the module, `enforceRateLimit` is auto-imported in Nitro server handlers:
 
+```ts
 export default defineEventHandler(async (event) => {
   await enforceRateLimit(event, {
     max: 5,
@@ -31,6 +31,13 @@ export default defineEventHandler(async (event) => {
 
   return { ok: true };
 });
+```
+
+It also remains available as an explicit runtime import when needed outside a Nuxt auto-import
+context:
+
+```ts
+import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 ```
 
 `max` is the number of allowed requests in each window. `duration` is the window length in seconds,

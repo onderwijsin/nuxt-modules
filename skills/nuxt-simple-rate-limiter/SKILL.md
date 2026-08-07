@@ -15,12 +15,14 @@ pnpm add @onderwijsin/nuxt-simple-rate-limiter
 ```
 
 ```ts
-import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
-
 export default defineEventHandler(async (event) => {
   await enforceRateLimit(event, { max: 5, duration: 60, ban: 900 });
 });
 ```
+
+Register the module in `nuxt.config.ts`; it auto-imports `enforceRateLimit` in Nitro server
+handlers. The helper is also available as an explicit runtime import from
+`@onderwijsin/nuxt-simple-rate-limiter/runtime` outside that context.
 
 `duration` and `ban` are seconds. A ban returns `{ bannedUntil }` with a Unix-millisecond timestamp;
 return or throw a `429` response from the handler using that value. The limiter uses Nitro storage,
