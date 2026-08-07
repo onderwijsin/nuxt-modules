@@ -60,6 +60,8 @@ When multiple valid solutions exist, prefer:
   `node_modules/.pnpm/` is PNPM's normal virtual store and is allowed.
 - Only run dependency-mutating commands when the task requires dependency changes. Otherwise, keep
   `node_modules`, `pnpm-lock.yaml`, and PNPM configuration unchanged.
+- Every dependency added or modified must reference a workspace catalog entry, and all catalog
+  versions must be exact pins (never ranges).
 - If isolation is unavailable or PNPM reports a store mismatch, stop and report it rather than
   modifying the primary checkout.
 - In user-facing documentation, use `pnpm ...` unless Corepack itself is relevant.

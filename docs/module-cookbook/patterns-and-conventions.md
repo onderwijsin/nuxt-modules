@@ -9,6 +9,8 @@ a new contract is explicit.
   utilities.
 - Keep public types in `src/types/` and re-export only intended public APIs.
 - Import Vue, Nuxt, and framework dependencies explicitly in published runtime files.
+- Modules must not read environment variables directly. Consumers pass environment-derived values
+  through module configuration instead.
 - Use Zod at external boundaries that need runtime validation.
 - Preserve Node server and Cloudflare Workers compatibility.
 - Do not change public options, exports, component props, auto-imports, or registration behavior
