@@ -1,0 +1,5 @@
+{
+  "name": "webmanifest-e2e-fixture",
+  "private": true,
+  "type": "module"
+}

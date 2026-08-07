@@ -60,6 +60,8 @@ When multiple valid solutions exist, prefer:
   `node_modules/.pnpm/` is PNPM's normal virtual store and is allowed.
 - Only run dependency-mutating commands when the task requires dependency changes. Otherwise, keep
   `node_modules`, `pnpm-lock.yaml`, and PNPM configuration unchanged.
+- Every dependency added or modified must reference a workspace catalog entry, and all catalog
+  versions must be exact pins (never ranges).
 - If isolation is unavailable or PNPM reports a store mismatch, stop and report it rather than
   modifying the primary checkout.
 - In user-facing documentation, use `pnpm ...` unless Corepack itself is relevant.
@@ -110,6 +112,23 @@ explicitly requested. Instead, the agent **MUST** provide a summary of the work 
   `'feat(core): add new utility'`)
 
 It is the responsibility of the human collaborator to review, approve, and commit the changes.
+
+### Required handoff format
+
+Every final handoff MUST include all of the following, even when validation fails or the change is
+small:
+
+- List based summary of what changed
+- Validation performed and any blocked or failing checks
+- Impact on contracts and behavior (if any)
+- Open risks or follow-up work (if any)
+- A ready-to-copy Conventional Commit message in a fenced code block
+
+Use this final line format for the commit message:
+
+```text
+<type>(<scope>): <subject>
+```
 
 ---
 
