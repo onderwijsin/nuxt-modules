@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-webmanifest",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Nuxt module that generates a rich web app manifest with zero configuration.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
