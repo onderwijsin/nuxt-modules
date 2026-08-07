@@ -99,6 +99,11 @@ Nuxt Test Utils fixture coverage for each publishable module. Keep assertions li
 behavior that depends on Nuxt, such as registered components, auto-imports, runtime plugins, pages,
 and server handlers.
 
+For generated server handlers, include a fixture custom component and exercise the real endpoint.
+For example, a component that awaits a short `setTimeout` verifies both that consumer files are
+discovered and that the response includes measured component timing. Assert the public route
+contract with `$fetch`, including plain-text ping responses and parsed JSON health responses.
+
 ## Test locations
 
 Place tests in an `__tests__/` directory inside the package they exercise:
