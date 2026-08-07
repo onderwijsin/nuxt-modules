@@ -1,7 +1,6 @@
 <script setup lang="ts">
-const token = ref<string>();
 const turnstile = useTemplateRef<{ reset: () => void }>("turnstile");
-const { getTokenWithRetry, isEnabled, showMissingTokenErrorHint, captureTurnstileError } =
+const { token, getTokenWithRetry, isEnabled, showMissingTokenErrorHint, captureTurnstileError } =
   useTurnstile();
 
 const loading = ref(false);
@@ -34,6 +33,13 @@ async function submit() {
     turnstile.value?.reset();
   }
 }
+
+function reset() {
+  loading.value = false;
+  success.value = false;
+  error.value = null;
+  turnstile.value?.reset();
+}
 </script>
 
 <template>
@@ -44,8 +50,26 @@ async function submit() {
       :options="{ action: 'playground', appearance: 'interaction-only' }"
       class="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
     />
-    <UButton label="Submit protected request" @click="submit" :loading="loading" />
-    <UAlert v-if="error" color="error" :label="error" />
-    <UAlert v-if="success" color="success" :label="'Request successful'" />
+    <UButton
+      label="Submit protected request"
+      @click="submit"
+      color="neutral"
+      :loading="loading"
+      :disabled="success || !!error"
+    />
+    <UAlert
+      v-if="error"
+      color="error"
+      :title="error"
+      variant="soft"
+      :actions="[{ label: 'Reset', onClick: reset, color: 'error' }]"
+    />
+    <UAlert
+      v-if="success"
+      color="success"
+      variant="soft"
+      :title="'Request successful'"
+      :actions="[{ label: 'Reset', onClick: reset, color: 'success' }]"
+    />
   </UContainer>
 </template>
