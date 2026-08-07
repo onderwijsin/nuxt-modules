@@ -5,6 +5,9 @@ inputs:
   releases:
     description: JSON release data from Changesets or a legacy release list.
     required: true
+  channel-id:
+    description: Slack channel ID to include in the chat.postMessage payload.
+    required: true
   payload-file-path:
     description: Path to write the generated Slack payload JSON file.
     required: false
