@@ -1,7 +1,17 @@
 import { defineNuxtConfig } from "nuxt/config";
+import type { ModuleOptions, NewsletterProvider } from "../src/types/options";
 
-type Provider = "loops" | "mailchimp";
-const SELECTED_PROVIDER = "mailchimp" as Provider;
+/**
+ * Selects the provider used by the playground configuration.
+ *
+ * @param provider - Provider to use.
+ * @returns The selected provider.
+ */
+function selectProvider(provider: NewsletterProvider): NewsletterProvider {
+  return provider;
+}
+
+const SELECTED_PROVIDER = selectProvider("mailchimp");
 
 const loopsListId = process.env.LOOPS_LIST_ID!;
 const loopsApiKey = process.env.LOOPS_API_KEY!;
@@ -24,7 +34,7 @@ const loopsConfig = {
     lastName: { required: false },
     organization: { required: false }
   }
-} as const;
+} satisfies Partial<ModuleOptions>;
 
 const mailchimpConfig = {
   provider: "mailchimp",
@@ -50,7 +60,7 @@ const mailchimpConfig = {
     lastName: { required: false, target: "LNAME" },
     organization: { required: false, target: "ORG" }
   }
-} as const;
+} satisfies Partial<ModuleOptions>;
 
 export default defineNuxtConfig({
   compatibilityDate: "2026-08-07",
