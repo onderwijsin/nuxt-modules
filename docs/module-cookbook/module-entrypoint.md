@@ -57,6 +57,17 @@ addTypeTemplate({
 declarations exist in `dist/runtime/types/`; use `getContents` only when types must be generated
 from consumer options.
 
+Static runtime-config declarations must be self-contained files. Put the complete shape directly in
+the declaration under `src/runtime/types/` and augment `nuxt/schema`; do not import application or
+module source types into the generated declaration. This keeps the emitted declaration valid when
+the module is installed from its packed tarball.
+
+When optional module options become runtime configuration, do not rely only on the shape inferred
+from the values assigned in `nuxt.options.runtimeConfig`. Nuxt can infer a narrower
+`SharedRuntimeConfig` shape from the currently present keys, causing optional fields such as
+thresholds or credentials to disappear from editor types. The static runtime declaration should
+describe the complete runtime contract.
+
 ## Runtime CSS
 
 For runtime Tailwind classes, expose a stylesheet so consuming applications can scan the published
