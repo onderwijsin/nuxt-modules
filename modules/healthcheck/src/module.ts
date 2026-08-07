@@ -76,6 +76,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.runtimeConfig.healthcheck = defu(nuxt.options.runtimeConfig.healthcheck, {
       enabled: options.enabled,
+      timeoutMs: options.timeoutMs,
       cache: options.cache,
       cloudinary: options.cloudinary,
       directus: options.directus
