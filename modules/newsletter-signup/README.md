@@ -62,6 +62,15 @@ export default defineNuxtConfig({
 For Mailchimp, `server` belongs to the audience configuration. The selected list option’s server is
 used for that request; `us4` and `us5` are only examples.
 
+### Cloudflare Workers
+
+The Mailchimp adapter uses Node’s `node:crypto` API to calculate the subscriber hash. Cloudflare
+Workers deployments must enable the `nodejs_compat` compatibility flag in the
+[Wrangler configuration](https://developers.cloudflare.com/workers/wrangler/configuration/). Nuxt
+applications running on Workers already require this flag. Cloudflare also enables
+`nodejs_compat_v2` when the compatibility date is `2024-09-23` or later; see the
+[Cloudflare Node.js compatibility documentation](https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/).
+
 ## Local or remote endpoint
 
 By default, the module registers its local server handler at `POST /api/newsletter/signup` and the
@@ -191,8 +200,9 @@ minute and is then banned for 15 minutes. It does not configure or override an a
 Shield settings. The limiter is not registered when `endpoint.enabled` is `false`. Configure Nitro
 storage for production; use a shared driver such as Redis when the application runs on multiple
 instances. Duplicate subscriptions are idempotent and always return success, so the endpoint does
-not reveal mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses
-immediate `subscribed` status.
+not reveal mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses its
+add-or-update member endpoint and applies immediate `subscribed` status, including when an existing
+member was previously unsubscribed.
 
 Without persistent Nitro storage, the rate limiter works in memory but its counters and bans reset
 when the application restarts. To persist them for a single-instance deployment, configure storage:

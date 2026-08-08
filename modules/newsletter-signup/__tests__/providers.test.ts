@@ -48,11 +48,12 @@ describe("newsletter provider adapters", () => {
     });
   });
 
-  it("treats an existing Loops subscription as successful", async () => {
+  it("maps a Loops conflict to invalid input", async () => {
     fetchMock.mockRejectedValue(Object.assign(new Error("conflict"), { status: 409 }));
 
-    await expect(subscribeToLoops(input, "loops-list", loopsConfig)).resolves.toEqual({
-      success: true
+    await expect(subscribeToLoops(input, "loops-list", loopsConfig)).rejects.toMatchObject({
+      statusCode: 400,
+      data: { code: NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput }
     });
   });
 
@@ -100,9 +101,9 @@ describe("newsletter provider adapters", () => {
     ).resolves.toEqual({ success: true });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://us5.api.mailchimp.com/3.0/lists/audience-b/members",
+      "https://us5.api.mailchimp.com/3.0/lists/audience-b/members/3e3417d7ef77d5932a6734b916515ed5",
       {
-        method: "POST",
+        method: "PUT",
         timeout: 5000,
         headers: {
           Authorization: "apikey mailchimp-key",
@@ -116,25 +117,20 @@ describe("newsletter provider adapters", () => {
             ORG: "Analytical Engines"
           },
           status: "subscribed",
+          status_if_new: "subscribed",
           tags: ["homepage"]
         }
       }
     );
   });
 
-  it("treats an existing Mailchimp subscription as successful", async () => {
-    fetchMock.mockRejectedValue(
-      Object.assign(new Error("member exists"), {
-        status: 400,
-        data: { title: "Member Exists" }
-      })
-    );
+  it("upserts an existing unsubscribed Mailchimp member to subscribed", async () => {
+    fetchMock.mockResolvedValue({ email_address: input.email, status: "subscribed" });
 
     await expect(
       subscribeToMailchimp(input, "audience-a", "us4", mailchimpConfig)
-    ).resolves.toEqual({
-      success: true
-    });
+    ).resolves.toEqual({ success: true });
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: "PUT" });
   });
 
   it("maps other Mailchimp client errors to invalid input", async () => {
@@ -168,5 +164,38 @@ describe("newsletter provider adapters", () => {
       statusCode: 502,
       data: { code: NEWSLETTER_SIGNUP_ERROR_CODES.server }
     });
+  });
+
+  it("rejects a Mailchimp response that does not confirm the subscribed state", async () => {
+    fetchMock.mockResolvedValue({ email_address: input.email, status: "unsubscribed" });
+
+    await expect(
+      subscribeToMailchimp(input, "audience-a", "us4", mailchimpConfig)
+    ).rejects.toMatchObject({
+      statusCode: 502,
+      data: { code: NEWSLETTER_SIGNUP_ERROR_CODES.server }
+    });
+  });
+
+  it("rejects a Mailchimp response for a different member", async () => {
+    fetchMock.mockResolvedValue({ email_address: "grace@example.com", status: "subscribed" });
+
+    await expect(
+      subscribeToMailchimp(input, "audience-a", "us4", mailchimpConfig)
+    ).rejects.toMatchObject({
+      statusCode: 502,
+      data: { code: NEWSLETTER_SIGNUP_ERROR_CODES.server }
+    });
+  });
+
+  it("retries an ambiguous Mailchimp transport failure safely", async () => {
+    fetchMock
+      .mockRejectedValueOnce(new Error("network failure after request was accepted"))
+      .mockResolvedValueOnce({ email_address: input.email, status: "subscribed" });
+
+    await expect(
+      subscribeToMailchimp(input, "audience-a", "us4", mailchimpConfig)
+    ).resolves.toEqual({ success: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -48,9 +48,6 @@ export async function subscribeToLoops(
 
     console.error({ status, providerData });
 
-    if (status === 409) {
-      return { success: true };
-    }
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);
     }
