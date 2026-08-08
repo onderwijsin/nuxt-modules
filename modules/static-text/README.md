@@ -1,7 +1,7 @@
 # @onderwijsin/nuxt-static-text
 
 Provide one static, type-safe text dictionary to a Nuxt 4 application. The module exposes an
-auto-imported `useText` translator and a Vue-compatible `$t` helper without requiring application
+auto-imported `useText` translator and a vuei18n-like `$t` helper without requiring application
 code to import the dictionary.
 
 The dictionary is resolved at build time and is available in both server and client contexts. This
