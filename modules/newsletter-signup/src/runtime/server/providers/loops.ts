@@ -46,7 +46,7 @@ export async function subscribeToLoops(
     const status = getErrorStatus(error);
     const providerData = getErrorData(error);
 
-    console.error({ status, providerData });
+    console.error("Subscribing to Loops failed", { status });
 
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);

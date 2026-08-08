@@ -17,11 +17,11 @@ const CACHE_HEALTH_KEY_PREFIX = "healthcheck:system";
 /**
  * Converts unknown handler failures into safe, useful response messages.
  *
- * @param error - Thrown value from a component handler.
+ * @param _error - Thrown value from a component handler.
  * @returns A safe error message for the health response.
  */
-function getErrorMessage(error: unknown): string {
-  console.error("Healthcheck component failed", error);
+function getErrorMessage(_error: unknown): string {
+  console.error("Healthcheck component failed");
   return "Health check failed";
 }
 

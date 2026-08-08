@@ -37,7 +37,7 @@ export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> =>
       })
     );
     if (result.error !== null) {
-      console.error("Failed to fetch Google Fonts metadata", result.error);
+      console.error("Failed to fetch Google Fonts metadata");
     } else {
       const parsed = googleFontsResponseSchema.safeParse(result.data);
       if (parsed.success) {

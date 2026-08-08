@@ -7,7 +7,7 @@ import { DEFAULT_TARGETS } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";
 import type { NewsletterFieldConfig } from "../../../types/options";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../types/errors";
-import { createNewsletterSignupError, getErrorData, getErrorStatus } from "../utils/errors";
+import { createNewsletterSignupError, getErrorStatus } from "../utils/errors";
 
 const responseSchema = z.object({ email_address: z.email(), status: z.literal("subscribed") });
 
@@ -66,9 +66,8 @@ export async function subscribeToMailchimp(
   if (result.error !== null) {
     const error = result.error;
     const status = getErrorStatus(error);
-    const data = getErrorData(error);
 
-    console.error({ status, data });
+    console.error("Subscribing to Mailchimp failed", { status });
 
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);
