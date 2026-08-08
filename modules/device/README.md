@@ -5,7 +5,9 @@ the auto-imported `useDevice` composable.
 
 The logic in this module is inspired by [`@nuxtjs/device`](https://github.com/nuxt-modules/device), but our implementation takes a different approach:
 - we do not install a global plugin, making the core bundle smaller 
-- device flags are reactive and recalculated client side, making the module usable in prerendered routes 
+- device flags are reactive and recalculated client side, making the module usable in prerendered routes
+
+**Do not use this module concurrently with `@nuxtjs/device`**, because conflicts will occur.
 
 ## Install and register
 
