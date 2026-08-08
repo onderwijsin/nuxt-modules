@@ -29,6 +29,7 @@ export default defineConfig({
     "scripts/**/*.sh",
     "layer/envs/env.d.ts",
     ".starters/**",
-    "content/**"
+    "content/**",
+    "tmp/**"
   ]
 });

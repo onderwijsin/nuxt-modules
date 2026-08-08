@@ -164,7 +164,7 @@ infrastructure/internal-scripts/
 .fleet
 build-info.json
 code-review.md
-
+tmp
 
 shared/generated/content-manifest.ts
 
