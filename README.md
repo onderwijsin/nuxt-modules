@@ -19,6 +19,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | [`@onderwijsin/nuxt-turnstile`](modules/turnstile/README.md)                     | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
 | [`@onderwijsin/nuxt-newsletter-signup`](modules/newsletter-signup/README.md)     | Provider-independent newsletter signup with Loops and Mailchimp adapters.                      |
 | [`@onderwijsin/nuxt-simple-rate-limiter`](modules/simple-rate-limiter/README.md) | Path-scoped, per-IP server-side rate limiting for Nuxt endpoints.                              |
+| [`@onderwijsin/nuxt-storage-admin`](modules/storage-admin/README.md)             | Admin-protected CRUD endpoints for Nitro storage mounts.                                       |
 
 ## 🧱 Requirements
 

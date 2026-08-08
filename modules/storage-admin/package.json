@@ -1,0 +1,58 @@
+{
+  "name": "@onderwijsin/nuxt-storage-admin",
+  "version": "0.1.0",
+  "description": "Admin-protected CRUD endpoints for explicitly configured Nitro storage mounts.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "modules/storage-admin"
+  },
+  "style": "./dist/runtime/app/app.css",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "dev": "pnpm run dev:prepare && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground"
+  },
+  "dependencies": {
+    "@nuxt/kit": "catalog:",
+    "@nuxt/schema": "catalog:",
+    "@nuxt/ui": "catalog:",
+    "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "h3": "catalog:",
+    "nitropack": "catalog:",
+    "ofetch": "catalog:",
+    "tailwindcss": "catalog:",
+    "unstorage": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "catalog:",
+    "@nuxt/test-utils": "catalog:",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

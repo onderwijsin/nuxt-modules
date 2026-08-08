@@ -31,6 +31,7 @@ export default defineConfig({
     ".starters/**",
     "docs/content/**",
     "env.d.ts",
-    "layer/envs/env.d.ts"
+    "layer/envs/env.d.ts",
+    "tmp/**"
   ]
 });
