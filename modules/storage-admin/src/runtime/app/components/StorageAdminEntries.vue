@@ -35,6 +35,7 @@ const selectedBase = shallowRef(ALL_BASES_VALUE);
 const selectedMount = shallowRef("");
 const rowSelection = shallowRef<Record<string, boolean>>({});
 const contextMenuEntry = shallowRef<StorageEntry | null>(null);
+const pendingDeletionKeys = shallowRef<string[] | null>(null);
 const total = shallowRef(0);
 let requestId = 0;
 
@@ -63,6 +64,19 @@ const mountOptions = computed(() =>
 const contextMenuItems = computed(() =>
   contextMenuEntry.value ? storageEntryActions(contextMenuEntry.value.key) : []
 );
+const isDeleteConfirmationOpen = computed({
+  get: () => pendingDeletionKeys.value !== null,
+  set: (isOpen: boolean) => {
+    if (!isOpen) pendingDeletionKeys.value = null;
+  }
+});
+const pendingDeletionDescription = computed(() => {
+  const keys = pendingDeletionKeys.value;
+  if (!keys) return "";
+  return keys.length === 1
+    ? "Delete this storage entry? This cannot be undone."
+    : `Delete ${keys.length} storage entries? This cannot be undone.`;
+});
 
 /**
  * Returns the currently selected mount when the selector contains a value.
@@ -82,15 +96,12 @@ function getRowId(entry: StorageEntry): string {
 }
 
 /**
- * Deletes one or more selected entries after an explicit browser confirmation.
+ * Deletes one or more entries after the confirmation dialog has been accepted.
  * @param keys Storage keys within the currently selected mount.
  */
 async function deleteEntries(keys: string[]): Promise<void> {
   const target = selectedTarget();
   if (!target || keys.length === 0 || isDeleting.value) return;
-
-  const description = keys.length === 1 ? "this storage entry" : `${keys.length} storage entries`;
-  if (!window.confirm(`Delete ${description}? This cannot be undone.`)) return;
 
   errorMessage.value = null;
   isDeleting.value = true;
@@ -111,6 +122,25 @@ async function deleteEntries(keys: string[]): Promise<void> {
 }
 
 /**
+ * Opens the destructive-action confirmation dialog for storage keys.
+ * @param keys Storage keys within the currently selected mount.
+ * @returns Nothing.
+ */
+function requestDeletion(keys: string[]): void {
+  if (keys.length === 0 || isDeleting.value) return;
+  pendingDeletionKeys.value = keys;
+}
+
+/** Confirms the pending deletion and removes the dialog before the request starts. */
+async function confirmDeletion(): Promise<void> {
+  const keys = pendingDeletionKeys.value;
+  pendingDeletionKeys.value = null;
+  if (!keys) return;
+
+  await deleteEntries(keys);
+}
+
+/**
  * Creates the destructive action shared by the row dropdown and context menu.
  * @param key Storage key to delete.
  * @returns A grouped Nuxt UI menu item list.
@@ -123,7 +153,7 @@ function storageEntryActions(key: string): DropdownMenuItem[][] {
         icon: "i-lucide-trash-2",
         color: "error",
         disabled: isDeleting.value,
-        onSelect: () => deleteEntries([key])
+        onSelect: () => requestDeletion([key])
       }
     ]
   ];
@@ -278,6 +308,32 @@ watch([selectedMount, selectedBase, search, pageSize, page], loadEntries);
         @contextmenu="handleContextMenu"
       />
     </UContextMenu>
+
+    <UModal
+      v-model:open="isDeleteConfirmationOpen"
+      :description="pendingDeletionDescription"
+      :dismissible="!isDeleting"
+      title="Delete storage entry"
+    >
+      <template #footer>
+        <div class="flex w-full justify-end gap-3">
+          <UButton
+            color="neutral"
+            :disabled="isDeleting"
+            label="Cancel"
+            variant="soft"
+            @click="isDeleteConfirmationOpen = false"
+          />
+          <UButton
+            color="error"
+            icon="i-lucide-trash-2"
+            label="Delete"
+            :loading="isDeleting"
+            @click="confirmDeletion"
+          />
+        </div>
+      </template>
+    </UModal>
 
     <div class="flex items-center justify-between gap-4">
       <USelect

@@ -240,6 +240,9 @@ UI page at `ui.path` (default `/_storage`). It provides:
 The browser is not registered in production. Set `ui.enabled: false` to exclude the UI and avoid
 registering `@nuxt/ui` as a module dependency.
 
+The host application's root component must render Nuxt UI's `<UApp>` so the browser can open its
+confirmation dialog and action menus.
+
 ## Error behavior
 
 | Status | Meaning                                                                                      |

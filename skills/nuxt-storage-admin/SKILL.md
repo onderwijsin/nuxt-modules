@@ -197,6 +197,9 @@ per-entry or selected-entry deletion.
 Set `storageAdmin.ui.enabled` to `false` to remove the page and prevent the module from registering
 `@nuxt/ui` as a Nuxt dependency.
 
+The host app must use Nuxt UI's `<UApp>` root wrapper for the browser's confirmation dialog and
+action menus.
+
 ## Errors and safety
 
 - `400`: invalid request input.
