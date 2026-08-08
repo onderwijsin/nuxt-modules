@@ -11,7 +11,10 @@ describe("storageAdminOptionsSchema", () => {
       mounts: {},
       ui: { enabled: true, path: "/_storage" },
       defaultLimit: 100,
-      maxLimit: 500
+      maxLimit: 500,
+      maxScanKeys: 10_000,
+      metadataConcurrency: 8,
+      listTimeoutMs: 10_000
     });
   });
 

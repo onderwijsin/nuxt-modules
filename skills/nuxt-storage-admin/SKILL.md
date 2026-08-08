@@ -39,7 +39,10 @@ export default defineNuxtConfig({
       path: "/_storage"
     },
     defaultLimit: 100,
-    maxLimit: 500
+    maxLimit: 500,
+    maxScanKeys: 10_000,
+    metadataConcurrency: 8,
+    listTimeoutMs: 10_000
   }
 });
 ```
@@ -69,6 +72,9 @@ This stylesheet imports Tailwind CSS and Nuxt UI, and sources the storage browse
 | `ui.path`                   | `/_storage`         | Development-only browser path; must start with `/`.                                                 |
 | `defaultLimit`              | `100`               | Default list page size; maximum `500`.                                                              |
 | `maxLimit`                  | `500`               | Largest allowed list `limit`; maximum `1000`.                                                       |
+| `maxScanKeys`               | `10_000`            | Maximum non-internal keys scanned per list request; larger selections return `413`.                 |
+| `metadataConcurrency`       | `8`                 | Maximum simultaneous driver listing/metadata calls; maximum `50`.                                   |
+| `listTimeoutMs`             | `10_000`            | Per-driver-call list/metadata timeout in milliseconds; `100`–`60_000`.                              |
 
 A mount is a Nitro namespace, for example `useStorage("cache")`. A prefix is a boundary inside that
 mount: `kennisbank:articles` is a cache base/prefix inside the `cache` mount. Configure the
@@ -134,6 +140,10 @@ GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=ex
 
 Path search works when the chosen driver exposes `getMeta()` with a `path` field. The cache module
 will provide this; a normal storage driver may return `null` for `path`.
+
+`nextCursor` is the final entry's string key. Send that exact value as `cursor`; do not serialize
+the whole entry. It is valid only for the same mount, prefix, search text, and ordering, and writes
+between pages can change the result set.
 
 ### Read one entry
 
@@ -206,6 +216,26 @@ action menus.
 - `401`: missing or invalid production token.
 - `403`: unpermitted mount operation, prefix, or metadata key.
 - `404`: disabled/unconfigured mount or absent entry.
+- `413`: the selected base exceeds `maxScanKeys`.
+- `503`: the storage provider failed while listing keys.
+- `504`: a storage key listing timed out.
 
 Never configure `allowRoot: true` for sensitive mounts unless full administrative access is
 intended.
+
+## Operations and troubleshooting
+
+The module requires Nuxt 4 and Node.js 22 or later. It reserves `/api/_storage/**` while enabled and
+reserves `ui.path` (default `/_storage`) in development; do not use those paths for application
+routes.
+
+Unstorage does not provide paginated `getKeys()` for every driver. The module caps the scanned
+result set and bounds metadata concurrency, but a path search still reads metadata for every key up
+to `maxScanKeys`. Size configured prefixes narrowly and tune `maxScanKeys`, `metadataConcurrency`,
+and `listTimeoutMs` for the provider. Provider list failures return `503`; list timeouts return
+`504`; unavailable or timed-out per-entry metadata is returned as `path: null`.
+
+If the browser does not render dialogs or action menus, ensure the consuming app has `<UApp>` at its
+root and imports `@onderwijsin/nuxt-storage-admin` from its main CSS file. To verify the published
+artifact, run `pnpm pack` from the module, install that tarball in a clean Nuxt 4 app, then run
+`pnpm nuxt prepare` and `pnpm nuxt build`.

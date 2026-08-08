@@ -1,3 +1,4 @@
-@source "./components";
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+@source "./components";

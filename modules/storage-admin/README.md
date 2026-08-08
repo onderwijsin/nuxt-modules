@@ -4,6 +4,8 @@
 allowed** Nitro storage mounts. It is intended for operational tooling, debugging, and controlled
 maintenance—not as a general application data API.
 
+Requires Nuxt 4 and Node.js 22 or later.
+
 The module is disabled by default. It never exposes every `useStorage()` mount implicitly.
 
 ## Installation
@@ -78,7 +80,10 @@ export default defineNuxtConfig({
       path: "/_storage"
     },
     defaultLimit: 100,
-    maxLimit: 500
+    maxLimit: 500,
+    maxScanKeys: 10_000,
+    metadataConcurrency: 8,
+    listTimeoutMs: 10_000
   }
 });
 ```
@@ -148,6 +153,10 @@ GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=ex
 
 `metadata.path` is available only when the selected storage driver writes metadata. The cache module
 will provide it; ordinary Unstorage drivers may return `null`.
+
+`nextCursor` is a storage key string, not an entry object. Use it unchanged as `cursor` in the next
+request. Cursors are valid only for the same mount, prefix, search query, and ordering; writes
+between requests can change the result set.
 
 ### Read an entry
 
@@ -243,6 +252,26 @@ registering `@nuxt/ui` as a module dependency.
 The host application's root component must render Nuxt UI's `<UApp>` so the browser can open its
 confirmation dialog and action menus.
 
+Avoid configuring application pages at `ui.path` (default `/_storage`) or API handlers below
+`/api/_storage/**`; those locations are reserved by this module while it is enabled.
+
+## Listing limits and provider behavior
+
+Unstorage exposes key enumeration through `getKeys()`, and not every driver can paginate that call.
+The module therefore reads the selected base keys once, refuses result sets larger than
+`maxScanKeys`, and only reads metadata for the requested page unless a path search requires it. Tune
+these limits for the provider and mount size:
+
+| Option                |  Default | Contract                                                                                 |
+| --------------------- | -------: | ---------------------------------------------------------------------------------------- |
+| `maxScanKeys`         | `10_000` | Maximum non-internal keys scanned for one list request; larger result sets return `413`. |
+| `metadataConcurrency` |      `8` | Maximum simultaneous `getKeys()` and `getMeta()` calls; maximum `50`.                    |
+| `listTimeoutMs`       | `10_000` | Timeout for each listing/metadata driver call; `100`–`60_000` milliseconds.              |
+
+Searches by `metadata.path` necessarily inspect metadata for every key within the scan limit. Driver
+listing failures return `503`; timed-out listing calls return `504`. A failed or timed-out metadata
+lookup on an otherwise listable entry is represented as `metadata: null` and `path: null`.
+
 ## Error behavior
 
 | Status | Meaning                                                                                      |
@@ -251,3 +280,6 @@ confirmation dialog and action menus.
 | `401`  | Missing or invalid administrator token in production.                                        |
 | `403`  | The configured mount, permission, prefix, or metadata key is not allowed.                    |
 | `404`  | Storage administration is disabled, the mount is not configured, or an entry does not exist. |
+| `413`  | The selected storage base contains more than `maxScanKeys` entries.                          |
+| `503`  | The storage provider failed while listing keys.                                              |
+| `504`  | The storage provider timed out while listing keys.                                           |

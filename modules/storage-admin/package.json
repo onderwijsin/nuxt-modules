@@ -23,13 +23,6 @@
   "type": "module",
   "main": "./dist/module.mjs",
   "types": "./dist/types.d.mts",
-  "exports": {
-    ".": {
-      "types": "./dist/types.d.mts",
-      "style": "./dist/runtime/app/app.css",
-      "import": "./dist/module.mjs"
-    }
-  },
   "publishConfig": {
     "access": "public"
   },
@@ -48,10 +41,12 @@
     "h3": "catalog:",
     "nitropack": "catalog:",
     "tailwindcss": "catalog:",
+    "unstorage": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
+    "@nuxt/test-utils": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"

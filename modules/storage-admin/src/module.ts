@@ -46,7 +46,10 @@ export default defineNuxtModule<ModuleOptions>({
     ui: { enabled: true, path: "/_storage" },
     adminHeaderName: "x-admin-token",
     defaultLimit: 100,
-    maxLimit: 500
+    maxLimit: 500,
+    maxScanKeys: 10_000,
+    metadataConcurrency: 8,
+    listTimeoutMs: 10_000
   },
   setup(rawOptions, nuxt) {
     const resolver = createResolver(import.meta.url);
@@ -73,7 +76,10 @@ export default defineNuxtModule<ModuleOptions>({
       mounts: options.mounts,
       ui: options.ui,
       defaultLimit: options.defaultLimit,
-      maxLimit: options.maxLimit
+      maxLimit: options.maxLimit,
+      maxScanKeys: options.maxScanKeys,
+      metadataConcurrency: options.metadataConcurrency,
+      listTimeoutMs: options.listTimeoutMs
     };
     transpileRuntime(nuxt, runtimeDir);
     addServerScanDir(resolver.resolve(runtimeDir, "server"));

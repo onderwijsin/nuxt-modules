@@ -47,6 +47,7 @@ catalog:
   defu: 6.1.7
   h3: 1.15.11
   nitropack: 2.13.4
+  unstorage: 1.17.5
   ofetch: 1.5.1
   ufo: 1.6.4
   zod: 4.4.3

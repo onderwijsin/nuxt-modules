@@ -20,6 +20,9 @@ declare module "nuxt/schema" {
       };
       defaultLimit: number;
       maxLimit: number;
+      maxScanKeys: number;
+      metadataConcurrency: number;
+      listTimeoutMs: number;
     };
   }
 }

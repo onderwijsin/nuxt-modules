@@ -2,6 +2,7 @@ import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
 import { createError } from "h3";
 import type { H3Event } from "h3";
 import { useRuntimeConfig, useStorage } from "nitropack/runtime";
+import type { Storage } from "unstorage";
 
 type Permission = "read" | "write" | "delete";
 
@@ -24,6 +25,14 @@ interface StorageAdminConfig {
   };
   defaultLimit: number;
   maxLimit: number;
+  maxScanKeys: number;
+  metadataConcurrency: number;
+  listTimeoutMs: number;
+}
+
+interface AllowedStorage {
+  config: StorageAdminConfig;
+  storage: Storage;
 }
 
 /**
@@ -141,7 +150,7 @@ export function useAllowedStorage(
   mountName: string,
   permission: Permission,
   prefix: string
-) {
+): AllowedStorage {
   const { mount, config } = getAllowedMount(event, mountName, permission);
   assertAllowedPrefix(config, mount, prefix);
   return { config, storage: useStorage(mountName) };

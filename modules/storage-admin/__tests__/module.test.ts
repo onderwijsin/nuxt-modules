@@ -35,6 +35,9 @@ vi.mock("@onderwijsin/nuxt-module-utils/shared", () => ({
     ui: { enabled: true, path: "/_storage" },
     defaultLimit: 100,
     maxLimit: 500,
+    maxScanKeys: 10_000,
+    metadataConcurrency: 8,
+    listTimeoutMs: 10_000,
     ...options
   })
 }));
