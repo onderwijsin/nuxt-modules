@@ -4,8 +4,8 @@ Shared utilities for building the Onderwijs in Nuxt modules.
 
 This package exists to keep recurring module concerns in one place: module setup and lifecycle
 logging, option validation, typed object helpers, retryable operations, and server-side request
-token checks. Keeping these contracts shared prevents each module from implementing subtly different
-behavior.
+token checks, and primitive runtime guards. Keeping these contracts shared prevents each module from
+implementing subtly different behavior.
 
 ## Why is this a published package?
 
@@ -36,4 +36,6 @@ not intended to be an application-level Nuxt module or a package that consumers 
 ## API reference
 
 For the complete utility list, signatures, behavior, and examples, see the
-[module utilities cookbook](https://github.com/onderwijsin/nuxt-modules/blob/main/docs/module-cookbook/module-utils.md).
+[module utilities cookbook](https://github.com/onderwijsin/nuxt-modules/blob/main/docs/module-cookbook/module-utils.md)
+and
+[primitive guards guide](https://github.com/onderwijsin/nuxt-modules/blob/main/docs/module-cookbook/guards.md).

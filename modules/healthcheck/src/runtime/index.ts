@@ -1,3 +1,9 @@
+import {
+  isDefined,
+  isFiniteNumber,
+  isInteger,
+  isRecord
+} from "@onderwijsin/nuxt-module-utils/shared";
 import type { HealthcheckComponentDefinition } from "./types/health";
 
 /**
@@ -25,7 +31,7 @@ export function normalizeHealthcheckComponent(
   component: unknown,
   source: string
 ): HealthcheckComponentDefinition {
-  if (!component || typeof component !== "object") {
+  if (!isRecord(component)) {
     throw new Error(`Healthcheck component "${name}" in ${source} must export a component object.`);
   }
 
@@ -34,25 +40,23 @@ export function normalizeHealthcheckComponent(
     throw new Error(`Healthcheck component "${name}" in ${source} must define a handler function.`);
   }
 
-  if (candidate.threshold !== undefined) {
-    if (typeof candidate.threshold !== "object" || candidate.threshold === null) {
+  const threshold = candidate.threshold;
+  if (isDefined(threshold)) {
+    if (!isRecord(threshold)) {
       throw new Error(`Healthcheck component "${name}" in ${source} has an invalid threshold.`);
     }
-    const { warn, error } = candidate.threshold;
+    const { warn, error } = threshold;
     if (
-      (warn !== undefined && (typeof warn !== "number" || !Number.isFinite(warn) || warn < 0)) ||
-      (error !== undefined &&
-        (typeof error !== "number" || !Number.isFinite(error) || error < 0)) ||
-      (warn !== undefined && error !== undefined && error < warn)
+      (isDefined(warn) && (!isFiniteNumber(warn) || warn < 0)) ||
+      (isDefined(error) && (!isFiniteNumber(error) || error < 0)) ||
+      (isDefined(warn) && isDefined(error) && error < warn)
     ) {
       throw new Error(`Healthcheck component "${name}" in ${source} has invalid threshold values.`);
     }
   }
 
-  if (
-    candidate.timeoutMs !== undefined &&
-    (!Number.isInteger(candidate.timeoutMs) || candidate.timeoutMs <= 0)
-  ) {
+  const timeoutMs = candidate.timeoutMs;
+  if (isDefined(timeoutMs) && (!isInteger(timeoutMs) || timeoutMs <= 0)) {
     throw new Error(`Healthcheck component "${name}" in ${source} has an invalid timeoutMs.`);
   }
 

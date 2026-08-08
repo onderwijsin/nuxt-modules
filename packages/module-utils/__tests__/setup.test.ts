@@ -4,8 +4,20 @@ import {
   attempt,
   attemptWithRetry,
   enabled,
+  hasKey,
+  hasKeys,
   fromEntries,
+  isArray,
+  isBoolean,
+  isDefined,
+  isFiniteNumber,
+  isInteger,
+  isNonBlankString,
+  isNonEmptyString,
+  isNumber,
   isPrepareMode,
+  isRecord,
+  isString,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
@@ -40,6 +52,52 @@ describe("typed entry helpers", () => {
       ["retries", 2]
     ]);
     expect(fromEntries(entries)).toEqual({ enabled: true, retries: 2 });
+  });
+});
+
+describe("primitive runtime guards", () => {
+  it("distinguishes defined, record, array, string, and boolean values", () => {
+    expect(isDefined(undefined)).toBe(false);
+    expect(isDefined(null)).toBe(true);
+    expect(isDefined(false)).toBe(true);
+    expect(isDefined(0)).toBe(true);
+    expect(isDefined("")).toBe(true);
+    expect(isRecord({})).toBe(true);
+    expect(isRecord(Object.create(null))).toBe(true);
+    expect(isRecord([])).toBe(false);
+    expect(isRecord(null)).toBe(false);
+    expect(isRecord(undefined)).toBe(false);
+    expect(isArray([])).toBe(true);
+    expect(isString("")).toBe(true);
+    expect(isBoolean(false)).toBe(true);
+  });
+
+  it("distinguishes empty and blank strings", () => {
+    expect(isNonEmptyString("")).toBe(false);
+    expect(isNonEmptyString(" ")).toBe(true);
+    expect(isNonBlankString(" ")).toBe(false);
+    expect(isNonBlankString(" text ")).toBe(true);
+  });
+
+  it("distinguishes number type, finite numbers, and integers", () => {
+    expect(isNumber(Number.NaN)).toBe(true);
+    expect(isNumber(Infinity)).toBe(true);
+    expect(isFiniteNumber(Number.NaN)).toBe(false);
+    expect(isFiniteNumber(Infinity)).toBe(false);
+    expect(isFiniteNumber(-Infinity)).toBe(false);
+    expect(isFiniteNumber(1.5)).toBe(true);
+    expect(isInteger(1)).toBe(true);
+    expect(isInteger(1.5)).toBe(false);
+  });
+
+  it("checks own keys and properties only", () => {
+    const inherited = Object.create({ inherited: true }) as Record<string, unknown>;
+    inherited.own = true;
+
+    expect(hasKeys(inherited)).toBe(true);
+    expect(hasKey(inherited, "own")).toBe(true);
+    expect(hasKey(inherited, "inherited")).toBe(false);
+    expect(hasKeys({})).toBe(false);
   });
 });
 

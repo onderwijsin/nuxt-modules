@@ -1,5 +1,11 @@
 import { computed, reactive, shallowRef, toRaw, watch } from "#imports";
-import { attempt, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  attempt,
+  hasKey,
+  isArray,
+  isRecord,
+  toEntries
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 /** Options for a form that keeps a local editable draft. */
 interface UseDraftFormOptions<TDraft extends object, TSubmission> {
@@ -61,7 +67,7 @@ export function useDraftForm<TDraft extends object, TSubmission>(
    */
   function replaceState(nextState: TDraft): void {
     for (const key of Object.keys(state)) {
-      if (!Object.hasOwn(nextState, key)) delete (state as Record<string, unknown>)[key];
+      if (!hasKey(nextState, key)) delete (state as Record<string, unknown>)[key];
     }
     Object.assign(state, copyDraft(nextState));
     initialState.value = copyDraft(state);
@@ -87,11 +93,11 @@ function copyDraft<TDraft extends object>(draft: TDraft): TDraft {
  * @returns The unwrapped value.
  */
 function toRawDeep<T>(value: T): T {
-  if (typeof value !== "object" || value === null) return value;
+  if (!isRecord(value) && !isArray(value)) return value;
 
   const rawValue = toRaw(value);
 
-  if (Array.isArray(rawValue)) {
+  if (isArray(rawValue)) {
     return rawValue.map((item) => toRawDeep(item)) as T;
   }
 
@@ -120,7 +126,7 @@ function toRawDeep<T>(value: T): T {
 function isDraftEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) return true;
   if (left instanceof Date && right instanceof Date) return left.getTime() === right.getTime();
-  if (Array.isArray(left) && Array.isArray(right)) {
+  if (isArray(left) && isArray(right)) {
     return (
       left.length === right.length &&
       left.every((value, index) => isDraftEqual(value, right[index]))
@@ -132,7 +138,7 @@ function isDraftEqual(left: unknown, right: unknown): boolean {
   const rightKeys = Object.keys(right);
   if (leftKeys.length !== rightKeys.length) return false;
 
-  return leftKeys.every((key) => Object.hasOwn(right, key) && isDraftEqual(left[key], right[key]));
+  return leftKeys.every((key) => hasKey(right, key) && isDraftEqual(left[key], right[key]));
 }
 
 /**
