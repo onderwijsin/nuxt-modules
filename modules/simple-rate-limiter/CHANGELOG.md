@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 33bc382: Update module utility imports to the published `@onderwijsin/nuxt-module-utils` package.
+
 ## 0.2.0
 
 ### Minor Changes

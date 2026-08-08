@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-simple-rate-limiter",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Path-scoped server-side rate limiting for Nuxt.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
