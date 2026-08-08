@@ -40,6 +40,7 @@
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "h3": "catalog:",
     "nitropack": "catalog:",
+    "ofetch": "catalog:",
     "tailwindcss": "catalog:",
     "unstorage": "catalog:",
     "zod": "catalog:"

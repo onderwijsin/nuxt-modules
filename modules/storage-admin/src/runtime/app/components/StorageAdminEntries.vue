@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn, TableRow } from "@nuxt/ui";
+import { $fetch } from "ofetch";
 import { computed, h, onMounted, resolveComponent, shallowRef, watch } from "vue";
 import StorageAdminEntriesControls from "./StorageAdminEntriesControls.vue";
 
