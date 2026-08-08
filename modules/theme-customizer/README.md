@@ -3,8 +3,8 @@
 # @onderwijsin/nuxt-theme-customizer
 
 Runtime theme selection and custom color editing for Nuxt UI applications. The module adds a
-`ThemePicker`, a complete `/thema` editor, generated Tailwind color variables, and persisted browser
-state.
+`ThemeCustomizerThemePicker`, a complete `/thema` editor, generated Tailwind color variables, and
+persisted browser state.
 
 ## Installation
 
@@ -117,15 +117,15 @@ The default color keys are group names, so custom groups can be configured in th
 `appConfig.ui.colors` values take precedence over these initial color defaults. User selections
 remain persisted in browser `localStorage`.
 
-## ThemePicker
+## ThemeCustomizerThemePicker
 
-`ThemePicker` is automatically registered as a component. Put it in the right slot of a Nuxt UI
-header:
+`ThemeCustomizerThemePicker` is automatically registered as a component. Put it in the right slot of
+a Nuxt UI header:
 
 ```vue
 <UHeader>
   <template #right>
-    <ThemePicker />
+    <ThemeCustomizerThemePicker />
   </template>
 </UHeader>
 ```
@@ -149,9 +149,9 @@ export default defineNuxtConfig({
 });
 ```
 
-The module proxies and filters Google Fonts metadata at `/api/theme/fonts`, debouncing SelectMenu
-queries. The selected family is persisted locally and loaded through Google Fonts CSS. When
-`families` is provided without an API key, that list replaces the module's default family list.
+The module proxies and filters Google Fonts metadata at `/api/_theme-customizer/fonts`, debouncing
+SelectMenu queries. The selected family is persisted locally and loaded through Google Fonts CSS.
+When `families` is provided without an API key, that list replaces the module's default family list.
 
 ### Acquiring a Google Fonts API key
 
@@ -175,11 +175,15 @@ server-side and do not commit it to source control.
 
 ## Theme editor and generated palettes
 
-The module registers `/thema`, which lets users inspect active shades, create custom groups and
-colors, edit every shade, copy a complete `@theme` block, and remove runtime customizations.
+The module registers `/thema` by default, which lets users inspect active shades, create custom
+groups and colors, edit every shade, copy a complete `@theme` block, and remove runtime
+customizations.
 
-HEX palette generation calls the module-provided `GET /api/theme/palette?hex=%23abcdef` endpoint,
-which proxies ColorFYI and returns:
+Set `themeCustomizer.route` to another application-relative path to move the editor page. The route
+name is always `theme-customizer`.
+
+HEX palette generation calls the module-provided `GET /api/_theme-customizer/palette?hex=%23abcdef`
+endpoint, which proxies ColorFYI and returns:
 
 ```ts
 {
@@ -198,11 +202,11 @@ group is mapped to `--color-{group}-{shade}` and Nuxt UI semantic variables. Cus
 groups, and active colors are persisted in browser `localStorage` through the Pinia persisted-state
 plugin; the module does not use cookies.
 
-The following APIs are automatically imported:
+The following components are automatically registered with the `ThemeCustomizer` prefix:
 
-- `ThemePicker`, `FontPicker`, `ColorPalette`, `ThemeCustomizer`, `HexInput`, and `RadiusInput`;
-- `ThemeCustomizerConfirmation`;
-- `FormModal`;
+- `ThemeCustomizerThemePicker`, `ThemeCustomizerFontPicker`, `ThemeCustomizerColorPalette`,
+  `ThemeCustomizerEditor`, `ThemeCustomizerHexInput`, and `ThemeCustomizerRadiusInput`;
+- `ThemeCustomizerThemeCustomizerConfirmation` and `ThemeCustomizerFormModal`;
 - `useGeneratedPalette()`;
 - `useThemeCustomizerConfirmDialog()`;
 - `useFormModal()`;

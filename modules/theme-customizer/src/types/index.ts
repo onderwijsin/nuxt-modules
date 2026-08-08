@@ -33,6 +33,8 @@ export type ThemeCustomizerDefaults = {
 export type ThemeCustomizerOptions = {
   /** Enables the module outside development when set to `true`. */
   enabled?: boolean;
+  /** Application-relative path for the theme editor page. @default "/thema" */
+  route?: string;
   /** Named palettes for the primary semantic color group. */
   primary?: Record<string, ThemePalette>;
   /** Named palettes for the secondary semantic color group. */
@@ -48,5 +50,6 @@ export type ThemeCustomizerOptions = {
     | Record<string, ThemePalette>
     | ThemeGoogleFontsOptions
     | ThemeCustomizerDefaults
+    | string
     | undefined;
 };

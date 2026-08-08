@@ -14,7 +14,7 @@ describe("theme customizer module", async () => {
   });
 
   it("serves configured font families without a Google Fonts API key", async () => {
-    await expect($fetch("/api/theme/fonts?q=inter")).resolves.toEqual([
+    await expect($fetch("/api/_theme-customizer/fonts?q=inter")).resolves.toEqual([
       { label: "Inter", value: "Inter" }
     ]);
   });

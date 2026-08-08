@@ -40,6 +40,11 @@ vi.mock("../src/runtime/app/adapters/theme-runtime.client", () => ({
 
 import { useThemeCustomizerStore } from "../src/runtime/app/stores/theme-customizer";
 
+function defined<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error("Expected a value");
+  return value;
+}
+
 describe("useThemeCustomizerStore", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -56,7 +61,7 @@ describe("useThemeCustomizerStore", () => {
   it("creates normalized custom colors from a group's active palette", () => {
     const store = useThemeCustomizerStore();
 
-    const color = store.addColor("Café Blue", "primary");
+    const color = defined(store.addColor("Café Blue", "primary"));
 
     expect(color.name).toBe("Cafe Blue");
     expect(color.token).toBe("custom-primary-cafe-blue");
@@ -64,14 +69,14 @@ describe("useThemeCustomizerStore", () => {
     expect(runtime.applyColor).toHaveBeenCalledWith(color);
   });
 
-  it("keeps tokens unique after deleting a duplicate color", () => {
+  it("rejects a custom color whose token is already in use", () => {
     const store = useThemeCustomizerStore();
-    store.addColor("Ocean", "primary");
-    const deleted = store.addColor("Ocean", "primary");
-    const retained = store.addColor("Ocean", "primary");
-    store.removeColor(deleted.id);
+    const first = defined(store.addColor("Ocean", "primary"));
+    const duplicate = store.addColor("Ocean", "primary");
 
-    expect(store.addColor("Ocean", "primary").token).not.toBe(retained.token);
+    expect(first).toBeDefined();
+    expect(duplicate).toBeUndefined();
+    expect(store.colors).toHaveLength(1);
   });
 
   it("initializes the configured default font and palette", () => {
@@ -122,7 +127,7 @@ describe("useThemeCustomizerStore", () => {
 
   it("updates valid shades and ignores invalid values", () => {
     const store = useThemeCustomizerStore();
-    const color = store.addColor("Ocean", "primary");
+    const color = defined(store.addColor("Ocean", "primary"));
 
     store.updateShade(color.id, 500, "#ABCDEF");
     store.updateShade(color.id, 600, "not-a-color");
@@ -134,7 +139,7 @@ describe("useThemeCustomizerStore", () => {
 
   it("renames custom colors while keeping their active selection", () => {
     const store = useThemeCustomizerStore();
-    const color = store.addColor("Ocean", "primary");
+    const color = defined(store.addColor("Ocean", "primary"));
     store.setActiveColor("primary", color.token);
 
     store.renameColor(color.id, "Sky Blue");
@@ -147,10 +152,20 @@ describe("useThemeCustomizerStore", () => {
     expect(runtime.setActiveColor).toHaveBeenLastCalledWith("primary", color.token);
   });
 
+  it("rejects renaming a custom color to an existing token", () => {
+    const store = useThemeCustomizerStore();
+    const first = defined(store.addColor("Ocean", "primary"));
+    const second = defined(store.addColor("Sky", "primary"));
+
+    expect(store.renameColor(second.id, "Ocean")).toBe(false);
+    expect(second.name).toBe("Sky");
+    expect(second.token).not.toBe(first.token);
+  });
+
   it("renames runtime groups and moves their custom colors", () => {
     const store = useThemeCustomizerStore();
     store.addGroup("Brand colors");
-    const color = store.addColor("Ocean", "brand-colors");
+    const color = defined(store.addColor("Ocean", "brand-colors"));
 
     expect(store.renameGroup("brand-colors", "Branding")).toBe("branding");
     expect(store.groups).toEqual(["branding"]);
@@ -161,7 +176,7 @@ describe("useThemeCustomizerStore", () => {
 
   it("removes active colors and runtime groups cleanly", () => {
     const store = useThemeCustomizerStore();
-    const color = store.addColor("Ocean", "primary");
+    const color = defined(store.addColor("Ocean", "primary"));
     store.setActiveColor("primary", color.token);
 
     store.removeColor(color.id);

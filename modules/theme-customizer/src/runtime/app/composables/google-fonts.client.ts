@@ -28,7 +28,7 @@ export function useGoogleFonts() {
     loading.value = true;
 
     const result = await attempt(() =>
-      ofetch<ThemeFontOption[]>("/api/theme/fonts", {
+      ofetch<ThemeFontOption[]>("/api/_theme-customizer/fonts", {
         query: { q: debouncedSearchTerm.value }
       })
     );

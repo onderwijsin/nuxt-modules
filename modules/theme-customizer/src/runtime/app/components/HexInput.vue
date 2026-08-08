@@ -8,6 +8,7 @@ const props = withDefaults(
     allowEmpty?: boolean;
     placeholder?: string;
     size?: "xs" | "sm" | "md" | "lg" | "xl";
+    disabled?: boolean;
   }>(),
   {
     allowEmpty: false,
@@ -83,6 +84,7 @@ function handleEnter(event: KeyboardEvent) {
       :model-value="inputValue"
       :placeholder="placeholder"
       :size="size"
+      :disabled="disabled"
       :ui="{ root: 'mt-0!' }"
       v-bind="$attrs"
       @update:model-value="updateValue"

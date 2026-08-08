@@ -28,6 +28,11 @@ const themeDefaultsSchema = z
 /** Runtime validation for configured theme palettes. */
 const themeOptionsShape = {
   enabled,
+  route: z
+    .string()
+    .trim()
+    .regex(/^\/(?!\/)/u, "De themaroute moet een applicatie-relative route zijn.")
+    .optional(),
   primary: themePaletteSchema.refine((palettes) => Object.keys(palettes).length > 0, {
     error: "Configureer minstens één palet in de primaire kleurgroep."
   }),
@@ -43,8 +48,10 @@ export const themeOptionsSchema = z
     z.union([z.boolean(), themePaletteSchema, googleFontsOptionsSchema, themeDefaultsSchema])
   )
   .superRefine((options, context) => {
+    const paletteNames = new Map<string, string>();
     for (const [name, value] of toEntries(options)) {
-      if (name === "enabled" || name === "googleFonts" || name === "defaults") continue;
+      if (name === "enabled" || name === "route" || name === "googleFonts" || name === "defaults")
+        continue;
 
       const result = themePaletteSchema.safeParse(value);
       if (!result.success) {
@@ -53,6 +60,19 @@ export const themeOptionsSchema = z
           path: [name],
           message: "Elke kleurgroep moet benoemde paletten met alle elf tinten bevatten."
         });
+      } else {
+        for (const paletteName of Object.keys(result.data)) {
+          const previousGroup = paletteNames.get(paletteName);
+          if (previousGroup) {
+            context.addIssue({
+              code: "custom",
+              path: [name, paletteName],
+              message: "Deze kleurnaam is al in gebruik. Kies een andere naam."
+            });
+          } else {
+            paletteNames.set(paletteName, String(name));
+          }
+        }
       }
     }
   });

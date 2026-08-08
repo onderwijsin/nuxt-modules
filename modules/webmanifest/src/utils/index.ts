@@ -131,10 +131,15 @@ export function generateWebManifest(
     categories: getStrings(identity, "keywords")
   };
   const configuredAppUrl = site?.url ?? nuxt.options.runtimeConfig.public.siteUrl;
-  const appUrl = isString(configuredAppUrl) ? configuredAppUrl : "/";
+  const appUrl = isString(configuredAppUrl) ? configuredAppUrl : undefined;
   const configuredBaseURL = nuxt.options.app.baseURL;
   const baseURL = isString(configuredBaseURL) ? configuredBaseURL : "/";
-  const scopedAppUrl = baseURL === "/" ? appUrl : new URL(baseURL, appUrl).toString();
+  const normalizedBaseURL = `/${baseURL.replace(/^\/+|\/+$/gu, "")}/`.replace("//", "/");
+  const scopedAppUrl = appUrl
+    ? normalizedBaseURL === "/"
+      ? appUrl
+      : new URL(normalizedBaseURL, appUrl).toString()
+    : normalizedBaseURL;
   const generatedIcons = iconResolution.config
     ? generatePwaIcons({
         sizes: [16, 32, 48, 96, 144, 192, 512],
@@ -156,8 +161,11 @@ export function generateWebManifest(
   return defu({ ...manifest, icons: manifestIcons, shortcuts }, manifestFromIdentity, {
     name: site?.name,
     description: site?.description,
-    start_url:
-      baseURL === "/" ? `${appUrl}?source=pwa` : new URL("?source=pwa", scopedAppUrl).toString(),
+    start_url: appUrl
+      ? normalizedBaseURL === "/"
+        ? `${appUrl.replace(/\/$/u, "")}?source=pwa`
+        : new URL("?source=pwa", scopedAppUrl).toString()
+      : `${scopedAppUrl}?source=pwa`,
     scope: scopedAppUrl,
     lang: nuxt.options.app.head?.htmlAttrs?.lang ?? site?.currentLocale ?? site?.defaultLocale
   }) as WebManifest;

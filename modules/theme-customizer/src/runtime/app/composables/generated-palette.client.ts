@@ -112,39 +112,39 @@ export function useGeneratedPalette() {
     loading[group] = true;
     delete errors[group];
 
-    const result = await attempt(() =>
-      ofetch<unknown>("/api/theme/palette", {
-        query: { hex: parsedHex.data }
-      })
-    );
-    const response = result.data;
-    if (!response) {
-      errors[group] = "Het kleurenpalet kon niet worden opgehaald. Probeer het opnieuw.";
+    try {
+      const result = await attempt(() =>
+        ofetch<unknown>("/api/_theme-customizer/palette", {
+          query: { hex: parsedHex.data }
+        })
+      );
+      const response = result.data;
+      if (!response) {
+        errors[group] = "Het kleurenpalet kon niet worden opgehaald. Probeer het opnieuw.";
+        return false;
+      }
+      const parsedResponse = paletteResponseSchema.safeParse(response);
+
+      if (!parsedResponse.success) {
+        errors[group] = "De API gaf een ongeldig kleurenpalet terug.";
+        return false;
+      }
+
+      const tokenName = `theme-picker-${group}-custom`;
+      runtime.removeColorTokens(generatedTokenNames.value[group]);
+
+      for (const shade of parsedResponse.data.shades) {
+        runtime.applyColor({ token: tokenName, shades: { [shade.level]: `#${shade.hex}` } });
+      }
+
+      generatedTokenNames.value[group] = tokenName;
+      customHex.value[group] = parsedResponse.data.hex;
+      generatedPalettes.value[group] = parsedResponse.data.shades;
+      runtime.setActiveColor(group, tokenName);
+      return true;
+    } finally {
       loading[group] = false;
-      return false;
     }
-    const parsedResponse = paletteResponseSchema.safeParse(response);
-
-    if (!parsedResponse.success) {
-      errors[group] = "De API gaf een ongeldig kleurenpalet terug.";
-      loading[group] = false;
-      return false;
-    }
-
-    const tokenName = `theme-picker-${group}-custom`;
-    runtime.removeColorTokens(generatedTokenNames.value[group]);
-
-    for (const shade of parsedResponse.data.shades) {
-      runtime.applyColor({ token: tokenName, shades: { [shade.level]: `#${shade.hex}` } });
-    }
-
-    generatedTokenNames.value[group] = tokenName;
-    customHex.value[group] = parsedResponse.data.hex;
-    generatedPalettes.value[group] = parsedResponse.data.shades;
-    runtime.setActiveColor(group, tokenName);
-
-    loading[group] = false;
-    return true;
   }
 
   return {

@@ -21,7 +21,7 @@ const emptyGroups = computed(() =>
         description="Op deze pagina zie je de kleurtinten en rondingen voor het huidige thema"
         class="mb-8"
       />
-      <ColorPalette
+      <ThemeCustomizerColorPalette
         :colors="appConfig.ui.colors"
         :groups="themeCustomizer.colorGroups()"
         :empty-groups="emptyGroups"
@@ -34,7 +34,7 @@ const emptyGroups = computed(() =>
         description="Wanneer je in de kleurkiezer een #HEX-kleur invoert, wordt via de ColorFYI API automatisch een kleurenpalet gegenereerd dat zo dicht mogelijk bij de ingevoerde kleur ligt. Wil je meer controle over het samenstellen van de kleuren? Hieronder kun je je eigen kleurthema maken."
         class="mb-8"
       />
-      <ThemeCustomizer />
+      <ThemeCustomizerEditor />
     </UPage>
   </UContainer>
 </template>

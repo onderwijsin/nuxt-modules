@@ -50,6 +50,7 @@
     "h3": "catalog:",
     "nitropack": "catalog:",
     "ofetch": "catalog:",
+    "ufo": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

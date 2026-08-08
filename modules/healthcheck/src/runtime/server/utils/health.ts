@@ -2,6 +2,7 @@ import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { useStorage } from "nitropack/runtime";
 import { ofetch } from "ofetch";
+import { joinURL } from "ufo";
 import { attempt, fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import type {
@@ -138,7 +139,7 @@ async function checkCloudinary(event: H3Event, signal: AbortSignal): Promise<voi
 async function checkDirectus(event: H3Event, signal: AbortSignal): Promise<void> {
   const baseUrl = useRuntimeConfig(event).healthcheck.directus?.baseUrl?.trim();
   if (!baseUrl) throw new Error("Directus baseUrl is required");
-  await ofetch(new URL("/server/ping", baseUrl).toString(), {
+  await ofetch(joinURL(baseUrl, "server/ping"), {
     retry: 0,
     signal
   });

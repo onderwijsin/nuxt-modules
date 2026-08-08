@@ -65,13 +65,13 @@ TypeScript types, for example `color="accent"`.
 
 ## Usage
 
-Place `<ThemePicker />` in the application's navigation, or use the standalone `<FontPicker />` when
-only font selection is needed:
+Place `<ThemeCustomizerThemePicker />` in the application's navigation, or use the standalone
+`<ThemeCustomizerFontPicker />` when only font selection is needed:
 
 ```vue
 <UHeader>
   <template #right>
-    <ThemePicker />
+    <ThemeCustomizerThemePicker />
   </template>
 </UHeader>
 ```
@@ -132,14 +132,15 @@ module uses it server-side; do not commit the key to source control. See Google'
 [Web Fonts Developer API guide](https://developers.google.com/fonts/docs/developer_api) for the API
 details.
 
-The module also provides `/thema` for palette inspection and editing. Its user interface is Dutch.
-Configured palettes, custom colors, groups, and active selections are persisted in browser
+The module also provides `/thema` for palette inspection and editing by default. Set
+`themeCustomizer.route` to another application-relative path when needed. Its user interface is
+Dutch. Configured palettes, custom colors, groups, and active selections are persisted in browser
 `localStorage`, not cookies.
 
 The `/thema` editor also lets users rename custom colors and runtime-created groups through the edit
 buttons beside their names.
 
-For generated palettes, the module provides `GET /api/theme/palette?hex=%23abcdef`, which proxies
-ColorFYI. The response contains a six-digit `hex` value and exactly eleven `{ level, hex }` shade
-objects. Applications that use another palette service can replace the route; configured and locally
-created palettes do not depend on it.
+For generated palettes, the module provides `GET /api/_theme-customizer/palette?hex=%23abcdef`,
+which proxies ColorFYI. The response contains a six-digit `hex` value and exactly eleven
+`{ level, hex }` shade objects. Applications that use another palette service can replace the route;
+configured and locally created palettes do not depend on it.
