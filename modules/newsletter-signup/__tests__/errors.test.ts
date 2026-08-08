@@ -9,14 +9,14 @@ describe("newsletter error utilities", () => {
     expect(getErrorStatus(undefined)).toBeUndefined();
   });
 
-  it("parses object and JSON-string provider data", () => {
-    expect(getErrorData({ data: { title: "Member Exists" } })).toEqual({
+  it("parses object and JSON-string provider data", async () => {
+    await expect(getErrorData({ data: { title: "Member Exists" } })).resolves.toEqual({
       title: "Member Exists"
     });
-    expect(getErrorData({ data: '{"title":"Member Exists"}' })).toEqual({
+    await expect(getErrorData({ data: '{"title":"Member Exists"}' })).resolves.toEqual({
       title: "Member Exists"
     });
-    expect(getErrorData({ data: "not-json" })).toBeUndefined();
-    expect(getErrorData({ data: 400 })).toBeUndefined();
+    await expect(getErrorData({ data: "not-json" })).resolves.toBeUndefined();
+    await expect(getErrorData({ data: 400 })).resolves.toBeUndefined();
   });
 });

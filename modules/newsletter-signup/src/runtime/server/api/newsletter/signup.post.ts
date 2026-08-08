@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
 import { FIELD_NAMES } from "../../../shared";
 import type { NewsletterSignupInput } from "../../../shared";
@@ -8,7 +9,7 @@ import type { NewsletterFieldConfig } from "../../../../types/options";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../../types/errors";
 import { subscribeToLoops } from "../../providers/loops";
 import { subscribeToMailchimp } from "../../providers/mailchimp";
-import { createNewsletterSignupError } from "../../utils/errors";
+import { createNewsletterSignupError, getErrorData } from "../../utils/errors";
 
 const signupSchema = z
   .object({
@@ -32,14 +33,20 @@ export default defineEventHandler(async (event) => {
     throw createNewsletterSignupError(500, NEWSLETTER_SIGNUP_ERROR_CODES.configuration);
   }
 
-  const { bannedUntil } = await enforceRateLimit(event, { max: 5, duration: 60, ban: 900 });
-  if (bannedUntil !== undefined) {
-    throw createNewsletterSignupError(
-      429,
-      NEWSLETTER_SIGNUP_ERROR_CODES.rateLimited,
-      undefined,
-      bannedUntil
-    );
+  const rateLimitResult = await attempt(() =>
+    enforceRateLimit(event, { max: 5, duration: 60, ban: 900 })
+  );
+  if (rateLimitResult.error !== null) {
+    const data = await getErrorData(rateLimitResult.error);
+    if (data?.bannedUntil && typeof data.bannedUntil === "number") {
+      throw createNewsletterSignupError(
+        429,
+        NEWSLETTER_SIGNUP_ERROR_CODES.rateLimited,
+        undefined,
+        data.bannedUntil
+      );
+    }
+    throw rateLimitResult.error;
   }
 
   const body = await readBody<Record<string, unknown>>(event);

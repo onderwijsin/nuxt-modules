@@ -14,7 +14,7 @@ describe("simple rate limiter module", () => {
     addServerImports.mockReset();
   });
 
-  it("auto-imports enforceRateLimit in Nitro server handlers", async () => {
+  it("auto-imports both rate limit helpers in Nitro server handlers", async () => {
     const module = (await import("../src/module")).default;
     const setup = Reflect.get(module, "setup");
 
@@ -22,6 +22,10 @@ describe("simple rate limiter module", () => {
 
     expect(addServerImports).toHaveBeenCalledWith({
       name: "enforceRateLimit",
+      from: "./runtime"
+    });
+    expect(addServerImports).toHaveBeenCalledWith({
+      name: "enforceGlobalRateLimit",
       from: "./runtime"
     });
   });

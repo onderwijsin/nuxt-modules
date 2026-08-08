@@ -44,7 +44,7 @@ export async function subscribeToLoops(
   if (result.error !== null) {
     const error = result.error;
     const status = getErrorStatus(error);
-    const providerData = getErrorData(error);
+    const providerData = await getErrorData(error);
 
     console.error("Subscribing to Loops failed", { status });
 

@@ -196,13 +196,13 @@ endpoint.
 The module generates `POST /api/newsletter/signup`.
 
 The local endpoint uses `@onderwijsin/nuxt-simple-rate-limiter`: each IP may make five requests per
-minute and is then banned for 15 minutes. It does not configure or override an application's API
-Shield settings. The limiter is not registered when `endpoint.enabled` is `false`. Configure Nitro
-storage for production; use a shared driver such as Redis when the application runs on multiple
-instances. Duplicate subscriptions are idempotent and always return success, so the endpoint does
-not reveal mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses its
-add-or-update member endpoint and applies immediate `subscribed` status, including when an existing
-member was previously unsubscribed.
+minute and is then banned for 15 minutes. Rate-limit failures are normalized as `rateLimited` errors
+and include `bannedUntil`. It does not configure or override other application rate limits. The
+limiter is not registered when `endpoint.enabled` is `false`. Configure Nitro storage for
+production; use a shared driver such as Redis when the application runs on multiple instances.
+Duplicate subscriptions are idempotent and always return success, so the endpoint does not reveal
+mailing-list membership. Provider requests have a five-second timeout. Mailchimp uses immediate
+`subscribed` status.
 
 Without persistent Nitro storage, the rate limiter works in memory but its counters and bans reset
 when the application restarts. To persist them for a single-instance deployment, configure storage:

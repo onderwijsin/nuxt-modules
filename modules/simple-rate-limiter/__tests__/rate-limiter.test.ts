@@ -4,8 +4,15 @@ const storageByNamespace = vi.hoisted(() => new Map<string, Map<string, unknown>
 const request = vi.hoisted(() => ({ ip: "192.0.2.1", path: "/api/newsletter/signup" }));
 
 vi.mock("h3", () => ({
-  createError: ({ statusCode, statusMessage }: { statusCode: number; statusMessage: string }) =>
-    Object.assign(new Error(statusMessage), { statusCode, statusMessage }),
+  createError: ({
+    statusCode,
+    statusMessage,
+    data
+  }: {
+    statusCode: number;
+    statusMessage: string;
+    data?: unknown;
+  }) => Object.assign(new Error(statusMessage), { statusCode, statusMessage, data }),
   getRequestIP: () => request.ip,
   getRequestURL: () => new URL(`https://example.test${request.path}`)
 }));
@@ -31,7 +38,7 @@ vi.mock("zod", () => ({
   }
 }));
 
-import { enforceRateLimit } from "../src/runtime";
+import { enforceGlobalRateLimit, enforceRateLimit } from "../src/runtime";
 
 const config = { max: 2, duration: 60, ban: 900 };
 
@@ -46,9 +53,10 @@ describe("enforceRateLimit", () => {
     await Reflect.apply(enforceRateLimit, undefined, [{}, config]);
     await Reflect.apply(enforceRateLimit, undefined, [{}, config]);
 
-    const result = await Reflect.apply(enforceRateLimit, undefined, [{}, config]);
-
-    expect(result.bannedUntil).toEqual(expect.any(Number));
+    await expect(Reflect.apply(enforceRateLimit, undefined, [{}, config])).rejects.toMatchObject({
+      statusCode: 429,
+      data: { bannedUntil: expect.any(Number), limits: config }
+    });
   });
 
   it("keeps entries independent for each request path", async () => {
@@ -57,7 +65,19 @@ describe("enforceRateLimit", () => {
 
     await expect(
       Reflect.apply(enforceRateLimit, undefined, [{}, { max: 1, duration: 60, ban: 0 }])
-    ).resolves.toEqual({});
-    expect(storageByNamespace).toHaveLength(2);
+    ).resolves.toBeUndefined();
+    expect(storageByNamespace).toHaveLength(3);
+  });
+
+  it("counts requests from different paths in the global limit", async () => {
+    await Reflect.apply(enforceGlobalRateLimit, undefined, [{}, { max: 2, duration: 60, ban: 0 }]);
+    request.path = "/api/contact";
+    await Reflect.apply(enforceRateLimit, undefined, [{}, { max: 10, duration: 60, ban: 0 }]);
+
+    await expect(
+      Reflect.apply(enforceGlobalRateLimit, undefined, [{}, { max: 2, duration: 60, ban: 0 }])
+    ).rejects.toMatchObject({
+      data: { bannedUntil: expect.any(Number), limits: { max: 2, duration: 60, ban: 0 } }
+    });
   });
 });
