@@ -55,27 +55,21 @@ agents working in consuming Nuxt applications.
 
 ## 🚀 Getting Started
 
-Build all workspace packages and isolated playgrounds with:
+Each module contains an isolated playground for development. To run a specific playground, first start development mode for the internal utils package, then for the module itself:
 
 ```sh
-pnpm build
-```
-
-Run the module playground during development:
-
-```sh
+pnpm dev:utils
 pnpm --filter @onderwijsin/nuxt-loops-renderer dev
 ```
 
-Run playground checks directly when iterating:
+To build all workspace packages:
 
 ```sh
-pnpm --filter loops-renderer-playground typecheck
-pnpm --filter loops-renderer-playground build
+pnpm build:utils
+pnpm dev:prepare
+pnpm build
 ```
 
-Each module owns an isolated playground. A shared integration playground will only be introduced
-when multiple modules have a supported interaction that needs to be validated together.
 
 ## ✅ Validation
 
