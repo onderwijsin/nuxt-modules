@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["module-utils", "test-utils"]
+  "ignore": ["test-utils"]
 }

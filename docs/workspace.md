@@ -1,8 +1,8 @@
 # Workspace and tooling
 
-This repository is a pnpm workspace for standalone Nuxt 4 modules and the private packages that
-support them. Package versions are managed through the strict workspace catalog, and package-local
-scripts are included in the root recursive validation commands.
+This repository is a pnpm workspace for standalone Nuxt 4 modules and the packages that support
+them. Package versions are managed through the strict workspace catalog, and package-local scripts
+are included in the root recursive validation commands.
 
 ## Requirements
 
@@ -37,21 +37,21 @@ edits to root scripts or configuration. Keep playgrounds private and scoped to t
 
 ## Package groups
 
-### Private packages
+### Supporting packages
 
 Private packages live under `packages/`:
 
-- `module-utils` contains reusable, module-agnostic runtime helpers. It is built with tsup and its
-  output is consumed through package exports.
+- `@onderwijsin/nuxt-module-utils` contains reusable, module-agnostic runtime helpers. It is built
+  with tsup and published alongside modules.
 - `test-utils` is reserved for shared test fixtures, assertions, and Vitest helpers. It must never
   be imported by published runtime code.
 
-Private packages are type-checked recursively. `module-utils` must be built before workspace
-preparation so consuming modules can resolve its generated output. Prepare every module stub and
-playground Nuxt types before type checking:
+Supporting packages are type-checked recursively. `@onderwijsin/nuxt-module-utils` must be built
+before workspace preparation so consuming modules can resolve its generated output. Prepare every
+module stub and playground Nuxt types before type checking:
 
 ```sh
-pnpm --filter module-utils build
+pnpm --filter @onderwijsin/nuxt-module-utils build
 pnpm dev:prepare
 pnpm typecheck
 ```
@@ -91,9 +91,9 @@ pnpm build
 pnpm validate:packages
 ```
 
-The recursive build follows workspace dependency order, builds private utility packages, then builds
-modules and their playgrounds. Package validation checks publishable metadata and confirms that
-private workspace dependencies do not leak into runtime output.
+The recursive build follows workspace dependency order, builds utility packages, then builds modules
+and their playgrounds. Package validation checks publishable metadata and confirms that private
+workspace dependencies do not leak into runtime output.
 
 ## Generated output
 
@@ -134,6 +134,7 @@ pnpm build
 pnpm validate:packages
 ```
 
-Apply formatting and lint fixes with `pnpm format` and `pnpm lint:fix`. `module-utils` must be built
-before workspace preparation so consuming modules resolve its generated declarations. Preparation
-creates module stubs and playground Nuxt types; the recursive build performs full production builds.
+Apply formatting and lint fixes with `pnpm format` and `pnpm lint:fix`.
+`@onderwijsin/nuxt-module-utils` must be built before workspace preparation so consuming modules
+resolve its generated declarations. Preparation creates module stubs and playground Nuxt types; the
+recursive build performs full production builds.

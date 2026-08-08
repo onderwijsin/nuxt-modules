@@ -22,8 +22,8 @@ vi.mock("@nuxt/kit", () => ({
   addTypeTemplate
 }));
 
-vi.mock("module-utils/shared", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("module-utils/shared")>()),
+vi.mock("@onderwijsin/nuxt-module-utils/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@onderwijsin/nuxt-module-utils/shared")>()),
   transpileRuntime: (nuxt: any, runtimeDir: string) =>
     nuxt.options.build.transpile.push(runtimeDir),
   moduleSetup: (_name: string, options: { enabled?: boolean }) => ({

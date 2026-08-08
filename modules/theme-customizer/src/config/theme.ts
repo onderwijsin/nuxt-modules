@@ -1,5 +1,5 @@
 import { builtInDefaultTokens, THEME_SHADES } from "../runtime/app/utils/theme";
-import { fromEntries, toEntries } from "module-utils/shared";
+import { fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import type {
   ThemeColorGroups,
   ThemeCustomizerDefaults,

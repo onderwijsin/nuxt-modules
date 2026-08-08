@@ -56,8 +56,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/packages"
-          for package in modules/*/package.json; do
+          for package in packages/*/package.json modules/*/package.json; do
             name=$(node -p "require('./$package').name")
+            private=$(node -p "require('./$package').private === true")
+            [ "$private" = "true" ] && continue
             archive=$(pnpm --filter "$name" pack --pack-destination "$RUNNER_TEMP/packages" --json | node -e 'let s=""; process.stdin.on("data", c => s += c).on("end", () => process.stdout.write(JSON.parse(s).filename))')
             node scripts/check-packed-package.mjs "$archive"
             pnpm exec publint "$(dirname "$package")"

@@ -2,7 +2,7 @@ import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { useStorage } from "nitropack/runtime";
 import { ofetch } from "ofetch";
-import { attempt, fromEntries } from "module-utils/shared";
+import { attempt, fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import type {
   HealthCheckResult,

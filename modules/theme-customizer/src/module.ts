@@ -22,7 +22,7 @@ import {
   toEntries,
   transpileRuntime,
   validateModuleOptions
-} from "module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/shared";
 import { version } from "../package.json";
 import { themeOptionsSchema } from "./config/options.schema";
 import {

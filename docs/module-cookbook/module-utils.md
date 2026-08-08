@@ -1,59 +1,49 @@
-# Working with `module-utils`
+# Working with `@onderwijsin/nuxt-module-utils`
 
-`packages/module-utils` is a private, module-agnostic utility package used by modules in this
+`packages/module-utils` is the publishable, module-agnostic utility package used by modules in this
 repository. It contains build-time Nuxt module helpers, typed object-entry helpers, Zod option
-validation, retryable operation helpers, and server-only request-token checks. It is bundled into
-consuming modules at build time; application authors must not import it directly.
+validation, retryable operation helpers, and server-only request-token checks. It is published as a
+runtime dependency for modules that use its runtime helpers; application authors generally should
+not install or import it directly.
 
 ## Runtime subpaths
 
 Use the public package subpaths rather than source paths:
 
-| Subpath               | Contents                                   | Intended use                                                           |
-| --------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
-| `module-utils`        | Compatibility alias for the shared exports | Existing shared-only imports; prefer `module-utils/shared` in new code |
-| `module-utils/shared` | Build-time and framework-neutral helpers   | Module entrypoints, config, and runtime code that does not need `h3`   |
-| `module-utils/server` | H3 request-token helpers                   | Server routes and server utilities only                                |
-| `module-utils/app`    | Reserved client-runtime entrypoint         | Do not import; it currently has no public helpers                      |
-| `module-utils/types`  | Shared TypeScript types                    | Type-only imports such as `BaseModuleOptions`                          |
+| Subpath                                 | Contents                                   | Intended use                                                                             |
+| --------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `@onderwijsin/nuxt-module-utils`        | Compatibility alias for the shared exports | Existing shared-only imports; prefer `@onderwijsin/nuxt-module-utils/shared` in new code |
+| `@onderwijsin/nuxt-module-utils/shared` | Build-time and framework-neutral helpers   | Module entrypoints, config, and runtime code that does not need `h3`                     |
+| `@onderwijsin/nuxt-module-utils/server` | H3 request-token helpers                   | Server routes and server utilities only                                                  |
+| `@onderwijsin/nuxt-module-utils/app`    | Reserved client-runtime entrypoint         | Do not import; it currently has no public helpers                                        |
+| `@onderwijsin/nuxt-module-utils/types`  | Shared TypeScript types                    | Type-only imports such as `BaseModuleOptions`                                            |
 
 The `server` subpath is separate so importing token helpers does not add `h3` to build-time or
 app-only dependency graphs. The package root currently re-exports the shared entrypoint for
-compatibility, but it must not be used for server helpers. `module-utils` is private and should be
-inlined by each published module's build configuration:
-
-```ts
-export default defineBuildConfig({
-  rollup: { inlineDependencies: ["module-utils"] }
-});
-```
-
-Nuxt Module Builder copies `src/runtime` files without bundling their dependencies. Modules with
-runtime imports must run `inlineModuleUtilsRuntime` in their `mkdist:done` build hook; it copies the
-utility output into `dist/runtime/module-utils` and rewrites those runtime imports to the bundled
-copy. Run `pnpm validate:packages` after building packages to catch a private import that reaches
-`dist/`.
+compatibility, but it must not be used for server helpers. Published modules declare the package as
+a normal `workspace:^` runtime dependency. pnpm rewrites that protocol to a semver range when
+packing the module for npm, so consumers receive the package transitively.
 
 ## Utility reference
 
 The following table lists the public runtime utilities and their import locations. The signatures
 use the source-level generic types; type-only exports are listed separately below.
 
-| Utility                   | Calling signature                                                                                                                                                  | Import from           |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
-| `attempt`                 | `attempt<T>(operation: () => T \| Promise<T>): Promise<AttemptResult<T>>`                                                                                          | `module-utils/shared` |
-| `attemptWithRetry`        | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `module-utils/shared` |
-| `toEntries`               | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `module-utils/shared` |
-| `fromEntries`             | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `module-utils/shared` |
-| `resolveModuleName`       | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `module-utils/shared` |
-| `resolveLoggerScope`      | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `module-utils/shared` |
-| `isPrepareMode`           | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `module-utils/shared` |
-| `transpileRuntime`        | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `module-utils/shared` |
-| `moduleSetup`             | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `module-utils/shared` |
-| `validateModuleOptions`   | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `module-utils/shared` |
-| `enabled`                 | Zod schema: `z.boolean().default(true)`                                                                                                                            | `module-utils/shared` |
-| `hasMatchingRequestToken` | `hasMatchingRequestToken(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                 | `module-utils/server` |
-| `isAdmin`                 | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `module-utils/server` |
+| Utility                   | Calling signature                                                                                                                                                  | Import from                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `attempt`                 | `attempt<T>(operation: () => T \| Promise<T>): Promise<AttemptResult<T>>`                                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
+| `attemptWithRetry`        | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `@onderwijsin/nuxt-module-utils/shared` |
+| `toEntries`               | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
+| `fromEntries`             | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
+| `resolveModuleName`       | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `@onderwijsin/nuxt-module-utils/shared` |
+| `resolveLoggerScope`      | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `@onderwijsin/nuxt-module-utils/shared` |
+| `isPrepareMode`           | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `@onderwijsin/nuxt-module-utils/shared` |
+| `transpileRuntime`        | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `@onderwijsin/nuxt-module-utils/shared` |
+| `moduleSetup`             | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/shared` |
+| `validateModuleOptions`   | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `@onderwijsin/nuxt-module-utils/shared` |
+| `enabled`                 | Zod schema: `z.boolean().default(true)`                                                                                                                            | `@onderwijsin/nuxt-module-utils/shared` |
+| `hasMatchingRequestToken` | `hasMatchingRequestToken(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                 | `@onderwijsin/nuxt-module-utils/server` |
+| `isAdmin`                 | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `@onderwijsin/nuxt-module-utils/server` |
 
 ## `attempt`
 
@@ -62,7 +52,7 @@ throwing immediately. Successful results contain `data` and `error: null`; faile
 `data: null` and the captured `error`.
 
 ```ts
-import { attempt } from "module-utils/shared";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 
 const result = await attempt(() => ofetch<Data>(url));
 if (result.error !== null) {
@@ -82,7 +72,7 @@ defaults to three total attempts, a 250 millisecond initial delay, and exponenti
 failures.
 
 ```ts
-import { attemptWithRetry } from "module-utils/shared";
+import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";
 
 const result = await attemptWithRetry(() => ofetch<Data>(url), {
   attempts: 3,
@@ -97,7 +87,7 @@ const result = await attemptWithRetry(() => ofetch<Data>(url), {
 for iteration or transformation.
 
 ```ts
-import { toEntries } from "module-utils/shared";
+import { toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 const entries = toEntries(options);
 ```
@@ -108,7 +98,7 @@ const entries = toEntries(options);
 when transforming option or configuration maps.
 
 ```ts
-import { fromEntries, toEntries } from "module-utils/shared";
+import { fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 const optionsByName = fromEntries(toEntries(options));
 ```
@@ -119,7 +109,7 @@ const optionsByName = fromEntries(toEntries(options));
 example, `resolveModuleName("turnstile")` returns `@onderwijsin/nuxt-turnstile`.
 
 ```ts
-import { resolveModuleName } from "module-utils/shared";
+import { resolveModuleName } from "@onderwijsin/nuxt-module-utils/shared";
 
 const moduleName = resolveModuleName("turnstile");
 ```
@@ -129,7 +119,7 @@ const moduleName = resolveModuleName("turnstile");
 `resolveLoggerScope` converts a module key to the kebab-case scope used by Nuxt's logger.
 
 ```ts
-import { resolveLoggerScope } from "module-utils/shared";
+import { resolveLoggerScope } from "@onderwijsin/nuxt-module-utils/shared";
 
 const log = useLogger(resolveLoggerScope("themeCustomizer"));
 ```
@@ -140,7 +130,7 @@ const log = useLogger(resolveLoggerScope("themeCustomizer"));
 Nuxt preparation from a normal module load.
 
 ```ts
-import { isPrepareMode } from "module-utils/shared";
+import { isPrepareMode } from "@onderwijsin/nuxt-module-utils/shared";
 
 if (isPrepareMode(nuxt)) return;
 ```
@@ -151,19 +141,19 @@ if (isPrepareMode(nuxt)) return;
 modules that publish runtime code consumed by Nuxt.
 
 ```ts
-import { transpileRuntime } from "module-utils/shared";
+import { transpileRuntime } from "@onderwijsin/nuxt-module-utils/shared";
 
 transpileRuntime(nuxt, runtimeDir);
 ```
 
 ## `moduleSetup`
 
-`moduleSetup` provides consistent lifecycle logging and an enabled check for a module. Its returned
-`start` and `end` functions log loading state; `isEnabled` logs and returns `false` when
+`moduleSetup` provides consistent lifecycle logging and an enabled check for a Nuxt module. Its
+returned `start` and `end` functions log loading state; `isEnabled` logs and returns `false` when
 `options.enabled === false`.
 
 ```ts
-import { moduleSetup } from "module-utils/shared";
+import { moduleSetup } from "@onderwijsin/nuxt-module-utils/shared";
 
 const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);
 start();
@@ -179,7 +169,7 @@ schema output, logs a formatted validation error, and throws a uniform error whe
 does not extend or modify the schema.
 
 ```ts
-import { validateModuleOptions } from "module-utils/shared";
+import { validateModuleOptions } from "@onderwijsin/nuxt-module-utils/shared";
 import { turnstileOptionsSchema } from "./config/options.schema";
 
 const options = validateModuleOptions(rawOptions, turnstileOptionsSchema, log);
@@ -194,7 +184,7 @@ Define the complete module schema, including the shared `enabled` field, in
 into the module's own schema rather than defining a second enabled default.
 
 ```ts
-import { enabled } from "module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
 
 const schema = z.object({ enabled, otherOption: z.string() });
 ```
@@ -205,7 +195,7 @@ const schema = z.object({ enabled, otherOption: z.string() });
 `Authorization: Bearer <token>`. It returns `false` for missing or empty configured tokens.
 
 ```ts
-import { hasMatchingRequestToken } from "module-utils/server";
+import { hasMatchingRequestToken } from "@onderwijsin/nuxt-module-utils/server";
 
 if (hasMatchingRequestToken(event, runtimeConfig.module.token, "x-module-token")) return;
 ```
@@ -217,15 +207,16 @@ trusted bypasses in server-facing modules. Keep the expected token in private ru
 never expose it through `runtimeConfig.public`, logs, client bundles, or hard-coded aliases.
 
 ```ts
-import { isAdmin } from "module-utils/server";
+import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
 
 if (isAdmin(event, runtimeConfig.module.adminToken, runtimeConfig.module.adminHeaderName)) return;
 ```
 
 ## Shared types and module integration
 
-The package also exports `AttemptResult` and `AttemptRetryOptions` from `module-utils/shared`, and
-`BaseModuleOptions` from `module-utils/shared` or `module-utils/types`. Use type-only imports for
-these contracts. Declare `module-utils` as a `workspace:*` build dependency, build it before
-consuming modules, and inspect the generated bundle or tarball to ensure no private import remains.
+The package also exports `AttemptResult` and `AttemptRetryOptions` from
+`@onderwijsin/nuxt-module-utils/shared`, and `BaseModuleOptions` from
+`@onderwijsin/nuxt-module-utils/shared` or `@onderwijsin/nuxt-module-utils/types`. Use type-only
+imports for these contracts. Declare `@onderwijsin/nuxt-module-utils` as a `workspace:^` runtime
+dependency, and inspect the generated bundle or tarball to ensure the package resolves correctly.
 Never import `test-utils` from published runtime code.

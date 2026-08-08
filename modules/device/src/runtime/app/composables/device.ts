@@ -1,7 +1,7 @@
 import type { Device } from "#build/types/device";
 import { useRequestHeaders, useRuntimeConfig, useState } from "#imports";
 import { reactive, ref } from "vue";
-import { toEntries } from "module-utils/shared";
+import { toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import {
   REGEX_CRAWLER,

@@ -1,6 +1,10 @@
 {
   "name": "test-utils",
   "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

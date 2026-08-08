@@ -30,8 +30,9 @@ problem.
 - [ ] Put build-time helpers in `src/config/`, consumer runtime code in `src/runtime/`, and public
       types in `src/types/`.
 - [ ] Put tests in the package-owned `__tests__/` directory.
-- [ ] Add `build.config.ts`, `tsconfig.json`, package scripts, Node engine, repository metadata,
-      `CHANGELOG.md`, and a package `README.md`.
+- [ ] Add `tsconfig.json`, package scripts, Node engine, repository metadata, author,
+      `CHANGELOG.md`, and a package `README.md`. Add `build.config.ts` only when custom unbuild
+      configuration is required.
 - [ ] Add an isolated `playground/` with a private package, `workspace:*` dependency, Nuxt config,
       and `dev`, `typecheck`, and `build` scripts.
 
@@ -55,8 +56,8 @@ problem.
 - [ ] Use the public name `@onderwijsin/nuxt-<module-name>` and export the generated module and
       declarations from `dist/`.
 - [ ] Put runtime dependencies in `dependencies`; keep build and test tooling in `devDependencies`.
-- [ ] Inline private workspace helpers in the build and verify no private imports leak into the
-      packed module.
+- [ ] Declare runtime helper packages in `dependencies` and verify the packed module resolves all
+      runtime imports.
 - [ ] Add or update the module table in the root `README.md`.
 - [ ] Add the corresponding installable consumer skill under `skills/<module-name>/` and update it
       when options or public APIs change.
