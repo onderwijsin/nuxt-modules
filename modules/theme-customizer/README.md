@@ -208,7 +208,6 @@ The following APIs are automatically imported:
 - `useFormModal()`;
 - `useThemeCustomizerStore()`.
 
-````
 
 ## Agent skill
 
