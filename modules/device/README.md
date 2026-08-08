@@ -3,6 +3,10 @@
 Nuxt 4 module that exposes SSR-aware device, operating-system, browser, and crawler flags through
 the auto-imported `useDevice` composable.
 
+The logic in this module is inspired by [`@nuxtjs/device`](https://github.com/nuxt-modules/device), but our implementation takes a different approach:
+- we do not install a global plugin, making the core bundle smaller 
+- device flags are reactive and recalculated client side, making the module usable in prerendered routes 
+
 ## Install and register
 
 ```sh
