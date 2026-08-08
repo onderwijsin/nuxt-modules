@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { enabled } from "module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
 
 /** Runtime validation schema for webmanifest module options. */
 export const webmanifestOptionsSchema = z.strictObject({

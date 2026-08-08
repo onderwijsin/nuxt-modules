@@ -7,6 +7,10 @@
     "url": "https://github.com/onderwijsin/nuxt-modules/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
@@ -43,6 +47,7 @@
     "@nuxt/schema": "catalog:",
     "@nuxt/ui": "catalog:",
     "@nuxtjs/turnstile": "catalog:",
+    "@onderwijsin/nuxt-module-utils": "workspace:^",
     "defu": "catalog:",
     "h3": "catalog:",
     "zod": "catalog:"
@@ -50,7 +55,6 @@
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
     "@nuxt/test-utils": "catalog:",
-    "module-utils": "workspace:*",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"

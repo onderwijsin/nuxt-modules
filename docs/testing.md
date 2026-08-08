@@ -66,8 +66,8 @@ Test the behavior that could regress and the public contract that consumers depe
 ### Shared utilities
 
 Test pure utilities with direct inputs and outputs. Cover normal values, important boundary cases,
-and failures or disabled paths. For example, `module-utils` tests module naming, logger scopes,
-prepare-mode detection, and setup lifecycle behavior.
+and failures or disabled paths. For example, `@onderwijsin/nuxt-module-utils` tests module naming,
+logger scopes, prepare-mode detection, and setup lifecycle behavior.
 
 ### Module entrypoints
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ofetch } from "ofetch";
 import { defineEventHandler as h3DefineEventHandler, getQuery as h3GetQuery } from "h3";
 import { useRuntimeConfig } from "nitropack/runtime";
-import { attempt } from "module-utils/shared";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 
 type ThemeFontOption = {
   label: string;

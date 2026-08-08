@@ -15,6 +15,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   bundle: true,
-  noExternal: ["scule"],
-  external: ["@nuxt/schema", "consola"]
+  noExternal: ["scule"]
 });

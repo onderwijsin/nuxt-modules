@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { reactive, useAppConfig, useRuntimeConfig, useState } from "#imports";
 import { ofetch } from "ofetch";
-import { attempt } from "module-utils/shared";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";
 import { builtInDefaultTokens, hexColorSchema } from "../utils/theme";

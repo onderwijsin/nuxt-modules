@@ -1,9 +1,25 @@
 {
-  "name": "module-utils",
+  "name": "@onderwijsin/nuxt-module-utils",
   "version": "0.0.0",
-  "private": true,
+  "description": "Shared runtime and Nuxt module utilities for Onderwijs in modules.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "packages/module-utils"
+  },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "sideEffects": false,
@@ -31,20 +47,26 @@
       "import": "./dist/types.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
+    "@nuxt/schema": "catalog:",
+    "consola": "catalog:",
     "h3": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@nuxt/schema": "catalog:",
-    "consola": "catalog:",
     "scule": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

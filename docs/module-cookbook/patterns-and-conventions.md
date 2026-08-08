@@ -18,11 +18,6 @@ a new contract is explicit.
 - Import Nitro runtime helpers explicitly from their runtime entrypoints, such as `useStorage` from
   `nitropack/runtime`; do not rely on untyped server auto-imports in published runtime files.
 - Preserve Node server and Cloudflare Workers compatibility.
-- In module runtime code, use the private shared `attempt` utility for expected operation failures;
-  use `attemptWithRetry` only for idempotent, transient work with bounded exponential backoff.
-- Never reference private repository utilities such as `module-utils`, `attempt`, or
-  `attemptWithRetry` in consumer-facing READMEs, installable skills, or copyable application
-  examples; consuming apps do not have access to them.
 - Do not change public options, exports, component props, auto-imports, or registration behavior
   without an explicit compatibility decision.
 - Do not commit generated files and build artefacts.

@@ -1,5 +1,9 @@
 {
   "name": "basic",
   "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
   "type": "module"
 }

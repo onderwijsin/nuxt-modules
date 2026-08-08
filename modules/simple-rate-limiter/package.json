@@ -7,6 +7,10 @@
     "url": "https://github.com/onderwijsin/nuxt-modules/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/nuxt-modules.git",

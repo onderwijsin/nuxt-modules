@@ -7,7 +7,7 @@ import {
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
-} from "module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { webmanifestOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";

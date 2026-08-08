@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fromEntries } from "module-utils/shared";
+import { fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { themeOptionsSchema } from "../src/config/options.schema";
 import type { ThemePalette } from "../src/types";
