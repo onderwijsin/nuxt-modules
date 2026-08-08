@@ -126,7 +126,12 @@ describe("newsletter signup endpoint", () => {
     runtimeConfig.value = {
       newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "main" } }
     };
-    enforceRateLimitMock.mockResolvedValueOnce({ bannedUntil: 1_800_000_000_000 });
+    enforceRateLimitMock.mockRejectedValueOnce(
+      Object.assign(new Error("Too Many Requests"), {
+        statusCode: 429,
+        data: { bannedUntil: 1_800_000_000_000 }
+      })
+    );
     const handler = await loadHandler();
 
     await expect(handler({})).rejects.toMatchObject({

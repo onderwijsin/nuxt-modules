@@ -19,5 +19,9 @@ export default defineNuxtModule<ModuleOptions>({
       name: "enforceRateLimit",
       from: resolver.resolve("./runtime")
     });
+    addServerImports({
+      name: "enforceGlobalRateLimit",
+      from: resolver.resolve("./runtime")
+    });
   }
 });

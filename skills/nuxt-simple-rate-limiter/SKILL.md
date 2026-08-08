@@ -24,10 +24,13 @@ Register the module in `nuxt.config.ts`; it auto-imports `enforceRateLimit` in N
 handlers. The helper is also available as an explicit runtime import from
 `@onderwijsin/nuxt-simple-rate-limiter/runtime` outside that context.
 
-`duration` and `ban` are seconds. A ban returns `{ bannedUntil }` with a Unix-millisecond timestamp;
-return or throw a `429` response from the handler using that value. The limiter uses Nitro storage,
-separates entries by request path, and keys each path by client IP. Use shared Nitro storage when
-the application runs on multiple instances.
+`duration` and `ban` are seconds. Both helpers return nothing when allowed and throw a `429` with
+`error.data.bannedUntil` and `error.data.limits` when exceeded. `limits` contains the active `max`,
+`duration`, and `ban` values. The limiter uses Nitro storage, separates route entries by request
+path, and keys entries by client IP. Use shared Nitro storage when the application runs on multiple
+instances.
+
+For one quota across all API paths, call `enforceGlobalRateLimit` before route-specific checks.
 
 This module is intentionally simple. Use infrastructure-level rate limiting (such as a CDN, WAF, API
 gateway, load balancer, or dedicated distributed limiter) when rate limiting is a production
