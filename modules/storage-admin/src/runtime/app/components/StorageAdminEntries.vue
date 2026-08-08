@@ -235,7 +235,6 @@ async function loadEntries(): Promise<void> {
         prefix: selectedBase.value === ALL_BASES_VALUE ? undefined : selectedBase.value,
         page: page.value,
         limit: pageSize.value,
-        metadata: true,
         ...(search.value ? { search: search.value } : {})
       }
     });

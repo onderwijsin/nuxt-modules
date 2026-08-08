@@ -106,6 +106,7 @@ A task is **ONLY** complete when **ALL** applicable items are satisfied:
    `skills/` and module README are updated
 7. All code written or touched has proper JSDoc where applicable
 8. Runtime contracts remain backward-compatible unless explicitly requested
+9. Create a changeset entry for all affected public packages under proper semver scope
 
 **Important:** After completing the above, the agent **MUST NOT** commit the changes, unless
 explicitly requested. Instead, the agent **MUST** provide a summary of the work done, including:

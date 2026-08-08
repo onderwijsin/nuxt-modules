@@ -6,15 +6,14 @@ describe("storageAdminOptionsSchema", () => {
     expect(storageAdminOptionsSchema.parse({})).toMatchObject({
       enabled: false,
       adminHeaderName: "x-admin-token",
+      devAuthBypass: false,
       internalKeyPrefixes: ["__cache_meta:"],
       internalKeySuffixes: ["$"],
       mounts: {},
       ui: { enabled: true, path: "/_storage" },
       defaultLimit: 100,
       maxLimit: 500,
-      maxScanKeys: 10_000,
-      metadataConcurrency: 8,
-      listTimeoutMs: 10_000
+      maxListedKeys: 10_000
     });
   });
 

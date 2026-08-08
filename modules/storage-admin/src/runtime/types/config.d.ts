@@ -4,6 +4,7 @@ declare module "nuxt/schema" {
       enabled: boolean;
       adminToken?: string;
       adminHeaderName: string;
+      devAuthBypass: boolean;
       internalKeyPrefixes: string[];
       internalKeySuffixes: string[];
       mounts: Record<
@@ -20,9 +21,7 @@ declare module "nuxt/schema" {
       };
       defaultLimit: number;
       maxLimit: number;
-      maxScanKeys: number;
-      metadataConcurrency: number;
-      listTimeoutMs: number;
+      maxListedKeys: number;
     };
   }
 }

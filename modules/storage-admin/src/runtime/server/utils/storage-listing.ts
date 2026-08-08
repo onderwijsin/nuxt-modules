@@ -1,8 +1,8 @@
 /** One storage item returned by the administrative listing endpoint. */
 export interface StorageListEntry {
   key: string;
-  metadata: Record<string, unknown> | null;
   path: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 /** A cursor or page-number slice of ordered storage-list entries. */
@@ -44,18 +44,26 @@ export function paginateStorageEntries(
   return { items, nextCursor };
 }
 
-/** Error thrown when a storage listing operation exceeds its configured duration. */
-export class StorageListingTimeoutError extends Error {}
+const STORAGE_LISTING_CONCURRENCY = 8;
+const STORAGE_LISTING_DEADLINE_MS = 10_000;
+
+/** Error thrown when a storage listing operation exceeds its response deadline. */
+export class StorageListingDeadlineError extends Error {}
 
 /**
- * Resolves an operation or rejects when the configured storage-list timeout elapses.
+ * Resolves an operation or rejects when its response deadline elapses.
+ *
+ * Unstorage's portable API does not expose cancellation, so the underlying driver operation can
+ * continue after this promise rejects. Callers must treat this as a response deadline, not abort.
  * @param operation Storage operation to wait for.
- * @param timeoutMs Maximum time to wait for the operation.
  * @returns The operation result.
  */
-export function withStorageListingTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+export function withStorageListingDeadline<T>(operation: Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new StorageListingTimeoutError()), timeoutMs);
+    const timeout = setTimeout(
+      () => reject(new StorageListingDeadlineError()),
+      STORAGE_LISTING_DEADLINE_MS
+    );
     operation.then(
       (value) => {
         clearTimeout(timeout);
@@ -78,13 +86,12 @@ export function withStorageListingTimeout<T>(operation: Promise<T>, timeoutMs: n
  */
 export async function mapWithStorageConcurrency<T, R>(
   values: T[],
-  concurrency: number,
   operation: (value: T) => Promise<R>
 ): Promise<R[]> {
   const results: R[] = [];
 
-  for (let index = 0; index < values.length; index += concurrency) {
-    const batch = values.slice(index, index + concurrency);
+  for (let index = 0; index < values.length; index += STORAGE_LISTING_CONCURRENCY) {
+    const batch = values.slice(index, index + STORAGE_LISTING_CONCURRENCY);
     results.push(...(await Promise.all(batch.map(operation))));
   }
 

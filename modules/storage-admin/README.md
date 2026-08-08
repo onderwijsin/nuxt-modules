@@ -62,6 +62,7 @@ export default defineNuxtConfig({
     enabled: true,
     adminToken: process.env.STORAGE_ADMIN_TOKEN,
     adminHeaderName: "x-admin-token",
+    devAuthBypass: false,
     internalKeyPrefixes: ["__cache_meta:"],
     internalKeySuffixes: ["$"],
     mounts: {
@@ -81,9 +82,7 @@ export default defineNuxtConfig({
     },
     defaultLimit: 100,
     maxLimit: 500,
-    maxScanKeys: 10_000,
-    metadataConcurrency: 8,
-    listTimeoutMs: 10_000
+    maxListedKeys: 10_000
   }
 });
 ```
@@ -105,8 +104,9 @@ Authorization: Bearer <adminToken>
 The custom header name is configurable through `adminHeaderName`. Missing or invalid credentials
 produce `401`.
 
-Development requests intentionally bypass this token check to support the local browser. This bypass
-is removed from production builds; do not expose a development server publicly.
+Development requests require the same token by default. Set `devAuthBypass: true` only for a trusted
+local server when using the browser without client-side credentials. Nuxt logs a prominent warning
+when this explicit bypass is enabled; it is ignored in production builds.
 
 ## API reference
 
@@ -119,19 +119,19 @@ application origin.
 GET /api/_storage/:mount/items?prefix=<prefix>&limit=<limit>&cursor=<cursor>
 ```
 
-| Query parameter | Required | Description                                                                                                      |
-| --------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `prefix`        | No       | Allowed key prefix to list. Omit it to aggregate every configured prefix, or every key when `allowRoot` is true. |
-| `limit`         | No       | Positive page size, limited by `maxLimit`.                                                                       |
-| `cursor`        | No       | Cursor returned as `nextCursor` from a prior request.                                                            |
-| `page`          | No       | Positive page number. Intended for the development UI; when present, it takes precedence over `cursor`.          |
-| `metadata`      | No       | Set `true` to retrieve driver metadata and `path`.                                                               |
-| `search`        | No       | Case-insensitive search across storage keys and `metadata.path`. Metadata is read automatically for this query.  |
+| Query parameter | Required | Description                                                                                                          |
+| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| `prefix`        | No       | Allowed key prefix to list. Omit it to aggregate every configured prefix. A mount with no prefixes cannot be listed. |
+| `limit`         | No       | Positive page size, limited by `maxLimit`.                                                                           |
+| `cursor`        | No       | Cursor returned as `nextCursor` from a prior request.                                                                |
+| `page`          | No       | Positive page number. Intended for the development UI; when present, it takes precedence over `cursor`.              |
+| `metadata`      | No       | Set `true` to additionally retrieve raw driver metadata. `path` is always returned.                                  |
+| `search`        | No       | Case-insensitive search across storage keys and `path`. Metadata is read automatically for this query.               |
 
 Example:
 
 ```http
-GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=example
+GET /api/_storage/cache/items?prefix=kennisbank:articles&search=example
 ```
 
 ```json
@@ -140,7 +140,6 @@ GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=ex
     "items": [
       {
         "key": "kennisbank:articles:example:abc123",
-        "metadata": { "path": "/kennisbank/artikelen/example" },
         "path": "/kennisbank/artikelen/example"
       }
     ],
@@ -151,8 +150,9 @@ GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=ex
 }
 ```
 
-`metadata.path` is available only when the selected storage driver writes metadata. The cache module
-will provide it; ordinary Unstorage drivers may return `null`.
+`path` is available only when the selected storage driver writes metadata. The cache module will
+provide it; ordinary Unstorage drivers may return `null`. Raw driver metadata is omitted by default;
+request it explicitly with `metadata=true` only when it is needed.
 
 `nextCursor` is a storage key string, not an entry object. Use it unchanged as `cursor` in the next
 request. Cursors are valid only for the same mount, prefix, search query, and ordering; writes
@@ -237,11 +237,11 @@ permission and `allowRoot: true` on the mount; an ordinary prefix allowlist is n
 
 ## Development browser
 
-When both `storageAdmin.enabled` and `storageAdmin.ui.enabled` are true, `nuxt dev` registers a Nuxt
-UI page at `ui.path` (default `/_storage`). It provides:
+When `storageAdmin.enabled`, `storageAdmin.ui.enabled`, and `devAuthBypass` are true, `nuxt dev`
+registers an unauthenticated Nuxt UI page at `ui.path` (default `/_storage`). It provides:
 
 - a selector containing only configured mount/prefix pairs;
-- key and `metadata.path` search;
+- key and cached-path search;
 - selectable page sizes; and
 - server-backed pagination; and
 - per-entry and selected-entry deletion with a confirmation prompt.
@@ -257,20 +257,20 @@ Avoid configuring application pages at `ui.path` (default `/_storage`) or API ha
 
 ## Listing limits and provider behavior
 
-Unstorage exposes key enumeration through `getKeys()`, and not every driver can paginate that call.
-The module therefore reads the selected base keys once, refuses result sets larger than
-`maxScanKeys`, and only reads metadata for the requested page unless a path search requires it. Tune
-these limits for the provider and mount size:
+Unstorage exposes key enumeration through `getKeys()`, and not every driver can paginate or cancel
+that call. Listing refuses a mount without configured prefixes and only enumerates configured bases.
+`maxListedKeys` is a **post-enumeration response guard**: generic drivers have already materialized
+the key array before a larger result can return `413`, so it does not cap provider or process
+memory. Configure narrow prefixes and do not use this endpoint to inspect large mounts.
 
-| Option                |  Default | Contract                                                                                 |
-| --------------------- | -------: | ---------------------------------------------------------------------------------------- |
-| `maxScanKeys`         | `10_000` | Maximum non-internal keys scanned for one list request; larger result sets return `413`. |
-| `metadataConcurrency` |      `8` | Maximum simultaneous `getKeys()` and `getMeta()` calls; maximum `50`.                    |
-| `listTimeoutMs`       | `10_000` | Timeout for each listing/metadata driver call; `100`–`60_000` milliseconds.              |
+| Option          |  Default | Contract                                                                           |
+| --------------- | -------: | ---------------------------------------------------------------------------------- |
+| `maxListedKeys` | `10_000` | Maximum non-internal keys accepted after enumeration; larger results return `413`. |
 
-Searches by `metadata.path` necessarily inspect metadata for every key within the scan limit. Driver
-listing failures return `503`; timed-out listing calls return `504`. A failed or timed-out metadata
-lookup on an otherwise listable entry is represented as `metadata: null` and `path: null`.
+Searches by `path` necessarily inspect metadata for every accepted key. Driver listing failures
+return `503`; a fixed 10-second response deadline returns `504`. The deadline does not cancel an
+underlying driver operation. A failed or late metadata lookup on an otherwise listable entry is
+represented as `path: null`.
 
 ## Error behavior
 
@@ -280,6 +280,6 @@ lookup on an otherwise listable entry is represented as `metadata: null` and `pa
 | `401`  | Missing or invalid administrator token in production.                                        |
 | `403`  | The configured mount, permission, prefix, or metadata key is not allowed.                    |
 | `404`  | Storage administration is disabled, the mount is not configured, or an entry does not exist. |
-| `413`  | The selected storage base contains more than `maxScanKeys` entries.                          |
+| `413`  | The selected storage base contains more than `maxListedKeys` entries after enumeration.      |
 | `503`  | The storage provider failed while listing keys.                                              |
 | `504`  | The storage provider timed out while listing keys.                                           |

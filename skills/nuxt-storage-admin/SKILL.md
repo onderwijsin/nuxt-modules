@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     enabled: true,
     adminToken: process.env.STORAGE_ADMIN_TOKEN,
     adminHeaderName: "x-admin-token",
+    devAuthBypass: false,
     internalKeyPrefixes: ["__cache_meta:"],
     internalKeySuffixes: ["$"],
     mounts: {
@@ -40,9 +41,7 @@ export default defineNuxtConfig({
     },
     defaultLimit: 100,
     maxLimit: 500,
-    maxScanKeys: 10_000,
-    metadataConcurrency: 8,
-    listTimeoutMs: 10_000
+    maxListedKeys: 10_000
   }
 });
 ```
@@ -62,6 +61,7 @@ This stylesheet imports Tailwind CSS and Nuxt UI, and sources the storage browse
 | `enabled`                   | `false`             | Enables the module routes.                                                                          |
 | `adminToken`                | —                   | Production token. Supply it through normal Nuxt config/environment overrides.                       |
 | `adminHeaderName`           | `x-admin-token`     | Custom token header; bearer authorization is also accepted.                                         |
+| `devAuthBypass`             | `false`             | Explicitly permits unauthenticated API access only in `nuxt dev`; logs a warning when enabled.      |
 | `internalKeyPrefixes`       | `["__cache_meta:"]` | Prefixes reserved for internal records; matching keys are hidden from the API and UI.               |
 | `internalKeySuffixes`       | `["$"]`             | Suffixes reserved for internal records; matching keys are hidden from the API and UI.               |
 | `mounts`                    | `{}`                | Map of allowed `useStorage()` mount names.                                                          |
@@ -72,9 +72,7 @@ This stylesheet imports Tailwind CSS and Nuxt UI, and sources the storage browse
 | `ui.path`                   | `/_storage`         | Development-only browser path; must start with `/`.                                                 |
 | `defaultLimit`              | `100`               | Default list page size; maximum `500`.                                                              |
 | `maxLimit`                  | `500`               | Largest allowed list `limit`; maximum `1000`.                                                       |
-| `maxScanKeys`               | `10_000`            | Maximum non-internal keys scanned per list request; larger selections return `413`.                 |
-| `metadataConcurrency`       | `8`                 | Maximum simultaneous driver listing/metadata calls; maximum `50`.                                   |
-| `listTimeoutMs`             | `10_000`            | Per-driver-call list/metadata timeout in milliseconds; `100`–`60_000`.                              |
+| `maxListedKeys`             | `10_000`            | Post-enumeration key-result guard; larger selections return `413`.                                  |
 
 A mount is a Nitro namespace, for example `useStorage("cache")`. A prefix is a boundary inside that
 mount: `kennisbank:articles` is a cache base/prefix inside the `cache` mount. Configure the
@@ -93,8 +91,9 @@ x-admin-token: <adminToken>
 Authorization: Bearer <adminToken>
 ```
 
-Development bypasses this check for local operations and the development browser. The bypass and
-browser are not registered in production builds.
+Development also requires authentication by default. Set `devAuthBypass: true` only on a trusted
+local server to use the browser without client-side credentials; Nuxt logs a prominent warning. The
+bypass is ignored in production builds.
 
 ## API reference
 
@@ -108,17 +107,17 @@ GET /api/_storage/:mount/items?prefix=<prefix>&limit=<limit>&cursor=<cursor>
 
 Parameters:
 
-- `prefix`: optional configured prefix. Omit it to aggregate all configured prefixes, or every key
-  when the mount has `allowRoot: true`.
+- `prefix`: optional configured prefix. Omit it to aggregate all configured prefixes. A mount with
+  no configured prefixes cannot be listed.
 - `limit`: optional positive page size, capped by `maxLimit`.
 - `cursor`: optional continuation token returned in `nextCursor`.
 - `page`: optional positive page number; intended for the development browser and takes precedence
   over `cursor`.
-- `metadata=true`: includes the driver metadata and normalized `path` field.
-- `search=<text>`: case-insensitive search of storage keys and `metadata.path`.
+- `metadata=true`: additionally includes raw driver metadata. `path` is always returned.
+- `search=<text>`: case-insensitive search of storage keys and `path`.
 
 ```http
-GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=example
+GET /api/_storage/cache/items?prefix=kennisbank:articles&search=example
 ```
 
 ```json
@@ -127,7 +126,6 @@ GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=ex
     "items": [
       {
         "key": "kennisbank:articles:example:abc123",
-        "metadata": { "path": "/kennisbank/artikelen/example" },
         "path": "/kennisbank/artikelen/example"
       }
     ],
@@ -139,7 +137,8 @@ GET /api/_storage/cache/items?prefix=kennisbank:articles&metadata=true&search=ex
 ```
 
 Path search works when the chosen driver exposes `getMeta()` with a `path` field. The cache module
-will provide this; a normal storage driver may return `null` for `path`.
+will provide this; a normal storage driver may return `null` for `path`. Raw driver metadata is only
+returned with `metadata=true`.
 
 `nextCursor` is the final entry's string key. Send that exact value as `cursor`; do not serialize
 the whole entry. It is valid only for the same mount, prefix, search text, and ordering, and writes
@@ -199,10 +198,10 @@ This calls `storage.clear()` for the entire mount. It requires `delete` permissi
 
 ## Development browser
 
-With `storageAdmin.enabled` and `storageAdmin.ui.enabled` enabled, open `ui.path` (default
-`/_storage`) while running `nuxt dev`. The browser lists only configured mount/prefix pairs,
-searches storage keys and cache paths, and provides pagination, page-size controls, and confirmed
-per-entry or selected-entry deletion.
+With `storageAdmin.enabled`, `storageAdmin.ui.enabled`, and `devAuthBypass` enabled, open `ui.path`
+(default `/_storage`) while running `nuxt dev`. The browser lists only configured mount/prefix
+pairs, searches storage keys and cache paths, and provides pagination, page-size controls, and
+confirmed per-entry or selected-entry deletion.
 
 Set `storageAdmin.ui.enabled` to `false` to remove the page and prevent the module from registering
 `@nuxt/ui` as a Nuxt dependency.
@@ -216,7 +215,7 @@ action menus.
 - `401`: missing or invalid production token.
 - `403`: unpermitted mount operation, prefix, or metadata key.
 - `404`: disabled/unconfigured mount or absent entry.
-- `413`: the selected base exceeds `maxScanKeys`.
+- `413`: the selected base exceeds `maxListedKeys` after key enumeration.
 - `503`: the storage provider failed while listing keys.
 - `504`: a storage key listing timed out.
 
@@ -229,11 +228,12 @@ The module requires Nuxt 4 and Node.js 22 or later. It reserves `/api/_storage/*
 reserves `ui.path` (default `/_storage`) in development; do not use those paths for application
 routes.
 
-Unstorage does not provide paginated `getKeys()` for every driver. The module caps the scanned
-result set and bounds metadata concurrency, but a path search still reads metadata for every key up
-to `maxScanKeys`. Size configured prefixes narrowly and tune `maxScanKeys`, `metadataConcurrency`,
-and `listTimeoutMs` for the provider. Provider list failures return `503`; list timeouts return
-`504`; unavailable or timed-out per-entry metadata is returned as `path: null`.
+Unstorage does not provide portable paginated or cancellable `getKeys()`. The module refuses root
+listings, enumerates only configured prefixes, and applies `maxListedKeys` only after the driver has
+returned its full key array. It therefore does not cap provider/process memory: configure narrow
+prefixes and do not list large mounts. A fixed 10-second response deadline returns `504`, but does
+not cancel the underlying driver operation; unavailable or late per-entry metadata returns
+`path: null`.
 
 If the browser does not render dialogs or action menus, ensure the consuming app has `<UApp>` at its
 root and imports `@onderwijsin/nuxt-storage-admin` from its main CSS file. To verify the published

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const addServerScanDir = vi.fn();
 const addTypeTemplate = vi.fn();
 const extendPages = vi.fn();
+const warn = vi.fn();
 
 vi.mock("@nuxt/kit", () => ({
   addServerScanDir,
@@ -10,7 +11,7 @@ vi.mock("@nuxt/kit", () => ({
   createResolver: () => ({ resolve: (...segments: string[]) => segments.join("/") }),
   defineNuxtModule: (definition: unknown) => definition,
   extendPages,
-  useLogger: () => ({ start: vi.fn(), success: vi.fn(), info: vi.fn() })
+  useLogger: () => ({ start: vi.fn(), success: vi.fn(), info: vi.fn(), warn })
 }));
 
 vi.mock("@onderwijsin/nuxt-module-utils/shared", () => ({
@@ -31,13 +32,12 @@ vi.mock("@onderwijsin/nuxt-module-utils/shared", () => ({
   validateModuleOptions: (options: Record<string, unknown>) => ({
     enabled: options.enabled !== false,
     adminHeaderName: "x-admin-token",
+    devAuthBypass: false,
     mounts: {},
     ui: { enabled: true, path: "/_storage" },
     defaultLimit: 100,
     maxLimit: 500,
-    maxScanKeys: 10_000,
-    metadataConcurrency: 8,
-    listTimeoutMs: 10_000,
+    maxListedKeys: 10_000,
     ...options
   })
 }));
@@ -48,6 +48,7 @@ describe("storage-admin module setup", () => {
     addServerScanDir.mockReset();
     addTypeTemplate.mockReset();
     extendPages.mockReset();
+    warn.mockReset();
   });
 
   it("registers its server runtime and protected route rules", async () => {
@@ -91,5 +92,16 @@ describe("storage-admin module setup", () => {
         options: { dev: true, storageAdmin: { enabled: true, ui: { enabled: false } } }
       })
     ).toEqual({});
+  });
+
+  it("warns when the explicit development authentication bypass is enabled", async () => {
+    const module = (await import("../src/module")).default as any;
+    const nuxt: any = {
+      options: { dev: true, runtimeConfig: {}, build: { transpile: [] }, routeRules: {} }
+    };
+
+    module.setup({ enabled: true, devAuthBypass: true }, nuxt);
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("unauthenticated"));
   });
 });

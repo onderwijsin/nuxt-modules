@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   storageAdmin: {
     enabled: true,
     adminToken: "playground-admin-token",
+    devAuthBypass: true,
     mounts: {
       cache: {
         permissions: ["read", "write", "delete"],

@@ -27,6 +27,7 @@ export const storageAdminOptionsSchema = z.strictObject({
   enabled: enabled.default(false),
   adminToken: z.string().trim().min(1).optional(),
   adminHeaderName: z.string().trim().min(1).default("x-admin-token"),
+  devAuthBypass: z.boolean().default(false),
   internalKeyPrefixes: z.array(internalKeyPatternSchema).default(["__cache_meta:"]),
   internalKeySuffixes: z.array(internalKeyPatternSchema).default(["$"]),
   mounts: z.record(z.string().trim().min(1), mountOptionsSchema).default({}),
@@ -38,9 +39,7 @@ export const storageAdminOptionsSchema = z.strictObject({
     .default({ enabled: true, path: "/_storage" }),
   defaultLimit: z.number().int().positive().max(500).default(100),
   maxLimit: z.number().int().positive().max(1000).default(500),
-  maxScanKeys: z.number().int().positive().max(100_000).default(10_000),
-  metadataConcurrency: z.number().int().positive().max(50).default(8),
-  listTimeoutMs: z.number().int().min(100).max(60_000).default(10_000)
+  maxListedKeys: z.number().int().positive().max(100_000).default(10_000)
 });
 
 export type StorageAdminOptionsSchema = typeof storageAdminOptionsSchema;

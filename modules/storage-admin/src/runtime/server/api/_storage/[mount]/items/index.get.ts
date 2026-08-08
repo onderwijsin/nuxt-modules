@@ -3,10 +3,10 @@ import { listQuerySchema, mountParamSchema } from "../../../../utils/schema";
 import {
   mapWithStorageConcurrency,
   paginateStorageEntries,
-  StorageListingTimeoutError,
+  StorageListingDeadlineError,
   type StorageListEntry,
   type StorageListPage,
-  withStorageListingTimeout
+  withStorageListingDeadline
 } from "../../../../utils/storage-listing";
 import {
   assertAllowedPrefix,
@@ -42,21 +42,28 @@ export default defineEventHandler(async (event): Promise<StorageListResponse> =>
   const { config, mount } = getAllowedMount(event, mountResult.data.mount, "read");
   if (prefix) assertAllowedPrefix(config, mount, prefix);
 
+  if (!prefix && mount.prefixes.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "A configured storage prefix is required for listing"
+    });
+  }
+
   const storage = useStorage(mountResult.data.mount);
-  const bases = prefix ? [prefix] : mount.allowRoot ? [""] : mount.prefixes;
+  const bases = prefix ? [prefix] : mount.prefixes;
   const pageSize = Math.min(limit ?? config.defaultLimit, config.maxLimit);
   let listedKeys: string[][];
 
   try {
-    // Drivers enumerate each base independently. Bound both concurrency and individual call time.
-    listedKeys = await mapWithStorageConcurrency(bases, config.metadataConcurrency, (base) =>
-      withStorageListingTimeout(storage.getKeys(base), config.listTimeoutMs)
+    // Drivers enumerate each base independently. Use fixed batching and a response deadline.
+    listedKeys = await mapWithStorageConcurrency(bases, (base) =>
+      withStorageListingDeadline(storage.getKeys(base))
     );
   } catch (error: unknown) {
     throw createError({
-      statusCode: error instanceof StorageListingTimeoutError ? 504 : 503,
+      statusCode: error instanceof StorageListingDeadlineError ? 504 : 503,
       statusMessage:
-        error instanceof StorageListingTimeoutError
+        error instanceof StorageListingDeadlineError
           ? "Storage provider timed out while listing keys"
           : "Storage provider failed while listing keys"
     });
@@ -67,7 +74,8 @@ export default defineEventHandler(async (event): Promise<StorageListResponse> =>
     .filter((key) => !isInternalStorageKey(config, key))
     .sort();
 
-  if (keys.length > config.maxScanKeys) {
+  // This is a post-enumeration guard: generic Unstorage drivers return a materialized key array.
+  if (keys.length > config.maxListedKeys) {
     throw createError({
       statusCode: 413,
       statusMessage: "Storage listing exceeds the configured scan limit"
@@ -77,29 +85,22 @@ export default defineEventHandler(async (event): Promise<StorageListResponse> =>
   const createEntry = async (key: string, includeMetadata: boolean): Promise<StorageListEntry> => {
     let entryMetadata: Record<string, unknown> | null = null;
 
-    if (includeMetadata) {
-      try {
-        entryMetadata = await withStorageListingTimeout(
-          Promise.resolve(storage.getMeta(key)),
-          config.listTimeoutMs
-        );
-      } catch {
-        entryMetadata = null;
-      }
+    try {
+      entryMetadata = await withStorageListingDeadline(Promise.resolve(storage.getMeta(key)));
+    } catch {
+      entryMetadata = null;
     }
 
     return {
       key,
-      metadata: entryMetadata,
-      path: typeof entryMetadata?.path === "string" ? entryMetadata.path : null
+      path: typeof entryMetadata?.path === "string" ? entryMetadata.path : null,
+      ...(includeMetadata ? { metadata: entryMetadata } : {})
     };
   };
   const normalizedSearch = search?.toLocaleLowerCase();
-  // Path search needs metadata for the full bounded result set. Ordinary pages fetch metadata later.
+  // Path search needs metadata for the full bounded result set. Ordinary pages fetch it later.
   const entries = normalizedSearch
-    ? await mapWithStorageConcurrency(keys, config.metadataConcurrency, (key) =>
-        createEntry(key, true)
-      )
+    ? await mapWithStorageConcurrency(keys, (key) => createEntry(key, metadata))
     : [];
   const filteredEntries = normalizedSearch
     ? entries.filter(
@@ -107,7 +108,7 @@ export default defineEventHandler(async (event): Promise<StorageListResponse> =>
           entry.key.toLocaleLowerCase().includes(normalizedSearch) ||
           entry.path?.toLocaleLowerCase().includes(normalizedSearch)
       )
-    : keys.map((key) => ({ key, metadata: null, path: null }));
+    : keys.map((key) => ({ key, path: null }));
   // Apply stable cursor/page pagination before reading optional metadata for the visible page.
   const { items: pageEntries, nextCursor } = paginateStorageEntries(
     filteredEntries,
@@ -117,9 +118,7 @@ export default defineEventHandler(async (event): Promise<StorageListResponse> =>
   );
   const page = normalizedSearch
     ? pageEntries
-    : await mapWithStorageConcurrency(pageEntries, config.metadataConcurrency, (entry) =>
-        createEntry(entry.key, metadata)
-      );
+    : await mapWithStorageConcurrency(pageEntries, (entry) => createEntry(entry.key, metadata));
 
   return {
     data: { items: page, nextCursor, page: requestedPage ?? null, total: filteredEntries.length }

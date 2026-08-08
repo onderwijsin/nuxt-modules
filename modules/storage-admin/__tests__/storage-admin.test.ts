@@ -42,6 +42,7 @@ describe("storage-admin runtime access", () => {
         enabled: true,
         adminToken: "token",
         adminHeaderName: "x-admin-token",
+        devAuthBypass: false,
         internalKeyPrefixes: ["__cache_meta:"],
         internalKeySuffixes: ["$"],
         mounts: {
@@ -52,7 +53,8 @@ describe("storage-admin runtime access", () => {
           }
         },
         defaultLimit: 100,
-        maxLimit: 500
+        maxLimit: 500,
+        maxListedKeys: 10_000
       }
     });
   });
@@ -93,6 +95,40 @@ describe("storage-admin runtime access", () => {
     );
   });
 
+  it.each(["toString", "constructor", "__proto__"])(
+    "rejects inherited mount name %s",
+    async (mountName) => {
+      const { getAllowedMount } = await import("../src/runtime/server/utils/storage-admin");
+
+      expect(() => getAllowedMount(createTestEvent(), mountName, "read")).toThrow();
+      expect(createError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 404,
+          statusMessage: "Storage mount is not configured"
+        })
+      );
+    }
+  );
+
+  it("requires authentication when the development bypass is disabled", async () => {
+    isAdmin.mockReturnValue(false);
+    const { getAllowedMount } = await import("../src/runtime/server/utils/storage-admin");
+
+    expect(() => getAllowedMount(createTestEvent(), "cache", "read")).toThrow();
+    expect(createError).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 401, statusMessage: "Unauthorized" })
+    );
+  });
+
+  it("enables the development bypass only when both safeguards are true", async () => {
+    const { isDevelopmentAuthBypassEnabled } =
+      await import("../src/runtime/server/utils/storage-admin");
+
+    expect(isDevelopmentAuthBypassEnabled(true, false)).toBe(false);
+    expect(isDevelopmentAuthBypassEnabled(false, true)).toBe(false);
+    expect(isDevelopmentAuthBypassEnabled(true, true)).toBe(true);
+  });
+
   it("does not expose cache metadata keys", async () => {
     const { useAllowedStorage } = await import("../src/runtime/server/utils/storage-admin");
     const event = createTestEvent();
@@ -112,6 +148,7 @@ describe("storage-admin runtime access", () => {
         enabled: true,
         adminToken: "token",
         adminHeaderName: "x-admin-token",
+        devAuthBypass: false,
         internalKeyPrefixes: ["__private:"],
         internalKeySuffixes: [],
         mounts: {
@@ -123,7 +160,8 @@ describe("storage-admin runtime access", () => {
         },
         ui: { enabled: true, path: "/_storage" },
         defaultLimit: 100,
-        maxLimit: 500
+        maxLimit: 500,
+        maxListedKeys: 10_000
       }
     });
     const { useAllowedStorage } = await import("../src/runtime/server/utils/storage-admin");

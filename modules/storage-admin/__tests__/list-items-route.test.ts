@@ -53,9 +53,7 @@ describe("storage item list route", () => {
       config: {
         defaultLimit: 100,
         maxLimit: 500,
-        maxScanKeys: 10_000,
-        metadataConcurrency: 8,
-        listTimeoutMs: 10_000,
+        maxListedKeys: 10_000,
         internalKeyPrefixes: ["__cache_meta:"],
         internalKeySuffixes: ["$"]
       },
@@ -75,8 +73,8 @@ describe("storage item list route", () => {
     await expect(handler(createTestEvent())).resolves.toEqual({
       data: {
         items: [
-          { key: "media:videos:introduction", metadata: null, path: null },
-          { key: "pages:home", metadata: null, path: null }
+          { key: "media:videos:introduction", path: null },
+          { key: "pages:home", path: null }
         ],
         nextCursor: null,
         page: 1,
@@ -93,9 +91,7 @@ describe("storage item list route", () => {
       config: {
         defaultLimit: 2,
         maxLimit: 500,
-        maxScanKeys: 10_000,
-        metadataConcurrency: 8,
-        listTimeoutMs: 10_000,
+        maxListedKeys: 10_000,
         internalKeyPrefixes: [],
         internalKeySuffixes: []
       },
@@ -116,7 +112,7 @@ describe("storage item list route", () => {
     expect(secondPage.data.nextCursor).toBeNull();
   });
 
-  it("limits listing to the requested base and searches its metadata path", async () => {
+  it("limits listing to the requested base and searches its cached path", async () => {
     const getMeta = vi
       .fn()
       .mockResolvedValueOnce({ path: "/welcome" })
@@ -136,27 +132,22 @@ describe("storage item list route", () => {
     expect(getMeta).toHaveBeenCalledTimes(2);
   });
 
-  it("uses the root storage base only when the mount explicitly permits it", async () => {
+  it("rejects an unbounded root listing even when the mount permits root operations", async () => {
     getAllowedMount.mockReturnValue({
       config: {
         defaultLimit: 100,
         maxLimit: 500,
-        maxScanKeys: 10_000,
-        metadataConcurrency: 8,
-        listTimeoutMs: 10_000,
+        maxListedKeys: 10_000,
         internalKeyPrefixes: [],
         internalKeySuffixes: []
       },
       mount: { prefixes: [], allowRoot: true }
     });
-    getKeys.mockResolvedValue(["operations:job"]);
     const handler = (await import("../src/runtime/server/api/_storage/[mount]/items/index.get"))
       .default;
 
-    await expect(handler(createTestEvent())).resolves.toMatchObject({
-      data: { items: [{ key: "operations:job" }], total: 1 }
-    });
-    expect(getKeys).toHaveBeenCalledWith("");
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
+    expect(getKeys).not.toHaveBeenCalled();
   });
 
   it("loads metadata only for the requested page when no search is active", async () => {
@@ -173,22 +164,43 @@ describe("storage item list route", () => {
     expect(getMeta).toHaveBeenCalledTimes(2);
   });
 
-  it("rejects mounts exceeding the configured scan limit before loading metadata", async () => {
+  it("returns only path metadata by default and exposes raw metadata on request", async () => {
+    const getMeta = vi.fn().mockResolvedValue({ path: "/cached-page", providerToken: "private" });
+    getQuery.mockReturnValue({ prefix: "pages" });
+    getKeys.mockResolvedValue(["pages:a"]);
+    useStorage.mockReturnValue({ getKeys, getMeta });
+    const handler = (await import("../src/runtime/server/api/_storage/[mount]/items/index.get"))
+      .default;
+
+    await expect(handler(createTestEvent())).resolves.toEqual({
+      data: {
+        items: [{ key: "pages:a", path: "/cached-page" }],
+        nextCursor: null,
+        page: null,
+        total: 1
+      }
+    });
+
+    getQuery.mockReturnValue({ prefix: "pages", metadata: "true" });
+    await expect(handler(createTestEvent())).resolves.toMatchObject({
+      data: { items: [{ metadata: { path: "/cached-page", providerToken: "private" } }] }
+    });
+  });
+
+  it("rejects a large post-enumeration result before loading metadata", async () => {
     const getMeta = vi.fn();
     getAllowedMount.mockReturnValue({
       config: {
         defaultLimit: 100,
         maxLimit: 500,
-        maxScanKeys: 2,
-        metadataConcurrency: 8,
-        listTimeoutMs: 10_000,
+        maxListedKeys: 10_000,
         internalKeyPrefixes: [],
         internalKeySuffixes: []
       },
       mount: { prefixes: ["pages"], allowRoot: false }
     });
     getQuery.mockReturnValue({ prefix: "pages", search: "cached" });
-    getKeys.mockResolvedValue(["pages:a", "pages:b", "pages:c"]);
+    getKeys.mockResolvedValue(Array.from({ length: 10_001 }, (_, index) => `pages:${index}`));
     useStorage.mockReturnValue({ getKeys, getMeta });
     const handler = (await import("../src/runtime/server/api/_storage/[mount]/items/index.get"))
       .default;
@@ -203,26 +215,6 @@ describe("storage item list route", () => {
       .default;
 
     await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 503 });
-  });
-
-  it("returns a gateway-timeout response when key listing exceeds its timeout", async () => {
-    getAllowedMount.mockReturnValue({
-      config: {
-        defaultLimit: 100,
-        maxLimit: 500,
-        maxScanKeys: 10_000,
-        metadataConcurrency: 8,
-        listTimeoutMs: 100,
-        internalKeyPrefixes: [],
-        internalKeySuffixes: []
-      },
-      mount: { prefixes: ["pages"], allowRoot: false }
-    });
-    getKeys.mockReturnValue(new Promise(() => undefined));
-    const handler = (await import("../src/runtime/server/api/_storage/[mount]/items/index.get"))
-      .default;
-
-    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 504 });
   });
 
   it("rejects malformed list parameters before accessing storage", async () => {

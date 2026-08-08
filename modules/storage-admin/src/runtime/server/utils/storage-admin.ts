@@ -1,3 +1,4 @@
+import { hasKey } from "@onderwijsin/nuxt-module-utils/shared";
 import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
 import { createError } from "h3";
 import type { H3Event } from "h3";
@@ -16,6 +17,7 @@ interface StorageAdminConfig {
   enabled: boolean;
   adminToken?: string;
   adminHeaderName: string;
+  devAuthBypass: boolean;
   internalKeyPrefixes: string[];
   internalKeySuffixes: string[];
   mounts: Record<string, MountConfig>;
@@ -25,9 +27,7 @@ interface StorageAdminConfig {
   };
   defaultLimit: number;
   maxLimit: number;
-  maxScanKeys: number;
-  metadataConcurrency: number;
-  listTimeoutMs: number;
+  maxListedKeys: number;
 }
 
 interface AllowedStorage {
@@ -50,13 +50,26 @@ export function getStorageAdminConfig(event: H3Event): StorageAdminConfig {
 }
 
 /**
+ * Returns whether a request may skip authentication during local development.
+ * @param isDevelopment Whether the runtime is a development build.
+ * @param devAuthBypass Whether the consuming application explicitly enabled the bypass.
+ * @returns Whether authentication may be bypassed.
+ */
+export function isDevelopmentAuthBypassEnabled(
+  isDevelopment: boolean,
+  devAuthBypass: boolean
+): boolean {
+  return isDevelopment && devAuthBypass;
+}
+
+/**
  * Requires a request to carry the configured administrator token.
  * @param event - Current H3 request event.
  * @param config - Storage-admin configuration to authenticate against.
  * @returns Nothing when the request is authorized.
  */
 export function assertStorageAdmin(event: H3Event, config: StorageAdminConfig): void {
-  if (import.meta.dev) return;
+  if (isDevelopmentAuthBypassEnabled(import.meta.dev, config.devAuthBypass)) return;
 
   if (!isAdmin(event, config.adminToken, config.adminHeaderName)) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
@@ -78,7 +91,7 @@ export function getAllowedMount(
   const config = getStorageAdminConfig(event);
   assertStorageAdmin(event, config);
 
-  const mount = config.mounts[mountName];
+  const mount = hasKey(config.mounts, mountName) ? config.mounts[mountName] : undefined;
   if (!mount) {
     throw createError({ statusCode: 404, statusMessage: "Storage mount is not configured" });
   }

@@ -45,11 +45,10 @@ export default defineNuxtModule<ModuleOptions>({
     mounts: {},
     ui: { enabled: true, path: "/_storage" },
     adminHeaderName: "x-admin-token",
+    devAuthBypass: false,
     defaultLimit: 100,
     maxLimit: 500,
-    maxScanKeys: 10_000,
-    metadataConcurrency: 8,
-    listTimeoutMs: 10_000
+    maxListedKeys: 10_000
   },
   setup(rawOptions, nuxt) {
     const resolver = createResolver(import.meta.url);
@@ -71,16 +70,20 @@ export default defineNuxtModule<ModuleOptions>({
       enabled: options.enabled,
       adminToken: options.adminToken,
       adminHeaderName: options.adminHeaderName,
+      devAuthBypass: options.devAuthBypass,
       internalKeyPrefixes: options.internalKeyPrefixes,
       internalKeySuffixes: options.internalKeySuffixes,
       mounts: options.mounts,
       ui: options.ui,
       defaultLimit: options.defaultLimit,
       maxLimit: options.maxLimit,
-      maxScanKeys: options.maxScanKeys,
-      metadataConcurrency: options.metadataConcurrency,
-      listTimeoutMs: options.listTimeoutMs
+      maxListedKeys: options.maxListedKeys
     };
+    if (nuxt.options.dev && options.devAuthBypass) {
+      log.warn(
+        "Development authentication bypass is enabled. Storage administration is unauthenticated."
+      );
+    }
     transpileRuntime(nuxt, runtimeDir);
     addServerScanDir(resolver.resolve(runtimeDir, "server"));
 
