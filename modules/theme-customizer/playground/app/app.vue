@@ -9,7 +9,7 @@
       </template>
       <template #right>
         <UColorModeButton aria-label="Schakel kleurmodus" />
-        <ThemePicker />
+        <ThemeCustomizerThemePicker />
       </template>
     </UHeader>
 

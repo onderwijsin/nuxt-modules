@@ -62,6 +62,10 @@ When Mailchimp is used, each audience option should contain its own `server` val
 option’s server is used for the request. A top-level `server` can be used as a fallback when one
 server applies to a single audience or to all configured audiences. `us4` and `us5` are examples.
 
+For Cloudflare Workers, enable the `nodejs_compat` compatibility flag in the Wrangler configuration.
+Nuxt applications running on Workers already require this flag. Cloudflare also enables
+`nodejs_compat_v2` when the compatibility date is `2024-09-23` or later.
+
 ## Local or remote endpoint
 
 The default configuration registers the local `POST /api/newsletter/signup` handler:
@@ -110,7 +114,9 @@ export default defineNuxtConfig({
 ```
 
 Use a shared driver such as Redis for multi-instance production deployments. Duplicate subscriptions
-are intentionally idempotent and provider requests time out after five seconds.
+are intentionally idempotent and provider requests time out after five seconds. Mailchimp uses its
+add-or-update member endpoint and applies immediate `subscribed` status, including when an existing
+member was previously unsubscribed.
 
 For multiple selectable lists or audiences:
 
@@ -122,6 +128,9 @@ lists: {
   ];
 }
 ```
+
+When only `lists.default` is configured, the endpoint always uses that server-owned list and rejects
+any client-supplied `listId`.
 
 For Mailchimp, include the server with each audience option:
 

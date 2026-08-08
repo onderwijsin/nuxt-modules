@@ -49,7 +49,7 @@ function submitRadius() {
     </div>
     <div class="mt-3 flex items-center gap-3">
       <p class="mb-0 text-xs font-bold">Radius</p>
-      <RadiusInput
+      <ThemeCustomizerRadiusInput
         v-model="radiusInput"
         class="w-full"
         size="sm"

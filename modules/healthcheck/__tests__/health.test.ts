@@ -109,4 +109,20 @@ describe("getSystemHealth", () => {
     expect(signal?.aborted).toBe(true);
     error.mockRestore();
   });
+
+  it("preserves the Directus installation path when pinging", async () => {
+    runtimeConfig.healthcheck = {
+      timeoutMs: 50,
+      cache: { enabled: false },
+      directus: { enabled: true, baseUrl: "https://directus.example.com/directus/", timeoutMs: 50 }
+    };
+    fetchMock.mockResolvedValue(undefined);
+
+    await Reflect.apply(getSystemHealth, undefined, [{}]);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://directus.example.com/directus/server/ping",
+      expect.objectContaining({ retry: 0, signal: expect.any(AbortSignal) })
+    );
+  });
 });

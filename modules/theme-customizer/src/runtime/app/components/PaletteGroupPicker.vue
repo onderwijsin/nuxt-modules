@@ -45,6 +45,7 @@ const emit = defineEmits<{
         :key="color"
         type="button"
         :aria-pressed="activeColor === color"
+        :disabled="loading"
         :class="[
           'theme-option text-inverted',
           activeColor === color ? 'ring-2 ring-offset-1 ring-[var(--theme-option-ring)]' : ''
@@ -62,6 +63,7 @@ const emit = defineEmits<{
         :key="color.id"
         type="button"
         :aria-pressed="activeColor === color.token"
+        :disabled="loading"
         :class="[
           'theme-option text-inverted',
           activeColor === color.token ? 'ring-2 ring-offset-1 ring-[var(--theme-option-ring)]' : ''
@@ -77,14 +79,14 @@ const emit = defineEmits<{
     </div>
     <div v-if="showCustomInput" class="mt-3 flex items-center gap-3">
       <p class="mb-0 text-xs font-bold">Hex</p>
-      <HexInput
+      <ThemeCustomizerHexInput
         v-model="customHex"
         class="w-full"
         size="sm"
         placeholder="#DBE1FF"
         allow-empty
         :error="error"
-        :loading="loading"
+        :disabled="loading"
         @blur="emit('submit')"
         @keydown-enter.prevent="emit('submit')"
       />
@@ -108,5 +110,10 @@ const emit = defineEmits<{
 .theme-option:focus-visible {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
+}
+
+.theme-option:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 </style>

@@ -1,14 +1,15 @@
+import { createHash } from "node:crypto";
 import { $fetch } from "ofetch";
 import { z } from "zod";
-import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";
 import type { ModuleOptions } from "../../../types/options";
 import { DEFAULT_TARGETS } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";
 import type { NewsletterFieldConfig } from "../../../types/options";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../types/errors";
-import { createNewsletterSignupError, getErrorData, getErrorStatus } from "../utils/errors";
+import { createNewsletterSignupError, getErrorStatus } from "../utils/errors";
 
-const responseSchema = z.object({ email_address: z.string(), status: z.string() });
+const responseSchema = z.object({ email_address: z.email(), status: z.literal("subscribed") });
 
 /**
  * Sends a validated signup to Mailchimp using its REST API.
@@ -31,37 +32,43 @@ export async function subscribeToMailchimp(
     const target = fields[name]?.target ?? DEFAULT_TARGETS.mailchimp[name];
     if (target) mergeFields[target] = value;
   }
-  const result = await attempt(async () => {
-    const response = await $fetch(
-      `https://${server}.api.mailchimp.com/3.0/lists/${encodeURIComponent(listId)}/members`,
-      {
-        method: "POST",
-        timeout: 5000,
-        headers: {
-          Authorization: `apikey ${config.apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: {
-          email_address: input.email,
-          merge_fields: mergeFields,
-          status: "subscribed",
-          tags: [input.source ?? "api"]
+  const result = await attemptWithRetry(
+    async () => {
+      const subscriberHash = createHash("md5")
+        .update(input.email.trim().toLowerCase())
+        .digest("hex");
+      const response = await $fetch(
+        `https://${server}.api.mailchimp.com/3.0/lists/${encodeURIComponent(listId)}/members/${subscriberHash}`,
+        {
+          method: "PUT",
+          timeout: 5000,
+          headers: {
+            Authorization: `apikey ${config.apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: {
+            email_address: input.email,
+            merge_fields: mergeFields,
+            status: "subscribed",
+            status_if_new: "subscribed",
+            tags: [input.source ?? "api"]
+          }
         }
+      );
+      const parsedResponse = responseSchema.parse(response);
+      if (parsedResponse.email_address.trim().toLowerCase() !== input.email.trim().toLowerCase()) {
+        throw new Error("Mailchimp returned a different member");
       }
-    );
-    responseSchema.parse(response);
-    return response;
-  });
+      return parsedResponse;
+    },
+    { attempts: 3, delayMs: 250 }
+  );
   if (result.error !== null) {
     const error = result.error;
     const status = getErrorStatus(error);
-    const data = await getErrorData(error);
 
-    console.error({ status, data });
+    console.error("Subscribing to Mailchimp failed", { status });
 
-    if (data?.title === "Member Exists" || data?.detail === "Member Exists") {
-      return { success: true };
-    }
     if (status && status >= 400 && status < 500) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput, error);
     }

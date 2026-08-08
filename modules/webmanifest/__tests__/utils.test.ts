@@ -52,6 +52,20 @@ describe("webmanifest utilities", () => {
     expect(manifest.start_url).toBe("https://site.example/portal/?source=pwa");
   });
 
+  it("keeps subpath manifest values relative when no public origin is configured", () => {
+    const manifest = generateWebManifest(
+      baseOptions,
+      nuxt({
+        site: undefined,
+        runtimeConfig: { public: {} },
+        app: { baseURL: "/portal/", head: { htmlAttrs: { lang: "en" } } }
+      }) as never
+    );
+
+    expect(manifest.scope).toBe("/portal/");
+    expect(manifest.start_url).toBe("/portal/?source=pwa");
+  });
+
   it("generates IPX icons when Nuxt Image uses the IPX provider", () => {
     const manifest = generateWebManifest(baseOptions, nuxt() as never);
     expect(manifest.icons?.[0]).toMatchObject({

@@ -49,7 +49,14 @@ function createColor() {
   }
 
   error.value = undefined;
-  store.addColor(parsedName.data, group.value);
+  const color = store.addColor(parsedName.data, group.value);
+  if (!color) {
+    toast.add({
+      title: "Deze kleurnaam is al in gebruik. Kies een andere naam.",
+      color: "error"
+    });
+    return;
+  }
   name.value = "";
 }
 
@@ -88,7 +95,12 @@ async function renameColor(color: CustomThemeColor) {
     }
   });
 
-  if (value) store.renameColor(color.id, value);
+  if (value && !store.renameColor(color.id, value)) {
+    toast.add({
+      title: "Deze kleurnaam is al in gebruik. Kies een andere naam.",
+      color: "error"
+    });
+  }
 }
 
 /**
@@ -246,7 +258,7 @@ async function deleteColor(color: CustomThemeColor) {
                     :ui="colorPickerUi"
                     @update:model-value="updateColor(color.id, shade, $event)"
                   />
-                  <HexInput
+                  <ThemeCustomizerHexInput
                     v-model="color.shades[shade]"
                     size="sm"
                     class="w-full"

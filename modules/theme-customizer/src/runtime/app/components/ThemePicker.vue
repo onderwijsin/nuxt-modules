@@ -107,10 +107,10 @@ function setRadius(radius: ThemeRadius) {
             variant="ghost"
             label="Kleuroverzicht"
             trailing-icon="lucide:arrow-right"
-            :to="{ name: 'theme' }"
+            :to="{ name: 'theme-customizer' }"
           />
         </div>
-        <PaletteGroupPicker
+        <ThemeCustomizerPaletteGroupPicker
           v-for="(group, index) in groups"
           :key="index"
           v-model:custom-hex="customHex[group.name]"
@@ -124,8 +124,11 @@ function setRadius(radius: ThemeRadius) {
           @delete="deleteGroup(group.name)"
           @submit="submitPalette(group.name)"
         />
-        <RadiusPicker :model-value="appConfig.ui.radius" @update:model-value="setRadius" />
-        <FontPicker />
+        <ThemeCustomizerRadiusPicker
+          :model-value="appConfig.ui.radius"
+          @update:model-value="setRadius"
+        />
+        <ThemeCustomizerFontPicker />
       </div>
     </template>
   </UPopover>

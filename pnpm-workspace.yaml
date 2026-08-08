@@ -48,6 +48,7 @@ catalog:
   h3: 1.15.11
   nitropack: 2.13.4
   ofetch: 1.5.1
+  ufo: 1.6.4
   zod: 4.4.3
   "@iconify-json/lucide": 1.2.121
 

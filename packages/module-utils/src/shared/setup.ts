@@ -13,6 +13,19 @@ export interface BaseModuleOptions {
 export const enabled = z.boolean().default(true);
 
 /**
+ * Returns module dependencies only when the corresponding module option is enabled.
+ * @param options Module option value using the repository's shared enabled contract.
+ * @param dependencies Dependencies to register when the module is enabled.
+ * @returns The dependencies, or an empty dependency map when disabled.
+ */
+export function moduleDependenciesWhenEnabled<T extends object>(
+  options: false | { enabled?: boolean } | undefined,
+  dependencies: T
+): T | Record<string, never> {
+  return options === false || options?.enabled === false ? {} : dependencies;
+}
+
+/**
  * Resolves a config key to a namespaced Nuxt module name.
  * @param moduleKey - The module config key.
  * @returns The namespaced module name.

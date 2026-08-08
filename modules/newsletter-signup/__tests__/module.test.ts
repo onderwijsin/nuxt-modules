@@ -89,10 +89,11 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const dependencies = module.moduleDependencies;
 
-    expect(dependencies).toMatchObject({
+    expect(dependencies({ options: {} })).toMatchObject({
       "@nuxt/ui": { version: ">=4.0.0" }
     });
-    expect(dependencies).not.toHaveProperty("nuxt-api-shield");
+    expect(dependencies({ options: { newsletterSignup: false } })).toEqual({});
+    expect(dependencies({ options: { newsletterSignup: { enabled: false } } })).toEqual({});
   });
 
   it("ignores endpoint.url while the local endpoint is enabled", async () => {

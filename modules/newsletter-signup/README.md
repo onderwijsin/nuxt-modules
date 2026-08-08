@@ -62,6 +62,15 @@ export default defineNuxtConfig({
 For Mailchimp, `server` belongs to the audience configuration. The selected list option’s server is
 used for that request; `us4` and `us5` are only examples.
 
+### Cloudflare Workers
+
+The Mailchimp adapter uses Node’s `node:crypto` API to calculate the subscriber hash. Cloudflare
+Workers deployments must enable the `nodejs_compat` compatibility flag in the
+[Wrangler configuration](https://developers.cloudflare.com/workers/wrangler/configuration/). Nuxt
+applications running on Workers already require this flag. Cloudflare also enables
+`nodejs_compat_v2` when the compatibility date is `2024-09-23` or later; see the
+[Cloudflare Node.js compatibility documentation](https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/).
+
 ## Local or remote endpoint
 
 By default, the module registers its local server handler at `POST /api/newsletter/signup` and the
@@ -106,6 +115,9 @@ lists: {
   default: "newsletter-main"
 }
 ```
+
+When only `lists.default` is configured, the endpoint always uses that server-owned list and rejects
+any client-supplied `listId`.
 
 For a form that lets the visitor choose a list, configure `lists.options`. Each submitted `listId`
 must match one of the configured option IDs:

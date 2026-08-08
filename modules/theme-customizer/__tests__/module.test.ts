@@ -121,7 +121,8 @@ describe("theme customizer module", () => {
     expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
     expect(kit.addComponentsDir).toHaveBeenCalledWith({
       path: "./runtime/app/components",
-      pathPrefix: false
+      pathPrefix: false,
+      prefix: "ThemeCustomizer"
     });
     expect(kit.addPlugin).toHaveBeenCalledWith({
       src: "./runtime/app/plugins/theme-customizer.client",
@@ -133,7 +134,7 @@ describe("theme customizer module", () => {
     });
     expect(kit.addServerHandler).toHaveBeenCalledWith({
       handler: "./runtime/server/api/theme/palette.get",
-      route: "/api/theme/palette"
+      route: "/api/_theme-customizer/palette"
     });
     expect(kit.addTemplate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -152,6 +153,40 @@ describe("theme customizer module", () => {
     });
     expect(nuxt.options.ui.theme.colors).toEqual(["accent"]);
     expect(kit.extendPages).toHaveBeenCalled();
+    expect(kit.extendRouteRules).toHaveBeenCalledWith("/thema", {
+      cache: false,
+      prerender: false,
+      ssr: false
+    });
+  });
+
+  it("uses a configured editor route and stable route name", () => {
+    const nuxt: MockNuxt = {
+      options: {
+        dev: true,
+        appConfig: { ui: { colors: {} } },
+        ui: { theme: { colors: [] } },
+        runtimeConfig: { public: { themeCustomizer: { groups: {} } } },
+        css: [],
+        build: { transpile: [] }
+      }
+    };
+
+    moduleDefinition.setup(
+      { enabled: true, route: "/custom-theme", primary: { ocean: palette } },
+      nuxt as never
+    );
+
+    const pagesCallback = kit.extendPages.mock.calls.at(-1)?.[0];
+    const pages: Array<Record<string, unknown>> = [];
+    pagesCallback?.(pages);
+
+    expect(pages[0]).toMatchObject({ name: "theme-customizer", path: "/custom-theme" });
+    expect(kit.extendRouteRules).toHaveBeenLastCalledWith("/custom-theme", {
+      cache: false,
+      prerender: false,
+      ssr: false
+    });
   });
 
   it("registers type declarations but skips runtime registration when disabled", () => {

@@ -1,3 +1,4 @@
+import type { ModuleDependencies } from "@nuxt/schema";
 import {
   addImports,
   addServerScanDir,
@@ -7,6 +8,7 @@ import {
   useLogger
 } from "@nuxt/kit";
 import {
+  moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
@@ -33,9 +35,10 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
-  moduleDependencies: {
-    "@nuxt/ui": { version: ">=4.0.0" }
-  },
+  moduleDependencies: (nuxt): ModuleDependencies =>
+    moduleDependenciesWhenEnabled(nuxt.options.newsletterSignup, {
+      "@nuxt/ui": { version: ">=4.0.0" }
+    }),
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);

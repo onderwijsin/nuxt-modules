@@ -24,7 +24,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     ofetch<unknown>(`https://colorfyi.com/api/shades/${parsedHex.data.slice(1).toUpperCase()}/`)
   );
   if (result.error !== null) {
-    console.error("Failed to generate ColorFYI theme palette", result.error);
+    console.error("Failed to generate ColorFYI theme palette");
     throw createError({ statusCode: 502, statusMessage: "Unable to generate color palette" });
   }
   return result.data;

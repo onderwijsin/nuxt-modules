@@ -220,7 +220,9 @@ export const useThemeCustomizerStore = defineStore(
     function addColor(name: string, group: ThemeColorGroup) {
       const normalizedName = normalizeColorName(name);
       const baseToken = `custom-${toTokenSegment(group)}-${toTokenSegment(normalizedName)}`;
-      const token = resolveUniqueToken(baseToken);
+      if (isTokenInUse(baseToken)) return;
+
+      const token = baseToken;
       const color: CustomThemeColor = {
         id: `${token}-${Date.now()}`,
         name: normalizedName,
@@ -240,15 +242,16 @@ export const useThemeCustomizerStore = defineStore(
      * Renames a persisted custom color and updates its CSS token when needed.
      * @param id Persisted custom color identifier.
      * @param name New display name.
-     * @returns Nothing.
+     * @returns Whether the color was renamed.
      */
     function renameColor(id: string, name: string) {
       const color = colors.value.find((item) => item.id === id);
-      if (!color) return;
+      if (!color) return false;
 
       const normalizedName = normalizeColorName(name);
       const baseToken = `custom-${toTokenSegment(color.group)}-${toTokenSegment(normalizedName)}`;
-      const token = resolveUniqueToken(baseToken, id);
+      if (isTokenInUse(baseToken, id)) return false;
+      const token = baseToken;
 
       const previousToken = color.token;
       color.name = normalizedName;
@@ -257,6 +260,7 @@ export const useThemeCustomizerStore = defineStore(
       if (token !== previousToken) runtime.removeColorTokens(previousToken);
       runtime.applyColor(color);
       if (wasActive) setActiveColor(color.group, token);
+      return true;
     }
 
     /**
@@ -351,18 +355,17 @@ export const useThemeCustomizerStore = defineStore(
     }
 
     /**
-     * Resolves a CSS token that does not collide with another persisted color.
-     * @param baseToken Candidate token before collision suffixing.
-     * @param excludedId Existing color allowed to retain its token during renaming.
-     * @returns A token unique among persisted colors.
+     * Checks whether a token is already claimed by configured or persisted palettes.
+     * @param token Candidate CSS color token.
+     * @param excludedId Persisted color allowed to retain its token during renaming.
+     * @returns Whether another palette already owns the token.
      */
-    function resolveUniqueToken(baseToken: string, excludedId?: string) {
-      let token = baseToken;
-      let suffix = 2;
-      while (colors.value.some((color) => color.id !== excludedId && color.token === token)) {
-        token = `${baseToken}-${suffix++}`;
-      }
-      return token;
+    function isTokenInUse(token: string, excludedId?: string) {
+      return (
+        Object.values(runtimeConfig.public.themeCustomizer.groups).some((tokens) =>
+          tokens.includes(token)
+        ) || colors.value.some((color) => color.id !== excludedId && color.token === token)
+      );
     }
 
     /**

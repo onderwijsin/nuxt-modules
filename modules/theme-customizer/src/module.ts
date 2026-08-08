@@ -16,6 +16,7 @@ import {
 } from "@nuxt/kit";
 import {
   fromEntries,
+  moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
@@ -48,7 +49,7 @@ export type { ThemeColorGroups, ThemeCustomizerOptions } from "./types";
 const MODULE_KEY = "themeCustomizer";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
 
-/** Registers the theme customizer UI, persisted state, and `/thema` route. */
+/** Registers the theme customizer UI, persisted state, and configurable editor route. */
 export default defineNuxtModule<ThemeCustomizerOptions>({
   meta: {
     name: MODULE_NAME,
@@ -59,22 +60,12 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
-    nuxt.options.themeCustomizer === false || nuxt.options.themeCustomizer?.enabled === false
-      ? {}
-      : {
-          "@nuxt/ui": {
-            version: "^4.6.1"
-          },
-          "@pinia/nuxt": {
-            version: "^1.0.1"
-          },
-          "pinia-plugin-persistedstate": {
-            version: "^4.7.1"
-          },
-          "@vueuse/nuxt": {
-            version: "^14.3.0"
-          }
-        },
+    moduleDependenciesWhenEnabled(nuxt.options.themeCustomizer, {
+      "@nuxt/ui": { version: "^4.6.1" },
+      "@pinia/nuxt": { version: "^1.0.1" },
+      "pinia-plugin-persistedstate": { version: "^4.7.1" },
+      "@vueuse/nuxt": { version: "^14.3.0" }
+    }),
   defaults: (nuxt) => ({
     enabled: nuxt.options.dev,
     googleFonts: {
@@ -113,6 +104,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     if (!isEnabled()) return;
 
     const options = validateModuleOptions(rawOptions, themeOptionsSchema, log);
+    const route = options.route ?? "/thema";
 
     const neutralTheme = readFileSync(resolver.resolve(runtimeDir, "assets/theme.css"), "utf8");
     const groups = configuredGroups(options);
@@ -165,7 +157,8 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     Object.assign(appConfig, { ui: appConfigUi });
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app/components"),
-      pathPrefix: false
+      pathPrefix: false,
+      prefix: "ThemeCustomizer"
     });
     addImports({
       name: "useGeneratedPalette",
@@ -189,16 +182,16 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
     addServerHandler({
       handler: resolver.resolve(runtimeDir, "server/api/theme/palette.get"),
-      route: "/api/theme/palette"
+      route: "/api/_theme-customizer/palette"
     });
     addServerHandler({
       handler: resolver.resolve(runtimeDir, "server/api/theme/fonts.get"),
-      route: "/api/theme/fonts"
+      route: "/api/_theme-customizer/fonts"
     });
     extendPages((pages) => {
       pages.push({
-        name: "theme",
-        path: "/thema",
+        name: "theme-customizer",
+        path: route,
         file: resolver.resolve(runtimeDir, "app/pages/thema.vue"),
         meta: {
           robots: "noindex",
@@ -206,7 +199,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
         }
       });
     });
-    extendRouteRules("/thema", {
+    extendRouteRules(route, {
       cache: false,
       prerender: false,
       ssr: false

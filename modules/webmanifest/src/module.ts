@@ -3,6 +3,7 @@ import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import { join } from "pathe";
 import {
+  moduleDependenciesWhenEnabled,
   moduleSetup,
   isString,
   resolveLoggerScope,
@@ -41,13 +42,11 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: DEFAULTS,
   moduleDependencies: (nuxt): ModuleDependencies =>
-    nuxt.options.webmanifest === false || nuxt.options.webmanifest?.enabled === false
-      ? {}
-      : {
-          "@nuxt/image": { version: ">=2.0.0" },
-          "nuxt-site-config": { version: ">=4.0.0" },
-          "nuxt-schema-org": { version: ">=6.0.0" }
-        },
+    moduleDependenciesWhenEnabled(nuxt.options.webmanifest, {
+      "@nuxt/image": { version: ">=2.0.0" },
+      "nuxt-site-config": { version: ">=4.0.0" },
+      "nuxt-schema-org": { version: ">=6.0.0" }
+    }),
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
