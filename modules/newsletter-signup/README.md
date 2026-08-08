@@ -107,6 +107,9 @@ lists: {
 }
 ```
 
+When only `lists.default` is configured, the endpoint always uses that server-owned list and rejects
+any client-supplied `listId`.
+
 For a form that lets the visitor choose a list, configure `lists.options`. Each submitted `listId`
 must match one of the configured option IDs:
 

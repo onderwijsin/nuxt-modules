@@ -101,6 +101,17 @@ describe("newsletter signup endpoint", () => {
     );
   });
 
+  it("rejects a client-selected list when only a default list is configured", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "main" } }
+    };
+    body.value = { email: "ada@example.com", listId: "other-list" };
+    const handler = await loadHandler();
+
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
+    expect(loopsMock).not.toHaveBeenCalled();
+  });
+
   it("uses the selected Mailchimp audience server", async () => {
     const config = {
       provider: "mailchimp",

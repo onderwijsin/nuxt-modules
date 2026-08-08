@@ -122,6 +122,9 @@ lists: {
 }
 ```
 
+When only `lists.default` is configured, the endpoint always uses that server-owned list and rejects
+any client-supplied `listId`.
+
 For Mailchimp, include the server with each audience option:
 
 ```ts

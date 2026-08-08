@@ -56,7 +56,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const listConfig = config.lists;
-  const listId = parsed.data.listId ?? listConfig?.default;
+  if (parsed.data.listId && !listConfig?.options) {
+    throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
+  }
+  const listId = listConfig?.options
+    ? (parsed.data.listId ?? listConfig.default)
+    : listConfig?.default;
   const selectedList = listConfig?.options?.find((option) => option.id === listId);
   if (!listId || (listConfig?.options && !selectedList)) {
     throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
