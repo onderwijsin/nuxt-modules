@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- 33bc382: Update module utility imports to the published `@onderwijsin/nuxt-module-utils` package.
+- Updated dependencies [33bc382]
+- Updated dependencies [33bc382]
+  - @onderwijsin/nuxt-simple-rate-limiter@0.2.1
+  - @onderwijsin/nuxt-module-utils@0.1.0
+
 ## 1.0.1
 
 ### Patch Changes
