@@ -2,9 +2,9 @@
 
 `packages/module-utils` is the publishable, module-agnostic utility package used by modules in this
 repository. It contains build-time Nuxt module helpers, typed object-entry helpers, Zod option
-validation, retryable operation helpers, and server-only request-token checks. It is published as a
-runtime dependency for modules that use its runtime helpers; application authors generally should
-not install or import it directly.
+validation, retryable operation helpers, primitive runtime guards, and server-only request-token
+checks. It is published as a runtime dependency for modules that use its runtime helpers;
+application authors generally should not install or import it directly.
 
 ## Runtime subpaths
 
@@ -42,6 +42,19 @@ use the source-level generic types; type-only exports are listed separately belo
 | `moduleSetup`             | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/shared` |
 | `validateModuleOptions`   | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `@onderwijsin/nuxt-module-utils/shared` |
 | `enabled`                 | Zod schema: `z.boolean().default(true)`                                                                                                                            | `@onderwijsin/nuxt-module-utils/shared` |
+| `isDefined`               | `isDefined<T>(value: T): value is Exclude<T, undefined>`                                                                                                           | `@onderwijsin/nuxt-module-utils/shared` |
+| `isRecord`                | `isRecord(value: unknown): value is Record<string, unknown>`                                                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
+| `isArray`                 | `isArray(value: unknown): value is unknown[]`                                                                                                                      | `@onderwijsin/nuxt-module-utils/shared` |
+| `isString`                | `isString(value: unknown): value is string`                                                                                                                        | `@onderwijsin/nuxt-module-utils/shared` |
+| `isNonEmptyString`        | `isNonEmptyString(value: unknown): value is string`                                                                                                                | `@onderwijsin/nuxt-module-utils/shared` |
+| `isNonBlankString`        | `isNonBlankString(value: unknown): value is string`                                                                                                                | `@onderwijsin/nuxt-module-utils/shared` |
+| `isNumber`                | `isNumber(value: unknown): value is number`                                                                                                                        | `@onderwijsin/nuxt-module-utils/shared` |
+| `isFiniteNumber`          | `isFiniteNumber(value: unknown): value is number`                                                                                                                  | `@onderwijsin/nuxt-module-utils/shared` |
+| `isInteger`               | `isInteger(value: unknown): value is number`                                                                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
+| `isBoolean`               | `isBoolean(value: unknown): value is boolean`                                                                                                                      | `@onderwijsin/nuxt-module-utils/shared` |
+| `isFunction`              | `isFunction(value: unknown): value is (...args: never[]) => unknown`                                                                                               | `@onderwijsin/nuxt-module-utils/shared` |
+| `hasKeys`                 | `hasKeys(value: Record<string, unknown>): boolean`                                                                                                                 | `@onderwijsin/nuxt-module-utils/shared` |
+| `hasKey`                  | `hasKey<Key extends PropertyKey>(value: object, key: Key): value is object & Record<Key, unknown>`                                                                 | `@onderwijsin/nuxt-module-utils/shared` |
 | `hasMatchingRequestToken` | `hasMatchingRequestToken(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                 | `@onderwijsin/nuxt-module-utils/server` |
 | `isAdmin`                 | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `@onderwijsin/nuxt-module-utils/server` |
 
@@ -188,6 +201,14 @@ import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
 
 const schema = z.object({ enabled, otherOption: z.string() });
 ```
+
+## Primitive runtime guards
+
+These guards answer small runtime questions without coercion or diagnostics. `isRecord` excludes
+`null` and arrays; the string guards distinguish type, length, and whitespace. `isNumber` accepts
+`NaN` and infinities while `isFiniteNumber` and `isInteger` provide stronger checks. `isDefined`
+removes only `undefined`; `hasKeys` checks own enumerable string keys and `hasKey` checks one own
+property. See [the primitive guards guide](./guards.md) for complete edge cases and design rules.
 
 ## `hasMatchingRequestToken`
 

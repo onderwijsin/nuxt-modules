@@ -1,6 +1,6 @@
 import { $fetch } from "ofetch";
 import { useRuntimeConfig, useToast } from "#imports";
-import { isRecord } from "../../shared";
+import { hasKey, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { ERROR_CODES, newsletterSignupErrorDataSchema } from "../../types/errors";
 import type { NewsletterSignupErrorCode } from "../../types/errors";
 
@@ -49,7 +49,7 @@ export function useNewsletterSignup() {
 }
 
 function extractErrorData(error: unknown): unknown {
-  if (!isRecord(error) || !("data" in error)) return undefined;
+  if (!isRecord(error) || !hasKey(error, "data")) return undefined;
   const data = error.data;
-  return isRecord(data) && "data" in data ? data.data : data;
+  return isRecord(data) && hasKey(data, "data") ? data.data : data;
 }

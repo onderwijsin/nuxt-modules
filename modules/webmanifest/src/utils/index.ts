@@ -1,5 +1,6 @@
 import type { Nuxt } from "@nuxt/schema";
 import defu from "defu";
+import { hasKey, isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import type { WebManifest, WebManifestShortcut } from "../types/manifest";
 import type { ModuleOptions } from "../types/options";
@@ -19,21 +20,16 @@ export interface IconConfigResolution {
   warnings: string[];
 }
 
-function getRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === "object" && value !== null
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
 function getString(value: unknown, key: string): string | undefined {
-  const field = getRecord(value)?.[key];
-  return typeof field === "string" ? field : undefined;
+  if (!isRecord(value) || !hasKey(value, key)) return undefined;
+  return isString(value[key]) ? value[key] : undefined;
 }
 
 function getStrings(value: unknown, key: string): string[] | undefined {
-  const field = getRecord(value)?.[key];
-  if (Array.isArray(field) && field.every((entry) => typeof entry === "string")) return field;
-  if (typeof field === "string")
+  if (!isRecord(value) || !hasKey(value, key)) return undefined;
+  const field = value[key];
+  if (isArray(field) && field.every(isString)) return field;
+  if (isString(field))
     return field
       .split(",")
       .map((entry) => entry.trim())
@@ -50,7 +46,7 @@ function getStrings(value: unknown, key: string): string[] | undefined {
 export function resolveIconConfig(options: ModuleOptions, nuxt: Nuxt): IconConfigResolution {
   const imageOptions = nuxt.options;
 
-  if (!imageOptions.image || typeof imageOptions.image.provider !== "string") {
+  if (!imageOptions.image || !isString(imageOptions.image.provider)) {
     return {
       warnings: [
         'Webmanifest icons were skipped because Nuxt Image is not configured. Configure image.provider as "ipx" or "cloudinary".'
@@ -135,9 +131,9 @@ export function generateWebManifest(
     categories: getStrings(identity, "keywords")
   };
   const configuredAppUrl = site?.url ?? nuxt.options.runtimeConfig.public.siteUrl;
-  const appUrl = typeof configuredAppUrl === "string" ? configuredAppUrl : "/";
+  const appUrl = isString(configuredAppUrl) ? configuredAppUrl : "/";
   const configuredBaseURL = nuxt.options.app.baseURL;
-  const baseURL = typeof configuredBaseURL === "string" ? configuredBaseURL : "/";
+  const baseURL = isString(configuredBaseURL) ? configuredBaseURL : "/";
   const scopedAppUrl = baseURL === "/" ? appUrl : new URL(baseURL, appUrl).toString();
   const generatedIcons = iconResolution.config
     ? generatePwaIcons({

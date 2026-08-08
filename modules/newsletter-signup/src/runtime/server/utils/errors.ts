@@ -1,6 +1,6 @@
 import { createError } from "h3";
+import { hasKey, isNumber, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 import type { NewsletterSignupErrorCode, NewsletterSignupErrorData } from "../../types/errors";
-import { isRecord } from "../../shared";
 
 /**
  * Creates the stable serializable error returned by the signup endpoint.
@@ -36,13 +36,9 @@ export function createNewsletterSignupError(
  */
 export function getErrorStatus(error: unknown): number | undefined {
   if (!isRecord(error)) return undefined;
-  const status = error.status;
-  const statusCode = error.statusCode;
-  return typeof status === "number"
-    ? status
-    : typeof statusCode === "number"
-      ? statusCode
-      : undefined;
+  if (hasKey(error, "status") && isNumber(error.status)) return error.status;
+  if (hasKey(error, "statusCode") && isNumber(error.statusCode)) return error.statusCode;
+  return undefined;
 }
 
 /**
@@ -52,8 +48,9 @@ export function getErrorStatus(error: unknown): number | undefined {
  */
 export function getErrorData(error: unknown): Record<string, unknown> | undefined {
   if (!isRecord(error)) return undefined;
+  if (!hasKey(error, "data")) return undefined;
   const data = error.data;
-  if (typeof data === "string") {
+  if (isString(data)) {
     try {
       const parsed: unknown = JSON.parse(data);
       return isRecord(parsed) ? parsed : undefined;

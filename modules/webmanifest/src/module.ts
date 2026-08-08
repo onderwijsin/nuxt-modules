@@ -4,6 +4,7 @@ import { defu } from "defu";
 import { join } from "pathe";
 import {
   moduleSetup,
+  isString,
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
@@ -76,7 +77,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.app.head ??= {};
     nuxt.options.app.head.link ??= [];
     const configuredBaseURL = nuxt.options.app.baseURL;
-    const baseURL = typeof configuredBaseURL === "string" ? configuredBaseURL : "/";
+    const baseURL = isString(configuredBaseURL) ? configuredBaseURL : "/";
     const manifestHref = `${baseURL.replace(/\/?$/u, "/")}app.webmanifest`;
     nuxt.options.app.head.link.push({ rel: "manifest", href: manifestHref });
 

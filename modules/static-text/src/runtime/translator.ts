@@ -1,3 +1,4 @@
+import { isDefined, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 import type { TextDictionary, TextTranslator } from "@onderwijsin/nuxt-static-text";
 
 type RuntimeParameters = Record<string, string | number>;
@@ -13,17 +14,17 @@ export function createTextTranslator<Dictionary extends TextDictionary>(
 ): TextTranslator<Dictionary> {
   return ((key: string, parameters?: RuntimeParameters): string => {
     const message = key.split(".").reduce<unknown>((value, segment) => {
-      if (!value || typeof value !== "object") return undefined;
-      return (value as Record<string, unknown>)[segment];
+      if (!isRecord(value)) return undefined;
+      return value[segment];
     }, dictionary);
 
-    if (typeof message !== "string") {
+    if (!isString(message)) {
       throw new Error(`Unknown text key: ${key}`);
     }
 
     return message.replace(/\{([^{}]+)\}/g, (placeholder, name: string) => {
       const value = parameters?.[name];
-      return value === undefined ? placeholder : String(value);
+      return !isDefined(value) ? placeholder : String(value);
     });
   }) as TextTranslator<Dictionary>;
 }

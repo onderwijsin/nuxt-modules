@@ -3,7 +3,7 @@ import { createError, getRequestHeader } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { verifyTurnstileToken } from "@nuxtjs/turnstile/runtime/server/utils/verify.js";
 import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
-import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, hasKey, isNumber, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
 import type { TurnstileErrorCode, TurnstileErrorData } from "../../types/errors";
 import { TURNSTILE_TOKEN_HEADER } from "../../constants";
@@ -122,10 +122,5 @@ export function createTurnstileErrorData(
  * @returns Whether the exception has a numeric status code.
  */
 export function isErrorWithStatusCode(error: unknown): error is { statusCode: number } {
-  return Boolean(
-    error &&
-    typeof error === "object" &&
-    "statusCode" in error &&
-    typeof (error as { statusCode?: unknown }).statusCode === "number"
-  );
+  return isRecord(error) && hasKey(error, "statusCode") && isNumber(error.statusCode);
 }
