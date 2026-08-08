@@ -67,4 +67,14 @@ describe("storage clear routes", () => {
     expect(useAllowedStorage).toHaveBeenCalledWith(event, "cache", "delete", "");
     expect(clear).toHaveBeenCalledWith();
   });
+
+  it("requires an explicit confirmation before clearing storage", async () => {
+    readBody.mockResolvedValue({ prefix: "kennisbank:articles", confirm: false });
+    const handler = (
+      await import("../src/runtime/server/api/_storage/[mount]/actions/delete-by-prefix.post")
+    ).default;
+
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
+    expect(useAllowedStorage).not.toHaveBeenCalled();
+  });
 });

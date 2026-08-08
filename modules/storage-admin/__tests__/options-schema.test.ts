@@ -2,6 +2,19 @@ import { describe, expect, it } from "vitest";
 import { storageAdminOptionsSchema } from "../src/config/options.schema";
 
 describe("storageAdminOptionsSchema", () => {
+  it("applies the complete safe default configuration", () => {
+    expect(storageAdminOptionsSchema.parse({})).toMatchObject({
+      enabled: false,
+      adminHeaderName: "x-admin-token",
+      internalKeyPrefixes: ["__cache_meta:"],
+      internalKeySuffixes: ["$"],
+      mounts: {},
+      ui: { enabled: true, path: "/_storage" },
+      defaultLimit: 100,
+      maxLimit: 500
+    });
+  });
+
   it("accepts an explicitly bounded storage mount", () => {
     expect(
       storageAdminOptionsSchema.parse({
@@ -40,5 +53,12 @@ describe("storageAdminOptionsSchema", () => {
         mounts: { demo: { permissions: ["read"], allowRoot: true } }
       }).mounts.demo
     ).toMatchObject({ prefixes: [], allowRoot: true });
+  });
+
+  it("rejects invalid UI paths and unknown options", () => {
+    expect(() => storageAdminOptionsSchema.parse({ ui: { path: "storage" } })).toThrow(
+      /must start/
+    );
+    expect(() => storageAdminOptionsSchema.parse({ unexpected: true })).toThrow();
   });
 });
