@@ -81,5 +81,5 @@ jobs:
     with:
       releases: ${{ needs.publish.outputs.releases }}
     secrets:
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_BOT_TOKEN: ${{ secrets.ONDERWIJSIN_SLACK_APP_OAUTH_TOKEN }}
       SLACK_DEPLOYMENTS_CHANNEL_ID: ${{ secrets.SLACK_DEPLOYMENTS_CHANNEL_ID }}

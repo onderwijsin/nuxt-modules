@@ -54,10 +54,11 @@ The notification action accepts the native Changesets `publishedPackages` shape
 (`{ name, version }`) and also supports the legacy string-array and structured `{ tag, githubURL }`
 formats. It is kept dependency-free and runs directly from
 `.github/actions/slack-notification/index.js`; no compiled `dist` directory is required. Configure
-the `SLACK_BOT_TOKEN` and `SLACK_DEPLOYMENTS_CHANNEL_ID` repository secrets to enable the
-notification. The workflow sends the generated payload with Slack GitHub Action `v4.0.0` using the
-`chat.postMessage` API method; the channel ID is included in the payload and the bot token is passed
-through the action's `token` input.
+the `ONDERWIJSIN_SLACK_APP_OAUTH_TOKEN` and `SLACK_DEPLOYMENTS_CHANNEL_ID` repository or
+organization secrets to enable the notification. The release workflow maps the OAuth token secret to
+the reusable workflow's `SLACK_BOT_TOKEN` input. The workflow sends the generated payload with Slack
+GitHub Action `v4.0.0` using the `chat.postMessage` API method; the channel ID is included in the
+payload and the bot token is passed through the action's `token` input.
 
 ## Checks performed
 
