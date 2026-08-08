@@ -8,4 +8,4 @@
 "@onderwijsin/nuxt-webmanifest": patch
 ---
 
-Add shared primitive runtime guards and migrate repeated module-local checks to the new API.
+Add shared primitive runtime guards, including `isFunction`, and migrate repeated module-local checks to the new API.

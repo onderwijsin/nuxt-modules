@@ -11,6 +11,7 @@ import {
   isBoolean,
   isDefined,
   isFiniteNumber,
+  isFunction,
   isInteger,
   isNonBlankString,
   isNonEmptyString,
@@ -70,6 +71,8 @@ describe("primitive runtime guards", () => {
     expect(isArray([])).toBe(true);
     expect(isString("")).toBe(true);
     expect(isBoolean(false)).toBe(true);
+    expect(isFunction(() => undefined)).toBe(true);
+    expect(isFunction({})).toBe(false);
   });
 
   it("distinguishes empty and blank strings", () => {

@@ -1,6 +1,7 @@
 import {
   isDefined,
   isFiniteNumber,
+  isFunction,
   isInteger,
   isRecord
 } from "@onderwijsin/nuxt-module-utils/shared";
@@ -36,7 +37,7 @@ export function normalizeHealthcheckComponent(
   }
 
   const candidate = component as Partial<HealthcheckComponentDefinition>;
-  if (typeof candidate.handler !== "function") {
+  if (!isFunction(candidate.handler)) {
     throw new Error(`Healthcheck component "${name}" in ${source} must define a handler function.`);
   }
 

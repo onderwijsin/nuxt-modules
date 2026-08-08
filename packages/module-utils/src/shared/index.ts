@@ -8,6 +8,7 @@ export {
   isBoolean,
   isDefined,
   isFiniteNumber,
+  isFunction,
   isInteger,
   isNonBlankString,
   isNonEmptyString,

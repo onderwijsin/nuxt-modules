@@ -78,6 +78,14 @@ export function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
 
+/** Returns true when a value is callable.
+ * @param value - Value to inspect.
+ * @returns Whether the value is a function.
+ */
+export function isFunction(value: unknown): value is (...args: never[]) => unknown {
+  return typeof value === "function";
+}
+
 /** Returns true when a record has one or more own enumerable string keys.
  * @param value - Record to inspect.
  * @returns Whether the record has own enumerable keys.

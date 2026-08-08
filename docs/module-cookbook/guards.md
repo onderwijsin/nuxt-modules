@@ -18,6 +18,7 @@ replacement for Zod, parsing/coercion layer, or generic collection for every one
 | `isFiniteNumber`   | `isFiniteNumber(value: unknown): value is number`                                                  | Accepts numbers except `NaN`, `Infinity`, and `-Infinity`.                                                         |
 | `isInteger`        | `isInteger(value: unknown): value is number`                                                       | Checks `Number.isInteger`; non-finite values and fractions fail.                                                   |
 | `isBoolean`        | `isBoolean(value: unknown): value is boolean`                                                      | Checks the boolean type.                                                                                           |
+| `isFunction`       | `isFunction(value: unknown): value is (...args: never[]) => unknown`                               | Checks whether a value is callable.                                                                                |
 | `hasKeys`          | `hasKeys(value: Record<string, unknown>): boolean`                                                 | Checks for one or more own enumerable string keys.                                                                 |
 | `hasKey`           | `hasKey<Key extends PropertyKey>(value: object, key: Key): value is object & Record<Key, unknown>` | Checks an own property using `Object.hasOwn`, never the prototype chain.                                           |
 
