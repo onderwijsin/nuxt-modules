@@ -47,15 +47,17 @@ export function useDraftForm<TDraft extends object, TSubmission>(
 
     saving.value = true;
     const submittedDraft = copyDraft(state);
-    try {
+    const operationResult = await attempt(async () => {
       const result = await attempt(() => options.save(submission));
       if (result.error !== null) {
         options.onError();
         return;
       }
       if (isDraftEqual(state, submittedDraft)) replaceState(options.getSource());
-    } finally {
-      saving.value = false;
+    });
+    saving.value = false;
+    if (operationResult.error !== null) {
+      throw operationResult.error;
     }
   }
 

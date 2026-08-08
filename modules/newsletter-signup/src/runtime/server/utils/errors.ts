@@ -1,5 +1,11 @@
 import { createError } from "h3";
-import { hasKey, isNumber, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  attempt,
+  hasKey,
+  isNumber,
+  isRecord,
+  isString
+} from "@onderwijsin/nuxt-module-utils/shared";
 import type { NewsletterSignupErrorCode, NewsletterSignupErrorData } from "../../types/errors";
 
 /**
@@ -46,17 +52,13 @@ export function getErrorStatus(error: unknown): number | undefined {
  * @param error - Unknown caught error.
  * @returns Object-shaped provider data when available.
  */
-export function getErrorData(error: unknown): Record<string, unknown> | undefined {
+export async function getErrorData(error: unknown): Promise<Record<string, unknown> | undefined> {
   if (!isRecord(error)) return undefined;
   if (!hasKey(error, "data")) return undefined;
   const data = error.data;
   if (isString(data)) {
-    try {
-      const parsed: unknown = JSON.parse(data);
-      return isRecord(parsed) ? parsed : undefined;
-    } catch {
-      return undefined;
-    }
+    const parsed = await attempt(() => JSON.parse(data));
+    return parsed.error === null && isRecord(parsed.data) ? parsed.data : undefined;
   }
   return isRecord(data) ? data : undefined;
 }

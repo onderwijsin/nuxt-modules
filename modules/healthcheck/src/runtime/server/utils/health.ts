@@ -60,8 +60,8 @@ async function runComponent(
   const operationResult = await attempt(async () => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const handlerResult = await Promise.race([
+    const handlerResult = await attempt(() =>
+      Promise.race([
         component.handler({ event, signal: controller.signal }),
         new Promise<never>((_, reject) => {
           controller.signal.addEventListener(
@@ -70,16 +70,16 @@ async function runComponent(
             { once: true }
           );
         })
-      ]);
-      const normalizedResult = handlerResult ?? {};
-      const responseTimeMs = Math.round(performance.now() - startedAt);
-      const status =
-        normalizedResult.status ??
-        resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
-      return { ...normalizedResult, status, responseTimeMs };
-    } finally {
-      clearTimeout(timeout);
-    }
+      ])
+    );
+    clearTimeout(timeout);
+    if (handlerResult.error !== null) throw handlerResult.error;
+    const normalizedResult = handlerResult.data ?? {};
+    const responseTimeMs = Math.round(performance.now() - startedAt);
+    const status =
+      normalizedResult.status ??
+      resolveThresholdStatus(responseTimeMs, threshold ?? component.threshold);
+    return { ...normalizedResult, status, responseTimeMs };
   });
   if (operationResult.error !== null || !operationResult.data) {
     return {
