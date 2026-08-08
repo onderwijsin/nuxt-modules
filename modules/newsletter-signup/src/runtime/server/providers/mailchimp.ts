@@ -55,7 +55,7 @@ export async function subscribeToMailchimp(
   if (result.error !== null) {
     const error = result.error;
     const status = getErrorStatus(error);
-    const data = getErrorData(error);
+    const data = await getErrorData(error);
 
     console.error({ status, data });
 

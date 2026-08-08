@@ -1,7 +1,7 @@
 # @onderwijsin/nuxt-simple-rate-limiter
 
 Small server-side, per-IP rate limiting for Nuxt 4 endpoints. Limits are stored in Nitro storage and
-isolated by request path, so activity on one endpoint does not consume another endpoint's quota.
+can be scoped to one request path or shared across all paths.
 
 ## Installation
 
@@ -40,14 +40,25 @@ context:
 import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 ```
 
-`max` is the number of allowed requests in each window. `duration` is the window length in seconds,
-and `ban` is the ban duration in seconds; set `ban` to `0` to allow another request when the current
-window ends. A configured ban returns `{ bannedUntil }`, where `bannedUntil` is a Unix-millisecond
-timestamp. A caller should return or throw its own `429` response using that value. Without a ban,
-exceeding the request window throws an H3 `429 Too Many Requests` error.
+`max` is the number of allowed requests in each window. `duration` and `ban` are measured in
+seconds. Both helpers return nothing when allowed. When the limit is exceeded, they always throw an
+H3 `429` error with `error.data.bannedUntil`, a Unix-millisecond timestamp after which the request
+may be retried, and `error.data.limits`, containing the active `max`, `duration`, and `ban` values.
+With `ban: 0`, `bannedUntil` is the end of the current window.
 
 The storage namespace includes the request path and each entry is keyed by the client IP. Configure
 a shared Nitro storage driver for multi-instance deployments; in-memory storage resets on restart.
+
+## Global limits
+
+Use `enforceGlobalRateLimit` in middleware scoped to `/api`, before any path-scoped limiter:
+
+```ts
+await enforceGlobalRateLimit(event, { max: 100, duration: 60, ban: 900 });
+await enforceRateLimit(event, { max: 5, duration: 60, ban: 900 });
+```
+
+The request is counted once globally while still receiving the route-specific limit.
 
 ## Security boundary
 
