@@ -3,9 +3,9 @@
 Shared utilities for building the Onderwijs in Nuxt modules.
 
 This package exists to keep recurring module concerns in one place: module setup and lifecycle
-logging, option validation, typed object helpers, retryable operations, and server-side request
-token checks, and primitive runtime guards. Keeping these contracts shared prevents each module from
-implementing subtly different behavior.
+logging, option validation, typed object helpers, conditional dependency registration, retryable
+operations, server-side request token checks, and primitive runtime guards. Keeping these contracts
+shared prevents each module from implementing subtly different behavior.
 
 ## Why is this a published package?
 
@@ -29,6 +29,11 @@ Use the narrowest subpath for the code you are writing:
 The separate `server` entrypoint keeps H3-specific code out of shared and app-only dependency
 graphs. The `app` and `types` exports are reserved for package-level compatibility and type-only
 contracts.
+
+Use `moduleDependenciesWhenEnabled` from the `shared` subpath to register dependencies according to
+the standard module option contract. It returns the dependency map for `undefined`, `{}`, or
+`{ enabled: true }`, and `{}` for `false` or `{ enabled: false }`. Module setup must still skip its
+runtime registrations when disabled.
 
 This package is primarily a dependency for module authors and published module runtime code. It is
 not intended to be an application-level Nuxt module or a package that consumers install directly.

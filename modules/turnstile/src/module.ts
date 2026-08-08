@@ -9,6 +9,7 @@ import {
 import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import {
+  moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
@@ -40,12 +41,10 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: DEFAULTS,
   moduleDependencies: (nuxt): ModuleDependencies =>
-    nuxt.options.turnstile === false || nuxt.options.turnstile?.enabled === false
-      ? {}
-      : {
-          "@nuxt/ui": { version: ">=4.0.0" },
-          "@nuxtjs/turnstile": { version: ">=1.1.3" }
-        },
+    moduleDependenciesWhenEnabled(nuxt.options.turnstile, {
+      "@nuxt/ui": { version: ">=4.0.0" },
+      "@nuxtjs/turnstile": { version: ">=1.1.3" }
+    }),
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);

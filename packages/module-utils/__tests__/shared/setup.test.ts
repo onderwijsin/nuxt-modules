@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   enabled,
+  moduleDependenciesWhenEnabled,
   isPrepareMode,
   moduleSetup,
   resolveLoggerScope,
@@ -24,6 +25,18 @@ describe("shared option schemas", () => {
   it("defaults the shared enabled option to true", () => {
     expect(enabled.parse(undefined)).toBe(true);
     expect(enabled.parse(false)).toBe(false);
+  });
+});
+
+describe("moduleDependenciesWhenEnabled", () => {
+  const dependencies = { "@nuxt/ui": { version: ">=4.0.0" } };
+
+  it.each([undefined, {}, { enabled: true }])("returns dependencies for %o", (options) => {
+    expect(moduleDependenciesWhenEnabled(options, dependencies)).toBe(dependencies);
+  });
+
+  it.each([{ enabled: false }, false])("returns an empty map for %o", (options) => {
+    expect(moduleDependenciesWhenEnabled(options, dependencies)).toEqual({});
   });
 });
 

@@ -23,6 +23,7 @@ export {
   transpileRuntime,
   moduleSetup,
   validateModuleOptions,
-  enabled
+  enabled,
+  moduleDependenciesWhenEnabled
 } from "./setup";
 export type { BaseModuleOptions } from "./setup";

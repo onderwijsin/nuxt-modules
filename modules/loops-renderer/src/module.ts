@@ -1,6 +1,7 @@
 import { addComponentsDir, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
 import type { ModuleDependencies } from "@nuxt/schema";
 import {
+  moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
@@ -29,13 +30,9 @@ export default defineNuxtModule<ModuleOptions>({
     // applyInlineStyles: true
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
-    nuxt.options.loopsRenderer === false || nuxt.options.loopsRenderer?.enabled === false
-      ? {}
-      : {
-          "@nuxt/ui": {
-            version: ">=4.0.0"
-          }
-        },
+    moduleDependenciesWhenEnabled(nuxt.options.loopsRenderer, {
+      "@nuxt/ui": { version: ">=4.0.0" }
+    }),
   setup(options, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);

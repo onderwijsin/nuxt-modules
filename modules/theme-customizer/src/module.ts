@@ -16,6 +16,7 @@ import {
 } from "@nuxt/kit";
 import {
   fromEntries,
+  moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
@@ -59,22 +60,12 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     }
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
-    nuxt.options.themeCustomizer === false || nuxt.options.themeCustomizer?.enabled === false
-      ? {}
-      : {
-          "@nuxt/ui": {
-            version: "^4.6.1"
-          },
-          "@pinia/nuxt": {
-            version: "^1.0.1"
-          },
-          "pinia-plugin-persistedstate": {
-            version: "^4.7.1"
-          },
-          "@vueuse/nuxt": {
-            version: "^14.3.0"
-          }
-        },
+    moduleDependenciesWhenEnabled(nuxt.options.themeCustomizer, {
+      "@nuxt/ui": { version: "^4.6.1" },
+      "@pinia/nuxt": { version: "^1.0.1" },
+      "pinia-plugin-persistedstate": { version: "^4.7.1" },
+      "@vueuse/nuxt": { version: "^14.3.0" }
+    }),
   defaults: (nuxt) => ({
     enabled: nuxt.options.dev,
     googleFonts: {
