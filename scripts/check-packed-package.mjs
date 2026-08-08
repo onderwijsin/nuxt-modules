@@ -1,5 +1,5 @@
 /**
- * @fileoverview Verifies that a packed module contains only intended files and no private imports.
+ * @fileoverview Verifies that a packed package contains only intended files and no private imports.
  */
 
 import { existsSync } from "node:fs";
@@ -32,12 +32,17 @@ for (const entry of listing.stdout.trim().split("\n").filter(Boolean)) {
   }
 }
 
-const moduleEntry = spawnSync("tar", ["-xOzf", archive, "package/dist/module.mjs"], {
+const packageJsonOutput = spawnSync("tar", ["-xOzf", archive, "package/package.json"], {
+  encoding: "utf8"
+});
+const packageJson = packageJsonOutput.status === 0 ? JSON.parse(packageJsonOutput.stdout) : null;
+const entrypoint = packageJson?.main?.replace(/^\.\//u, "") ?? "dist/module.mjs";
+const packageEntry = spawnSync("tar", ["-xOzf", archive, `package/${entrypoint}`], {
   encoding: "utf8"
 });
 if (
-  moduleEntry.status !== 0 ||
-  /from\s+["'](?:module-utils|test-utils)(?:\/[^"']*)?["']/.test(moduleEntry.stdout)
+  packageEntry.status !== 0 ||
+  /from\s+["']test-utils(?:\/[^"']*)?["']/.test(packageEntry.stdout)
 ) {
   console.error("Packed package is missing its entrypoint or leaks a private workspace import.");
   process.exit(1);

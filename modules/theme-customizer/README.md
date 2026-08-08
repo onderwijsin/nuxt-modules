@@ -208,15 +208,13 @@ The following APIs are automatically imported:
 - `useFormModal()`;
 - `useThemeCustomizerStore()`.
 
-````
-
 ## Agent skill
 
 Install the consumer skill with:
 
 ```sh
 npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
-````
+```
 
 ## Compatibility
 

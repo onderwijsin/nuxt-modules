@@ -1,7 +1,7 @@
 import type { ThemeFontOption } from "../types";
 import { computed, refDebounced, shallowRef, useRuntimeConfig, watch } from "#imports";
 import { ofetch } from "ofetch";
-import { attempt } from "module-utils/shared";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 
 /**
  * Loads searchable Google Font options for the theme picker.

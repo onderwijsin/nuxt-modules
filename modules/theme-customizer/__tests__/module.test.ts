@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fromEntries } from "module-utils/shared";
+import { fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 const kit = vi.hoisted(() => ({
   addComponentsDir: vi.fn(),

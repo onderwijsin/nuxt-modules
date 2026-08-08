@@ -16,7 +16,7 @@ import {
   resolveModuleName,
   transpileRuntime,
   validateModuleOptions
-} from "module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { staticTextOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";

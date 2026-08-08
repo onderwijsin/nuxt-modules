@@ -1,5 +1,9 @@
 {
   "name": "theme-customizer-e2e-fixture",
   "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
   "type": "module"
 }

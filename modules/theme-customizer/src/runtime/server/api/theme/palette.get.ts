@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ofetch } from "ofetch";
 import { createError, defineEventHandler, getQuery } from "h3";
-import { attempt } from "module-utils/shared";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 
 const hexSchema = z.string().regex(/^#[\da-f]{6}$/i, {
   error: "Invalid hex color"

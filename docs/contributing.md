@@ -17,9 +17,9 @@ package metadata, and an isolated `playground/`. The playground must depend on t
 `workspace:*` and register the module by its public package name. The existing workspace globs
 discover both packages automatically.
 
-For a runtime utility, use `packages/module-utils` patterns and keep the package private,
-side-effect-free, and named-export-only. For test helpers, use `packages/test-utils`; never import
-test utilities from published runtime code.
+For a runtime utility, use `packages/module-utils` patterns and decide whether it belongs in the
+published `@onderwijsin/nuxt-module-utils` package, side-effect-free, and named-export-only. For
+test helpers, use `packages/test-utils`; never import test utilities from published runtime code.
 
 ## Validation workflow
 

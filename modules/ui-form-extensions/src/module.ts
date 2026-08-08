@@ -1,6 +1,10 @@
 import { defineNuxtModule, useLogger, createResolver, addImportsDir } from "@nuxt/kit";
 import type { ModuleDependencies } from "@nuxt/schema";
-import { resolveModuleName, resolveLoggerScope, moduleSetup } from "module-utils/shared";
+import {
+  resolveModuleName,
+  resolveLoggerScope,
+  moduleSetup
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types";

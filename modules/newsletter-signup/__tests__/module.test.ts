@@ -14,8 +14,8 @@ vi.mock("@nuxt/kit", () => ({
   useLogger: () => logger
 }));
 
-vi.mock("module-utils/shared", async (importOriginal) => {
-  const original = await importOriginal<typeof import("module-utils/shared")>();
+vi.mock("@onderwijsin/nuxt-module-utils/shared", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@onderwijsin/nuxt-module-utils/shared")>();
 
   return {
     ...original,

@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import { kebabCase, titleCase } from "scule";
 import { reactive, ref } from "#imports";
 import { useAppConfig, useRuntimeConfig } from "nuxt/app";
-import { fromEntries } from "module-utils/shared";
+import { fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
 
 import { createThemeRuntimeAdapter } from "../adapters/theme-runtime.client";

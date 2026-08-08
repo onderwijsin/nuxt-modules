@@ -3,16 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
   "type": "module",
   "scripts": {
-    "dev:utils": "pnpm --filter module-utils dev",
-    "build:utils": "pnpm --filter module-utils build",
+    "dev:utils": "pnpm --filter @onderwijsin/nuxt-module-utils dev",
+    "build:utils": "pnpm --filter @onderwijsin/nuxt-module-utils build",
     "dev:prepare": "pnpm --recursive --if-present run dev:prepare",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "build": "pnpm --filter './modules/*' --if-present run build",
+    "build": "pnpm --filter './packages/*' --filter './modules/*' --if-present run build",
     "typecheck": "pnpm --recursive --if-present run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",

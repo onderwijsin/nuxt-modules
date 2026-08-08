@@ -1,6 +1,6 @@
 import { $fetch } from "ofetch";
 import { z } from "zod";
-import { attempt } from "module-utils/shared";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 import type { ModuleOptions } from "../../../types/options";
 import { DEFAULT_TARGETS } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";

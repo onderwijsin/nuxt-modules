@@ -13,7 +13,7 @@ import {
   resolveLoggerScope,
   resolveModuleName,
   transpileRuntime
-} from "module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types/options";

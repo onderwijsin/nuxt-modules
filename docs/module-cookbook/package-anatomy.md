@@ -17,7 +17,7 @@ modules/<module-name>/
 │   ├── config/
 │   ├── runtime/
 │   └── types/
-├── build.config.ts
+├── build.config.ts (only when custom unbuild configuration is required)
 ├── CHANGELOG.md
 ├── README.md
 ├── package.json
@@ -25,10 +25,10 @@ modules/<module-name>/
 ```
 
 Tests belong to the package they exercise. Use the public naming convention
-`@onderwijsin/nuxt-<module-name>`. Published packages need repository metadata, a README, changelog,
-Node.js `>=22`, and exports for the generated module and declarations. Put consumer runtime
-dependencies in `dependencies`, tooling in `devDependencies`, and use `workspace:*` for private
-workspace dependencies.
+`@onderwijsin/nuxt-<module-name>`. Published packages need repository metadata, an author, a README,
+changelog, Node.js `>=22`, and exports for the generated module and declarations. Put consumer
+runtime dependencies in `dependencies`, tooling in `devDependencies`, and use `workspace:*` for
+private workspace dependencies.
 
 The package's generated entrypoints normally follow this shape:
 

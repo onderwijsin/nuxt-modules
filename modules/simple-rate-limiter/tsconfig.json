@@ -3,6 +3,6 @@
   "compilerOptions": {
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "__tests__/**/*.ts", "build.config.ts"],
+  "include": ["src/**/*.ts", "__tests__/**/*.ts"],
   "exclude": ["dist", "node_modules", "playground"]
 }
