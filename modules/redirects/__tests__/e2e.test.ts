@@ -48,4 +48,28 @@ describe("redirects module", async () => {
       data: expect.any(Object)
     });
   });
+
+  it("invalidates cached public responses and primes the lookup after a webhook upsert", async () => {
+    const initial = await $fetch<{ data: Record<string, unknown> }>("/api/_redirects");
+    expect(initial.data["/webhook-origin?campaign=spring"]).toBeUndefined();
+
+    await expect($fetch("/api/_test/upsert", { method: "POST" })).resolves.toMatchObject({
+      data: { from: "/webhook-origin?campaign=spring", statusCode: 308 }
+    });
+    await expect(
+      $fetch<{ data: Record<string, unknown> }>("/api/_redirects")
+    ).resolves.toMatchObject({
+      data: {
+        "/webhook-origin?campaign=spring": {
+          to: "/webhook-destination",
+          statusCode: 308
+        }
+      }
+    });
+    await expect(
+      $fetch("/api/_redirects/%2Fwebhook-origin%3Fcampaign%3Dspring")
+    ).resolves.toMatchObject({
+      data: { to: "/webhook-destination", statusCode: 308 }
+    });
+  });
 });

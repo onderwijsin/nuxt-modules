@@ -5,6 +5,7 @@ import type { Storage } from "unstorage";
 
 import { toRedirectOrigin, toRedirectPath, toRedirectStorageKey } from "./path";
 import { normalizeRedirect } from "./validation";
+import { invalidateRedirectCache, primeRedirectLookupCache } from "./cache";
 
 const MANIFEST_KEY = "manifest";
 
@@ -113,6 +114,7 @@ export async function refreshRedirectStorage(
 
 /**
  * Adds or replaces one redirect after consumer-specific webhook validation.
+ * Invalidates the public index and affected lookup cache, then immediately primes the new lookup.
  *
  * @param value - Provider-mapped redirect record.
  * @returns The normalized record written to the index.
@@ -128,11 +130,14 @@ export async function upsertRedirect(value: Redirect): Promise<ResolvedRedirect>
     redirects,
     updatedAt: new Date().toISOString()
   });
+  await invalidateRedirectCache(redirect.from);
+  await primeRedirectLookupCache(redirect.from);
   return redirect;
 }
 
 /**
  * Removes one redirect after consumer-specific webhook validation.
+ * The affected public cache entries are invalidated after the storage mutation.
  *
  * @param origin - Provider-mapped redirect origin.
  */
@@ -148,4 +153,5 @@ export async function removeRedirect(origin: string): Promise<void> {
     redirects,
     updatedAt: new Date().toISOString()
   });
+  await invalidateRedirectCache(canonicalOrigin);
 }

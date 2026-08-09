@@ -125,6 +125,23 @@ export default defineNuxtConfig({
 middleware is on but the store is off. Both are wrapped in `defineCachedEventHandler`; configure
 `cache.index` and `cache.lookup` separately.
 
+`upsertRedirect()` and `removeRedirect()` immediately invalidate the affected public cache entries;
+an upsert also primes its exact lookup response. A path-only change clears all lookup entries
+because it is the fallback for every query on that path. Use a short `cache.index` TTL when the
+Pinia store must converge quickly after webhooks; a webhook-driven setup can safely use a longer
+`cache.lookup` TTL because mutations invalidate the affected entry.
+
+```ts
+export default defineNuxtConfig({
+  redirects: {
+    cache: {
+      index: { maxAge: 15, staleMaxAge: 60, swr: true },
+      lookup: { maxAge: 3600, staleMaxAge: 3600, swr: true }
+    }
+  }
+});
+```
+
 `serverMiddleware`, `store`, and `routeMiddleware` are independent. When `routeMiddleware` is true
 and `store` is false, every client navigation uses the cached single-path endpoint instead of
 loading the complete index. Enabling `store` installs `@pinia/nuxt` and

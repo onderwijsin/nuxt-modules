@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-09",
+  compatibilityDate: "2026-08-07",
   modules: ["@onderwijsin/nuxt-redirects"],
   redirects: {
     serverMiddleware: true,

@@ -6,11 +6,7 @@ export default defineNuxtConfig({
   redirects: {
     serverMiddleware: true,
     store: false,
-    routeMiddleware: false,
-    cache: {
-      index: { maxAge: 0, staleMaxAge: 0, swr: false },
-      lookup: { maxAge: 0, staleMaxAge: 0, swr: false }
-    }
+    routeMiddleware: false
   },
   nitro: { experimental: { tasks: true } }
 });

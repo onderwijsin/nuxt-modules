@@ -87,7 +87,11 @@ entries for direct lookup.
 - `GET /api/_redirects/:path` returns `{ data: Redirect | null }`, where `:path` is an encoded path
   plus optional query string.
 
-Both endpoints use `defineCachedEventHandler` with the configured cache options.
+Both endpoints use `defineCachedEventHandler` with the configured cache options. `upsertRedirect()`
+and `removeRedirect()` invalidate the affected public entries; upserts also prime the exact lookup
+entry. Path-only mutations clear all lookup entries because they affect query fallbacks. For
+webhook-driven updates, prefer a short `cache.index` TTL for fast store convergence and a longer
+`cache.lookup` TTL for efficient route navigation.
 
 ## Precedence and query semantics
 
