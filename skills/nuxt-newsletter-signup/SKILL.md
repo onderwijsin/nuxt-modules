@@ -58,9 +58,11 @@ export default defineNuxtConfig({
 });
 ```
 
-When Mailchimp is used, each audience option should contain its own `server` value. The selected
+When Mailchimp is used, each audience option should contain its own `server` value. It must be a
+Mailchimp server prefix matching `us` followed by one or more digits, such as `us4` or `us21`.
+Hostnames, URLs, paths, whitespace, and other formats are rejected during module setup. The selected
 option’s server is used for the request. A top-level `server` can be used as a fallback when one
-server applies to a single audience or to all configured audiences. `us4` and `us5` are examples.
+server applies to a single audience or to all configured audiences.
 
 For Cloudflare Workers, enable the `nodejs_compat` compatibility flag in the Wrangler configuration.
 Nuxt applications running on Workers already require this flag. Cloudflare also enables
