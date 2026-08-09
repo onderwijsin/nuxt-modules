@@ -93,17 +93,19 @@ const server = spawn("node", [".output/server/index.mjs"], {
 });
 
 /**
- * Waits for a URL to respond successfully.
+ * Requests a URL, retrying while Nitro is starting.
  *
  * @param {string} url - URL to poll.
- * @returns {Promise<Response>} The first successful response.
+ * @param {RequestInit} [options] - Fetch options.
+ * @param {number} [expectedStatus] - Expected response status; defaults to 200.
+ * @returns {Promise<Response>} The first response with the expected status.
  */
-async function waitForResponse(url) {
+async function waitForResponse(url, options = {}, expectedStatus = 200) {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(2_000) });
-      if (response.ok) return response;
+      const response = await fetch(url, { ...options, signal: AbortSignal.timeout(2_000) });
+      if (response.status === expectedStatus) return response;
     } catch {
       // Nitro is still starting.
     }
@@ -112,16 +114,76 @@ async function waitForResponse(url) {
   throw new Error(`Timed out waiting for ${url}`);
 }
 
+/**
+ * Parses a JSON response and fails with a useful assertion message.
+ *
+ * @param {Response} response - Response to parse.
+ * @param {(body: Record<string, unknown>) => boolean} assertion - Predicate for the response body.
+ * @returns {Promise<Record<string, unknown>>} The parsed response body.
+ */
+async function readJson(response, assertion) {
+  const body = await response.json();
+  if (!assertion(body))
+    throw new Error(`External consumer assertion failed: ${JSON.stringify(body)}`);
+  return body;
+}
+
 try {
   const rootResponse = await waitForResponse(`http://127.0.0.1:${port}/`);
   const rootBody = await rootResponse.text();
-  if (!rootBody.includes("External consumer OK")) {
+  if (
+    !rootBody.includes("External consumer OK") ||
+    !rootBody.includes('data-sanity="static-text"') ||
+    !rootBody.includes('data-sanity="template-translation"') ||
+    !rootBody.includes('data-sanity="draft-form"') ||
+    !rootBody.includes('data-sanity="turnstile"') ||
+    !rootBody.includes("Renderer OK")
+  ) {
     throw new Error("The external consumer page did not render its assertion text.");
   }
 
   const pingResponse = await waitForResponse(`http://127.0.0.1:${port}/api/system/ping`);
   if ((await pingResponse.text()) !== "pong")
     throw new Error("Healthcheck ping did not return pong.");
+
+  await readJson(
+    await waitForResponse(`http://127.0.0.1:${port}/api/sanity/runtime`),
+    (body) =>
+      body.healthcheck === true &&
+      body.turnstile?.header === "x-turnstile-token" &&
+      body.moduleUtils?.name === "@onderwijsin/nuxt-external-consumer" &&
+      body.moduleUtils?.server === true &&
+      body.publicSubpaths?.newsletterServer === true &&
+      body.publicSubpaths?.rateLimitPruneTask === true
+  );
+
+  await readJson(
+    await waitForResponse(`http://127.0.0.1:${port}/api/system/health`),
+    (body) => body.data?.status === "ok"
+  );
+
+  await readJson(
+    await waitForResponse(`http://127.0.0.1:${port}/api/_storage/config`, {
+      headers: { "x-admin-token": "dummy-storage-token" }
+    }),
+    (body) => body.data?.mounts?.some((mount) => mount.mount === "cache")
+  );
+
+  await waitForResponse(`http://127.0.0.1:${port}/thema`);
+
+  const manifestResponse = await waitForResponse(`http://127.0.0.1:${port}/app.webmanifest`);
+  await readJson(manifestResponse, (body) => body.name === "External consumer validation");
+
+  await waitForResponse(
+    `http://127.0.0.1:${port}/api/newsletter/signup`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}"
+    },
+    400
+  );
+  console.log("External consumer sanity checks passed.");
   console.log("External consumer smoke test passed.");
 } finally {
   server.kill("SIGTERM");

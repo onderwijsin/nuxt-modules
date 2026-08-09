@@ -16,7 +16,8 @@ they affect and preserve the isolated playground contract. Review the repository
 For a new module, create `modules/<module-name>` with `src/module.ts`, tests, README, changelog,
 package metadata, and an isolated `playground/`. The playground must depend on the local module with
 `workspace:*` and register the module by its public package name. The existing workspace globs
-discover both packages automatically.
+discover both packages automatically. Also update the external consumer fixture with safe dummy
+configuration and a local sanity assertion for every new publishable module.
 
 For a runtime utility, use `packages/module-utils` patterns and decide whether it belongs in the
 published `@onderwijsin/nuxt-module-utils` package, side-effect-free, and named-export-only. For

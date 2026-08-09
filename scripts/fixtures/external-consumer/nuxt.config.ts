@@ -53,6 +53,9 @@ export default defineNuxtConfig({
   storageAdmin: {
     enabled: true,
     adminToken: "dummy-storage-token",
+    mounts: {
+      cache: { permissions: ["read"], allowRoot: true }
+    },
     ui: { enabled: false }
   },
   themeCustomizer: {
