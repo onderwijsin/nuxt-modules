@@ -88,8 +88,9 @@ The renderer supports the LMX presentation nodes used by Loops, including:
 - sections, columns, reusable components, and conditional sections;
 - safe URL handling, merge-tag resolution, and constrained inline styles.
 
-Set `debug: true` during development to show unsupported nodes in the Nuxt development overlay.
-Unsupported content is not rendered as raw HTML.
+Set `debug: true` during development to render unsupported nodes as an inline developer-only `<pre>`
+block. This is not a Nuxt development overlay or production error surface. Unsupported content is
+not rendered as raw HTML.
 
 ```vue
 <LoopsRenderer :data="parsedAst" :variables="variables" :config="{ debug: import.meta.dev }" />

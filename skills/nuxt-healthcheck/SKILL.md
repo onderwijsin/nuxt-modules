@@ -48,10 +48,12 @@ export default defineHealthcheckComponent({
 });
 ```
 
-The filename becomes the component name. Components must default-export
-`defineHealthcheckComponent({ handler })`; every check has a 5000ms timeout by default and handlers
-receive an `AbortSignal` for abortable downstream work. The built-in Cloudinary and Directus probes
-also cancel their HTTP request at that configured timeout.
+The filename becomes the component name. Components should default-export
+`defineHealthcheckComponent({ handler })`, which is a typed convenience helper. Runtime validation
+requires the default export to be an object with a callable `handler`; `threshold` and `timeoutMs`
+are optional validated fields. Every check has a 5000ms timeout by default and handlers receive an
+`AbortSignal` for abortable downstream work. The built-in Cloudinary and Directus probes also cancel
+their HTTP request at that configured timeout.
 
 `warn` produces HTTP `200`, while overall `error` produces HTTP `503`. Disabled built-ins are not
 included in the response. Never return credentials or other secrets in component details.

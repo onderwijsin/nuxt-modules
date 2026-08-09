@@ -105,8 +105,9 @@ const config: LoopsRendererConfig = {
 };
 ```
 
-`debug` displays unsupported nodes in the Nuxt development overlay only. It does not make
-unsupported content render and should not be treated as a production user-facing error surface.
+`debug` renders unsupported nodes in an inline developer-only `<pre>` block. It does not make
+unsupported content render and should not be treated as a Nuxt overlay or production user-facing
+error surface.
 
 ### Module options
 

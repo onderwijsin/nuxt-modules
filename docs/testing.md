@@ -95,9 +95,10 @@ aliases, auto-imports, registered components, runtime plugins, or application bu
 minimal fixture that proves the behavior and assert what a consumer can observe.
 
 Do not add integration or end-to-end tests solely to increase coverage. The repository has focused
-Nuxt Test Utils fixture coverage for each publishable module. Keep assertions limited to runtime
-behavior that depends on Nuxt, such as registered components, auto-imports, runtime plugins, pages,
-and server handlers.
+Nuxt Test Utils fixture coverage for modules and behaviors that require a real Nuxt application;
+some publishable modules, such as the pure server utilities, are covered by unit tests without a
+Nuxt fixture. Keep assertions limited to runtime behavior that depends on Nuxt, such as registered
+components, auto-imports, runtime plugins, pages, and server handlers.
 
 For generated server handlers, include a fixture custom component and exercise the real endpoint.
 For example, a component that awaits a short `setTimeout` verifies both that consumer files are

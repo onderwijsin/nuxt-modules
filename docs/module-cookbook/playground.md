@@ -31,14 +31,16 @@ Use the established scripts:
 
 ```json
 {
-  "dev": "npm run dev:prepare && nuxt dev playground",
+  "dev": "pnpm run dev:prepare && nuxt dev playground",
   "dev:build": "nuxt build playground",
   "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground"
 }
 ```
 
-`dev:prepare` creates the development stub, prepares the module, and generates Nuxt types. Run
-package development and focused checks with:
+`dev:prepare` creates the development stub, prepares the module, and generates Nuxt types. Packages
+that expose a runtime subpath need a full module build between preparation and `nuxt prepare`; see
+[package anatomy](package-anatomy.md#runtime-subpath-exports) for that exception. Run package
+development and focused checks with:
 
 ```sh
 pnpm --filter @onderwijsin/nuxt-example dev

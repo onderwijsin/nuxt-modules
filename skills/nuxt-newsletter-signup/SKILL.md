@@ -107,16 +107,21 @@ reset on application restart. Configure persistent storage for a single instance
 export default defineNuxtConfig({
   nitro: {
     storage: {
-      shield: { driver: "fs", base: "./shield" }
+      "simple-rate-limiter:%2Fapi%2Fnewsletter%2Fsignup": {
+        driver: "fs",
+        base: "./newsletter-signup"
+      }
     }
   }
 });
 ```
 
-Use a shared driver such as Redis for multi-instance production deployments. Duplicate subscriptions
-are intentionally idempotent and provider requests time out after five seconds. Mailchimp uses its
-add-or-update member endpoint and applies immediate `subscribed` status, including when an existing
-member was previously unsubscribed.
+The storage key must match the limiter namespace for `/api/newsletter/signup`. Configure
+`simple-rate-limiter:global` separately if global rate limiting is enabled. Use a shared driver such
+as Redis for multi-instance production deployments. Duplicate subscriptions are intentionally
+idempotent and provider requests time out after five seconds. Mailchimp uses its add-or-update
+member endpoint and applies immediate `subscribed` status, including when an existing member was
+previously unsubscribed.
 
 For multiple selectable lists or audiences:
 

@@ -211,13 +211,18 @@ when the application restarts. To persist them for a single-instance deployment,
 export default defineNuxtConfig({
   nitro: {
     storage: {
-      "newsletter-signup": { driver: "fs", base: "./newsletter-signup" }
+      "simple-rate-limiter:%2Fapi%2Fnewsletter%2Fsignup": {
+        driver: "fs",
+        base: "./newsletter-signup"
+      }
     }
   }
 });
 ```
 
-Use a shared storage driver such as Redis for multiple application instances.
+The storage key must match the limiter namespace for the endpoint path. If global rate limiting is
+enabled separately, configure its `simple-rate-limiter:global` namespace as well. Use a shared
+storage driver such as Redis for multiple application instances.
 
 Single-list request:
 

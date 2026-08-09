@@ -69,7 +69,8 @@ pnpm --filter "<package>" dev
 # pnpm --filter @onderwijsin/nuxt-loops-renderer dev
 ```
 
-To build all workspace packages:
+To build the shared utility and module packages (playground build scripts are not part of the root
+`build` filter):
 
 ```sh
 pnpm build:utils
@@ -116,7 +117,7 @@ Module request:
 
 ## 🧰 Supporting Packages
 
-This project contains various private packages as internal dependencies.
+This project contains supporting workspace packages with different publication policies.
 
 | Package                          | Description                                    |
 | -------------------------------- | ---------------------------------------------- |
