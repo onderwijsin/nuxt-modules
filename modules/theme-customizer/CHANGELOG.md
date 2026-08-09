@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- c19384b: Preserve prefixed deployments in health checks and web manifests, make disabled newsletter signup
+  inert, and namespace and harden theme customizer routes, components, palettes, and controls.
+
+### Patch Changes
+
+- 8c84b5d: Harden newsletter signup list authorization and Mailchimp member upserts, and prevent provider or
+  external error details from exposing sensitive data in server logs.
+- 132746b: Centralize conditional module dependency registration and apply the shared enablement contract
+  consistently across the affected modules.
+- Updated dependencies [438e854]
+- Updated dependencies [132746b]
+  - @onderwijsin/nuxt-module-utils@0.2.0
+
 ## 0.2.9
 
 ### Patch Changes

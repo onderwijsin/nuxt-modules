@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 40c6668: Add global per-IP rate limiting and make exceeded limits consistently throw 429 errors with a
+  `bannedUntil` timestamp and active limit configuration.
+
 ## 0.2.1
 
 ### Patch Changes
