@@ -6,7 +6,10 @@ const useRuntimeConfig = vi.hoisted(() => vi.fn());
 const enforceRateLimit = vi.hoisted(() => vi.fn());
 
 vi.mock("ofetch", () => ({ ofetch: fetchFonts }));
-vi.mock("nitropack/runtime", () => ({ useRuntimeConfig }));
+vi.mock("nitropack/runtime", () => ({
+  defineCachedFunction: (handler: unknown) => handler,
+  useRuntimeConfig
+}));
 vi.mock("@onderwijsin/nuxt-simple-rate-limiter/runtime", () => ({ enforceRateLimit }));
 vi.mock("h3", async (importOriginal) => ({
   ...(await importOriginal<typeof import("h3")>()),
