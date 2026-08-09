@@ -53,9 +53,12 @@ When multiple valid solutions exist, prefer:
 ### Package Manager Contract
 
 - Use the exact PNPM version declared in `package.json`, invoked as `corepack pnpm ...`.
-- Agents must work in an isolated checkout or Git worktree with its own `node_modules`.
+- Agents may work in the current checkout. If there is a `node_modules` conflict, use an isolated
+  checkout or Git worktree with its own `node_modules` instead.
 - Never install dependencies or modify, delete, relink, or repair `node_modules` in the human
   collaborator's primary checkout.
+- When working in an isolated checkout or Git worktree, integrate the completed changes back into
+  the current branch before handoff. Do not commit those changes.
 - In the isolated checkout, do not reuse `node_modules` created by another environment. Remove it
   and run:
   ```sh
