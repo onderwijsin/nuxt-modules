@@ -1,3 +1,4 @@
+import { hasKey, isNumber, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 import { shallowRef } from "vue";
 
 interface RateLimitResponse {
@@ -9,30 +10,27 @@ interface RequestResult {
   status: "allowed" | "limited";
 }
 
-interface ErrorRecord {
-  data?: unknown;
-  statusCode?: unknown;
-}
-
 const LIMIT = 5;
 const WINDOW_SECONDS = 1;
 
-function isErrorRecord(error: unknown): error is ErrorRecord {
-  return typeof error === "object" && error !== null;
-}
-
 function getStatusCode(error: unknown): number | undefined {
-  if (!isErrorRecord(error)) return undefined;
+  if (!isRecord(error)) return undefined;
 
-  if (typeof error.statusCode === "number") return error.statusCode;
+  if (hasKey(error, "statusCode") && isNumber(error.statusCode)) return error.statusCode;
 
-  if (!isErrorRecord(error.data)) return undefined;
-  return typeof error.data.statusCode === "number" ? error.data.statusCode : undefined;
+  if (!hasKey(error, "data") || !isRecord(error.data)) return undefined;
+  return hasKey(error.data, "statusCode") && isNumber(error.data.statusCode)
+    ? error.data.statusCode
+    : undefined;
 }
 
 function getFriendlyErrorMessage(error: unknown): string {
   if (getStatusCode(error) === 429) {
     return `The demo allows ${LIMIT} requests per second. Wait a moment and try again.`;
+  }
+
+  if (isRecord(error) && hasKey(error, "statusMessage") && isString(error.statusMessage)) {
+    return error.statusMessage;
   }
 
   return "The request could not be completed. Check the playground server and try again.";

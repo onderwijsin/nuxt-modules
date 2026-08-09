@@ -229,7 +229,10 @@ These guards answer small runtime questions without coercion or diagnostics. `is
 `null` and arrays; the string guards distinguish type, length, and whitespace. `isNumber` accepts
 `NaN` and infinities while `isFiniteNumber` and `isInteger` provide stronger checks. `isDefined`
 removes only `undefined`; `hasKeys` checks own enumerable string keys and `hasKey` checks one own
-property. See [the primitive guards guide](./guards.md) for complete edge cases and design rules.
+property. Use them together when narrowing unknown network or persisted data; for example, the
+simple-rate-limiter playground uses `isRecord`, `hasKey`, `isNumber`, and `isString` to interpret
+fetch errors without unsafe casts. See [the primitive guards guide](./guards.md) for complete edge
+cases and design rules.
 
 ## `hasMatchingRequestToken`
 

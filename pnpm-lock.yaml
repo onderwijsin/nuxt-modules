@@ -530,6 +530,9 @@ importers:
       '@nuxt/ui':
         specifier: 'catalog:'
         version: 4.10.0(9145a6cec4b36a79e86df09951ec8fe9)
+      '@onderwijsin/nuxt-module-utils':
+        specifier: workspace:*
+        version: link:../../../packages/module-utils
       '@onderwijsin/nuxt-simple-rate-limiter':
         specifier: workspace:*
         version: link:..
