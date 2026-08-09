@@ -1,4 +1,5 @@
 import { useNitroApp, useStorage } from "nitropack/runtime";
+import { hash } from "ohash";
 
 import { toRedirectOrigin, toRedirectPath } from "./path";
 
@@ -9,18 +10,15 @@ const LOOKUP_CACHE_PREFIX = `${CACHE_PREFIX}:lookup:`;
 /**
  * Hashes an encoded redirect lookup origin into Nitro-safe key material.
  *
- * Nitro strips non-word characters from custom cache keys. SHA-256 prevents distinct encoded paths
- * such as `%2Ffoo-bar` and `%2Ffoobar` from collapsing into the same cache record.
+ * Nitro strips non-word characters from custom cache keys. ohash provides SHA-256-backed hashing;
+ * replacing its URL-safe hyphen keeps the result lossless after Nitro normalizes the key. This
+ * prevents distinct encoded paths such as `%2Ffoo-bar` and `%2Ffoobar` from collapsing together.
  *
  * @param origin - Raw or canonical redirect origin.
  * @returns Collision-resistant cache-key material.
  */
-export async function hashRedirectLookupOrigin(origin: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(encodeURIComponent(toRedirectOrigin(origin)))
-  );
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+export function hashRedirectLookupOrigin(origin: string): string {
+  return hash(encodeURIComponent(toRedirectOrigin(origin))).replaceAll("-", "_");
 }
 
 /**
@@ -29,8 +27,8 @@ export async function hashRedirectLookupOrigin(origin: string): Promise<string> 
  * @param origin - Raw or canonical redirect origin.
  * @returns Storage key for the cached lookup response.
  */
-async function toLookupCacheKey(origin: string): Promise<string> {
-  return `${LOOKUP_CACHE_PREFIX}${await hashRedirectLookupOrigin(origin)}.json`;
+function toLookupCacheKey(origin: string): string {
+  return `${LOOKUP_CACHE_PREFIX}${hashRedirectLookupOrigin(origin)}.json`;
 }
 
 /**
@@ -50,7 +48,7 @@ export async function invalidateRedirectCache(origin?: string): Promise<void> {
     const lookupKeys = await cache.getKeys(LOOKUP_CACHE_PREFIX);
     invalidations.push(...lookupKeys.map((key) => cache.removeItem(key)));
   } else {
-    invalidations.push(cache.removeItem(await toLookupCacheKey(canonicalOrigin)));
+    invalidations.push(cache.removeItem(toLookupCacheKey(canonicalOrigin)));
   }
   await Promise.all(invalidations);
 }

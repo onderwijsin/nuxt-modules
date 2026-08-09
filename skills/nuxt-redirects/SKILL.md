@@ -91,7 +91,9 @@ Both endpoints use `defineCachedEventHandler` with the configured cache options.
 `removeRedirect()`, and complete source refreshes invalidate affected public entries; upserts also
 prime the exact lookup entry. Path-only mutations and complete refreshes clear all lookup entries
 because they affect query fallbacks. For webhook-driven updates, prefer a short `cache.index` TTL
-for fast store convergence and a longer `cache.lookup` TTL for efficient route navigation.
+for fast store convergence and a longer `cache.lookup` TTL for efficient route navigation. Lookup
+keys include the complete normalized origin, including query parameters, so distinct paths and query
+variants cannot share a cached response.
 
 ## Precedence and query semantics
 

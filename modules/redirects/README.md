@@ -134,6 +134,9 @@ short `cache.index` TTL when the Pinia store must converge quickly after webhook
 setup can safely use a longer `cache.lookup` TTL because mutations and refreshes invalidate affected
 entries.
 
+Lookup cache keys are derived from the complete normalized origin, including its query string, so
+distinct paths and query variants never share a cache record.
+
 ```ts
 export default defineNuxtConfig({
   redirects: {

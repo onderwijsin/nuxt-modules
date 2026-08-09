@@ -93,6 +93,9 @@ catalogs:
     ofetch:
       specifier: 1.5.1
       version: 1.5.1
+    ohash:
+      specifier: 2.0.11
+      version: 2.0.11
     oxfmt:
       specifier: 0.62.0
       version: 0.62.0
@@ -517,6 +520,9 @@ importers:
       nitropack:
         specifier: 'catalog:'
         version: 2.13.4(oxc-parser@0.140.0)(rolldown@1.2.2)(srvx@0.12.5)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.1)(yaml@2.9.0))
+      ohash:
+        specifier: 'catalog:'
+        version: 2.0.11
       pinia:
         specifier: 'catalog:'
         version: 4.0.2(@vue/devtools-api@8.2.1)(typescript@5.9.3)(vue@3.5.41(typescript@5.9.3))
