@@ -68,6 +68,20 @@ from the values assigned in `nuxt.options.runtimeConfig`. Nuxt can infer a narro
 thresholds or credentials to disappear from editor types. The static runtime declaration should
 describe the complete runtime contract.
 
+In module setup, always merge runtime configuration with the existing configuration; never replace
+`nuxt.options.runtimeConfig` or `nuxt.options.runtimeConfig.public`. Replacing either object drops
+configuration contributed by the consuming application, layers, or other modules.
+
+```ts
+nuxt.options.runtimeConfig = {
+  ...nuxt.options.runtimeConfig,
+  example: {
+    ...nuxt.options.runtimeConfig.example,
+    apiKey: options.apiKey
+  }
+};
+```
+
 ## Runtime CSS
 
 For runtime Tailwind classes, expose a stylesheet so consuming applications can scan the published

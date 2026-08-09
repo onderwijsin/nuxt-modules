@@ -77,6 +77,8 @@ return result.data;
 ```
 
 Inspect the error and rethrow or map it when the failure cannot safely be hidden from the caller.
+Use it for fallible local parsing as well as asynchronous operations, for example when a module
+needs to treat malformed persisted metadata as absent rather than throw.
 
 ## `attemptWithRetry`
 

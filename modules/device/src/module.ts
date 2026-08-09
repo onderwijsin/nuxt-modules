@@ -12,20 +12,19 @@ import {
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
-  transpileRuntime
+  transpileRuntime,
+  validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { version } from "../package.json";
+import { DEFAULT_DEVICE_USER_AGENT, deviceOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";
 
 const MODULE_KEY = "device";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
-const DEFAULT_USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36";
-
 const DEFAULTS = {
   enabled: true,
-  defaultUserAgent: DEFAULT_USER_AGENT
+  defaultUserAgent: DEFAULT_DEVICE_USER_AGENT
 } satisfies Required<ModuleOptions>;
 
 /** Registers request-aware device detection and the generated crawler matcher. */
@@ -37,12 +36,13 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
-  setup(options, nuxt) {
-    const resolvedOptions = defu(options, DEFAULTS);
+  setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
-    const { start, end, isEnabled } = moduleSetup(MODULE_NAME, resolvedOptions, log);
+    const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
 
     start();
+
+    const options = validateModuleOptions(rawOptions, deviceOptionsSchema, log);
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
@@ -60,7 +60,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.runtimeConfig.public.device = defu(
       nuxt.options.runtimeConfig.public.device,
-      resolvedOptions
+      options
     );
     transpileRuntime(nuxt, runtimeDir);
     addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));

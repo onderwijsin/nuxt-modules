@@ -1,0 +1,69 @@
+{
+  "name": "@onderwijsin/nuxt-cache",
+  "version": "0.1.0",
+  "description": "Cache metadata indexing and targeted invalidation for Nitro storage.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "modules/cache"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "test": "pnpm run build && vitest run __tests__",
+    "test:e2e": "pnpm run build && vitest run __tests__/e2e.test.ts",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "dev": "pnpm run dev:prepare && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground"
+  },
+  "dependencies": {
+    "@nuxt/kit": "catalog:",
+    "@nuxt/schema": "catalog:",
+    "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "defu": "catalog:",
+    "h3": "catalog:",
+    "nitropack": "catalog:",
+    "ofetch": "catalog:",
+    "unctx": "catalog:",
+    "unstorage": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "catalog:",
+    "@nuxt/test-utils": "catalog:",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
