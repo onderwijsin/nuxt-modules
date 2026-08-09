@@ -44,6 +44,9 @@ When multiple valid solutions exist, prefer:
   by the human maintainer; model the types correctly instead
 - **MUST** use Zod for boundary validation where applicable
 - **MUST** preserve Node server and Cloudflare Workers runtime compatibility
+- **MUST** pin every third-party GitHub Action to a full immutable commit SHA; mutable refs such as
+  `@v1`, `@v4`, `@main`, branches, or tags are not allowed. Keep the intended release or tag in an
+  inline comment for maintainability.
 - **MUST** update the corresponding installable consumer skill in `skills/` whenever a module's
   public API surface changes, alongside the module README
 - **MUST** update `docs/module-cookbook/module-utils.md` whenever work changes, documents, or relies

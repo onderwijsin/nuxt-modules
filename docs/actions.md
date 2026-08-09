@@ -1,5 +1,21 @@
 # Custom GitHub Actions
 
+## Pin third-party actions
+
+Every third-party action referenced from `.github/workflows/**` must use a full immutable commit
+SHA. Mutable tags, branches, and other refs such as `@v1`, `@v4`, or `@main` are prohibited.
+
+Keep the intended release or tag as an inline comment next to the SHA so the pin remains readable:
+
+```yaml
+- uses: actions/checkout@<full-commit-sha> # v7
+```
+
+Repository-relative local actions such as `./.github/actions/<action-name>` and local reusable
+workflows such as `./.github/workflows/<workflow-name>.yml` are exempt from SHA pinning. When
+updating a third-party action, deliberately resolve the desired upstream release or tag to its new
+full commit SHA and retain the corresponding version comment.
+
 Custom GitHub Actions live in `.github/actions/<action-name>`. Keep each action self-contained and
 prefer plain Node.js with built-in modules when the action does not need external dependencies.
 
