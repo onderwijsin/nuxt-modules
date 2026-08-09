@@ -50,13 +50,16 @@ export default defineNuxtModule<ModuleOptions>({
     const options = validateModuleOptions(rawOptions, cacheOptionsSchema, log);
     if (!isEnabled()) return;
 
-    nuxt.options.runtimeConfig.cache = {
-      enabled: options.enabled,
-      adminToken: options.adminToken,
-      adminHeaderName: options.adminHeaderName,
-      devAuthBypass: options.devAuthBypass,
-      maxInvalidatedEntries: options.maxInvalidatedEntries
-    };
+    nuxt.options.runtimeConfig.nuxtCache = defu(
+      {
+        enabled: options.enabled,
+        adminToken: options.adminToken,
+        adminHeaderName: options.adminHeaderName,
+        devAuthBypass: options.devAuthBypass,
+        maxInvalidatedEntries: options.maxInvalidatedEntries
+      },
+      nuxt.options.runtimeConfig.nuxtCache ?? {}
+    );
     if (nuxt.options.dev && options.devAuthBypass) {
       log.warn(
         "Development authentication bypass is enabled. Cache invalidation is unauthenticated."

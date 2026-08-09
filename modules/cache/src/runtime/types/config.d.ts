@@ -1,6 +1,6 @@
 declare module "nuxt/schema" {
   interface RuntimeConfig {
-    cache?: {
+    nuxtCache?: {
       enabled: boolean;
       adminToken?: string;
       adminHeaderName: string;

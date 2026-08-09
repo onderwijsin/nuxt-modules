@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import cacheModule from "../../../src/module";
+import cacheModule from "@onderwijsin/nuxt-cache";
 
 export default defineNuxtConfig({
   compatibilityDate: "2026-08-09",

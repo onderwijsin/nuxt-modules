@@ -11,7 +11,7 @@ import { invalidateCacheTargets } from "../../utils/invalidate";
  * @returns The number of invalidated cache entries.
  */
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event).cache;
+  const config = useRuntimeConfig(event).nuxtCache;
   if (!config?.enabled) {
     throw createError({ statusCode: 404, statusMessage: "Cache invalidation is disabled." });
   }

@@ -51,8 +51,14 @@ describe("Cloudflare cache driver", () => {
       expect.objectContaining({ method: "POST" })
     );
     expect(bulkDeleteRequest.mock.calls[0]?.[1].body).toEqual(
-      expect.arrayContaining([key, `${key}$`, getCacheIndexKey("kennisbank:articles", path, key)])
+      expect.arrayContaining([
+        key,
+        `${key}$`,
+        `${key}$__cache_write`,
+        getCacheIndexKey("kennisbank:articles", path, key)
+      ])
     );
+    expect(bulkDeleteRequest.mock.calls[0]?.[1]).toMatchObject({ timeout: 10_000 });
   });
 
   it("chunks Cloudflare bulk deletion requests at the documented API limit", async () => {
@@ -65,6 +71,27 @@ describe("Cloudflare cache driver", () => {
     expect(bulkDeleteRequest.mock.calls[1]?.[1].body).toEqual(["cache-entry-10000"]);
   });
 
+  it("wraps malformed and failed Cloudflare responses with chunk context", async () => {
+    bulkDeleteRequest.mockResolvedValueOnce({});
+    await expect(bulkDeleteCloudflareCacheKeys(["first"], cloudflareCredentials)).rejects.toThrow(
+      "chunk 1"
+    );
+
+    bulkDeleteRequest
+      .mockResolvedValueOnce({ success: true })
+      .mockRejectedValueOnce(new Error("timeout"));
+    await expect(
+      bulkDeleteCloudflareCacheKeys(
+        Array.from({ length: 10_001 }, (_, index) => `cache-entry-${index}`),
+        cloudflareCredentials
+      )
+    ).rejects.toThrow("chunk 2");
+
+    await expect(
+      bulkDeleteCloudflareCacheKeys(["recovered-after-failure"], cloudflareCredentials)
+    ).resolves.toBeUndefined();
+  });
+
   it("rejects incomplete Cloudflare credentials", () => {
     expect(() =>
       createCloudflareCacheDriver(memoryDriver(), {
@@ -73,5 +100,18 @@ describe("Cloudflare cache driver", () => {
         cacheNamespaceId: "namespace"
       })
     ).toThrow();
+  });
+
+  it("adds cache-base context when a Cloudflare clear fails", async () => {
+    const rawDriver = memoryDriver();
+    await createStorage({ driver: rawDriver }).setItem("kennisbank:articles:example", {
+      title: "Example"
+    });
+    const driver = createCloudflareCacheDriver(rawDriver, cloudflareCredentials);
+    bulkDeleteRequest.mockRejectedValueOnce(new Error("provider unavailable"));
+
+    await expect(driver.clear?.("kennisbank:articles", {})).rejects.toThrow(
+      "cache base kennisbank:articles"
+    );
   });
 });

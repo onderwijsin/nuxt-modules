@@ -1,16 +1,54 @@
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
 import { $fetch, fetch, setup } from "@nuxt/test-utils/e2e";
 
 const ARTICLE_PATH = "/kennisbank/artikelen/example-slug";
+const moduleRoot = fileURLToPath(new URL("../", import.meta.url));
+const fixtureRoot = fileURLToPath(new URL("./fixtures/e2e", import.meta.url));
+const packedOutputDirectory = mkdtempSync(join(tmpdir(), "nuxt-cache-e2e-pack-"));
+const packedModuleDirectory = join(fixtureRoot, "node_modules", "@onderwijsin", "nuxt-cache");
 const invalidationBody = {
   targets: [{ base: "kennisbank:articles", path: ARTICLE_PATH, match: "exact" }]
 };
 
+/** Packs the module and installs its tarball at the e2e fixture's package-resolution boundary. */
+function preparePackedModuleFixture(): void {
+  execFileSync("corepack", ["pnpm", "pack", "--pack-destination", packedOutputDirectory], {
+    cwd: moduleRoot,
+    stdio: "pipe"
+  });
+  const [tarball] = readdirSync(packedOutputDirectory).filter((file) => file.endsWith(".tgz"));
+  if (!tarball) throw new Error("Expected pnpm pack to create a cache module tarball.");
+
+  rmSync(packedModuleDirectory, { force: true, recursive: true });
+  mkdirSync(packedModuleDirectory, { recursive: true });
+  execFileSync(
+    "tar",
+    [
+      "-xzf",
+      join(packedOutputDirectory, tarball),
+      "--strip-components=1",
+      "-C",
+      packedModuleDirectory
+    ],
+    { stdio: "pipe" }
+  );
+}
+
 describe("cache module end to end", async () => {
+  preparePackedModuleFixture();
   await setup({
-    rootDir: fileURLToPath(new URL("./fixtures/e2e", import.meta.url)),
+    rootDir: fixtureRoot,
     dev: false
+  });
+
+  afterAll(() => {
+    rmSync(packedModuleDirectory, { force: true, recursive: true });
+    rmSync(packedOutputDirectory, { force: true, recursive: true });
   });
 
   it("creates indexed metadata, invalidates it, and creates a fresh entry on the next public request", async () => {

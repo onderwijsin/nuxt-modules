@@ -37,8 +37,8 @@
   },
   "scripts": {
     "build": "nuxt-module-build build",
-    "test": "vitest run __tests__",
-    "test:e2e": "vitest run __tests__/e2e.test.ts",
+    "test": "pnpm run build && vitest run __tests__",
+    "test:e2e": "pnpm run build && vitest run __tests__/e2e.test.ts",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "dev": "pnpm run dev:prepare && nuxt dev playground",
     "dev:build": "nuxt build playground",

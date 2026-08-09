@@ -24,11 +24,11 @@ describe("cache runtime", () => {
     const key = "kennisbank:articles:example:abc123";
     const indexKey = getCacheIndexKey("kennisbank:articles", "/kennisbank/artikelen/example", key);
     await storage.setItem(key, { title: "Example" }, { ttl: 60 });
-    expect(await storage.getItem(getCacheMetadataKey(key))).toEqual({
+    expect(await storage.getItem(getCacheMetadataKey(key))).toMatchObject({
       version: 1,
       path: "/kennisbank/artikelen/example"
     });
-    expect(await storage.getItem(indexKey)).toBe(key);
+    expect(await storage.getItem(indexKey)).toMatchObject({ key });
     await storage.removeItem(key);
     expect(await storage.getItem(key)).toBeNull();
     expect(await storage.getItem(getCacheMetadataKey(key))).toBeNull();
@@ -48,15 +48,15 @@ describe("cache runtime", () => {
       { key: secondKey, value: { title: "Second" } }
     ]);
 
-    expect(await storage.getItem(getCacheIndexKey("kennisbank:articles", path, firstKey))).toBe(
-      firstKey
-    );
-    expect(await storage.getItem(getCacheIndexKey("kennisbank:articles", path, secondKey))).toBe(
-      secondKey
-    );
+    expect(
+      await storage.getItem(getCacheIndexKey("kennisbank:articles", path, firstKey))
+    ).toMatchObject({ key: firstKey });
+    expect(
+      await storage.getItem(getCacheIndexKey("kennisbank:articles", path, secondKey))
+    ).toMatchObject({ key: secondKey });
   });
 
-  it("moves the reverse index when a cache entry is overwritten from a different request path", async () => {
+  it("leaves a stale index harmless when a cache entry is overwritten from a different request path", async () => {
     const key = "kennisbank:articles:example:abc123";
     let path = "/kennisbank/artikelen/first";
     const storage = createStorage({
@@ -71,15 +71,46 @@ describe("cache runtime", () => {
       await storage.getItem(
         getCacheIndexKey("kennisbank:articles", "/kennisbank/artikelen/first", key)
       )
-    ).toBeNull();
+    ).toMatchObject({ key });
     expect(
       await storage.getItem(
         getCacheIndexKey("kennisbank:articles", "/kennisbank/artikelen/second", key)
       )
-    ).toBe(key);
+    ).toMatchObject({ key });
     expect(await storage.getMeta(key)).toMatchObject({
       version: 1,
       path: "/kennisbank/artikelen/second"
+    });
+
+    await invalidateCacheTargets(
+      storage,
+      [{ base: "kennisbank:articles", path: "/kennisbank/artikelen/first", match: "exact" }],
+      10
+    );
+    expect(await storage.getItem(key)).toEqual({ title: "Second" });
+  });
+
+  it("clears values and indexes before a key is reused for a different route", async () => {
+    const key = "kennisbank:articles:example:abc123";
+    let path = "/kennisbank/artikelen/old";
+    const driver = createCacheDriver(memoryDriver(), { getRequestPath: () => path });
+    const storage = createStorage({ driver });
+    await storage.setItem(key, { title: "Old" });
+    await storage.setItem("kennisbank:news:other:abc123", { title: "Other base" });
+
+    await driver.clear?.("kennisbank:articles", {});
+    path = "/kennisbank/artikelen/new";
+    await storage.setItem(key, { title: "New" });
+
+    const removed = await invalidateCacheTargets(
+      storage,
+      [{ base: "kennisbank:articles", path: "/kennisbank/artikelen/old", match: "exact" }],
+      10
+    );
+    expect(removed).toBe(0);
+    expect(await storage.getItem(key)).toEqual({ title: "New" });
+    expect(await storage.getItem("kennisbank:news:other:abc123")).toEqual({
+      title: "Other base"
     });
   });
 
@@ -111,6 +142,28 @@ describe("cache runtime", () => {
     expect(await storage.getItem(articleKey)).toBeNull();
     expect(await storage.getItem(otherBaseKey)).toEqual({ title: "News" });
     expect(await storage.getItem(getCacheMetadataKey(articleKey))).toBeNull();
+  });
+
+  it("matches a prefix route and its descendants without matching sibling paths", async () => {
+    const storage = createStorage({ driver: memoryDriver() });
+    const base = "kennisbank:articles";
+    const entries = ["/articles/foo", "/articles/foo/bar", "/articles/foobar"];
+    for (const [index, path] of entries.entries()) {
+      const key = `${base}:entry-${index}`;
+      await storage.setItem(key, { path });
+      await storage.setItem(getCacheMetadataKey(key), JSON.stringify({ version: 1, path }));
+      await storage.setItem(getCacheIndexKey(base, path, key), key);
+    }
+
+    const removed = await invalidateCacheTargets(
+      storage,
+      [{ base, path: "/articles/foo", match: "prefix" }],
+      10
+    );
+    expect(removed).toBe(2);
+    expect(await storage.getItem(`${base}:entry-0`)).toBeNull();
+    expect(await storage.getItem(`${base}:entry-1`)).toBeNull();
+    expect(await storage.getItem(`${base}:entry-2`)).toEqual({ path: "/articles/foobar" });
   });
 
   it("finds reverse-index records through the wrapped storage driver", async () => {

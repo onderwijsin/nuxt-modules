@@ -9,7 +9,14 @@ Requires Nuxt 4 and Node.js 22 or later.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-cache
+pnpm add @onderwijsin/nuxt-cache unstorage
+```
+
+The driver modules below import `unstorage` directly, so it is a required application dependency.
+For Redis or Valkey, also install its Unstorage peer dependency:
+
+```sh
+pnpm add ioredis
 ```
 
 ```ts
@@ -42,9 +49,10 @@ index:     __cache_meta:index:v1:kennisbank:articles:<encoded-path>:<encoded-key
 ```
 
 `storage.getMeta(key)` returns the native driver metadata together with the cache metadata. The
-cache metadata currently contains `{ version: 1, path: "/public/route" }`. The sidecar and index
-receive the same Unstorage options as the value, including TTL. Normal `removeItem()` operations
-remove all three records.
+cache metadata currently contains `{ version: 1, path: "/public/route", writeId: "…" }`. `writeId`
+is an internal association marker that prevents stale indexes from deleting a newer value. The
+sidecar, marker, and index receive the same Unstorage options as the value, including TTL. Normal
+`removeItem()` operations remove all related records.
 
 ## Driver registration
 
@@ -133,9 +141,9 @@ export default defineNuxtConfig({
 ```
 
 `setItems()` writes the batch with the underlying driver and then records metadata/indexes for every
-cache value. `clear()` is intentionally not added by the generic wrapper: regular drivers retain
-their native clear behavior. Only `createCloudflareCacheDriver()` replaces it because Cloudflare KV
-requires its REST bulk-delete API.
+cache value. Both wrappers implement a safe `clear()` for a complete cache base (or the whole cache
+mount): it removes values, sidecars, association markers, and reverse indexes together. Do not call
+`clear()` with a narrower arbitrary key prefix; cache-base clears must use `<group>:<name>`.
 
 ## Invalidation API
 
@@ -159,7 +167,12 @@ x-admin-token: <adminToken>
 
 `base` is required and must be `<group>:<name>`. The endpoint reads only index records for that
 base; it never scans the complete `cache` mount or matches cache-key strings. `match` is `exact` by
-default and also accepts `prefix`. The response is `{ "data": { "removed": number } }`.
+default and also accepts `prefix`. Prefix matching includes the exact path and descendants separated
+by `/`; invalidating `/articles/foo` does not invalidate `/articles/foobar`. The response is
+`{ "data": { "removed": number } }`.
+
+For prefix matching, one trailing slash is ignored: `/articles/foo/` behaves as `/articles/foo`. The
+root path `/` matches every absolute cached route in the requested base.
 
 The endpoint lazily removes stale index records when a cache value has expired or a previous write
 did not complete. An invalidation request is limited by `maxInvalidatedEntries` before it deletes
@@ -178,6 +191,18 @@ allows unauthenticated invalidation during development and logs a warning.
 | `adminHeaderName`       | `x-admin-token` | Header carrying the administrator token.            |
 | `devAuthBypass`         | `false`         | Allows unauthenticated invalidation in development. |
 | `maxInvalidatedEntries` | `1000`          | Maximum index records one request can remove.       |
+
+The module stores its private server runtime values under `runtimeConfig.nuxtCache`. This namespace
+is reserved for the module; configure the public module options through the `cache` key shown above
+instead of setting `runtimeConfig.nuxtCache` directly.
+
+## Low-level Cloudflare bulk deletion
+
+`bulkDeleteCloudflareCacheKeys(keys, credentials)` is also exported from
+`@onderwijsin/nuxt-cache/runtime` for server-only maintenance code that already has fully qualified
+Cloudflare KV keys. It deletes raw keys in 10,000-key chunks with a 10-second request timeout. This
+is destructive and bypasses cache metadata/index discovery, so prefer `createCloudflareCacheDriver`
+and `storage.clear(base)` for normal cache operations.
 
 ## Boundaries and troubleshooting
 

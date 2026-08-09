@@ -1,4 +1,4 @@
-import { createCacheDriver } from "../../../../../src/runtime";
+import { createCacheDriver } from "@onderwijsin/nuxt-cache/runtime";
 import { defineDriver } from "unstorage";
 import memoryDriver from "unstorage/drivers/memory";
 

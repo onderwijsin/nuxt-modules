@@ -2,7 +2,7 @@ import { ofetch } from "ofetch";
 import type { Driver } from "unstorage";
 import { z } from "zod";
 import { createCacheDriver } from "./cache";
-import { getCacheIndexPrefix } from "./keys";
+import { getCacheIndexPrefix, normalizeCacheBase } from "./keys";
 import type { CloudflareCacheDriverOptions } from "./types";
 
 const cloudflareCredentialsSchema = z.strictObject({
@@ -10,12 +10,20 @@ const cloudflareCredentialsSchema = z.strictObject({
   kvApiToken: z.string().trim().min(1),
   cacheNamespaceId: z.string().trim().min(1)
 });
+const CLOUDFLARE_BULK_DELETE_TIMEOUT_MS = 10_000;
 
 /** Shape returned by Cloudflare's KV bulk-delete endpoint. */
 interface CloudflareBulkDeleteResponse {
   errors?: Array<{ code?: number; message?: string }>;
   success: boolean;
 }
+
+const cloudflareBulkDeleteResponseSchema = z.object({
+  errors: z
+    .array(z.object({ code: z.number().optional(), message: z.string().optional() }))
+    .optional(),
+  success: z.boolean()
+});
 
 /**
  * Wraps a Cloudflare KV driver with metadata/index support and bulk clear operations.
@@ -39,7 +47,12 @@ export function createCloudflareCacheDriver(
     async clear(base, transactionOptions) {
       // The KV binding only offers one-delete-per-key; use the REST bulk endpoint instead.
       const keys = await getCloudflareClearKeys(driver, base, transactionOptions);
-      await bulkDeleteCloudflareCacheKeys(keys, credentials);
+      try {
+        await bulkDeleteCloudflareCacheKeys(keys, credentials);
+      } catch (error) {
+        const scope = base ? `cache base ${base}` : "the complete cache mount";
+        throw new Error(`Cloudflare cache clear failed for ${scope}.`, { cause: error });
+      }
     }
   };
 }
@@ -61,13 +74,31 @@ export async function bulkDeleteCloudflareCacheKeys(
     headers: { Authorization: `Bearer ${options.kvApiToken}` }
   });
   for (let index = 0; index < keys.length; index += 10_000) {
-    const response = await client<CloudflareBulkDeleteResponse>(
-      `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
-      { method: "POST", body: keys.slice(index, index + 10_000) }
-    );
+    const chunk = keys.slice(index, index + 10_000);
+    const chunkNumber = index / 10_000 + 1;
+    let response: CloudflareBulkDeleteResponse;
+    try {
+      const rawResponse = await client<unknown>(
+        `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
+        {
+          method: "POST",
+          body: chunk,
+          timeout: CLOUDFLARE_BULK_DELETE_TIMEOUT_MS
+        }
+      );
+      const parsedResponse = cloudflareBulkDeleteResponseSchema.safeParse(rawResponse);
+      if (!parsedResponse.success) {
+        throw new Error("Cloudflare returned an invalid bulk-delete response.");
+      }
+      response = parsedResponse.data;
+    } catch (error) {
+      throw new Error(`Cloudflare KV bulk delete failed for chunk ${chunkNumber}.`, {
+        cause: error
+      });
+    }
     if (!response.success) {
       throw new Error(
-        `Cloudflare KV bulk delete failed: ${formatCloudflareErrors(response.errors)}`
+        `Cloudflare KV bulk delete failed for chunk ${chunkNumber}: ${formatCloudflareErrors(response.errors)}`
       );
     }
   }
@@ -82,11 +113,20 @@ export async function bulkDeleteCloudflareCacheKeys(
  */
 async function getCloudflareClearKeys(
   driver: Driver,
-  base: string,
+  base: string | undefined,
   transactionOptions: Record<string, unknown> = {}
 ): Promise<string[]> {
-  const valueAndMetadataKeys = await driver.getKeys(base, transactionOptions);
-  const indexKeys = await driver.getKeys(getCacheIndexPrefix(base), transactionOptions);
+  const cacheBase = base
+    ? normalizeCacheBase(base.endsWith(":") ? base.slice(0, -1) : base)
+    : undefined;
+  const valuePrefix = cacheBase ? `${cacheBase}:` : "";
+  const indexPrefix = getCacheIndexPrefix(cacheBase);
+  const valueAndMetadataKeys = (await driver.getKeys(valuePrefix, transactionOptions)).filter(
+    (key) => key.startsWith(valuePrefix)
+  );
+  const indexKeys = (await driver.getKeys(indexPrefix, transactionOptions)).filter((key) =>
+    key.startsWith(indexPrefix)
+  );
   return [...new Set([...valueAndMetadataKeys, ...indexKeys])];
 }
 

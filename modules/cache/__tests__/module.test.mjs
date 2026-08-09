@@ -42,7 +42,12 @@ describe("cache module setup", () => {
   it("registers runtime handlers, types, and async request context", async () => {
     const module = (await import("../src/module")).default;
     const nuxt = {
-      options: { dev: true, runtimeConfig: {}, build: { transpile: [] }, routeRules: {} }
+      options: {
+        dev: true,
+        runtimeConfig: { cache: { applicationField: true }, nuxtCache: { preservedField: true } },
+        build: { transpile: [] },
+        routeRules: {}
+      }
     };
 
     module.setup({ enabled: true }, nuxt);
@@ -54,6 +59,11 @@ describe("cache module setup", () => {
     expect(addServerScanDir).toHaveBeenCalledWith("./runtime/server");
     expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
     expect(nuxt.options.nitro).toMatchObject({ experimental: { asyncContext: true } });
+    expect(nuxt.options.runtimeConfig.cache).toEqual({ applicationField: true });
+    expect(nuxt.options.runtimeConfig.nuxtCache).toMatchObject({
+      enabled: true,
+      preservedField: true
+    });
     expect(nuxt.options.routeRules["/api/_cache/**"]).toEqual({ cache: false, prerender: false });
   });
 
