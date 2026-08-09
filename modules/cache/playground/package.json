@@ -1,0 +1,21 @@
+{
+  "name": "cache-playground",
+  "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@nuxt/ui": "catalog:",
+    "@onderwijsin/nuxt-cache": "workspace:*",
+    "nuxt": "catalog:",
+    "tailwindcss": "catalog:",
+    "unstorage": "catalog:"
+  }
+}
