@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getRequestURL } from "h3";
 import { defineCachedEventHandler, useRuntimeConfig } from "nitropack/runtime";
 
 import { findRedirect } from "../../utils/storage";
+import { hashRedirectLookupOrigin } from "../../utils/cache";
 
 const cache = useRuntimeConfig().redirects?.cache.lookup ?? {
   maxAge: 60,
@@ -32,6 +33,13 @@ export default defineCachedEventHandler(
     ...cache,
     group: "redirects",
     name: "lookup",
-    getKey: (event) => getRequestURL(event).pathname.slice(LOOKUP_PREFIX.length)
+    getKey: (event) => {
+      const encodedPath = getRequestURL(event).pathname.slice(LOOKUP_PREFIX.length);
+      try {
+        return hashRedirectLookupOrigin(decodeURIComponent(encodedPath));
+      } catch {
+        return hashRedirectLookupOrigin(encodedPath);
+      }
+    }
   }
 );

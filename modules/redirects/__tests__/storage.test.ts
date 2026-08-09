@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const values = new Map<string, unknown>();
-const clear = vi.fn(async (prefix: string) => {
-  for (const key of values.keys()) if (key.startsWith(prefix)) values.delete(key);
-});
 const localFetch = vi.fn();
 
 vi.mock("nitropack/runtime", () => ({
@@ -18,7 +15,7 @@ vi.mock("nitropack/runtime", () => ({
     removeItem: async (key: string) => {
       values.delete(key);
     },
-    clear
+    getKeys: async (base = "") => [...values.keys()].filter((key) => key.startsWith(base))
   })
 }));
 
@@ -33,7 +30,6 @@ import {
 describe("redirect storage refresh", () => {
   beforeEach(() => {
     values.clear();
-    clear.mockClear();
     localFetch.mockReset();
     localFetch.mockResolvedValue(undefined);
   });
@@ -89,8 +85,7 @@ describe("redirect storage refresh", () => {
       to: "example.com/offer",
       statusCode: 308
     });
-    expect(values.has("/cache:redirects:index:all.json")).toBe(false);
-    expect(values.has("/cache:redirects:lookup:2Fcampaign3Fa3D13Fb3D2.json")).toBe(false);
+    expect(values.has("cache:redirects:index:all.json")).toBe(false);
     expect(localFetch).toHaveBeenCalledWith("/api/_redirects/%2Fcampaign%3Fa%3D1%26b%3D2");
     await removeRedirect("/campaign?b=2&a=1");
     await expect(findRedirect("/campaign?a=1&b=2")).resolves.toBeNull();
@@ -98,14 +93,13 @@ describe("redirect storage refresh", () => {
   });
 
   it("clears every lookup cache when a path-only webhook redirect changes", async () => {
-    values.set("/cache:redirects:lookup:2Fproduct.json", { value: "old" });
-    values.set("/cache:redirects:lookup:2Fproduct3Fcampaign3Dspring.json", { value: "old" });
+    values.set("cache:redirects:lookup:product", { value: "old" });
+    values.set("cache:redirects:lookup:product-campaign", { value: "old" });
 
     await upsertRedirect({ from: "/product", to: "/new-product" });
 
-    expect(clear).toHaveBeenCalledWith("/cache:redirects:lookup:");
-    expect(values.has("/cache:redirects:lookup:2Fproduct.json")).toBe(false);
-    expect(values.has("/cache:redirects:lookup:2Fproduct3Fcampaign3Dspring.json")).toBe(false);
+    expect(values.has("cache:redirects:lookup:product")).toBe(false);
+    expect(values.has("cache:redirects:lookup:product-campaign")).toBe(false);
   });
 
   it("keeps the current manifest when validation rejects an incoming refresh", async () => {

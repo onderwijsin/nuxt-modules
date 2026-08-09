@@ -87,11 +87,11 @@ entries for direct lookup.
 - `GET /api/_redirects/:path` returns `{ data: Redirect | null }`, where `:path` is an encoded path
   plus optional query string.
 
-Both endpoints use `defineCachedEventHandler` with the configured cache options. `upsertRedirect()`
-and `removeRedirect()` invalidate the affected public entries; upserts also prime the exact lookup
-entry. Path-only mutations clear all lookup entries because they affect query fallbacks. For
-webhook-driven updates, prefer a short `cache.index` TTL for fast store convergence and a longer
-`cache.lookup` TTL for efficient route navigation.
+Both endpoints use `defineCachedEventHandler` with the configured cache options. `upsertRedirect()`,
+`removeRedirect()`, and complete source refreshes invalidate affected public entries; upserts also
+prime the exact lookup entry. Path-only mutations and complete refreshes clear all lookup entries
+because they affect query fallbacks. For webhook-driven updates, prefer a short `cache.index` TTL
+for fast store convergence and a longer `cache.lookup` TTL for efficient route navigation.
 
 ## Precedence and query semantics
 
@@ -103,6 +103,8 @@ requires the same normalized query. A path-only redirect remains a fallback for 
 query parameters. Destination query strings are preserved and incoming request query parameters are
 never merged into destinations. Protocol-less domains such as `sub.example.com/new` are treated as
 external HTTPS destinations; explicit URLs and internal paths are otherwise used unchanged.
+Destinations must be an internal path, protocol-relative URL, absolute HTTP(S) URL, or bare domain;
+control characters and non-HTTP schemes are rejected during ingestion.
 
 ## Storage drivers
 

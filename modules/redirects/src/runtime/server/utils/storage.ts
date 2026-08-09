@@ -108,6 +108,7 @@ export async function refreshRedirectStorage(
     redirects: next,
     updatedAt: new Date().toISOString()
   });
+  await invalidateRedirectCache();
 
   return next;
 }

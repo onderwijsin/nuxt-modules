@@ -59,7 +59,9 @@ pairs are sorted. An origin with a query matches only the same normalized query;
 is the fallback for requests with query parameters. Destination query strings are preserved and
 request query parameters are never appended implicitly. Protocol-less domains such as
 `sub.example.com/new` are treated as external HTTPS destinations; explicit URLs and internal paths
-are otherwise used unchanged.
+are otherwise used unchanged. Destinations must be an internal path, protocol-relative URL, absolute
+HTTP(S) URL, or bare domain; control characters and other schemes such as `javascript:` and `data:`
+are rejected during ingestion.
 
 ## Refreshing
 
@@ -125,11 +127,12 @@ export default defineNuxtConfig({
 middleware is on but the store is off. Both are wrapped in `defineCachedEventHandler`; configure
 `cache.index` and `cache.lookup` separately.
 
-`upsertRedirect()` and `removeRedirect()` immediately invalidate the affected public cache entries;
-an upsert also primes its exact lookup response. A path-only change clears all lookup entries
-because it is the fallback for every query on that path. Use a short `cache.index` TTL when the
-Pinia store must converge quickly after webhooks; a webhook-driven setup can safely use a longer
-`cache.lookup` TTL because mutations invalidate the affected entry.
+`upsertRedirect()`, `removeRedirect()`, and a complete source refresh immediately invalidate
+affected public cache entries; an upsert also primes its exact lookup response. A path-only change
+or complete refresh clears all lookup entries because path-only redirects are query fallbacks. Use a
+short `cache.index` TTL when the Pinia store must converge quickly after webhooks; a webhook-driven
+setup can safely use a longer `cache.lookup` TTL because mutations and refreshes invalidate affected
+entries.
 
 ```ts
 export default defineNuxtConfig({

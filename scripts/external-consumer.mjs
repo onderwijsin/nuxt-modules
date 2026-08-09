@@ -137,6 +137,7 @@ try {
     !rootBody.includes('data-sanity="template-translation"') ||
     !rootBody.includes('data-sanity="draft-form"') ||
     !rootBody.includes('data-sanity="turnstile"') ||
+    !rootBody.includes('data-sanity="redirect-client-link"') ||
     !rootBody.includes("Renderer OK")
   ) {
     throw new Error("The external consumer page did not render its assertion text.");

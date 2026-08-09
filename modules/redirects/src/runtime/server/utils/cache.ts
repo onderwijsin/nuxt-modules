@@ -2,18 +2,25 @@ import { useNitroApp, useStorage } from "nitropack/runtime";
 
 import { toRedirectOrigin, toRedirectPath } from "./path";
 
-const CACHE_PREFIX = "/cache:redirects";
+const CACHE_PREFIX = "cache:redirects";
 const INDEX_CACHE_KEY = `${CACHE_PREFIX}:index:all.json`;
 const LOOKUP_CACHE_PREFIX = `${CACHE_PREFIX}:lookup:`;
 
 /**
- * Matches Nitro's custom event-handler cache-key escaping.
+ * Hashes an encoded redirect lookup origin into Nitro-safe key material.
  *
- * @param key - Unescaped cache key supplied by the lookup endpoint.
- * @returns The cache-safe key segment used by Nitro.
+ * Nitro strips non-word characters from custom cache keys. SHA-256 prevents distinct encoded paths
+ * such as `%2Ffoo-bar` and `%2Ffoobar` from collapsing into the same cache record.
+ *
+ * @param origin - Raw or canonical redirect origin.
+ * @returns Collision-resistant cache-key material.
  */
-function toNitroCacheKey(key: string): string {
-  return key.replace(/\W/g, "");
+export async function hashRedirectLookupOrigin(origin: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(encodeURIComponent(toRedirectOrigin(origin)))
+  );
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**
@@ -22,27 +29,28 @@ function toNitroCacheKey(key: string): string {
  * @param origin - Raw or canonical redirect origin.
  * @returns Storage key for the cached lookup response.
  */
-function toLookupCacheKey(origin: string): string {
-  return `${LOOKUP_CACHE_PREFIX}${toNitroCacheKey(encodeURIComponent(toRedirectOrigin(origin)))}.json`;
+async function toLookupCacheKey(origin: string): Promise<string> {
+  return `${LOOKUP_CACHE_PREFIX}${await hashRedirectLookupOrigin(origin)}.json`;
 }
 
 /**
  * Invalidates cached public responses affected by a redirect mutation.
  *
- * A path-only redirect is also the fallback for every query on that path, so all lookup entries
- * must be cleared. A query-specific redirect affects only its exact encoded lookup key.
+ * A complete refresh or path-only redirect is also the fallback for every query on that path, so
+ * all lookup entries must be cleared. A query-specific redirect affects only its exact lookup key.
  *
- * @param origin - Redirect origin being added, changed, or removed.
+ * @param origin - Redirect origin being added, changed, or removed. Omit for a complete refresh.
  */
-export async function invalidateRedirectCache(origin: string): Promise<void> {
-  const canonicalOrigin = toRedirectOrigin(origin);
+export async function invalidateRedirectCache(origin?: string): Promise<void> {
+  const canonicalOrigin = origin ? toRedirectOrigin(origin) : null;
   const cache = useStorage();
   const invalidations = [cache.removeItem(INDEX_CACHE_KEY)];
 
-  if (toRedirectPath(canonicalOrigin) === canonicalOrigin) {
-    invalidations.push(cache.clear(LOOKUP_CACHE_PREFIX));
+  if (!canonicalOrigin || toRedirectPath(canonicalOrigin) === canonicalOrigin) {
+    const lookupKeys = await cache.getKeys(LOOKUP_CACHE_PREFIX);
+    invalidations.push(...lookupKeys.map((key) => cache.removeItem(key)));
   } else {
-    invalidations.push(cache.removeItem(toLookupCacheKey(canonicalOrigin)));
+    invalidations.push(cache.removeItem(await toLookupCacheKey(canonicalOrigin)));
   }
   await Promise.all(invalidations);
 }

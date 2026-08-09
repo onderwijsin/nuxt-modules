@@ -11,10 +11,30 @@ describe("redirect validation", () => {
     });
   });
 
-  it("rejects unsafe origins and destinations", () => {
+  it("accepts internal paths and documented external destination forms", () => {
+    for (const to of [
+      "/new",
+      "//cdn.example.com/new",
+      "https://example.com/new",
+      "http://example.com",
+      "example.com/new"
+    ]) {
+      expect(normalizeRedirect({ from: "/old", to })).toMatchObject({ to });
+    }
+  });
+
+  it("rejects unsafe origins, schemes, and control characters", () => {
     expect(() => normalizeRedirect({ from: "old", to: "/new" })).toThrow("must start with");
-    expect(() => normalizeRedirect({ from: "/old", to: "/new\nLocation: /other" })).toThrow(
-      "must not contain newlines"
-    );
+    for (const to of [
+      "javascript:alert(1)",
+      "data:text/html,unsafe",
+      "mailto:redirect@example.com",
+      "ftp://example.com/file",
+      "https://",
+      "//",
+      "/new\nLocation: /other",
+      "/new\u0000unsafe"
+    ])
+      expect(() => normalizeRedirect({ from: "/old", to })).toThrow("Redirect destinations");
   });
 });

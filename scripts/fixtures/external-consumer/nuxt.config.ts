@@ -47,8 +47,8 @@ export default defineNuxtConfig({
   redirects: {
     enabled: true,
     serverMiddleware: false,
-    store: false,
-    routeMiddleware: false,
+    store: true,
+    routeMiddleware: true,
     storageMount: "externalRedirects"
   },
   nitro: {
