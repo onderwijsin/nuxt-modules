@@ -18,7 +18,7 @@ describe("simple rate limiter module", () => {
     const module = (await import("../src/module")).default;
     const setup = Reflect.get(module, "setup");
 
-    await Reflect.apply(setup, module, [{}]);
+    await Reflect.apply(setup, module, [{}, { options: { runtimeConfig: {} } }]);
 
     expect(addServerImports).toHaveBeenCalledWith({
       name: "enforceRateLimit",
@@ -28,5 +28,6 @@ describe("simple rate limiter module", () => {
       name: "enforceGlobalRateLimit",
       from: "./runtime"
     });
+    expect(addServerImports).toHaveBeenCalledTimes(2);
   });
 });

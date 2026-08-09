@@ -1,7 +1,13 @@
 import { createError, getRequestIP, getRequestURL } from "h3";
 import type { H3Event } from "h3";
-import { useStorage } from "nitropack/runtime";
+import { useRuntimeConfig, useStorage } from "nitropack/runtime";
 import { z } from "zod";
+
+import {
+  DEFAULT_STALE_AFTER_SECONDS,
+  GLOBAL_STORAGE_NAMESPACE,
+  type GlobalRateLimitEntry
+} from "./server/utils/global";
 
 const rateLimitConfigSchema = z.strictObject({
   max: z.number().int().positive(),
@@ -16,14 +22,11 @@ interface RateLimitEntry {
   bannedUntil?: number;
 }
 
-interface GlobalRateLimitEntry {
-  timestamps: number[];
-  bannedUntil?: number;
-}
-
 type RateLimitConfig = z.input<typeof rateLimitConfigSchema>;
 
 const globallyEnforcedEvents = new WeakSet<object>();
+let globalDisabledWarningLogged = false;
+const globalDurationWarnings = new Set<number>();
 
 /**
  * Enforces a path-scoped, per-IP rate limit using Nitro storage.
@@ -45,7 +48,10 @@ export async function enforceRateLimit(event: H3Event, config: RateLimitConfig):
       ? { count: 1, resetAt: now + parsedConfig.duration * 1000 }
       : { count: current.count + 1, resetAt: current.resetAt };
 
-  await recordGlobalRequest(event, ip, now);
+  if (isGlobalRateLimitingEnabled()) {
+    warnIfGlobalDurationExceedsRetention(parsedConfig.duration);
+    await recordGlobalRequest(event, ip, now);
+  }
   if (entry.count > parsedConfig.max) {
     entry.bannedUntil =
       now + (parsedConfig.ban > 0 ? parsedConfig.ban * 1000 : entry.resetAt - now);
@@ -69,10 +75,16 @@ export async function enforceGlobalRateLimit(
   event: H3Event,
   config: RateLimitConfig
 ): Promise<void> {
+  if (!isGlobalRateLimitingEnabled()) {
+    logGlobalRateLimitingDisabled();
+    return;
+  }
+
   if (globallyEnforcedEvents.has(event)) return;
 
   const { parsedConfig, key, now } = getRateLimitContext(event, config);
-  const storage = useStorage<GlobalRateLimitEntry>("simple-rate-limiter:global");
+  warnIfGlobalDurationExceedsRetention(parsedConfig.duration);
+  const storage = useStorage<GlobalRateLimitEntry>(GLOBAL_STORAGE_NAMESPACE);
   const current = await storage.getItem(key);
   const timestamps = (current?.timestamps ?? []).filter(
     (timestamp) => timestamp > now - parsedConfig.duration * 1000
@@ -96,10 +108,36 @@ export async function enforceGlobalRateLimit(
 async function recordGlobalRequest(event: H3Event, ip: string, now: number): Promise<void> {
   if (globallyEnforcedEvents.has(event)) return;
 
-  const storage = useStorage<GlobalRateLimitEntry>("simple-rate-limiter:global");
+  const storage = useStorage<GlobalRateLimitEntry>(GLOBAL_STORAGE_NAMESPACE);
   const key = encodeURIComponent(ip);
   const current = await storage.getItem(key);
   await storage.setItem(key, { timestamps: [...(current?.timestamps ?? []), now] });
+}
+
+function isGlobalRateLimitingEnabled(): boolean {
+  return useRuntimeConfig().simpleRateLimiter?.global?.enabled === true;
+}
+
+function logGlobalRateLimitingDisabled(): void {
+  if (globalDisabledWarningLogged) return;
+
+  globalDisabledWarningLogged = true;
+  console.error(
+    "[simple-rate-limiter] Global enforcement is disabled; the request was not globally rate limited. Enable simpleRateLimiter.global.enabled to use enforceGlobalRateLimit()."
+  );
+}
+
+function warnIfGlobalDurationExceedsRetention(duration: number): void {
+  const pruning = useRuntimeConfig().simpleRateLimiter?.global?.pruning;
+  if (pruning?.enabled !== true) return;
+
+  const staleAfter = pruning.staleAfter ?? DEFAULT_STALE_AFTER_SECONDS;
+  if (duration <= staleAfter || globalDurationWarnings.has(duration)) return;
+
+  globalDurationWarnings.add(duration);
+  console.error(
+    `[simple-rate-limiter] Global rate-limit duration (${duration}s) exceeds pruning staleAfter (${staleAfter}s). Increase staleAfter to prevent pruning records that may still affect rate-limit decisions.`
+  );
 }
 
 function getRateLimitContext(event: H3Event, config: RateLimitConfig) {

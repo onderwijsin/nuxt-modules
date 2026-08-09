@@ -55,6 +55,19 @@ when a trusted proxy sanitizes the header and direct origin access is prevented.
 
 ## Global limits
 
+Global rate limiting is disabled by default. This keeps path-scoped limiting independent from the
+global storage namespace:
+
+```ts
+export default defineNuxtConfig({
+  simpleRateLimiter: {
+    global: {
+      enabled: true
+    }
+  }
+});
+```
+
 Use `enforceGlobalRateLimit` in middleware scoped to `/api`, before any path-scoped limiter:
 
 ```ts
@@ -63,6 +76,72 @@ await enforceRateLimit(event, { max: 5, duration: 60, ban: 900 });
 ```
 
 The request is counted once globally while still receiving the route-specific limit.
+
+Calling `enforceGlobalRateLimit` without enabling `simpleRateLimiter.global.enabled` is a
+configuration error. It logs an error once per runtime instance, does not write global storage, and
+does not enforce a global limit.
+
+### Optional pruning
+
+Global records can be pruned by Nitro's experimental task system. Pruning is disabled by default.
+The setup has three consumer-owned parts:
+
+1. Enable pruning in the module configuration.
+2. Create a task file that re-exports the module's handler.
+3. Enable Nitro tasks and map a cron expression to the task name.
+
+Enable pruning in `nuxt.config.ts`:
+
+```ts
+export default defineNuxtConfig({
+  simpleRateLimiter: {
+    global: {
+      enabled: true,
+      pruning: {
+        enabled: true,
+        staleAfter: 86400
+      }
+    }
+  }
+});
+```
+
+The module provides the handler but does not register or schedule the task. Create this file at
+`server/tasks/simple-rate-limiter/prune.ts` in the consumer application:
+
+```ts
+// server/tasks/simple-rate-limiter/prune.ts
+export { default } from "@onderwijsin/nuxt-simple-rate-limiter/runtime/prune-task";
+```
+
+The directory and filename determine the task name: `server/tasks/simple-rate-limiter/prune.ts`
+becomes `simple-rate-limiter:prune`. Add that exact name to `nitro.scheduledTasks`, and enable
+Nitro's experimental task support:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    experimental: { tasks: true },
+    scheduledTasks: {
+      "0 * * * *": ["simple-rate-limiter:prune"]
+    }
+  }
+});
+```
+
+The cron expression is owned by the consumer, so it can be changed without changing the module
+configuration. The task is run only when both `simpleRateLimiter.global.enabled` and
+`simpleRateLimiter.global.pruning.enabled` are `true`; otherwise the handler logs an error and does
+not modify storage. Nitro task support is experimental, so use this setup only on deployment targets
+that support Nitro tasks. If tasks are unavailable, leave pruning disabled or perform equivalent
+cleanup externally.
+
+Global durations are supplied per helper call and are not stored with each timestamp, so the task
+cannot derive an individual entry expiration. `staleAfter` is therefore a retention threshold, not
+an automatic margin added to every duration; it should be at least as long as any global rate-limit
+window or ban that must be preserved. When pruning is enabled, the module logs an error if it
+observes a global duration longer than `staleAfter`. The task reports scanned, pruned, and retained
+record counts without logging client IPs.
 
 ## Security boundary
 

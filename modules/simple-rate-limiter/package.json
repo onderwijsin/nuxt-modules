@@ -30,6 +30,10 @@
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js"
+    },
+    "./runtime/prune-task": {
+      "types": "./dist/runtime/tasks/prune.d.ts",
+      "import": "./dist/runtime/tasks/prune.js"
     }
   },
   "publishConfig": {

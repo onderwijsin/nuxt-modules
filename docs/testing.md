@@ -142,6 +142,16 @@ Run the complete unit test suite with:
 pnpm test
 ```
 
+Generate the CI coverage reports locally with:
+
+```sh
+pnpm test:coverage
+```
+
+Coverage uses the V8 provider and writes text, JSON summary, and Cobertura reports under
+`coverage/`. It includes module and package source files while excluding generated output,
+playgrounds, fixtures, and tests. Coverage has no thresholds and is observational only.
+
 Use watch mode while developing:
 
 ```sh

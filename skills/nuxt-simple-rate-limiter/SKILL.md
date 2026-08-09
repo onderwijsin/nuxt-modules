@@ -32,6 +32,69 @@ instances.
 
 For one quota across all API paths, call `enforceGlobalRateLimit` before route-specific checks.
 
+Global rate limiting is opt-in. Enable it in `nuxt.config.ts` before using the global helper:
+
+```ts
+export default defineNuxtConfig({
+  simpleRateLimiter: {
+    global: { enabled: true }
+  }
+});
+```
+
+Path-scoped limiting works without global storage. Calling `enforceGlobalRateLimit` while global
+limiting is disabled is a configuration error: it logs a prominent error once per runtime instance,
+does not write storage, and does not enforce a global limit.
+
+Optional stale-record pruning uses Nitro's experimental task support and is disabled by default.
+Consumer setup consists of enabling pruning, adding the task file, and scheduling the task. First
+enable pruning in `nuxt.config.ts`:
+
+```ts
+export default defineNuxtConfig({
+  simpleRateLimiter: {
+    global: {
+      enabled: true,
+      pruning: { enabled: true, staleAfter: 86400 }
+    }
+  }
+});
+```
+
+The module provides the task handler, but the consumer registers and schedules it. Add this exact
+file to the consumer project:
+
+```ts
+// server/tasks/simple-rate-limiter/prune.ts
+export { default } from "@onderwijsin/nuxt-simple-rate-limiter/runtime/prune-task";
+```
+
+Nitro derives the task name from the file path: this file is registered as
+`simple-rate-limiter:prune`. Enable Nitro's experimental task support and schedule that exact task
+name in `nuxt.config.ts`:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    experimental: { tasks: true },
+    scheduledTasks: {
+      "0 * * * *": ["simple-rate-limiter:prune"]
+    }
+  }
+});
+```
+
+The cron expression is controlled by the consumer. The handler runs cleanup only when both global
+limiting and pruning are enabled; otherwise it logs an error and leaves storage unchanged. Nitro
+tasks are experimental and must be supported by the deployment target. If they are not available,
+leave pruning disabled or clean the global storage through another scheduled mechanism.
+
+Global durations are supplied per helper call and are not stored with each timestamp, so
+`staleAfter` cannot be made an automatic margin over each entry expiration. It should cover the
+longest global window or ban that must remain effective. When pruning is enabled, the module logs an
+error if it observes a longer global duration. Deployments without task support can leave pruning
+disabled or clean the global storage externally.
+
 Client IP resolution does not trust `X-Forwarded-For` by default. Opt in per call only when a
 trusted reverse proxy sanitizes that header and prevents direct access to the origin:
 
