@@ -4,10 +4,7 @@ import { attempt, hasKey, isRecord, isString } from "@onderwijsin/nuxt-module-ut
 import {
   getCacheBaseFromKey,
   getCacheIndexKey,
-  getCacheIndexPrefix,
   getCacheMetadataKey,
-  getCacheWriteMarkerKey,
-  normalizeCacheBase,
   isInternalCacheKey
 } from "./keys";
 import type { CacheDriverOptions, CacheEntryMetadata } from "./types";
@@ -55,12 +52,10 @@ export function createCacheDriver(driver: Driver, options: CacheDriverOptions = 
     },
     async removeItem(key, transactionOptions) {
       const metadata = await readMetadata(driver, key, transactionOptions);
-      const writeMarker = await driver.getItem(getCacheWriteMarkerKey(key), transactionOptions);
       await driver.removeItem?.(key, transactionOptions);
       await driver.removeItem?.(getCacheMetadataKey(key), transactionOptions);
-      await driver.removeItem?.(getCacheWriteMarkerKey(key), transactionOptions);
       const base = getCacheBaseFromKey(key);
-      if (base && metadata?.path && (!metadata.writeId || metadata.writeId === writeMarker)) {
+      if (base && metadata?.path) {
         await driver.removeItem?.(getCacheIndexKey(base, metadata.path, key), transactionOptions);
       }
     },
@@ -75,35 +70,8 @@ export function createCacheDriver(driver: Driver, options: CacheDriverOptions = 
       const keys = await driver.getKeys(base, transactionOptions);
       // Invalidation intentionally queries the internal index prefix; normal consumers do not see it.
       return isInternalCacheKey(base ?? "") ? keys : keys.filter((key) => !isInternalCacheKey(key));
-    },
-    async clear(base, transactionOptions) {
-      const cacheBase = getClearCacheBase(base);
-      const valuePrefix = cacheBase ? `${cacheBase}:` : "";
-      const indexPrefix = getCacheIndexPrefix(cacheBase ?? undefined);
-      // Drivers such as memory do not apply the requested base, so filter before destructive work.
-      const valueKeys = (await driver.getKeys(valuePrefix, transactionOptions)).filter((key) =>
-        key.startsWith(valuePrefix)
-      );
-      const indexKeys = (await driver.getKeys(indexPrefix, transactionOptions)).filter((key) =>
-        key.startsWith(indexPrefix)
-      );
-      await Promise.all(
-        [...new Set([...valueKeys, ...indexKeys])].map((key) =>
-          driver.removeItem?.(key, transactionOptions)
-        )
-      );
     }
   };
-}
-
-/**
- * Validates the only supported scoped clear input: one complete cache base.
- * @param base - Unstorage clear prefix.
- * @returns A normalized cache base, or null for a complete cache-mount clear.
- */
-function getClearCacheBase(base: string | undefined): string | null {
-  if (!base) return null;
-  return normalizeCacheBase(base.endsWith(":") ? base.slice(0, -1) : base);
 }
 
 /**
@@ -149,11 +117,7 @@ async function readMetadata(
 
   return {
     version: 1,
-    path: parsed.data.path,
-    writeId:
-      hasKey(parsed.data, "writeId") && isString(parsed.data.writeId)
-        ? parsed.data.writeId
-        : undefined
+    path: parsed.data.path
   };
 }
 
@@ -177,17 +141,7 @@ async function writeCacheMetadata(
   const path = normalizeRequestPath(resolveRequestPath());
   if (!base || !path) return;
 
-  const writeId = crypto.randomUUID();
-  await driver.setItem(getCacheWriteMarkerKey(key), writeId, transactionOptions);
-  if ((await driver.getItem(getCacheWriteMarkerKey(key), transactionOptions)) !== writeId) return;
-
-  const metadata: CacheEntryMetadata = { version: 1, path, writeId };
+  const metadata: CacheEntryMetadata = { version: 1, path };
   await driver.setItem(getCacheMetadataKey(key), JSON.stringify(metadata), transactionOptions);
-  if ((await driver.getItem(getCacheWriteMarkerKey(key), transactionOptions)) !== writeId) return;
-
-  await driver.setItem(
-    getCacheIndexKey(base, path, key),
-    JSON.stringify({ key, writeId }),
-    transactionOptions
-  );
+  await driver.setItem(getCacheIndexKey(base, path, key), key, transactionOptions);
 }

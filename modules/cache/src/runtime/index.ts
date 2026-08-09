@@ -1,5 +1,5 @@
 export { createCacheDriver } from "./driver/cache";
-export { bulkDeleteCloudflareCacheKeys, createCloudflareCacheDriver } from "./driver/cloudflare";
+export { createCloudflareCacheDriver } from "./driver/cloudflare";
 export {
   getCacheBaseFromKey,
   getCacheIndexKey,

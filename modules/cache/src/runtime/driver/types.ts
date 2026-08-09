@@ -4,8 +4,6 @@ export interface CacheEntryMetadata {
   version: 1;
   /** Public request path that populated this cache entry. */
   path: string;
-  /** Unique association between this metadata/index pair and one cache-value write. */
-  writeId?: string;
 }
 
 /** Options for wrapping an Unstorage driver with cache metadata support. */

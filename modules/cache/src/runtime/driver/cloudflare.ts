@@ -1,7 +1,6 @@
 import { ofetch } from "ofetch";
 import type { Driver } from "unstorage";
 import { z } from "zod";
-import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";
 import { createCacheDriver } from "./cache";
 import { getCacheIndexPrefix, normalizeCacheBase } from "./keys";
 import type { CloudflareCacheDriverOptions } from "./types";
@@ -11,20 +10,12 @@ const cloudflareCredentialsSchema = z.strictObject({
   kvApiToken: z.string().trim().min(1),
   cacheNamespaceId: z.string().trim().min(1)
 });
-const CLOUDFLARE_BULK_DELETE_TIMEOUT_MS = 10_000;
 
 /** Shape returned by Cloudflare's KV bulk-delete endpoint. */
 interface CloudflareBulkDeleteResponse {
   errors?: Array<{ code?: number; message?: string }>;
   success: boolean;
 }
-
-const cloudflareBulkDeleteResponseSchema = z.object({
-  errors: z
-    .array(z.object({ code: z.number().optional(), message: z.string().optional() }))
-    .optional(),
-  success: z.boolean()
-});
 
 /**
  * Wraps a Cloudflare KV driver with metadata/index support and bulk clear operations.
@@ -59,12 +50,12 @@ export function createCloudflareCacheDriver(
 }
 
 /**
- * Bulk deletes keys from a Cloudflare KV namespace.
- * @param keys - Fully qualified KV keys to remove.
- * @param options - Cloudflare account and namespace credentials.
- * @returns Nothing once every Cloudflare bulk-delete request succeeds.
+ * Bulk deletes Cloudflare KV keys on behalf of the Cloudflare cache driver.
+ * @param keys - Fully qualified KV keys to delete.
+ * @param options - Server-only Cloudflare account and namespace credentials.
+ * @returns Nothing once all Cloudflare requests complete.
  */
-export async function bulkDeleteCloudflareCacheKeys(
+async function bulkDeleteCloudflareCacheKeys(
   keys: string[],
   options: Pick<CloudflareCacheDriverOptions, "accountId" | "kvApiToken" | "cacheNamespaceId">
 ): Promise<void> {
@@ -77,30 +68,10 @@ export async function bulkDeleteCloudflareCacheKeys(
   for (let index = 0; index < keys.length; index += 10_000) {
     const chunk = keys.slice(index, index + 10_000);
     const chunkNumber = index / 10_000 + 1;
-    const result = await attemptWithRetry(
-      async (): Promise<CloudflareBulkDeleteResponse> => {
-        const rawResponse = await client<unknown>(
-          `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
-          {
-            method: "POST",
-            body: chunk,
-            timeout: CLOUDFLARE_BULK_DELETE_TIMEOUT_MS
-          }
-        );
-        const parsedResponse = cloudflareBulkDeleteResponseSchema.safeParse(rawResponse);
-        if (!parsedResponse.success) {
-          throw new Error("Cloudflare returned an invalid bulk-delete response.");
-        }
-        return parsedResponse.data;
-      },
-      { attempts: 2, delayMs: 100, exponentialBackoff: false }
+    const response = await client<CloudflareBulkDeleteResponse>(
+      `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
+      { method: "POST", body: chunk }
     );
-    if (result.data === null) {
-      throw new Error(`Cloudflare KV bulk delete failed for chunk ${chunkNumber}.`, {
-        cause: result.error
-      });
-    }
-    const response = result.data;
     if (!response.success) {
       throw new Error(
         `Cloudflare KV bulk delete failed for chunk ${chunkNumber}: ${formatCloudflareErrors(response.errors)}`

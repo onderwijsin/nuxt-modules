@@ -1,19 +1,8 @@
 import type { Storage } from "unstorage";
 import { z } from "zod";
-import {
-  getCacheIndexPrefix,
-  getCacheMetadataKey,
-  getCacheWriteMarkerKey,
-  normalizeCacheBase
-} from "../../driver/keys";
+import { getCacheIndexPrefix, getCacheMetadataKey, normalizeCacheBase } from "../../driver/keys";
 
-const cacheIndexRecordSchema = z.union([
-  z
-    .string()
-    .min(1)
-    .transform((key) => ({ key })),
-  z.strictObject({ key: z.string().min(1), writeId: z.string().uuid() })
-]);
+const cacheIndexRecordSchema = z.string().min(1);
 
 /** One cache-domain invalidation target. */
 export interface CacheInvalidationTarget {
@@ -70,9 +59,8 @@ export async function invalidateCacheTargets(
       continue;
     }
 
-    await storage.removeItem(indexRecord.data.key);
-    await storage.removeItem(getCacheMetadataKey(indexRecord.data.key));
-    await storage.removeItem(getCacheWriteMarkerKey(indexRecord.data.key));
+    await storage.removeItem(indexRecord.data);
+    await storage.removeItem(getCacheMetadataKey(indexRecord.data));
     await storage.removeItem(indexKey);
     removed += 1;
   }
@@ -113,23 +101,16 @@ function matchesPath(path: string, targetPath: string, match: "exact" | "prefix"
 }
 
 /**
- * Checks that an index still points to the cache value's current metadata/write association.
+ * Checks that an index still points to the cache value's current route metadata.
  * @param storage - Cache storage mount.
- * @param indexRecord - Parsed index value.
+ * @param cacheKey - Parsed index value.
  * @param indexPath - Public route path decoded from the reverse-index key.
  * @returns Whether the index can safely delete its referenced cache value.
  */
 async function isCurrentIndexRecord(
   storage: Storage,
-  indexRecord: { key: string; writeId?: string },
+  cacheKey: string,
   indexPath: string
 ): Promise<boolean> {
-  const metadata = await storage.getMeta(indexRecord.key);
-  if (metadata?.path !== indexPath) return false;
-
-  if (!indexRecord.writeId) return true;
-  return (
-    metadata.writeId === indexRecord.writeId &&
-    (await storage.getItem(getCacheWriteMarkerKey(indexRecord.key))) === indexRecord.writeId
-  );
+  return (await storage.getMeta(cacheKey))?.path === indexPath;
 }

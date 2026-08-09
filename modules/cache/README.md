@@ -48,11 +48,9 @@ metadata:  kennisbank:articles:<suffix>$
 index:     __cache_meta:index:v1:kennisbank:articles:<encoded-path>:<encoded-key>
 ```
 
-`storage.getMeta(key)` returns the native driver metadata together with the cache metadata. The
-cache metadata currently contains `{ version: 1, path: "/public/route", writeId: "…" }`. `writeId`
-is an internal association marker that prevents stale indexes from deleting a newer value. The
-sidecar, marker, and index receive the same Unstorage options as the value, including TTL. Normal
-`removeItem()` operations remove all related records.
+`storage.getMeta(key)` returns the native driver metadata together with cache metadata:
+`{ version: 1, path: "/public/route" }`. The sidecar and index receive the same Unstorage options as
+the value, including TTL. Normal `removeItem()` operations remove all related records.
 
 ## Driver registration
 
@@ -141,9 +139,9 @@ export default defineNuxtConfig({
 ```
 
 `setItems()` writes the batch with the underlying driver and then records metadata/indexes for every
-cache value. Both wrappers implement a safe `clear()` for a complete cache base (or the whole cache
-mount): it removes values, sidecars, association markers, and reverse indexes together. Do not call
-`clear()` with a narrower arbitrary key prefix; cache-base clears must use `<group>:<name>`.
+cache value. The generic wrapper retains the underlying driver's `clear()` behavior. The Cloudflare
+wrapper customizes `clear()` because KV needs the provider bulk-delete API; use a complete
+`<group>:<name>` cache base when clearing a Cloudflare cache.
 
 ## Invalidation API
 
@@ -195,15 +193,6 @@ allows unauthenticated invalidation during development and logs a warning.
 The module stores its private server runtime values under `runtimeConfig.nuxtCache`. This namespace
 is reserved for the module; configure the public module options through the `cache` key shown above
 instead of setting `runtimeConfig.nuxtCache` directly.
-
-## Low-level Cloudflare bulk deletion
-
-`bulkDeleteCloudflareCacheKeys(keys, credentials)` is also exported from
-`@onderwijsin/nuxt-cache/runtime` for server-only maintenance code that already has fully qualified
-Cloudflare KV keys. It deletes raw keys in 10,000-key chunks with a 10-second request timeout. Each
-idempotent request is retried once after a short delay. This is destructive and bypasses cache
-metadata/index discovery, so prefer `createCloudflareCacheDriver` and `storage.clear(base)` for
-normal cache operations.
 
 ## Boundaries and troubleshooting
 

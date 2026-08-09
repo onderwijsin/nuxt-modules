@@ -3,6 +3,7 @@ import memoryDriver from "unstorage/drivers/memory";
 import { describe, expect, it } from "vitest";
 import {
   createCacheDriver,
+  getCacheBaseFromKey,
   getCacheIndexKey,
   getCacheMetadataKey,
   normalizeCacheBase
@@ -13,6 +14,9 @@ describe("cache runtime", () => {
   it("validates the route-rule cache base contract", () => {
     expect(normalizeCacheBase("kennisbank:articles")).toBe("kennisbank:articles");
     expect(() => normalizeCacheBase("kennisbank/articles")).toThrow("<group>:<name>");
+    expect(getCacheBaseFromKey("kennisbank:articles")).toBeNull();
+    expect(getCacheBaseFromKey("kennisbank:articles:")).toBeNull();
+    expect(getCacheBaseFromKey("kennisbank:articles:entry")).toBe("kennisbank:articles");
   });
 
   it("writes aligned metadata and a reverse path index, then cleans them on deletion", async () => {
@@ -28,7 +32,7 @@ describe("cache runtime", () => {
       version: 1,
       path: "/kennisbank/artikelen/example"
     });
-    expect(await storage.getItem(indexKey)).toMatchObject({ key });
+    expect(await storage.getItem(indexKey)).toBe(key);
     await storage.removeItem(key);
     expect(await storage.getItem(key)).toBeNull();
     expect(await storage.getItem(getCacheMetadataKey(key))).toBeNull();
@@ -48,12 +52,12 @@ describe("cache runtime", () => {
       { key: secondKey, value: { title: "Second" } }
     ]);
 
-    expect(
-      await storage.getItem(getCacheIndexKey("kennisbank:articles", path, firstKey))
-    ).toMatchObject({ key: firstKey });
-    expect(
-      await storage.getItem(getCacheIndexKey("kennisbank:articles", path, secondKey))
-    ).toMatchObject({ key: secondKey });
+    expect(await storage.getItem(getCacheIndexKey("kennisbank:articles", path, firstKey))).toBe(
+      firstKey
+    );
+    expect(await storage.getItem(getCacheIndexKey("kennisbank:articles", path, secondKey))).toBe(
+      secondKey
+    );
   });
 
   it("leaves a stale index harmless when a cache entry is overwritten from a different request path", async () => {
@@ -71,12 +75,12 @@ describe("cache runtime", () => {
       await storage.getItem(
         getCacheIndexKey("kennisbank:articles", "/kennisbank/artikelen/first", key)
       )
-    ).toMatchObject({ key });
+    ).toBe(key);
     expect(
       await storage.getItem(
         getCacheIndexKey("kennisbank:articles", "/kennisbank/artikelen/second", key)
       )
-    ).toMatchObject({ key });
+    ).toBe(key);
     expect(await storage.getMeta(key)).toMatchObject({
       version: 1,
       path: "/kennisbank/artikelen/second"
@@ -88,30 +92,6 @@ describe("cache runtime", () => {
       10
     );
     expect(await storage.getItem(key)).toEqual({ title: "Second" });
-  });
-
-  it("clears values and indexes before a key is reused for a different route", async () => {
-    const key = "kennisbank:articles:example:abc123";
-    let path = "/kennisbank/artikelen/old";
-    const driver = createCacheDriver(memoryDriver(), { getRequestPath: () => path });
-    const storage = createStorage({ driver });
-    await storage.setItem(key, { title: "Old" });
-    await storage.setItem("kennisbank:news:other:abc123", { title: "Other base" });
-
-    await driver.clear?.("kennisbank:articles", {});
-    path = "/kennisbank/artikelen/new";
-    await storage.setItem(key, { title: "New" });
-
-    const removed = await invalidateCacheTargets(
-      storage,
-      [{ base: "kennisbank:articles", path: "/kennisbank/artikelen/old", match: "exact" }],
-      10
-    );
-    expect(removed).toBe(0);
-    expect(await storage.getItem(key)).toEqual({ title: "New" });
-    expect(await storage.getItem("kennisbank:news:other:abc123")).toEqual({
-      title: "Other base"
-    });
   });
 
   it("invalidates prefix matches without crossing cache bases", async () => {

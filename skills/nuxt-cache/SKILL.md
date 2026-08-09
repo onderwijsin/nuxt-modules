@@ -72,16 +72,15 @@ For each cache value, the wrapped driver writes these aligned records:
 ```text
 value:     kennisbank:articles:<suffix>
 metadata:  kennisbank:articles:<suffix>$
-marker:    kennisbank:articles:<suffix>$__cache_write
 index:     __cache_meta:index:v1:kennisbank:articles:<encoded-path>:<encoded-key>
 ```
 
-The metadata sidecar is `{ version: 1, path: "/public/route", writeId: "…" }`.
-`storage.getMeta(key)` merges it with native driver metadata. `writeId` and the internal marker bind
-an index to the current cache-value write, so an old or concurrent index cannot delete a newer
-value. Value, metadata, marker, and index writes receive the same Unstorage options, including TTL.
-`removeItem(key)` removes the related internal records. Stale index records left by expiry,
-interrupted writes, or overwritten keys are removed lazily during invalidation.
+The metadata sidecar is `{ version: 1, path: "/public/route" }`; `storage.getMeta(key)` merges it
+with native driver metadata. Value, metadata, and index writes receive the same Unstorage options,
+including TTL. `removeItem(key)` removes the related internal records. During invalidation, the
+module verifies that the current metadata path equals the index path before deleting a value. A
+stale index left by expiry, an interrupted write, or a key reused for another route is removed
+without deleting the current value.
 
 ## Register a driver
 
@@ -166,14 +165,14 @@ export default defineNuxtConfig({
 });
 ```
 
-`kvApiToken` needs permission to delete keys from `cacheNamespaceId`. Every remote bulk-delete
-request has a 10-second timeout; failures identify the failed chunk without including credentials.
+`kvApiToken` needs permission to delete keys from `cacheNamespaceId`. The driver keeps these
+credentials inside the server-only Nitro driver module.
 
-Both wrappers implement safe `clear()` behavior: `clear("kennisbank:articles")` removes the base's
-values, metadata, markers, and reverse indexes together. `clear()` with no base clears the whole
-cache mount. Do not pass a narrower arbitrary key prefix; a scoped clear must be one complete
-`<group>:<name>` cache base. Both wrappers preserve `setItem()`, `setItems()`, `removeItem()`,
-`getMeta()`, and `getKeys()` behavior while hiding internal records from ordinary key listing.
+The generic wrapper preserves the underlying driver's `clear()` behavior. The Cloudflare wrapper
+customizes `clear()` to bulk-delete a complete `<group>:<name>` cache base's values, metadata, and
+reverse indexes (or the complete mount with no base). Both wrappers preserve `setItem()`,
+`setItems()`, `removeItem()`, `getMeta()`, and `getKeys()` behavior while hiding internal records
+from ordinary key listing.
 
 When writing cache entries outside a Nitro request, pass `getRequestPath` to `createCacheDriver` or
 `createCloudflareCacheDriver`. It must return the public route path associated with the write.
@@ -220,28 +219,6 @@ The endpoint reads only reverse-index records for the requested base. It never s
 `cache` mount or falls back to cache-key matching. It rejects invalid input with `400`, missing or
 invalid credentials with `401`, a disabled module with `404`, and an oversized matching selection
 with `413` before deleting entries.
-
-## Low-level Cloudflare bulk deletion
-
-`bulkDeleteCloudflareCacheKeys(keys, credentials)` is a supported server-only runtime export for
-maintenance code that already knows the exact Cloudflare KV keys to delete:
-
-```ts
-import { bulkDeleteCloudflareCacheKeys } from "@onderwijsin/nuxt-cache/runtime";
-
-await bulkDeleteCloudflareCacheKeys(["cache-key", "cache-key$"], {
-  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
-  kvApiToken: process.env.CLOUDFLARE_KV_API_TOKEN!,
-  cacheNamespaceId: process.env.CLOUDFLARE_CACHE_NAMESPACE_ID!
-});
-```
-
-It sends a Cloudflare KV REST bulk-delete request for every 10,000-key chunk, applies a 10-second
-timeout to each request, and retries each idempotent chunk once after 100 milliseconds. It throws
-contextual errors for timeouts, non-success responses, malformed responses, and later-chunk
-failures. It does not discover metadata, markers, or indexes, so callers must provide every raw key
-that should be deleted. Prefer the Cloudflare cache driver and `storage.clear(base)` whenever the
-target is a normal cache base.
 
 ## CMS and operational boundaries
 

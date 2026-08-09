@@ -1,6 +1,5 @@
 const INDEX_PREFIX = "__cache_meta:index:v1:";
 const METADATA_SUFFIX = "$";
-const WRITE_MARKER_SUFFIX = "$__cache_write";
 const CACHE_BASE_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 
 /**
@@ -23,15 +22,6 @@ export function normalizeCacheBase(value: string): string {
  */
 export function getCacheMetadataKey(key: string): string {
   return `${key}${METADATA_SUFFIX}`;
-}
-
-/**
- * Returns the internal marker used to prove a metadata/index write still belongs to the current value.
- * @param key - Concrete cache storage key.
- * @returns The write-association marker key.
- */
-export function getCacheWriteMarkerKey(key: string): string {
-  return `${key}${WRITE_MARKER_SUFFIX}`;
 }
 
 /**
@@ -60,11 +50,7 @@ export function getCacheIndexPrefix(base?: string): string {
  * @returns Whether the key is internal.
  */
 export function isInternalCacheKey(key: string): boolean {
-  return (
-    key.startsWith(INDEX_PREFIX) ||
-    key.endsWith(METADATA_SUFFIX) ||
-    key.endsWith(WRITE_MARKER_SUFFIX)
-  );
+  return key.startsWith(INDEX_PREFIX) || key.endsWith(METADATA_SUFFIX);
 }
 
 /**
@@ -77,5 +63,6 @@ export function getCacheBaseFromKey(key: string): string | null {
   if (!group || !name) return null;
 
   const base = `${group}:${name}`;
-  return CACHE_BASE_PATTERN.test(base) ? base : null;
+  const suffix = key.slice(base.length + 1);
+  return CACHE_BASE_PATTERN.test(base) && suffix ? base : null;
 }
