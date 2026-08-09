@@ -1,6 +1,7 @@
 import { ofetch } from "ofetch";
 import type { Driver } from "unstorage";
 import { z } from "zod";
+import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";
 import { createCacheDriver } from "./cache";
 import { getCacheIndexPrefix, normalizeCacheBase } from "./keys";
 import type { CloudflareCacheDriverOptions } from "./types";
@@ -76,26 +77,30 @@ export async function bulkDeleteCloudflareCacheKeys(
   for (let index = 0; index < keys.length; index += 10_000) {
     const chunk = keys.slice(index, index + 10_000);
     const chunkNumber = index / 10_000 + 1;
-    let response: CloudflareBulkDeleteResponse;
-    try {
-      const rawResponse = await client<unknown>(
-        `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
-        {
-          method: "POST",
-          body: chunk,
-          timeout: CLOUDFLARE_BULK_DELETE_TIMEOUT_MS
+    const result = await attemptWithRetry(
+      async (): Promise<CloudflareBulkDeleteResponse> => {
+        const rawResponse = await client<unknown>(
+          `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
+          {
+            method: "POST",
+            body: chunk,
+            timeout: CLOUDFLARE_BULK_DELETE_TIMEOUT_MS
+          }
+        );
+        const parsedResponse = cloudflareBulkDeleteResponseSchema.safeParse(rawResponse);
+        if (!parsedResponse.success) {
+          throw new Error("Cloudflare returned an invalid bulk-delete response.");
         }
-      );
-      const parsedResponse = cloudflareBulkDeleteResponseSchema.safeParse(rawResponse);
-      if (!parsedResponse.success) {
-        throw new Error("Cloudflare returned an invalid bulk-delete response.");
-      }
-      response = parsedResponse.data;
-    } catch (error) {
+        return parsedResponse.data;
+      },
+      { attempts: 2, delayMs: 100, exponentialBackoff: false }
+    );
+    if (result.data === null) {
       throw new Error(`Cloudflare KV bulk delete failed for chunk ${chunkNumber}.`, {
-        cause: error
+        cause: result.error
       });
     }
+    const response = result.data;
     if (!response.success) {
       throw new Error(
         `Cloudflare KV bulk delete failed for chunk ${chunkNumber}: ${formatCloudflareErrors(response.errors)}`

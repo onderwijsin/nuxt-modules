@@ -200,9 +200,10 @@ instead of setting `runtimeConfig.nuxtCache` directly.
 
 `bulkDeleteCloudflareCacheKeys(keys, credentials)` is also exported from
 `@onderwijsin/nuxt-cache/runtime` for server-only maintenance code that already has fully qualified
-Cloudflare KV keys. It deletes raw keys in 10,000-key chunks with a 10-second request timeout. This
-is destructive and bypasses cache metadata/index discovery, so prefer `createCloudflareCacheDriver`
-and `storage.clear(base)` for normal cache operations.
+Cloudflare KV keys. It deletes raw keys in 10,000-key chunks with a 10-second request timeout. Each
+idempotent request is retried once after a short delay. This is destructive and bypasses cache
+metadata/index discovery, so prefer `createCloudflareCacheDriver` and `storage.clear(base)` for
+normal cache operations.
 
 ## Boundaries and troubleshooting
 

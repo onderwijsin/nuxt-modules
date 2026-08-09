@@ -72,13 +72,14 @@ describe("Cloudflare cache driver", () => {
   });
 
   it("wraps malformed and failed Cloudflare responses with chunk context", async () => {
-    bulkDeleteRequest.mockResolvedValueOnce({});
+    bulkDeleteRequest.mockResolvedValueOnce({}).mockResolvedValueOnce({});
     await expect(bulkDeleteCloudflareCacheKeys(["first"], cloudflareCredentials)).rejects.toThrow(
       "chunk 1"
     );
 
     bulkDeleteRequest
       .mockResolvedValueOnce({ success: true })
+      .mockRejectedValueOnce(new Error("timeout"))
       .mockRejectedValueOnce(new Error("timeout"));
     await expect(
       bulkDeleteCloudflareCacheKeys(
@@ -87,6 +88,7 @@ describe("Cloudflare cache driver", () => {
       )
     ).rejects.toThrow("chunk 2");
 
+    bulkDeleteRequest.mockRejectedValueOnce(new Error("temporary provider failure"));
     await expect(
       bulkDeleteCloudflareCacheKeys(["recovered-after-failure"], cloudflareCredentials)
     ).resolves.toBeUndefined();
@@ -108,7 +110,9 @@ describe("Cloudflare cache driver", () => {
       title: "Example"
     });
     const driver = createCloudflareCacheDriver(rawDriver, cloudflareCredentials);
-    bulkDeleteRequest.mockRejectedValueOnce(new Error("provider unavailable"));
+    bulkDeleteRequest
+      .mockRejectedValueOnce(new Error("provider unavailable"))
+      .mockRejectedValueOnce(new Error("provider unavailable"));
 
     await expect(driver.clear?.("kennisbank:articles", {})).rejects.toThrow(
       "cache base kennisbank:articles"

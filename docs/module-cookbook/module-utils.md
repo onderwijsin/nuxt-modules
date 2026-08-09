@@ -77,13 +77,16 @@ return result.data;
 ```
 
 Inspect the error and rethrow or map it when the failure cannot safely be hidden from the caller.
+Use it for fallible local parsing as well as asynchronous operations, for example when a module
+needs to treat malformed persisted metadata as absent rather than throw.
 
 ## `attemptWithRetry`
 
 `attemptWithRetry` repeats an operation until it succeeds or reaches a bounded retry budget. It
 defaults to three total attempts, a 250 millisecond initial delay, and exponential backoff. Set
 `exponentialBackoff: false` for a fixed delay. Use it only for idempotent operations with transient
-failures.
+failures. For example, an HTTP bulk-delete operation may use a small retry budget when repeating the
+same request cannot create or corrupt additional records.
 
 ```ts
 import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";

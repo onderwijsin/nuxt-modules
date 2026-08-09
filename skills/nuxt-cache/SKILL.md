@@ -236,11 +236,12 @@ await bulkDeleteCloudflareCacheKeys(["cache-key", "cache-key$"], {
 });
 ```
 
-It sends a Cloudflare KV REST bulk-delete request for every 10,000-key chunk and applies a 10-second
-timeout to each request. It throws contextual errors for timeouts, non-success responses, malformed
-responses, and later-chunk failures. It does not discover metadata, markers, or indexes, so callers
-must provide every raw key that should be deleted. Prefer the Cloudflare cache driver and
-`storage.clear(base)` whenever the target is a normal cache base.
+It sends a Cloudflare KV REST bulk-delete request for every 10,000-key chunk, applies a 10-second
+timeout to each request, and retries each idempotent chunk once after 100 milliseconds. It throws
+contextual errors for timeouts, non-success responses, malformed responses, and later-chunk
+failures. It does not discover metadata, markers, or indexes, so callers must provide every raw key
+that should be deleted. Prefer the Cloudflare cache driver and `storage.clear(base)` whenever the
+target is a normal cache base.
 
 ## CMS and operational boundaries
 

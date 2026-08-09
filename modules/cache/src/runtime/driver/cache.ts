@@ -1,5 +1,6 @@
 import type { Driver, StorageMeta } from "unstorage";
 import { getContext } from "unctx";
+import { attempt, hasKey, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 import {
   getCacheBaseFromKey,
   getCacheIndexKey,
@@ -139,31 +140,21 @@ async function readMetadata(
   transactionOptions: Record<string, unknown> = {}
 ): Promise<CacheEntryMetadata | null> {
   const raw = await driver.getItem(getCacheMetadataKey(key), transactionOptions);
-  if (typeof raw !== "string") return null;
+  if (!isString(raw)) return null;
 
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "version" in parsed &&
-      "path" in parsed &&
-      parsed.version === 1 &&
-      typeof parsed.path === "string"
-    ) {
-      const writeId =
-        "writeId" in parsed && typeof parsed.writeId === "string" ? parsed.writeId : undefined;
-      return {
-        version: 1,
-        path: parsed.path,
-        writeId
-      };
-    }
-  } catch {
-    return null;
-  }
+  const parsed = await attempt<unknown>(() => JSON.parse(raw));
+  if (parsed.error !== null || !isRecord(parsed.data)) return null;
+  if (!hasKey(parsed.data, "version") || !hasKey(parsed.data, "path")) return null;
+  if (parsed.data.version !== 1 || !isString(parsed.data.path)) return null;
 
-  return null;
+  return {
+    version: 1,
+    path: parsed.data.path,
+    writeId:
+      hasKey(parsed.data, "writeId") && isString(parsed.data.writeId)
+        ? parsed.data.writeId
+        : undefined
+  };
 }
 
 /**
