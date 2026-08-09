@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-cache",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Cache metadata indexing and targeted invalidation for Nitro storage.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

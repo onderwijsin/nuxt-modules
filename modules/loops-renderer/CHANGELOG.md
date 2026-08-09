@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.5
+
+### Patch Changes
+
+- 132746b: Centralize conditional module dependency registration and apply the shared enablement contract
+  consistently across the affected modules.
+- Updated dependencies [438e854]
+- Updated dependencies [132746b]
+  - @onderwijsin/nuxt-module-utils@0.2.0
+
 ## 0.2.4
 
 ### Patch Changes

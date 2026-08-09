@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+- 8c84b5d: Harden newsletter signup list authorization and Mailchimp member upserts, and prevent provider or
+  external error details from exposing sensitive data in server logs.
+- 438e854: Add shared primitive runtime guards, including `isFunction`, and migrate repeated module-local checks to the new API.
+- c19384b: Preserve prefixed deployments in health checks and web manifests, make disabled newsletter signup
+  inert, and namespace and harden theme customizer routes, components, palettes, and controls.
+- 132746b: Centralize conditional module dependency registration and apply the shared enablement contract
+  consistently across the affected modules.
+- 40c6668: Add global per-IP rate limiting and make exceeded limits consistently throw 429 errors with a
+  `bannedUntil` timestamp and active limit configuration.
+- Updated dependencies [438e854]
+- Updated dependencies [132746b]
+- Updated dependencies [40c6668]
+  - @onderwijsin/nuxt-module-utils@0.2.0
+  - @onderwijsin/nuxt-simple-rate-limiter@0.3.0
+
 ## 1.0.2
 
 ### Patch Changes

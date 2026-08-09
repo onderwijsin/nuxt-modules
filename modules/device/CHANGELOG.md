@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+- 8364cdb: Validate device module options with the module option schema.
+- Updated dependencies [438e854]
+- Updated dependencies [132746b]
+  - @onderwijsin/nuxt-module-utils@0.2.0
+
 ## 1.0.2
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.5
+
+### Patch Changes
+
+- 438e854: Add shared primitive runtime guards, including `isFunction`, and migrate repeated module-local checks to the new API.
+- c19384b: Preserve prefixed deployments in health checks and web manifests, make disabled newsletter signup
+  inert, and namespace and harden theme customizer routes, components, palettes, and controls.
+- 132746b: Centralize conditional module dependency registration and apply the shared enablement contract
+  consistently across the affected modules.
+- Updated dependencies [438e854]
+- Updated dependencies [132746b]
+  - @onderwijsin/nuxt-module-utils@0.2.0
+
 ## 0.2.4
 
 ### Patch Changes
