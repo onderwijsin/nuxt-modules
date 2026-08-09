@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 4c70ca0: Harden public theme endpoints with configurable rate limits and validated, cached ColorFYI requests.
+
+### Patch Changes
+
+- 7e46f91: Synchronize module documentation and consumer skills with the current implementation.
+- 5e3b6fb: Allow the theme customizer to use any installed version of the internal rate limiter module.
+- Updated dependencies [7cb45c8]
+- Updated dependencies [4c70ca0]
+- Updated dependencies [76cb9d0]
+- Updated dependencies [4810903]
+- Updated dependencies [4c70ca0]
+  - @onderwijsin/nuxt-module-utils@0.2.1
+  - @onderwijsin/nuxt-simple-rate-limiter@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

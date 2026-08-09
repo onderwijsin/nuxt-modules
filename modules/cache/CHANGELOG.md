@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 7cb45c8: Share administrator authentication between cache invalidation and storage administration.
+- 4c70ca0: Validate Cloudflare KV bulk-delete responses and bound requests with a timeout.
+- Updated dependencies [7cb45c8]
+  - @onderwijsin/nuxt-module-utils@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

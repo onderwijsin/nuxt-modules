@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.4
+
+### Patch Changes
+
+- 4c70ca0: Align newsletter signup consumer documentation with the current normalized error contract.
+- 4c70ca0: Add lenient maximum lengths to newsletter signup payload fields.
+- 7e46f91: Synchronize module documentation and consumer skills with the current implementation.
+- 5e3b6fb: Declare the internal rate limiter as a Nuxt module dependency without restricting its version.
+- Updated dependencies [7cb45c8]
+- Updated dependencies [4c70ca0]
+- Updated dependencies [76cb9d0]
+- Updated dependencies [4810903]
+- Updated dependencies [4c70ca0]
+  - @onderwijsin/nuxt-module-utils@0.2.1
+  - @onderwijsin/nuxt-simple-rate-limiter@0.4.0
+
 ## 1.0.3
 
 ### Patch Changes

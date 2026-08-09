@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 76cb9d0: Move Nitro pruning task registration and scheduling to consumers while providing a reusable task handler.
+- 4810903: Make global rate-limit storage opt-in and add optional Nitro pruning for stale global records.
+
+### Patch Changes
+
+- 4c70ca0: Return the active rolling-window expiry when global limiting has no explicit ban.
+- 4c70ca0: Make forwarded client IP trust opt-in and document the deployment security boundary.
+
 ## 0.3.0
 
 ### Minor Changes
