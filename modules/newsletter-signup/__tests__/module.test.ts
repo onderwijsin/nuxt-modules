@@ -90,7 +90,8 @@ describe("newsletter signup module setup", () => {
     const dependencies = module.moduleDependencies;
 
     expect(dependencies({ options: {} })).toMatchObject({
-      "@nuxt/ui": { version: ">=4.0.0" }
+      "@nuxt/ui": { version: ">=4.0.0" },
+      "@onderwijsin/nuxt-simple-rate-limiter": { version: "*" }
     });
     expect(dependencies({ options: { newsletterSignup: false } })).toEqual({});
     expect(dependencies({ options: { newsletterSignup: { enabled: false } } })).toEqual({});

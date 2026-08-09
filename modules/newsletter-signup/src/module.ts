@@ -37,7 +37,8 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: DEFAULTS,
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.newsletterSignup, {
-      "@nuxt/ui": { version: ">=4.0.0" }
+      "@nuxt/ui": { version: ">=4.0.0" },
+      "@onderwijsin/nuxt-simple-rate-limiter": { version: "*" }
     }),
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
