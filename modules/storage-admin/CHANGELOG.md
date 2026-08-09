@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 7cb45c8: Share administrator authentication between cache invalidation and storage administration.
+- 7e46f91: Synchronize module documentation and consumer skills with the current implementation.
+- Updated dependencies [7cb45c8]
+  - @onderwijsin/nuxt-module-utils@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

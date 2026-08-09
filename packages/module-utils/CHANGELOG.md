@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 7cb45c8: Share administrator authentication between cache invalidation and storage administration.
+
 ## 0.2.0
 
 ### Minor Changes
