@@ -128,6 +128,8 @@ This project contains various private packages as internal dependencies.
 - [`docs/module-cookbook/package-anatomy.md`](docs/module-cookbook/package-anatomy.md) —
   authoritative module cookbook.
 - [`docs/contributing.md`](docs/contributing.md) — contributor workflow.
+- [`docs/security.md`](docs/security.md) — Dependabot, CodeQL, and GitHub Actions security
+  expectations.
 - [`docs/workspace.md`](docs/workspace.md) — workspace, tools, and commands.
 - [`docs/testing.md`](docs/testing.md) — Vitest implementation and patterns.
 - [`docs/publishing.md`](docs/publishing.md) — release checks and publishing.
