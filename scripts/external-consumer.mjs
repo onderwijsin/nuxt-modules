@@ -81,9 +81,9 @@ writeFileSync(
 );
 
 console.log(`Installing packed packages into ${consumerDirectory}`);
-run("corepack", ["pnpm", "install", "--no-frozen-lockfile"]);
-run("corepack", ["pnpm", "exec", "nuxt", "prepare"]);
-run("corepack", ["pnpm", "exec", "nuxt", "build"]);
+run("pnpm", ["install", "--no-frozen-lockfile"]);
+run("pnpm", ["exec", "nuxt", "prepare"]);
+run("pnpm", ["exec", "nuxt", "build"]);
 
 const port = 31_000 + Math.floor(Math.random() * 1_000);
 const server = spawn("node", [".output/server/index.mjs"], {
