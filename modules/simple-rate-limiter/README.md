@@ -55,6 +55,19 @@ when a trusted proxy sanitizes the header and direct origin access is prevented.
 
 ## Global limits
 
+Global rate limiting is disabled by default. This keeps path-scoped limiting independent from the
+global storage namespace:
+
+```ts
+export default defineNuxtConfig({
+  simpleRateLimiter: {
+    global: {
+      enabled: true
+    }
+  }
+});
+```
+
 Use `enforceGlobalRateLimit` in middleware scoped to `/api`, before any path-scoped limiter:
 
 ```ts
@@ -63,6 +76,44 @@ await enforceRateLimit(event, { max: 5, duration: 60, ban: 900 });
 ```
 
 The request is counted once globally while still receiving the route-specific limit.
+
+Calling `enforceGlobalRateLimit` without enabling `simpleRateLimiter.global.enabled` is a
+configuration error. It logs an error once per runtime instance, does not write global storage, and
+does not enforce a global limit.
+
+### Optional pruning
+
+Global records can be pruned by Nitro's experimental task system, but this is disabled by default
+and should only be enabled on deployment targets that support Nitro tasks:
+
+```ts
+export default defineNuxtConfig({
+  simpleRateLimiter: {
+    global: {
+      enabled: true,
+      pruning: {
+        enabled: true,
+        cron: "0 * * * *",
+        staleAfter: 86400
+      }
+    }
+  },
+  nitro: {
+    experimental: {
+      tasks: true
+    }
+  }
+});
+```
+
+The module registers `simple-rate-limiter:prune` with the configured cron schedule only when pruning
+is explicitly enabled. Global durations are supplied per helper call and are not stored with each
+timestamp, so the task cannot derive an individual entry expiration. `staleAfter` is therefore a
+retention threshold, not an automatic margin added to every duration; it should be at least as long
+as any global rate-limit window or ban that must be preserved. When pruning is enabled, the module
+logs an error if it observes a global duration longer than `staleAfter`. The task reports scanned,
+pruned, and retained record counts without logging client IPs. Deployments without Nitro task
+support can leave pruning disabled or perform equivalent cleanup externally.
 
 ## Security boundary
 
