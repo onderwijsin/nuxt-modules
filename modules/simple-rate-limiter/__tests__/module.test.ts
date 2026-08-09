@@ -49,6 +49,10 @@ describe("simple rate limiter module", () => {
     expect(addTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "tasks/simple-rate-limiter-prune.mjs", write: true })
     );
+    const taskTemplate = addTemplate.mock.calls[0]?.[0];
+    expect(taskTemplate.getContents()).toBe(
+      'export { default } from "./runtime/tasks/prune.js";\n'
+    );
     expect(hook).toHaveBeenCalledWith("nitro:config", expect.any(Function));
     const configureNitro = hook.mock.calls[0]?.[1];
     const nitroConfig = {

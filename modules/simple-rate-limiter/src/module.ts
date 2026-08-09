@@ -56,7 +56,7 @@ export default defineNuxtModule<ModuleOptions>({
       filename: "tasks/simple-rate-limiter-prune.mjs",
       write: true,
       getContents: () =>
-        `export { default } from ${JSON.stringify(resolver.resolve(runtimeDir, "tasks/prune"))};\n`
+        `export { default } from ${JSON.stringify(resolver.resolve(runtimeDir, "tasks/prune.js"))};\n`
     });
 
     nuxt.hook("nitro:config", (nitroConfig) => {
