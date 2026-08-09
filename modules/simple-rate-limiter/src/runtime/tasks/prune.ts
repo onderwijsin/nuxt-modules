@@ -10,6 +10,16 @@ export default defineTask({
   },
   async run() {
     const config = useRuntimeConfig();
+    if (
+      config.simpleRateLimiter?.global?.enabled !== true ||
+      config.simpleRateLimiter?.global?.pruning?.enabled !== true
+    ) {
+      console.error(
+        "[simple-rate-limiter] The pruning task is disabled; enable simpleRateLimiter.global.enabled and simpleRateLimiter.global.pruning.enabled before registering it."
+      );
+      return { result: { scanned: 0, pruned: 0, retained: 0 } };
+    }
+
     const staleAfter =
       config.simpleRateLimiter?.global?.pruning?.staleAfter ?? DEFAULT_STALE_AFTER_SECONDS;
     const summary = await pruneGlobalRateLimitStorage(staleAfter);

@@ -7,9 +7,14 @@ export default defineNuxtConfig({
       enabled: true,
       pruning: {
         enabled: true,
-        cron: "*/10 * * * * *",
         staleAfter: 5
       }
+    }
+  },
+  nitro: {
+    experimental: { tasks: true },
+    scheduledTasks: {
+      "*/10 * * * * *": ["simple-rate-limiter:prune"]
     }
   }
 });

@@ -8,7 +8,6 @@ export const simpleRateLimiterOptionsSchema = z.strictObject({
       pruning: z
         .strictObject({
           enabled: z.boolean().optional(),
-          cron: z.string().trim().min(1).optional(),
           staleAfter: z.number().int().positive().optional()
         })
         .optional()
