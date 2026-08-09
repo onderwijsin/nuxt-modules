@@ -44,6 +44,43 @@ describe("newsletter signup option shape", () => {
     expect(result.success).toBe(false);
   });
 
+  it.each(["mailchimp.example.com", "https://us4.api.mailchimp.com", "us-4", " us4 "])(
+    "rejects an invalid Mailchimp server value: %s",
+    (server) => {
+      const result = optionsSchema.safeParse({
+        provider: "mailchimp",
+        apiKey: "mailchimp-key",
+        server,
+        lists: { default: "audience" }
+      });
+
+      expect(result.success).toBe(false);
+    }
+  );
+
+  it("accepts a Mailchimp server prefix with a numeric datacenter", () => {
+    const result = optionsSchema.safeParse({
+      provider: "mailchimp",
+      apiKey: "mailchimp-key",
+      server: "us21",
+      lists: { default: "audience" }
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("validates per-audience Mailchimp server prefixes", () => {
+    const result = optionsSchema.safeParse({
+      provider: "mailchimp",
+      apiKey: "mailchimp-key",
+      lists: {
+        options: [{ label: "Audience", id: "audience", server: "https://us21" }]
+      }
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects an endpoint URL that is neither relative nor HTTP(S)", () => {
     const result = optionsSchema.safeParse({
       endpoint: { enabled: false, url: "javascript:alert(1)" }

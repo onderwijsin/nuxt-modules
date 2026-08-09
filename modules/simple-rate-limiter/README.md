@@ -3,6 +3,10 @@
 Small server-side, per-IP rate limiting for Nuxt 4 endpoints. Limits are stored in Nitro storage and
 can be scoped to one request path or shared across all paths.
 
+> **Important:** This is a **best-effort rate limiter**, not a hard security boundary. Use it only
+> where approximate enforcement is acceptable; concurrent or distributed requests can exceed the
+> configured limit.
+
 ## Installation
 
 ```sh
@@ -145,12 +149,16 @@ record counts without logging client IPs.
 
 ## Security boundary
 
-This module is deliberately simple. It is useful for lightweight endpoint protection and developer
-convenience, but it is not a complete production security control: application storage operations
-may not be globally atomic, and deployment topology, proxy trust, and distributed traffic policies
-remain outside its scope. For security-critical or high-traffic production applications, enforce
-rate limiting at infrastructure level—for example through a CDN, WAF, API gateway, load balancer, or
-a dedicated distributed rate-limiting service.
+This module is a **best-effort rate limiter**, intended for low-risk abuse reduction and traffic
+shaping where approximate enforcement is acceptable. It is **not a hard security boundary**: the
+configured limit can be exceeded when concurrent or distributed requests perform non-atomic storage
+read/modify/write operations.
+
+Do not use it as the sole protection for authentication attempts, password resets, account recovery,
+enumeration prevention, expensive privileged operations, or other security-sensitive flows that
+require strict enforcement. Use a rate limiter backed by atomic operations such as Redis/Valkey
+`INCR`, Lua, transactions, or another purpose-built implementation. For high-traffic deployments,
+also consider infrastructure-level controls such as a CDN, WAF, API gateway, or load balancer.
 
 ## Compatibility
 

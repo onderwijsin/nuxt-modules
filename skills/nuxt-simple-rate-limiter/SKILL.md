@@ -10,6 +10,10 @@ description:
 Use `@onderwijsin/nuxt-simple-rate-limiter` in Nitro server handlers that need a small per-IP rate
 limit.
 
+> **Important:** This is a **best-effort rate limiter**, not a hard security boundary. Use it only
+> where approximate enforcement is acceptable; concurrent or distributed requests can exceed the
+> configured limit.
+
 ```sh
 pnpm add @onderwijsin/nuxt-simple-rate-limiter
 ```
@@ -108,6 +112,13 @@ trusted reverse proxy sanitizes that header and prevents direct access to the or
 When disabled, H3 uses the runtime-provided client address or socket address. If `ban` is `0`,
 `bannedUntil` is the end of the active window.
 
-This module is intentionally simple. Use infrastructure-level rate limiting (such as a CDN, WAF, API
-gateway, load balancer, or dedicated distributed limiter) when rate limiting is a production
-security requirement.
+This is a **best-effort rate limiter** for low-risk abuse reduction and traffic shaping where
+approximate enforcement is acceptable. It is **not a hard security boundary**: concurrent or
+distributed requests can exceed the configured limit because storage read/modify/write operations
+are not atomic.
+
+Do not rely on it as the sole protection for authentication attempts, password resets, account
+recovery, enumeration prevention, expensive privileged operations, or any other security-sensitive
+flow requiring strict enforcement. Use Redis/Valkey `INCR`, Lua, transactions, or another
+purpose-built atomic limiter for those cases. Infrastructure-level controls such as a CDN, WAF, API
+gateway, or load balancer may also be appropriate.

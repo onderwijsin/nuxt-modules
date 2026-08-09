@@ -23,6 +23,10 @@ const list = z.object({
   id: z.string().trim().min(1)
 });
 
+const mailchimpServer = z
+  .string()
+  .regex(/^us\d+$/, { error: "must be a Mailchimp server prefix such as us21" });
+
 const commonOptionsShape = {
   enabled,
   apiKey: z.string().optional(),
@@ -52,14 +56,14 @@ const loopsOptionsSchema = z.strictObject({
 const mailchimpOptionsSchema = z.strictObject({
   ...commonOptionsShape,
   provider: z.literal("mailchimp"),
-  server: z.string().trim().min(1).optional(),
+  server: mailchimpServer.optional(),
   lists: z
     .object({
       default: z.string().trim().min(1).optional(),
       options: z
         .array(
           list.extend({
-            server: z.string().trim().min(1)
+            server: mailchimpServer
           })
         )
         .min(1)

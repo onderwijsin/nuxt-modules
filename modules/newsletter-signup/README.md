@@ -33,7 +33,9 @@ export default defineNuxtConfig({
 The consumer must provide `apiKey`. It is used by the server runtime and is never exposed to the
 client. The module does not choose, load, or manage credentials for the consumer.
 
-When using Mailchimp, provide the `server` value associated with each configured audience. A
+When using Mailchimp, provide the `server` value associated with each configured audience. This must
+be the Mailchimp server prefix in the format `us` followed by one or more digits, such as `us4` or
+`us21`; hostnames, URLs, paths, whitespace, and other formats are rejected during module setup. A
 top-level `server` is available as a fallback for a single audience or configurations where all
 audiences share one server. For example:
 
@@ -60,7 +62,7 @@ export default defineNuxtConfig({
 ```
 
 For Mailchimp, `server` belongs to the audience configuration. The selected list option’s server is
-used for that request; `us4` and `us5` are only examples.
+used for that request; `us4` and `us5` are only examples of valid server prefixes.
 
 ### Cloudflare Workers
 
