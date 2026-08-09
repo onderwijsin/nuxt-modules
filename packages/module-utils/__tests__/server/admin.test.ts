@@ -1,13 +1,6 @@
-import { IncomingMessage, ServerResponse } from "node:http";
-import { Socket } from "node:net";
-import { createEvent } from "h3";
 import { describe, expect, it } from "vitest";
+import { createTestEvent } from "../../../test-utils/src";
 import { assertAdminAccess, isDevelopmentAuthBypassEnabled } from "../../src/server";
-
-function createTestEvent() {
-  const request = new IncomingMessage(new Socket());
-  return createEvent(request, new ServerResponse(request));
-}
 
 describe("administrator authentication", () => {
   it("requires a valid token outside development bypass mode", () => {

@@ -1,9 +1,9 @@
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { $fetch, setup } from "@nuxt/test-utils/e2e";
+import { $fetch } from "@nuxt/test-utils/e2e";
+import { setupFixture } from "../../../packages/test-utils/src";
 
 describe("webmanifest module", async () => {
-  await setup({ rootDir: fileURLToPath(new URL("./fixtures/basic", import.meta.url)) });
+  await setupFixture(import.meta.url);
 
   it("serves the generated manifest and links it from the document head", async () => {
     const manifest = await $fetch<Record<string, unknown>>("/app.webmanifest");

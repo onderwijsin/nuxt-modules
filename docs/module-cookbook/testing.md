@@ -11,3 +11,6 @@ coverage for its own sake.
 
 See the dedicated [testing guide](../testing.md) for test utilities, detailed patterns, locations,
 and commands.
+
+Shared test infrastructure belongs in the private [`test-utils` package](test-utils.md). Use its
+fixture and H3-event helpers when they apply, and keep module-specific test behavior local.

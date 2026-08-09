@@ -1,54 +1,39 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { $fetch, fetch, setup } from "@nuxt/test-utils/e2e";
+import { $fetch, fetch } from "@nuxt/test-utils/e2e";
+import { resolveFixture, setupFixture } from "../../../packages/test-utils/src";
+import { packPackage } from "./helpers/pack-package";
 
 const ARTICLE_PATH = "/kennisbank/artikelen/example-slug";
-const moduleRoot = fileURLToPath(new URL("../", import.meta.url));
-const fixtureRoot = fileURLToPath(new URL("./fixtures/e2e", import.meta.url));
-const packedOutputDirectory = mkdtempSync(join(tmpdir(), "nuxt-cache-e2e-pack-"));
+const moduleRoot = new URL("../", import.meta.url);
+const fixtureRoot = resolveFixture(import.meta.url, "e2e");
 const packedModuleDirectory = join(fixtureRoot, "node_modules", "@onderwijsin", "nuxt-cache");
+const packedPackage = packPackage(fileURLToPath(moduleRoot), "nuxt-cache-e2e-pack-");
 const invalidationBody = {
   targets: [{ base: "kennisbank:articles", path: ARTICLE_PATH, match: "exact" }]
 };
 
 /** Packs the module and installs its tarball at the e2e fixture's package-resolution boundary. */
 function preparePackedModuleFixture(): void {
-  execFileSync("corepack", ["pnpm", "pack", "--pack-destination", packedOutputDirectory], {
-    cwd: moduleRoot,
-    stdio: "pipe"
-  });
-  const [tarball] = readdirSync(packedOutputDirectory).filter((file) => file.endsWith(".tgz"));
-  if (!tarball) throw new Error("Expected pnpm pack to create a cache module tarball.");
-
   rmSync(packedModuleDirectory, { force: true, recursive: true });
   mkdirSync(packedModuleDirectory, { recursive: true });
   execFileSync(
     "tar",
-    [
-      "-xzf",
-      join(packedOutputDirectory, tarball),
-      "--strip-components=1",
-      "-C",
-      packedModuleDirectory
-    ],
+    ["-xzf", packedPackage.tarballPath, "--strip-components=1", "-C", packedModuleDirectory],
     { stdio: "pipe" }
   );
 }
 
 describe("cache module end to end", async () => {
   preparePackedModuleFixture();
-  await setup({
-    rootDir: fixtureRoot,
-    dev: false
-  });
+  await setupFixture(import.meta.url, "e2e", { dev: false });
 
   afterAll(() => {
     rmSync(packedModuleDirectory, { force: true, recursive: true });
-    rmSync(packedOutputDirectory, { force: true, recursive: true });
+    packedPackage.cleanup();
   });
 
   it("creates indexed metadata, invalidates it, and creates a fresh entry on the next public request", async () => {

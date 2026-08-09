@@ -17,6 +17,8 @@
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "catalog:",
+    "h3": "catalog:",
     "typescript": "catalog:"
   }
 }

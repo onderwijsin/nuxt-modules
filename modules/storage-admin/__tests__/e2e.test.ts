@@ -1,14 +1,11 @@
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { $fetch, fetch, setup } from "@nuxt/test-utils/e2e";
+import { $fetch, fetch } from "@nuxt/test-utils/e2e";
+import { setupFixture } from "../../../packages/test-utils/src";
 
 const adminHeaders = { "x-admin-token": "fixture-admin-token" };
 
 describe("storage-admin module in production", async () => {
-  await setup({
-    rootDir: fileURLToPath(new URL("./fixtures/production", import.meta.url)),
-    dev: false
-  });
+  await setupFixture(import.meta.url, "production", { dev: false });
 
   it("renders the fixture through SSR but does not register the development browser", async () => {
     await expect($fetch<string>("/")).resolves.toContain("Storage admin production fixture");

@@ -1,11 +1,9 @@
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { fetch, setup } from "@nuxt/test-utils/e2e";
+import { fetch } from "@nuxt/test-utils/e2e";
+import { setupFixture } from "../../../packages/test-utils/src";
 
 describe("turnstile module in production", async () => {
-  await setup({
-    rootDir: fileURLToPath(new URL("./fixtures/production", import.meta.url))
-  });
+  await setupFixture(import.meta.url, "production");
 
   it("rejects requests when the production secret is missing", async () => {
     const response = await fetch("/api/turnstile/validate", {
