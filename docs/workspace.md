@@ -91,6 +91,28 @@ pnpm build
 pnpm validate:packages
 ```
 
+### External consumer validation
+
+Validate packed modules from outside the workspace by building the packages first, packing them into
+a temporary artifact directory, and installing those exact archives into a clean Nuxt application:
+
+```sh
+pnpm build:utils
+pnpm dev:prepare
+pnpm build
+pnpm pack:packages /tmp/nuxt-external-artifacts
+pnpm validate:external-consumer --packages-dir=/tmp/nuxt-external-artifacts
+```
+
+The consumer is created under the system temporary directory, installs all public package tarballs,
+runs `nuxt prepare` and `nuxt build`, starts the Nitro server, and checks both the rendered root
+page, healthcheck routes, generated assets, protected local routes, and selected public runtime
+APIs. Generated pnpm overrides force internal package dependencies to use the matching local
+tarballs instead of a registry copy. The fixture uses dummy service credentials and does not call
+external services. Pull request CI runs this same consumer validation after package artifacts are
+produced, and the publish workflow runs it against the exact artifacts immediately before the
+unchanged Changesets publish step.
+
 The root `build` script follows workspace dependency order for `packages/*` and `modules/*`; it does
 not run playground package build scripts. The recursive `typecheck` script also includes
 playgrounds. Package validation checks publishable metadata and confirms that private workspace

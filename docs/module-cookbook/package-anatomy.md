@@ -52,6 +52,13 @@ The packed tarball, rather than a workspace symlink, is the release source of tr
 retain private workspace imports. Publish a CSS `style` export when the module exposes runtime
 Tailwind classes; see [module entrypoint](module-entrypoint.md#runtime-css).
 
+Every publishable module must also be represented in the external consumer fixture at
+`scripts/fixtures/external-consumer`. When adding a module, register it there with safe dummy
+configuration and add at least one local sanity assertion for its public behavior or exports. Keep
+service credentials synthetic and ensure the assertion cannot call an external service. Run
+`pnpm pack:packages` followed by `pnpm validate:external-consumer` to verify the packed module in a
+clean application.
+
 ### Runtime subpath exports
 
 When a module exposes a consumer-facing server or runtime helper in addition to its Nuxt module

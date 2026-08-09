@@ -52,18 +52,9 @@ jobs:
       - run: pnpm build
       - run: pnpm validate:packages
       - name: Validate packed modules
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/packages"
-          for package in packages/*/package.json modules/*/package.json; do
-            name=$(node -p "require('./$package').name")
-            private=$(node -p "require('./$package').private === true")
-            [ "$private" = "true" ] && continue
-            archive=$(pnpm --filter "$name" pack --pack-destination "$RUNNER_TEMP/packages" --json | node -e 'let s=""; process.stdin.on("data", c => s += c).on("end", () => process.stdout.write(JSON.parse(s).filename))')
-            node scripts/check-packed-package.mjs "$archive"
-            pnpm exec publint "$(dirname "$package")"
-          done
+        run: pnpm pack:packages "$RUNNER_TEMP/packages"
+      - name: Validate external Nuxt consumer
+        run: pnpm validate:external-consumer --packages-dir="${RUNNER_TEMP}/packages"
       - name: Publish packages
         id: changesets
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1

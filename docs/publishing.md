@@ -42,8 +42,9 @@ requiring another Changeset.
 
 After the `changeset-release/main` pull request is merged to `main`, `publish.yml` runs
 automatically. It builds the merged packages, validates their publish metadata and packed artefacts,
-and runs Changesets publish. Changesets only publishes package versions that are part of the release
-and are not already published.
+validates those exact packed artefacts in the external Nuxt consumer, and then runs Changesets
+publish. Changesets only publishes package versions that are part of the release and are not already
+published. The Changesets publish flow itself is unchanged.
 
 When publishing succeeds, the action creates the package-specific Changesets git tags and a GitHub
 Release for each tag. Re-running the workflow is safe: already published versions and existing
@@ -65,18 +66,19 @@ payload and the bot token is passed through the action's `token` input.
 The complete validation suite runs once on the release pull request through the PR-only CI workflow.
 The publish workflow repeats only the checks that protect the publish artefact itself.
 
-| Stage    | Check                           | Purpose                                                                                                   |
-| -------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Every PR | Changeset status                | Posts the proposed package releases and highlights a missing Changeset without blocking the PR.           |
-| Every PR | Format, lint, typecheck, tests  | Validates source quality and behavior.                                                                    |
-| Every PR | Recursive build                 | Builds shared utilities and modules; recursive typecheck covers playground packages.                      |
-| Every PR | Package metadata                | Checks public access, repository metadata, Node support, required files, and private dependency bundling. |
-| Every PR | Packed artefact and Publint     | Inspects the actual tarball and validates npm package metadata.                                           |
-| Publish  | Utility and Nuxt preparation    | Builds shared utility declarations and generates the Nuxt configuration required by module builds.        |
-| Publish  | Recursive build                 | Rebuilds shared utilities and modules before publishing.                                                  |
-| Publish  | Package metadata                | Confirms the package still meets the publish contract.                                                    |
-| Publish  | Packed artefact and Publint     | Prevents an invalid or incomplete tarball from reaching npm.                                              |
-| Publish  | Changesets publish and releases | Publishes release versions, creates package-specific tags, and creates GitHub Releases.                   |
+| Stage    | Check                           | Purpose                                                                                                       |
+| -------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Every PR | Changeset status                | Posts the proposed package releases and highlights a missing Changeset without blocking the PR.               |
+| Every PR | Format, lint, typecheck, tests  | Validates source quality and behavior.                                                                        |
+| Every PR | Recursive build                 | Builds shared utilities and modules; recursive typecheck covers playground packages.                          |
+| Every PR | Package metadata                | Checks public access, repository metadata, Node support, required files, and private dependency bundling.     |
+| Every PR | Packed artefact and Publint     | Inspects the actual tarball and validates npm package metadata.                                               |
+| Publish  | Utility and Nuxt preparation    | Builds shared utility declarations and generates the Nuxt configuration required by module builds.            |
+| Publish  | Recursive build                 | Rebuilds shared utilities and modules before publishing.                                                      |
+| Publish  | Package metadata                | Confirms the package still meets the publish contract.                                                        |
+| Publish  | Packed artefact and Publint     | Prevents an invalid or incomplete tarball from reaching npm.                                                  |
+| Publish  | External Nuxt consumer          | Installs the packed artefacts outside the workspace and validates prepare, build, Nitro startup, and runtime. |
+| Publish  | Changesets publish and releases | Publishes release versions, creates package-specific tags, and creates GitHub Releases.                       |
 
 ## Commands
 
