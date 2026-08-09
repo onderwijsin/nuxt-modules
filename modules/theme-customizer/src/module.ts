@@ -65,7 +65,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       "@pinia/nuxt": { version: "^1.0.1" },
       "pinia-plugin-persistedstate": { version: "^4.7.1" },
       "@vueuse/nuxt": { version: "^14.3.0" },
-      "@onderwijsin/nuxt-simple-rate-limiter": { version: "^0.3.0" }
+      "@onderwijsin/nuxt-simple-rate-limiter": { version: "*" }
     }),
   defaults: (nuxt) => ({
     enabled: nuxt.options.dev,
