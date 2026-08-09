@@ -8,6 +8,8 @@ import { defineHealthcheckComponent } from "@onderwijsin/nuxt-healthcheck/runtim
 import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 import * as rateLimitPruneTask from "@onderwijsin/nuxt-simple-rate-limiter/runtime/prune-task";
 import * as newsletterServer from "@onderwijsin/nuxt-newsletter-signup/runtime/server";
+import { defineRedirectSource } from "@onderwijsin/nuxt-redirects/runtime/source";
+import * as redirectsRefreshTask from "@onderwijsin/nuxt-redirects/runtime/refresh-task";
 import {
   TURNSTILE_TOKEN_HEADER,
   createTurnstileErrorData
@@ -48,7 +50,9 @@ export default defineEventHandler(async (event) => {
     },
     publicSubpaths: {
       newsletterServer: Object.keys(newsletterServer).includes("getErrorStatus"),
-      rateLimitPruneTask: typeof rateLimitPruneTask.default === "object"
+      rateLimitPruneTask: typeof rateLimitPruneTask.default === "object",
+      redirectsSource: typeof defineRedirectSource === "function",
+      redirectsRefreshTask: typeof redirectsRefreshTask.default === "object"
     }
   };
 });

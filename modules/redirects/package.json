@@ -1,11 +1,7 @@
 {
-  "name": "@onderwijsin/nuxt-healthcheck",
-  "version": "0.3.4",
-  "description": "Nuxt module that exposes configurable system health endpoints.",
-  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
-  "bugs": {
-    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
-  },
+  "name": "@onderwijsin/nuxt-redirects",
+  "version": "0.1.0",
+  "description": "Provider-agnostic dynamic redirects for Nuxt.",
   "license": "MIT",
   "author": {
     "name": "Remi Huigen",
@@ -14,7 +10,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
-    "directory": "modules/healthcheck"
+    "directory": "modules/redirects"
   },
   "files": [
     "dist"
@@ -30,29 +26,41 @@
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js"
+    },
+    "./runtime/source": {
+      "types": "./dist/runtime/source.d.ts",
+      "import": "./dist/runtime/source.js"
+    },
+    "./runtime/refresh-task": {
+      "types": "./dist/runtime/tasks/refresh.d.ts",
+      "import": "./dist/runtime/tasks/refresh.js"
+    },
+    "./runtime/store": {
+      "types": "./dist/runtime/app/stores/redirects.d.ts",
+      "import": "./dist/runtime/app/stores/redirects.js"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "prebuild": "pnpm --filter @onderwijsin/nuxt-module-utils build",
     "build": "nuxt-module-build build",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "dev": "pnpm run dev:prepare && nuxt dev playground",
-    "dev:build": "nuxt build playground",
-    "predev:prepare": "pnpm --filter @onderwijsin/nuxt-module-utils build",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground"
   },
   "dependencies": {
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "@pinia/nuxt": "catalog:",
     "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
-    "ofetch": "catalog:",
+    "pinia": "catalog:",
+    "pinia-plugin-persistedstate": "catalog:",
     "ufo": "catalog:",
+    "unstorage": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

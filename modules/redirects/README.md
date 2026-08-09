@@ -1,0 +1,155 @@
+# @onderwijsin/nuxt-redirects
+
+Dynamic redirects for Nuxt, independent of where your redirect data comes from.
+
+The module collects redirects from one or more external sources and stores them in Nitro storage for
+fast request-time lookups. Redirects are resolved locally, so handling a request never requires a
+call to the original provider.
+
+## Features
+
+- Combine redirects from any number of consumer-defined sources, with deterministic
+  first-source-wins precedence.
+- Keep redirects up to date through background refreshes or individual webhook updates.
+- Use any Nitro storage driver, including Redis.
+- Enable server middleware, the client-side Pinia store, and route middleware independently.
+- Configure Nitro caching separately for both public read endpoints.
+- Exclude namespaces or individual routes using efficient precompiled matchers.
+
+Key configuration options include `storageMount`, `serverMiddleware`, `store`, `routeMiddleware`,
+`storeRefreshInterval`, `excludedNamespaces`, `excludedRoutes`, and `cache`.
+
+## Installation
+
+```sh
+pnpm add @onderwijsin/nuxt-redirects
+```
+
+```ts
+export default defineNuxtConfig({
+  modules: ["@onderwijsin/nuxt-redirects"]
+});
+```
+
+## Source registration
+
+Add one source per external system under `server/redirects/`. A source owns provider-specific
+authentication, pagination, field mapping, and filtering of inactive or time-limited records.
+
+```ts
+// server/redirects/cms.ts
+import { defineRedirectSource } from "@onderwijsin/nuxt-redirects/runtime/source";
+
+export default defineRedirectSource(async (event) => {
+  const records = await getCmsRedirects(event);
+  return records.map((record) => ({
+    from: record.origin,
+    to: record.destination,
+    statusCode: record.permanent ? 301 : 302
+  }));
+});
+```
+
+Sources are discovered recursively in lexicographic file-path order. The first occurrence of a
+normalized origin wins, including duplicates within the same source. Later duplicates are logged
+loudly and ignored; they never fail a complete refresh.
+
+Origins are normalized during ingestion: non-root trailing slashes are removed and query key/value
+pairs are sorted. An origin with a query matches only the same normalized query; a path-only origin
+is the fallback for requests with query parameters. Destination query strings are preserved and
+request query parameters are never appended implicitly. Protocol-less domains such as
+`sub.example.com/new` are treated as external HTTPS destinations; explicit URLs and internal paths
+are otherwise used unchanged.
+
+## Refreshing
+
+The module deliberately does not schedule work. It registers discovered sources once during Nitro
+startup, then exposes a normal task handler:
+
+```ts
+// server/tasks/redirects/refresh.ts
+export { default } from "@onderwijsin/nuxt-redirects/runtime/refresh-task";
+```
+
+The task name follows its file path: `server/tasks/redirects/refresh.ts` becomes
+`redirects:refresh`. Schedule that consumer task through the application's Nitro configuration.
+`refreshRedirects()` is also exported from the runtime package for protected deployment endpoints.
+
+## Webhooks
+
+Provider webhooks remain consumer routes, because their payload and authentication are
+provider-specific. Map a verified payload to the public mutation helpers:
+
+```ts
+import { removeRedirect, upsertRedirect } from "@onderwijsin/nuxt-redirects/runtime";
+
+export default defineEventHandler(async (event) => {
+  const change = await verifyAndParseWebhook(event);
+  if (change.kind === "delete") return removeRedirect(change.from);
+  return upsertRedirect({ from: change.from, to: change.to, statusCode: change.statusCode });
+});
+```
+
+## Storage drivers
+
+The module uses Nitro's normal `redirects` storage mount. Configure any Nitro storage driver under
+that name when the index must be shared across instances or survive process replacement:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    storage: {
+      redirects: {
+        driver: "redis"
+        /* Redis driver connector options */
+      }
+    }
+  }
+});
+```
+
+Use a shared driver for horizontally scaled or serverless production deployments. If your storage
+configuration uses a different mount name, set the matching module option:
+
+```ts
+export default defineNuxtConfig({
+  redirects: { storageMount: "shared-redirects" },
+  nitro: { storage: { "shared-redirects": { driver: "redis" } } }
+});
+```
+
+## Endpoints and client behavior
+
+`GET /api/_redirects` returns the compact active index as a `{ [origin]: Redirect }` object.
+`GET /api/_redirects/:path` looks up one encoded path/query origin and is used when client route
+middleware is on but the store is off. Both are wrapped in `defineCachedEventHandler`; configure
+`cache.index` and `cache.lookup` separately.
+
+`serverMiddleware`, `store`, and `routeMiddleware` are independent. When `routeMiddleware` is true
+and `store` is false, every client navigation uses the cached single-path endpoint instead of
+loading the complete index. Enabling `store` installs `@pinia/nuxt` and
+`pinia-plugin-persistedstate/nuxt` as module dependencies.
+
+## Configuration
+
+```ts
+export default defineNuxtConfig({
+  redirects: {
+    serverMiddleware: true,
+    store: true,
+    routeMiddleware: true,
+    storageMount: "redirects",
+    storeRefreshInterval: 3600,
+    excludedNamespaces: ["/api", "/_nuxt", "/_payload", "/__"],
+    excludedRoutes: ["/"],
+    cache: {
+      index: { maxAge: 60, staleMaxAge: 300, swr: true },
+      lookup: { maxAge: 60, staleMaxAge: 300, swr: true }
+    }
+  }
+});
+```
+
+## Compatibility
+
+Developed against Nuxt 4.5.x and Node.js 24. The package requires Node.js 22 or newer.

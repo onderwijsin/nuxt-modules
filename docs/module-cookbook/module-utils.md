@@ -14,6 +14,7 @@ Use the public package subpaths rather than source paths:
 | --------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | `@onderwijsin/nuxt-module-utils`        | Compatibility alias for the shared exports | Existing shared-only imports; prefer `@onderwijsin/nuxt-module-utils/shared` in new code |
 | `@onderwijsin/nuxt-module-utils/shared` | Build-time and framework-neutral helpers   | Module entrypoints, config, and runtime code that does not need `h3`                     |
+| `@onderwijsin/nuxt-module-utils/build`  | Node-only module build helpers             | Nuxt module setup that discovers consumer source files                                   |
 | `@onderwijsin/nuxt-module-utils/server` | H3 request-token helpers                   | Server routes and server utilities only                                                  |
 | `@onderwijsin/nuxt-module-utils/app`    | Reserved client-runtime entrypoint         | Do not import; it currently has no public helpers                                        |
 | `@onderwijsin/nuxt-module-utils/types`  | Shared TypeScript types                    | Type-only imports such as `BaseModuleOptions`                                            |
@@ -60,6 +61,21 @@ use the source-level generic types; type-only exports are listed separately belo
 | `isAdmin`                        | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `@onderwijsin/nuxt-module-utils/server` |
 | `isDevelopmentAuthBypassEnabled` | `isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean`                                                                          | `@onderwijsin/nuxt-module-utils/server` |
 | `assertAdminAccess`              | `assertAdminAccess(event: H3Event, options: AdminAuthOptions, isDevelopment: boolean): void`                                                                       | `@onderwijsin/nuxt-module-utils/server` |
+| `discoverSourceFiles`            | `discoverSourceFiles(directory: string): string[]`                                                                                                                 | `@onderwijsin/nuxt-module-utils/build`  |
+
+## `discoverSourceFiles`
+
+`discoverSourceFiles` recursively finds JavaScript and TypeScript source files for a consumer-owned
+directory during Nuxt module setup. It returns absolute paths in lexicographic order, excludes
+declaration files, and returns an empty list when the directory is absent. Use it for generated
+registries where discovery order forms an explicit precedence rule; do not import this Node-only
+helper from runtime code.
+
+```ts
+import { discoverSourceFiles } from "@onderwijsin/nuxt-module-utils/build";
+
+const sources = discoverSourceFiles(resolve(nuxt.options.rootDir, "server/example"));
+```
 
 ## `attempt`
 
