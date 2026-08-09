@@ -4,8 +4,9 @@ Shared utilities for building the Onderwijs in Nuxt modules.
 
 This package exists to keep recurring module concerns in one place: module setup and lifecycle
 logging, option validation, typed object helpers, conditional dependency registration, retryable
-operations, server-side request token checks, and primitive runtime guards. Keeping these contracts
-shared prevents each module from implementing subtly different behavior.
+operations, server-side administrator authentication and request token checks, and primitive runtime
+guards. Keeping these contracts shared prevents each module from implementing subtly different
+behavior.
 
 ## Why is this a published package?
 
@@ -23,7 +24,8 @@ receive it transitively when they install a module.
 Use the narrowest subpath for the code you are writing:
 
 - `@onderwijsin/nuxt-module-utils/shared` contains framework-neutral and Nuxt module helpers.
-- `@onderwijsin/nuxt-module-utils/server` contains H3-dependent request-token helpers.
+- `@onderwijsin/nuxt-module-utils/server` contains H3-dependent request-token and
+  administrator-authentication helpers.
 - `@onderwijsin/nuxt-module-utils` is a compatibility alias for the shared exports.
 
 The separate `server` entrypoint keeps H3-specific code out of shared and app-only dependency

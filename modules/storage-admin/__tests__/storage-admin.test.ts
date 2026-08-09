@@ -9,7 +9,7 @@ const h3Mocks = vi.hoisted(() => ({
   )
 }));
 const { createError } = h3Mocks;
-const isAdmin = vi.fn();
+const assertAdminAccess = vi.fn();
 const useRuntimeConfig = vi.fn();
 const useStorage = vi.fn();
 
@@ -18,7 +18,7 @@ vi.mock("h3", async () => ({
   createError: h3Mocks.createError
 }));
 vi.mock("nitropack/runtime", () => ({ useRuntimeConfig, useStorage }));
-vi.mock("@onderwijsin/nuxt-module-utils/server", () => ({ isAdmin }));
+vi.mock("@onderwijsin/nuxt-module-utils/server", () => ({ assertAdminAccess }));
 
 /**
  * Creates an H3 event suitable for runtime utility tests.
@@ -33,10 +33,9 @@ describe("storage-admin runtime access", () => {
   beforeEach(() => {
     vi.resetModules();
     createError.mockClear();
-    isAdmin.mockReset();
+    assertAdminAccess.mockReset();
     useRuntimeConfig.mockReset();
     useStorage.mockReset();
-    isAdmin.mockReturnValue(true);
     useRuntimeConfig.mockReturnValue({
       storageAdmin: {
         enabled: true,
@@ -111,22 +110,15 @@ describe("storage-admin runtime access", () => {
   );
 
   it("requires authentication when the development bypass is disabled", async () => {
-    isAdmin.mockReturnValue(false);
+    assertAdminAccess.mockImplementation(() => {
+      throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+    });
     const { getAllowedMount } = await import("../src/runtime/server/utils/storage-admin");
 
     expect(() => getAllowedMount(createTestEvent(), "cache", "read")).toThrow();
     expect(createError).toHaveBeenCalledWith(
       expect.objectContaining({ statusCode: 401, statusMessage: "Unauthorized" })
     );
-  });
-
-  it("enables the development bypass only when both safeguards are true", async () => {
-    const { isDevelopmentAuthBypassEnabled } =
-      await import("../src/runtime/server/utils/storage-admin");
-
-    expect(isDevelopmentAuthBypassEnabled(true, false)).toBe(false);
-    expect(isDevelopmentAuthBypassEnabled(false, true)).toBe(false);
-    expect(isDevelopmentAuthBypassEnabled(true, true)).toBe(true);
   });
 
   it("does not expose cache metadata keys", async () => {

@@ -1,4 +1,4 @@
-import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
+import { assertAdminAccess } from "@onderwijsin/nuxt-module-utils/server";
 import { createError, defineEventHandler, readBody } from "h3";
 import { useRuntimeConfig, useStorage } from "nitropack/runtime";
 import { z } from "zod";
@@ -15,12 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!config?.enabled) {
     throw createError({ statusCode: 404, statusMessage: "Cache invalidation is disabled." });
   }
-  if (
-    !isDevelopmentAuthBypassEnabled(import.meta.dev, config.devAuthBypass) &&
-    !isAdmin(event, config.adminToken, config.adminHeaderName)
-  ) {
-    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
-  }
+  assertAdminAccess(event, config, import.meta.dev);
 
   const result = invalidateCacheSchema.safeParse(await readBody(event));
   if (!result.success) {
@@ -45,13 +40,3 @@ export default defineEventHandler(async (event) => {
     throw error;
   }
 });
-
-/**
- * Restricts the development bypass to actual development builds.
- * @param isDevelopment - Whether Nitro is running its development build.
- * @param devAuthBypass - Consumer configuration for the local bypass.
- * @returns Whether authentication may be bypassed for this request.
- */
-function isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean {
-  return isDevelopment && devAuthBypass;
-}

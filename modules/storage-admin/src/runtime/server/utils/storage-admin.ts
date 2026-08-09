@@ -1,5 +1,5 @@
 import { hasKey } from "@onderwijsin/nuxt-module-utils/shared";
-import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
+import { assertAdminAccess } from "@onderwijsin/nuxt-module-utils/server";
 import { createError } from "h3";
 import type { H3Event } from "h3";
 import { useRuntimeConfig, useStorage } from "nitropack/runtime";
@@ -50,30 +50,13 @@ export function getStorageAdminConfig(event: H3Event): StorageAdminConfig {
 }
 
 /**
- * Returns whether a request may skip authentication during local development.
- * @param isDevelopment Whether the runtime is a development build.
- * @param devAuthBypass Whether the consuming application explicitly enabled the bypass.
- * @returns Whether authentication may be bypassed.
- */
-export function isDevelopmentAuthBypassEnabled(
-  isDevelopment: boolean,
-  devAuthBypass: boolean
-): boolean {
-  return isDevelopment && devAuthBypass;
-}
-
-/**
  * Requires a request to carry the configured administrator token.
  * @param event - Current H3 request event.
  * @param config - Storage-admin configuration to authenticate against.
  * @returns Nothing when the request is authorized.
  */
 export function assertStorageAdmin(event: H3Event, config: StorageAdminConfig): void {
-  if (isDevelopmentAuthBypassEnabled(import.meta.dev, config.devAuthBypass)) return;
-
-  if (!isAdmin(event, config.adminToken, config.adminHeaderName)) {
-    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
-  }
+  assertAdminAccess(event, config, import.meta.dev);
 }
 
 /**
