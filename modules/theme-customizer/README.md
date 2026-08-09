@@ -195,6 +195,13 @@ endpoint, which proxies ColorFYI and returns:
 Applications that do not need generated palettes can disable or replace this route in their Nuxt
 configuration; configured and locally created palettes continue to work without it.
 
+Both public API endpoints are rate-limited by default: palette requests allow 30 per minute and font
+searches allow 60 per minute, with a five-minute temporary ban. Configure them independently through
+`themeCustomizer.rateLimit.palette` and `themeCustomizer.rateLimit.fonts`, or explicitly disable
+them when equivalent CDN, WAF, or reverse-proxy protection is in place. ColorFYI responses are
+runtime-validated, cached for 24 hours by normalized HEX value, and fetched with a five-second
+timeout. Invalid or failed provider responses return the generic upstream error.
+
 ## Runtime behavior
 
 Configured palettes are emitted as `--color-{name}-{shade}` variables. The active palette for each
@@ -225,6 +232,9 @@ npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
 - Nuxt 4
 - Nuxt UI 4
 - Node.js 22 or newer
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.
 
 ## License
 

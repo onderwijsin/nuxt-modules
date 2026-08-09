@@ -58,6 +58,33 @@ describe("newsletter signup endpoint", () => {
     await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
   });
 
+  it("accepts payload values at the configured maximum lengths", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "list" } }
+    };
+    body.value = {
+      email: "a".repeat(500) + "@example.com",
+      firstName: "a".repeat(256),
+      lastName: "a".repeat(256),
+      organization: "a".repeat(1024),
+      source: "a".repeat(256)
+    };
+    const handler = await loadHandler();
+
+    await expect(handler({})).resolves.toEqual({ success: true });
+  });
+
+  it("rejects payload values above their maximum lengths", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "list" } }
+    };
+    body.value = { email: "ada@example.com", organization: "a".repeat(1025) };
+    const handler = await loadHandler();
+
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
+    expect(loopsMock).not.toHaveBeenCalled();
+  });
+
   it("enforces configured required fields and list options", async () => {
     runtimeConfig.value = {
       newsletterSignup: {

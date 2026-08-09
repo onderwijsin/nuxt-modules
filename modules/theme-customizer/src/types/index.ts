@@ -20,6 +20,18 @@ export type ThemeGoogleFontsOptions = {
   families?: string[];
 };
 
+/** Per-client protection settings for the public theme API endpoints. */
+export type ThemeCustomizerRateLimit = {
+  /** Whether endpoint requests are limited. @default true */
+  enabled?: boolean;
+  /** Allowed requests per rolling window. */
+  max?: number;
+  /** Window duration in seconds. */
+  duration?: number;
+  /** Ban duration in seconds after the limit is exceeded. */
+  ban?: number;
+};
+
 /** Default values used when initializing the theme customizer. */
 export type ThemeCustomizerDefaults = {
   /** Default Google Font family; otherwise the first configured family is used. */
@@ -43,12 +55,18 @@ export type ThemeCustomizerOptions = {
   neutral?: Record<string, ThemePalette>;
   /** Optional Google Fonts Developer API configuration. */
   googleFonts?: ThemeGoogleFontsOptions;
+  /** Rate limits for the public palette and fonts endpoints. */
+  rateLimit?: {
+    palette?: ThemeCustomizerRateLimit;
+    fonts?: ThemeCustomizerRateLimit;
+  };
   /** Optional initial values for the theme customizer. */
   defaults?: ThemeCustomizerDefaults;
   [group: string]:
     | boolean
     | Record<string, ThemePalette>
     | ThemeGoogleFontsOptions
+    | { palette?: ThemeCustomizerRateLimit; fonts?: ThemeCustomizerRateLimit }
     | ThemeCustomizerDefaults
     | string
     | undefined;

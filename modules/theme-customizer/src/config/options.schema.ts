@@ -18,6 +18,17 @@ const googleFontsOptionsSchema = z.object({
     .optional()
 });
 
+const rateLimitSchema = z.object({
+  enabled: z.boolean().optional(),
+  max: z.number().int().positive().optional(),
+  duration: z.number().int().positive().optional(),
+  ban: z.number().int().nonnegative().optional()
+});
+const endpointRateLimitSchema = z.object({
+  palette: rateLimitSchema.optional(),
+  fonts: rateLimitSchema.optional()
+});
+
 const themeDefaultsSchema = z
   .object({
     font: z.string().trim().min(1).max(100).optional(),
@@ -39,18 +50,31 @@ const themeOptionsShape = {
   secondary: themePaletteSchema.optional(),
   neutral: themePaletteSchema.optional(),
   googleFonts: googleFontsOptionsSchema.optional(),
+  rateLimit: endpointRateLimitSchema.optional(),
   defaults: themeDefaultsSchema.optional()
 };
 
 export const themeOptionsSchema = z
   .object(themeOptionsShape)
   .catchall(
-    z.union([z.boolean(), themePaletteSchema, googleFontsOptionsSchema, themeDefaultsSchema])
+    z.union([
+      z.boolean(),
+      themePaletteSchema,
+      googleFontsOptionsSchema,
+      endpointRateLimitSchema,
+      themeDefaultsSchema
+    ])
   )
   .superRefine((options, context) => {
     const paletteNames = new Map<string, string>();
     for (const [name, value] of toEntries(options)) {
-      if (name === "enabled" || name === "route" || name === "googleFonts" || name === "defaults")
+      if (
+        name === "enabled" ||
+        name === "route" ||
+        name === "googleFonts" ||
+        name === "rateLimit" ||
+        name === "defaults"
+      )
         continue;
 
       const result = themePaletteSchema.safeParse(value);

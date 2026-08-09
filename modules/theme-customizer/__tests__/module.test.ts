@@ -75,6 +75,10 @@ describe("theme customizer module", () => {
           "Merriweather",
           "Playfair Display"
         ]
+      },
+      rateLimit: {
+        palette: { enabled: true, max: 30, duration: 60, ban: 300 },
+        fonts: { enabled: true, max: 60, duration: 60, ban: 300 }
       }
     });
   });
@@ -89,7 +93,8 @@ describe("theme customizer module", () => {
       "@nuxt/ui": { version: "^4.6.1" },
       "@pinia/nuxt": { version: "^1.0.1" },
       "pinia-plugin-persistedstate": { version: "^4.7.1" },
-      "@vueuse/nuxt": { version: "^14.3.0" }
+      "@vueuse/nuxt": { version: "^14.3.0" },
+      "@onderwijsin/nuxt-simple-rate-limiter": { version: "^0.3.0" }
     });
     expect(
       moduleDefinition.moduleDependencies({ options: { themeCustomizer: { enabled: false } } })
@@ -149,6 +154,10 @@ describe("theme customizer module", () => {
         accent: ["coral"]
       },
       googleFonts: { families: [] },
+      rateLimit: {
+        palette: { enabled: true, max: 30, duration: 60, ban: 300 },
+        fonts: { enabled: true, max: 60, duration: 60, ban: 300 }
+      },
       defaults: { font: "Public Sans" }
     });
     expect(nuxt.options.ui.theme.colors).toEqual(["accent"]);

@@ -49,6 +49,10 @@ With `ban: 0`, `bannedUntil` is the end of the current window.
 The storage namespace includes the request path and each entry is keyed by the client IP. Configure
 a shared Nitro storage driver for multi-instance deployments; in-memory storage resets on restart.
 
+`X-Forwarded-For` is not trusted by default. Set `trustXForwardedFor: true` in a helper call only
+when a trusted proxy sanitizes the header and direct origin access is prevented. With `ban: 0`,
+`bannedUntil` is the end of the active window.
+
 ## Global limits
 
 Use `enforceGlobalRateLimit` in middleware scoped to `/api`, before any path-scoped limiter:
@@ -74,3 +78,6 @@ a dedicated distributed rate-limiting service.
 - Nuxt 4
 - Node.js 22 or newer
 - Node and Cloudflare Workers-compatible server runtime
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.

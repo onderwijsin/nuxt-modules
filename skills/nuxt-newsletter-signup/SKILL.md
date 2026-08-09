@@ -204,15 +204,12 @@ await signup({
 `handleSignupError` uses Nuxt UI toasts with Dutch messages. Use the returned helpers for custom UI:
 
 ```ts
-const { signup, getErrorCode, isAlreadyExistsError, handleSignupError, ERROR_CODES } =
-  useNewsletterSignup();
+const { signup, getErrorCode, handleSignupError, ERROR_CODES } = useNewsletterSignup();
 
 try {
   await signup(payload);
 } catch (error) {
-  if (isAlreadyExistsError(error)) {
-    showAlreadySubscribedMessage();
-  } else if (getErrorCode(error) === ERROR_CODES.invalidInput) {
+  if (getErrorCode(error) === ERROR_CODES.invalidInput) {
     showInvalidInputMessage();
   } else {
     handleSignupError(error);
@@ -220,6 +217,7 @@ try {
 }
 ```
 
-The normalized statuses are `400` for invalid input, `429` for an already subscribed email when
-reported by the provider, `500` for incomplete module configuration, and `5xx` for provider/server
-failures.
+The normalized statuses are `400` for invalid input, `429` only for rate limiting
+(`NEWSLETTER_SIGNUP_RATE_LIMITED`, including `bannedUntil`), `500` for incomplete module
+configuration, and `5xx` for provider/server failures. Duplicate subscriptions are handled
+idempotently by the provider adapters and are not exposed as a separate frontend error state.

@@ -13,6 +13,11 @@ a new contract is explicit.
   through module configuration instead.
 - Use Zod at external boundaries that need runtime validation.
 - Use `ofetch` for outbound runtime HTTP requests; do not call native `fetch` directly.
+- For server-side caching, use only Nitro's built-in `defineCachedEventHandler` or
+  `defineCachedFunction` from `nitropack/runtime`. Do not implement module-level `Map` caches or
+  process-local cache variables; Nitro's helpers use the configured storage and work across server
+  instances. Cache only validated successful results, and keep request-specific validation and rate
+  limiting outside the cached function or handler.
 - Declare every runtime import used by published server code directly in `dependencies` (for example
   `h3`, `nitropack`, and `ofetch`) and source exact versions through the workspace catalog.
 - Import Nitro runtime helpers explicitly from their runtime entrypoints, such as `useStorage` from

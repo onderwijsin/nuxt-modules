@@ -119,6 +119,7 @@ but do not turn them into installable packages unless requested.
 - [Migrating local modules](migrating-local-modules.md)
 - [Module entrypoint and runtime registration](module-entrypoint.md)
 - [Module utilities](module-utils.md)
+- [Server-side caching patterns](server-caching.md)
 - [Playground conventions](playground.md)
 - [Patterns, conventions, and gotchas](patterns-and-conventions.md)
 - [Testing modules](testing.md)

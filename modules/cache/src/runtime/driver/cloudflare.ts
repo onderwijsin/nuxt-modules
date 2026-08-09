@@ -11,11 +11,20 @@ const cloudflareCredentialsSchema = z.strictObject({
   cacheNamespaceId: z.string().trim().min(1)
 });
 
-/** Shape returned by Cloudflare's KV bulk-delete endpoint. */
-interface CloudflareBulkDeleteResponse {
-  errors?: Array<{ code?: number; message?: string }>;
-  success: boolean;
-}
+const CLOUDFLARE_REQUEST_TIMEOUT_MS = 15_000;
+
+const cloudflareBulkDeleteResponseSchema = z.strictObject({
+  errors: z
+    .array(
+      z.strictObject({
+        code: z.number().optional(),
+        message: z.string().optional()
+      })
+    )
+    .optional(),
+  success: z.boolean()
+});
+type CloudflareBulkDeleteResponse = z.infer<typeof cloudflareBulkDeleteResponseSchema>;
 
 /**
  * Wraps a Cloudflare KV driver with metadata/index support and bulk clear operations.
@@ -63,18 +72,25 @@ async function bulkDeleteCloudflareCacheKeys(
 
   const client = ofetch.create({
     baseURL: `https://api.cloudflare.com/client/v4/accounts/${options.accountId}`,
-    headers: { Authorization: `Bearer ${options.kvApiToken}` }
+    headers: { Authorization: `Bearer ${options.kvApiToken}` },
+    timeout: CLOUDFLARE_REQUEST_TIMEOUT_MS
   });
   for (let index = 0; index < keys.length; index += 10_000) {
     const chunk = keys.slice(index, index + 10_000);
     const chunkNumber = index / 10_000 + 1;
-    const response = await client<CloudflareBulkDeleteResponse>(
+    const response = await client<unknown>(
       `/storage/kv/namespaces/${options.cacheNamespaceId}/bulk/delete`,
       { method: "POST", body: chunk }
     );
-    if (!response.success) {
+    const parsedResponse = cloudflareBulkDeleteResponseSchema.safeParse(response);
+    if (!parsedResponse.success) {
       throw new Error(
-        `Cloudflare KV bulk delete failed for chunk ${chunkNumber}: ${formatCloudflareErrors(response.errors)}`
+        `Unexpected Cloudflare KV bulk delete response: ${parsedResponse.error.message}`
+      );
+    }
+    if (!parsedResponse.data.success) {
+      throw new Error(
+        `Cloudflare KV bulk delete failed for chunk ${chunkNumber}: ${formatCloudflareErrors(parsedResponse.data.errors)}`
       );
     }
   }

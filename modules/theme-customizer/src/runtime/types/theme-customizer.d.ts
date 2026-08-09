@@ -10,6 +10,10 @@ declare module "nuxt/schema" {
       googleFonts?: {
         families: string[];
       };
+      rateLimit: {
+        palette: { enabled: boolean; max: number; duration: number; ban: number };
+        fonts: { enabled: boolean; max: number; duration: number; ban: number };
+      };
       defaults?: {
         font?: string;
         radius?: number;

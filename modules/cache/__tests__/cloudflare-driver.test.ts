@@ -40,7 +40,8 @@ describe("Cloudflare cache driver", () => {
 
     expect(createClient).toHaveBeenCalledWith({
       baseURL: "https://api.cloudflare.com/client/v4/accounts/account",
-      headers: { Authorization: "Bearer token" }
+      headers: { Authorization: "Bearer token" },
+      timeout: 15_000
     });
     expect(bulkDeleteRequest).toHaveBeenCalledWith(
       "/storage/kv/namespaces/namespace/bulk/delete",
@@ -71,6 +72,19 @@ describe("Cloudflare cache driver", () => {
 
     await expect(driver.clear?.("kennisbank:articles", {})).rejects.toThrow(
       "cache base kennisbank:articles"
+    );
+  });
+
+  it("rejects malformed Cloudflare responses", async () => {
+    const rawDriver = memoryDriver();
+    await createStorage({ driver: rawDriver }).setItem("kennisbank:articles:example", {
+      title: "Example"
+    });
+    const driver = createCloudflareCacheDriver(rawDriver, cloudflareCredentials);
+    bulkDeleteRequest.mockResolvedValueOnce({ success: "yes" });
+
+    await expect(driver.clear?.("kennisbank:articles", {})).rejects.toThrow(
+      "Cloudflare cache clear failed"
     );
   });
 });

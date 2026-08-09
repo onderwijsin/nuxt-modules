@@ -1,7 +1,8 @@
 # Contributing
 
 This is the repeatable workflow for adding or changing a module. Keep changes inside the package
-they affect and preserve the isolated playground contract.
+they affect and preserve the isolated playground contract. Review the repository's
+[security guide](security.md) when a change affects dependencies, workflows, or security findings.
 
 ## Before coding
 
@@ -59,5 +60,7 @@ merge.
 ## Pull requests
 
 Pull requests must pass formatting, linting, type checking, tests, recursive builds, playground
-checks, package metadata validation, and packed artefact validation. Changesets reports release
-impact in a pull request comment. Releases are never published by pull request or push CI.
+checks, package metadata validation, and packed artefact validation. They may also receive CodeQL
+findings and Dependabot security-update changes; handle those through the
+[security guide](security.md) and the normal review process. Changesets reports release impact in a
+pull request comment. Releases are never published by pull request or push CI.

@@ -31,7 +31,12 @@ export function configuredGroups(options: ThemeCustomizerOptions): ThemeColorGro
   const groups: ThemeColorGroups = {};
 
   for (const [name, value] of toEntries(options)) {
-    if (name !== "googleFonts" && name !== "defaults" && isThemeColorGroup(value)) {
+    if (
+      name !== "googleFonts" &&
+      name !== "rateLimit" &&
+      name !== "defaults" &&
+      isThemeColorGroup(value)
+    ) {
       groups[name] = value;
     }
   }

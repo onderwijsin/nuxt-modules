@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { ofetch } from "ofetch";
-import { defineEventHandler as h3DefineEventHandler, getQuery as h3GetQuery } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
+import { defineEventHandler, getQuery } from "h3";
+import { defineCachedFunction, useRuntimeConfig } from "nitropack/runtime";
 import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 
 type ThemeFontOption = {
   label: string;
@@ -14,23 +15,11 @@ const googleFontsResponseSchema = z.object({
 });
 
 const querySchema = z.object({ q: z.string().trim().max(80).catch("") });
-let cachedFonts: ThemeFontOption[] | undefined;
+const DEFAULT_RATE_LIMIT = { max: 60, duration: 60, ban: 300 };
+const GOOGLE_FONTS_CACHE_TTL_SECONDS = 24 * 60 * 60;
 
-/**
- * Returns searchable Google Font families through a server-side API-key proxy.
- * @param event The incoming Nitro request event.
- * @returns Matching font family options.
- */
-export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> => {
-  const query = querySchema.parse(h3GetQuery(event));
-  const config = useRuntimeConfig(event);
-  const apiKey = config.themeCustomizerGoogleFontsApiKey;
-  const configuredFonts = config.public?.themeCustomizer?.googleFonts?.families ?? [];
-  const fallbackFonts = toFontOptions(configuredFonts);
-
-  if (!apiKey) return filterFonts(fallbackFonts, query.q);
-
-  if (!cachedFonts) {
+const fetchFonts = defineCachedFunction(
+  async (apiKey: string): Promise<ThemeFontOption[] | undefined> => {
     const result = await attempt(() =>
       ofetch<unknown>("https://www.googleapis.com/webfonts/v1/webfonts", {
         query: { capability: "WOFF2", key: apiKey, sort: "popularity" }
@@ -38,15 +27,43 @@ export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> =>
     );
     if (result.error !== null) {
       console.error("Failed to fetch Google Fonts metadata");
-    } else {
-      const parsed = googleFontsResponseSchema.safeParse(result.data);
-      if (parsed.success) {
-        cachedFonts = parsed.data.items.map(({ family }) => ({ label: family, value: family }));
-      }
+      return undefined;
     }
-  }
 
-  return filterFonts(cachedFonts ?? fallbackFonts, query.q);
+    const parsed = googleFontsResponseSchema.safeParse(result.data);
+    if (!parsed.success) return undefined;
+
+    return parsed.data.items.map(({ family }) => ({ label: family, value: family }));
+  },
+  {
+    name: "theme-customizer-google-fonts",
+    maxAge: GOOGLE_FONTS_CACHE_TTL_SECONDS,
+    swr: false,
+    getKey: () => "google-fonts"
+  }
+);
+
+/**
+ * Returns searchable Google Font families through a server-side API-key proxy.
+ * @param event The incoming Nitro request event.
+ * @returns Matching font family options.
+ */
+export default defineEventHandler(async (event): Promise<ThemeFontOption[]> => {
+  const query = querySchema.parse(getQuery(event));
+  const config = useRuntimeConfig(event);
+  const rateLimit = config.public?.themeCustomizer?.rateLimit?.fonts ?? DEFAULT_RATE_LIMIT;
+  if (rateLimit.enabled !== false) {
+    const { enabled: _enabled, ...limits } = rateLimit;
+    await enforceRateLimit(event, limits);
+  }
+  const apiKey = config.themeCustomizerGoogleFontsApiKey;
+  const configuredFonts = config.public?.themeCustomizer?.googleFonts?.families ?? [];
+  const fallbackFonts = toFontOptions(configuredFonts);
+
+  if (!apiKey) return filterFonts(fallbackFonts, query.q);
+
+  const fonts = (await fetchFonts(apiKey)) ?? fallbackFonts;
+  return filterFonts(fonts, query.q);
 });
 
 /**

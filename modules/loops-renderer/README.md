@@ -153,6 +153,9 @@ needed by the current presentation to the client renderer.
 - Nuxt 4
 - Node.js 22 or newer
 
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.
+
 ## License
 
 MIT

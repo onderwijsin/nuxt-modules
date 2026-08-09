@@ -137,3 +137,6 @@ after Turnstile succeeds; the module does not replace the route's existing submi
 - Node.js 22+
 - Node and Cloudflare Workers-compatible server runtime
 - No Sentry dependency or telemetry is included
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.

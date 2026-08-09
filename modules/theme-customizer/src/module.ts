@@ -64,7 +64,8 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       "@nuxt/ui": { version: "^4.6.1" },
       "@pinia/nuxt": { version: "^1.0.1" },
       "pinia-plugin-persistedstate": { version: "^4.7.1" },
-      "@vueuse/nuxt": { version: "^14.3.0" }
+      "@vueuse/nuxt": { version: "^14.3.0" },
+      "@onderwijsin/nuxt-simple-rate-limiter": { version: "^0.3.0" }
     }),
   defaults: (nuxt) => ({
     enabled: nuxt.options.dev,
@@ -83,6 +84,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
         "Merriweather",
         "Playfair Display"
       ]
+    },
+    rateLimit: {
+      palette: { enabled: true, max: 30, duration: 60, ban: 300 },
+      fonts: { enabled: true, max: 60, duration: 60, ban: 300 }
     }
   }),
   setup(rawOptions, nuxt) {
@@ -133,6 +138,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       groups: configuredRuntimeGroups(groups),
       googleFonts: {
         families: options.googleFonts?.families ?? []
+      },
+      rateLimit: {
+        palette: { enabled: true, max: 30, duration: 60, ban: 300, ...options.rateLimit?.palette },
+        fonts: { enabled: true, max: 60, duration: 60, ban: 300, ...options.rateLimit?.fonts }
       },
       defaults: {
         ...defaults,

@@ -90,3 +90,9 @@ Custom component files are server-only. Do not return secrets or credentials in 
 Each enabled component includes `status` and `responseTimeMs`; failed checks may include `error`.
 The overall status is the worst component status. `warn` returns HTTP `200`; `error` returns HTTP
 `503`. Disabled built-in components are omitted from the response.
+
+## Compatibility
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
+matrix are not continuously tested. Nuxt 3 is not guaranteed.
