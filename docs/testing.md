@@ -7,14 +7,9 @@ runs the complete workspace suite.
 ## Test utilities
 
 `test-utils` is the private workspace package for helpers shared by tests. It is test-only and must
-never be imported by published runtime code. It is available to centralize fixture builders, Vitest
-helpers, assertions, package inspection helpers, and other genuinely shared testing behavior as the
-repository grows.
-
-The package currently provides an empty public entrypoint and is reserved for shared test
-infrastructure. Keep one-off fixtures and assertions in the test package that owns them until a
-second package needs the same behavior. This keeps the private package small and avoids coupling
-unrelated modules.
+never be imported by published runtime code. The current API centralizes Nuxt fixture setup and
+minimal H3 event construction; see the [test-utils cookbook article](module-cookbook/test-utils.md)
+for the full reference.
 
 Nuxt-specific integration helpers come from `@nuxt/test-utils`. Use that dependency when a test
 needs a real Nuxt application, generated configuration, auto-import resolution, component

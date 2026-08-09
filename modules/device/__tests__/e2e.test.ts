@@ -1,6 +1,6 @@
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { $fetch, setup } from "@nuxt/test-utils/e2e";
+import { $fetch } from "@nuxt/test-utils/e2e";
+import { setupFixture } from "../../../packages/test-utils/src";
 
 const iphoneUserAgent =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 Safari/605.1.15";
@@ -8,9 +8,7 @@ const desktopUserAgent =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36";
 
 describe("device module", async () => {
-  await setup({
-    rootDir: fileURLToPath(new URL("./fixtures/basic", import.meta.url))
-  });
+  await setupFixture(import.meta.url);
 
   it("resolves device flags from the request user agent at runtime", async () => {
     const html = await $fetch("/", {

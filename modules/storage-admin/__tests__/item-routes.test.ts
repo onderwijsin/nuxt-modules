@@ -1,7 +1,5 @@
-import { IncomingMessage, ServerResponse } from "node:http";
-import { Socket } from "node:net";
-import { createEvent } from "h3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestEvent } from "../../../packages/test-utils/src";
 
 const h3Mocks = vi.hoisted(() => ({
   createError: vi.fn((error: Record<string, unknown>) =>
@@ -27,15 +25,6 @@ vi.mock("../src/runtime/server/utils/storage-admin", () => ({
   getStorageAdminConfig,
   useAllowedStorage
 }));
-
-/**
- * Creates an H3 event suitable for testing a route handler.
- * @returns A minimal H3 event.
- */
-function createTestEvent() {
-  const request = new IncomingMessage(new Socket());
-  return createEvent(request, new ServerResponse(request));
-}
 
 describe("storage item routes", () => {
   beforeEach(() => {

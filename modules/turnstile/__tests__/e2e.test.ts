@@ -1,6 +1,6 @@
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { $fetch, fetch, setup } from "@nuxt/test-utils/e2e";
+import { $fetch, fetch } from "@nuxt/test-utils/e2e";
+import { setupFixture } from "../../../packages/test-utils/src";
 
 async function expectTurnstileError(
   token: string | undefined,
@@ -17,9 +17,7 @@ async function expectTurnstileError(
 }
 
 describe("turnstile module", async () => {
-  await setup({
-    rootDir: fileURLToPath(new URL("./fixtures/basic", import.meta.url))
-  });
+  await setupFixture(import.meta.url);
 
   it("loads the composable through Nuxt auto-imports", async () => {
     const html = await $fetch("/");

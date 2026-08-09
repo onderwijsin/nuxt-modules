@@ -43,8 +43,8 @@ Supporting packages live under `packages/`:
 
 - `@onderwijsin/nuxt-module-utils` contains reusable, module-agnostic runtime helpers. It is built
   with tsup and published alongside modules with public npm access.
-- `test-utils` is reserved for shared test fixtures, assertions, and Vitest helpers. It must never
-  be imported by published runtime code.
+- `test-utils` contains shared test fixtures, assertions, and Vitest helpers. It must never be
+  imported by published runtime code.
 
 Supporting packages are type-checked recursively. `@onderwijsin/nuxt-module-utils` must be built
 before workspace preparation so consuming modules can resolve its generated output. Prepare every
