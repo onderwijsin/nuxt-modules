@@ -1,9 +1,5 @@
 # @onderwijsin/nuxt-cache
 
-> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
-> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
-> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
-
 `@onderwijsin/nuxt-cache` adds cache-entry metadata and a reverse path index to an Unstorage driver.
 It also provides a protected, cache-base-scoped invalidation endpoint. It is CMS-agnostic: mapping a
 content event to a cache base and public route remains the consuming application's responsibility.
@@ -208,3 +204,9 @@ known cache base and public path, then call `/api/_cache/invalidate`.
 Reserve `/api/_cache/**` for this module while it is enabled. If an entry has no metadata, ensure
 its key begins with a valid cache base and that it was written while a Nitro request context was
 active (or pass `getRequestPath` when creating the driver outside a request).
+
+## Compatibility
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
+matrix are not continuously tested. Nuxt 3 is not guaranteed.

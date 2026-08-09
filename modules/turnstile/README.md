@@ -1,9 +1,5 @@
 # @onderwijsin/nuxt-turnstile
 
-> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
-> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
-> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
-
 Nuxt 4 integration for action-aware Cloudflare Turnstile protection. The module registers
 `@nuxtjs/turnstile` and `@nuxt/ui`, exposes the auto-imported `useTurnstile()` composable, and
 provides server helpers for validating single-use Turnstile tokens before a protected operation.
@@ -141,3 +137,6 @@ after Turnstile succeeds; the module does not replace the route's existing submi
 - Node.js 22+
 - Node and Cloudflare Workers-compatible server runtime
 - No Sentry dependency or telemetry is included
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.

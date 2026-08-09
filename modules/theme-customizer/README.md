@@ -2,10 +2,6 @@
 
 # @onderwijsin/nuxt-theme-customizer
 
-> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
-> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
-> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
-
 Runtime theme selection and custom color editing for Nuxt UI applications. The module adds a
 `ThemeCustomizerThemePicker`, a complete `/thema` editor, generated Tailwind color variables, and
 persisted browser state.
@@ -236,6 +232,9 @@ npx skills add onderwijsin/nuxt-modules --skill nuxt-theme-customizer
 - Nuxt 4
 - Nuxt UI 4
 - Node.js 22 or newer
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.
 
 ## License
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ofetch } from "ofetch";
 import { createError, defineEventHandler, getQuery } from "h3";
+import { defineCachedFunction } from "nitropack/runtime";
 import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 import { useRuntimeConfig } from "nitropack/runtime";
@@ -14,12 +15,32 @@ const paletteResponseSchema = z.strictObject({
     .array(z.strictObject({ level: z.number().int(), hex: z.string().regex(/^[\da-f]{6}$/i) }))
     .length(11)
 });
-const paletteCache = new Map<
-  string,
-  { expiresAt: number; value: z.infer<typeof paletteResponseSchema> }
->();
-const PALETTE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const PALETTE_CACHE_TTL_SECONDS = 24 * 60 * 60;
 const DEFAULT_RATE_LIMIT = { max: 30, duration: 60, ban: 300 };
+
+const fetchPalette = defineCachedFunction(
+  async (cacheKey: string): Promise<z.infer<typeof paletteResponseSchema>> => {
+    const result = await attempt(() =>
+      ofetch<unknown>(`https://colorfyi.com/api/shades/${cacheKey}/`, { timeout: 5_000 })
+    );
+    if (result.error !== null) {
+      console.error("Failed to generate ColorFYI theme palette");
+      throw createError({ statusCode: 502, statusMessage: "Unable to generate color palette" });
+    }
+    const parsedResponse = paletteResponseSchema.safeParse(result.data);
+    if (!parsedResponse.success) {
+      console.error("ColorFYI returned an invalid theme palette");
+      throw createError({ statusCode: 502, statusMessage: "Unable to generate color palette" });
+    }
+    return parsedResponse.data;
+  },
+  {
+    name: "theme-customizer-palette",
+    maxAge: PALETTE_CACHE_TTL_SECONDS,
+    swr: false,
+    getKey: (cacheKey) => cacheKey
+  }
+);
 
 /**
  * Proxies a generated Tailwind palette for the internal theme picker.
@@ -41,24 +62,5 @@ export default defineEventHandler(async (event) => {
   }
 
   const cacheKey = parsedHex.data.slice(1).toUpperCase();
-  const cached = paletteCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) return cached.value;
-  paletteCache.delete(cacheKey);
-  const result = await attempt(() =>
-    ofetch<unknown>(`https://colorfyi.com/api/shades/${cacheKey}/`, { timeout: 5_000 })
-  );
-  if (result.error !== null) {
-    console.error("Failed to generate ColorFYI theme palette");
-    throw createError({ statusCode: 502, statusMessage: "Unable to generate color palette" });
-  }
-  const parsedResponse = paletteResponseSchema.safeParse(result.data);
-  if (!parsedResponse.success) {
-    console.error("ColorFYI returned an invalid theme palette");
-    throw createError({ statusCode: 502, statusMessage: "Unable to generate color palette" });
-  }
-  paletteCache.set(cacheKey, {
-    expiresAt: Date.now() + PALETTE_CACHE_TTL_MS,
-    value: parsedResponse.data
-  });
-  return parsedResponse.data;
+  return fetchPalette(cacheKey);
 });

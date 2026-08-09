@@ -2,10 +2,6 @@
 
 # @onderwijsin/nuxt-ui-form-extensions
 
-> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
-> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
-> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
-
 Nuxt UI form extensions for Nuxt 4. The module provides a small foundation for building forms that
 keep local edits separate from canonical application state.
 
@@ -51,3 +47,6 @@ Tailwind CSS setup.
 
 - Nuxt 4
 - Node.js 22 or newer
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.

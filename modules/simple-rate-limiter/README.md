@@ -1,9 +1,5 @@
 # @onderwijsin/nuxt-simple-rate-limiter
 
-> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
-> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
-> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
-
 Small server-side, per-IP rate limiting for Nuxt 4 endpoints. Limits are stored in Nitro storage and
 can be scoped to one request path or shared across all paths.
 
@@ -82,3 +78,6 @@ a dedicated distributed rate-limiting service.
 - Nuxt 4
 - Node.js 22 or newer
 - Node and Cloudflare Workers-compatible server runtime
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
+not continuously tested. Nuxt 3 is not guaranteed.

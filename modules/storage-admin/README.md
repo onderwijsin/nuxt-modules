@@ -1,9 +1,5 @@
 # @onderwijsin/nuxt-storage-admin
 
-> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
-> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
-> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
-
 `@onderwijsin/nuxt-storage-admin` provides administrator-only CRUD endpoints for **explicitly
 allowed** Nitro storage mounts. It is intended for operational tooling, debugging, and controlled
 maintenance—not as a general application data API.
@@ -287,3 +283,9 @@ represented as `path: null`.
 | `413`  | The selected storage base contains more than `maxListedKeys` entries after enumeration.      |
 | `503`  | The storage provider failed while listing keys.                                              |
 | `504`  | The storage provider timed out while listing keys.                                           |
+
+## Compatibility
+
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
+matrix are not continuously tested. Nuxt 3 is not guaranteed.

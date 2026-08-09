@@ -5,8 +5,11 @@ const getQuery = vi.hoisted(() => vi.fn());
 const enforceRateLimit = vi.hoisted(() => vi.fn());
 
 vi.mock("ofetch", () => ({ ofetch: fetchPalette }));
+vi.mock("nitropack/runtime", () => ({
+  defineCachedFunction: (handler: unknown) => handler,
+  useRuntimeConfig: () => ({ public: {} })
+}));
 vi.mock("@onderwijsin/nuxt-simple-rate-limiter/runtime", () => ({ enforceRateLimit }));
-vi.mock("nitropack/runtime", () => ({ useRuntimeConfig: () => ({ public: {} }) }));
 vi.mock("h3", async (importOriginal) => ({
   ...(await importOriginal<typeof import("h3")>()),
   getQuery
