@@ -90,4 +90,20 @@ describe("device module setup contract", () => {
     expect(addTemplate).not.toHaveBeenCalled();
     expect(addImportsDir).not.toHaveBeenCalled();
   });
+
+  it("rejects invalid options", async () => {
+    const deviceModule = (await import("../src/module")).default as unknown as {
+      setup: (options: unknown, nuxt: any) => void;
+    };
+    const nuxt: any = {
+      options: {
+        runtimeConfig: { public: {} },
+        build: { transpile: [] as string[] }
+      }
+    };
+
+    expect(() => deviceModule.setup({ defaultUserAgent: "" }, nuxt)).toThrow(
+      "Invalid module options"
+    );
+  });
 });
