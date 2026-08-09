@@ -158,16 +158,16 @@ authorization, conflict, or server-validation failures.
 
 ## Synchronization semantics
 
-| Situation                                      | Result                                                                   |
-| ---------------------------------------------- | ------------------------------------------------------------------------ |
-| Initial creation                               | `state` is a deep clone; `isDirty` is false.                             |
-| User edits any nested plain object/array field | Canonical source is unchanged; `isDirty` becomes true.                   |
-| Source changes while clean                     | Draft is replaced from the new source; remains clean.                    |
-| Source changes while dirty                     | Local draft is preserved; `isDirty` remains true.                        |
-| `submit` resolves without newer local edits    | Draft is replaced from the latest `getSource()` value and becomes clean. |
-| User edits while `submit` is pending           | The newer local draft is preserved and remains dirty.                    |
-| A second `submit` occurs while saving          | It is ignored; the in-flight save remains authoritative.                 |
-| `submit` rejects                               | `onError` runs; draft and dirty state are preserved.                     |
+| Situation                                      | Result                                                                                   |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Initial creation                               | `state` is a deep clone; `isDirty` is false.                                             |
+| User edits any nested plain object/array field | Canonical source is unchanged; `isDirty` becomes true.                                   |
+| Source changes while clean                     | Draft is replaced from the new source; remains clean.                                    |
+| Source changes while dirty                     | Local draft is preserved; `isDirty` remains true.                                        |
+| `submit` resolves without newer local edits    | Draft is replaced from the latest `getSource()` value and becomes clean.                 |
+| User edits while `submit` is pending           | The newer local draft is preserved and remains dirty.                                    |
+| A second `submit` occurs while saving          | It is ignored; the in-flight save remains authoritative.                                 |
+| `save` rejects during `submit`                 | `onError` runs; the draft and dirty state are preserved, and `submit` normally resolves. |
 
 This is intentionally not a conflict-resolution system. If a dirty draft must be discarded, change
 the source lifecycle/key or expose an application-level reset that replaces the canonical input and

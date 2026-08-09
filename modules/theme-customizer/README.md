@@ -192,8 +192,8 @@ endpoint, which proxies ColorFYI and returns:
 }
 ```
 
-Applications that do not need generated palettes can disable or replace this route in their Nuxt
-configuration; configured and locally created palettes continue to work without it.
+The route is registered whenever the module is enabled and has no public configuration option to be
+disabled or replaced. Configured and locally created palettes continue to work without calling it.
 
 Both public API endpoints are rate-limited by default: palette requests allow 30 per minute and font
 searches allow 60 per minute, with a five-minute temporary ban. Configure them independently through
@@ -213,7 +213,10 @@ The following components are automatically registered with the `ThemeCustomizer`
 
 - `ThemeCustomizerThemePicker`, `ThemeCustomizerFontPicker`, `ThemeCustomizerColorPalette`,
   `ThemeCustomizerEditor`, `ThemeCustomizerHexInput`, and `ThemeCustomizerRadiusInput`;
-- `ThemeCustomizerThemeCustomizerConfirmation` and `ThemeCustomizerFormModal`;
+- `ThemeCustomizerConfirmation` and `ThemeCustomizerFormModal`.
+
+The following composables and stores are auto-imported separately:
+
 - `useGeneratedPalette()`;
 - `useThemeCustomizerConfirmDialog()`;
 - `useFormModal()`;

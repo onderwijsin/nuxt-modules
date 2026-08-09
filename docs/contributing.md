@@ -27,7 +27,7 @@ test helpers, use `packages/test-utils`; never import test utilities from publis
 Run these commands from the repository root:
 
 ```sh
-pnpm fmt
+pnpm format
 pnpm lint:fix
 pnpm typecheck
 pnpm test
@@ -59,8 +59,8 @@ merge.
 
 ## Pull requests
 
-Pull requests must pass formatting, linting, type checking, tests, recursive builds, playground
-checks, package metadata validation, and packed artefact validation. They may also receive CodeQL
+Pull requests must pass formatting, linting, type checking, tests, recursive typechecks, package
+builds, package metadata validation, and packed artefact validation. They may also receive CodeQL
 findings and Dependabot security-update changes; handle those through the
 [security guide](security.md) and the normal review process. Changesets reports release impact in a
 pull request comment. Releases are never published by pull request or push CI.

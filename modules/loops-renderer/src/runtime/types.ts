@@ -2,7 +2,7 @@ import type { EvaluateLoopsLmxOptions } from "@onderwijsin/loops-core";
 
 /** Options shared by the root renderer and every recursive LMX node renderer. */
 export interface LoopsRendererConfig {
-  /** Render unsupported nodes in the Nuxt development overlay. */
+  /** Render unsupported nodes in an inline developer-only block. */
   debug?: boolean;
   /** Overrides the module default for applying LMX node styles inline. */
   applyInlineStyles?: boolean;

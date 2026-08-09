@@ -198,10 +198,11 @@ This calls `storage.clear()` for the entire mount. It requires `delete` permissi
 
 ## Development browser
 
-With `storageAdmin.enabled`, `storageAdmin.ui.enabled`, and `devAuthBypass` enabled, open `ui.path`
-(default `/_storage`) while running `nuxt dev`. The browser lists only configured mount/prefix
-pairs, searches storage keys and cache paths, and provides pagination, page-size controls, and
-confirmed per-entry or selected-entry deletion.
+With `storageAdmin.enabled` and `storageAdmin.ui.enabled`, open `ui.path` (default `/_storage`)
+while running `nuxt dev`. Page registration is independent of authentication: development requests
+still require the configured token unless `devAuthBypass` is also enabled. The browser lists only
+configured mount/prefix pairs, searches storage keys and cache paths, and provides pagination,
+page-size controls, and confirmed per-entry or selected-entry deletion.
 
 Set `storageAdmin.ui.enabled` to `false` to remove the page and prevent the module from registering
 `@nuxt/ui` as a Nuxt dependency.

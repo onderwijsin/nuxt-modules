@@ -39,10 +39,10 @@ edits to root scripts or configuration. Keep playgrounds private and scoped to t
 
 ### Supporting packages
 
-Private packages live under `packages/`:
+Supporting packages live under `packages/`:
 
 - `@onderwijsin/nuxt-module-utils` contains reusable, module-agnostic runtime helpers. It is built
-  with tsup and published alongside modules.
+  with tsup and published alongside modules with public npm access.
 - `test-utils` is reserved for shared test fixtures, assertions, and Vitest helpers. It must never
   be imported by published runtime code.
 
@@ -91,9 +91,10 @@ pnpm build
 pnpm validate:packages
 ```
 
-The recursive build follows workspace dependency order, builds utility packages, then builds modules
-and their playgrounds. Package validation checks publishable metadata and confirms that private
-workspace dependencies do not leak into runtime output.
+The root `build` script follows workspace dependency order for `packages/*` and `modules/*`; it does
+not run playground package build scripts. The recursive `typecheck` script also includes
+playgrounds. Package validation checks publishable metadata and confirms that private workspace
+dependencies do not leak into runtime output.
 
 ## Generated output
 

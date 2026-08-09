@@ -237,8 +237,10 @@ permission and `allowRoot: true` on the mount; an ordinary prefix allowlist is n
 
 ## Development browser
 
-When `storageAdmin.enabled`, `storageAdmin.ui.enabled`, and `devAuthBypass` are true, `nuxt dev`
-registers an unauthenticated Nuxt UI page at `ui.path` (default `/_storage`). It provides:
+When `storageAdmin.enabled` and `storageAdmin.ui.enabled` are true, `nuxt dev` registers a Nuxt UI
+page at `ui.path` (default `/_storage`). Page registration is independent of authentication:
+development requests still require the configured token unless `devAuthBypass` is also true. The
+browser provides:
 
 - a selector containing only configured mount/prefix pairs;
 - key and cached-path search;
