@@ -46,6 +46,7 @@
     "@nuxt/schema": "catalog:",
     "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
     "@pinia/nuxt": "catalog:",
     "@vueuse/core": "catalog:",
     "@vueuse/nuxt": "catalog:",

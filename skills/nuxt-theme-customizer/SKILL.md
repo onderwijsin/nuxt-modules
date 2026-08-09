@@ -144,3 +144,9 @@ For generated palettes, the module provides `GET /api/_theme-customizer/palette?
 which proxies ColorFYI. The response contains a six-digit `hex` value and exactly eleven
 `{ level, hex }` shade objects. Applications that use another palette service can replace the route;
 configured and locally created palettes do not depend on it.
+
+The palette endpoint is cached for 24 hours, validates ColorFYI responses, and times out provider
+requests after five seconds. Palette requests are limited to 30 per minute and font requests to 60
+per minute by default. Configure `themeCustomizer.rateLimit.palette` and
+`themeCustomizer.rateLimit.fonts` independently, or set `enabled: false` when equivalent
+infrastructure protection is already active.

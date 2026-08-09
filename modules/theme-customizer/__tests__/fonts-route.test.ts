@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fetchFonts = vi.hoisted(() => vi.fn());
 const getQuery = vi.hoisted(() => vi.fn());
 const useRuntimeConfig = vi.hoisted(() => vi.fn());
+const enforceRateLimit = vi.hoisted(() => vi.fn());
 
 vi.mock("ofetch", () => ({ ofetch: fetchFonts }));
 vi.mock("nitropack/runtime", () => ({ useRuntimeConfig }));
+vi.mock("@onderwijsin/nuxt-simple-rate-limiter/runtime", () => ({ enforceRateLimit }));
 vi.mock("h3", async (importOriginal) => ({
   ...(await importOriginal<typeof import("h3")>()),
   getQuery

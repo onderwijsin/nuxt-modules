@@ -32,6 +32,19 @@ instances.
 
 For one quota across all API paths, call `enforceGlobalRateLimit` before route-specific checks.
 
+Client IP resolution does not trust `X-Forwarded-For` by default. Opt in per call only when a
+trusted reverse proxy sanitizes that header and prevents direct access to the origin:
+
+    await enforceRateLimit(event, {
+      max: 5,
+      duration: 60,
+      ban: 900,
+      trustXForwardedFor: true
+    });
+
+When disabled, H3 uses the runtime-provided client address or socket address. If `ban` is `0`,
+`bannedUntil` is the end of the active window.
+
 This module is intentionally simple. Use infrastructure-level rate limiting (such as a CDN, WAF, API
 gateway, load balancer, or dedicated distributed limiter) when rate limiting is a production
 security requirement.

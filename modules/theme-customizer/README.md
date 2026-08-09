@@ -2,6 +2,10 @@
 
 # @onderwijsin/nuxt-theme-customizer
 
+> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
+> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
+> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
+
 Runtime theme selection and custom color editing for Nuxt UI applications. The module adds a
 `ThemeCustomizerThemePicker`, a complete `/thema` editor, generated Tailwind color variables, and
 persisted browser state.
@@ -194,6 +198,13 @@ endpoint, which proxies ColorFYI and returns:
 
 Applications that do not need generated palettes can disable or replace this route in their Nuxt
 configuration; configured and locally created palettes continue to work without it.
+
+Both public API endpoints are rate-limited by default: palette requests allow 30 per minute and font
+searches allow 60 per minute, with a five-minute temporary ban. Configure them independently through
+`themeCustomizer.rateLimit.palette` and `themeCustomizer.rateLimit.fonts`, or explicitly disable
+them when equivalent CDN, WAF, or reverse-proxy protection is in place. ColorFYI responses are
+runtime-validated, cached for 24 hours by normalized HEX value, and fetched with a five-second
+timeout. Invalid or failed provider responses return the generic upstream error.
 
 ## Runtime behavior
 

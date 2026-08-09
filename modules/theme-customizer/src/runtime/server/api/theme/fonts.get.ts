@@ -3,6 +3,7 @@ import { ofetch } from "ofetch";
 import { defineEventHandler as h3DefineEventHandler, getQuery as h3GetQuery } from "h3";
 import { useRuntimeConfig } from "nitropack/runtime";
 import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
 
 type ThemeFontOption = {
   label: string;
@@ -14,6 +15,7 @@ const googleFontsResponseSchema = z.object({
 });
 
 const querySchema = z.object({ q: z.string().trim().max(80).catch("") });
+const DEFAULT_RATE_LIMIT = { max: 60, duration: 60, ban: 300 };
 let cachedFonts: ThemeFontOption[] | undefined;
 
 /**
@@ -24,6 +26,11 @@ let cachedFonts: ThemeFontOption[] | undefined;
 export default h3DefineEventHandler(async (event): Promise<ThemeFontOption[]> => {
   const query = querySchema.parse(h3GetQuery(event));
   const config = useRuntimeConfig(event);
+  const rateLimit = config.public?.themeCustomizer?.rateLimit?.fonts ?? DEFAULT_RATE_LIMIT;
+  if (rateLimit.enabled !== false) {
+    const { enabled: _enabled, ...limits } = rateLimit;
+    await enforceRateLimit(event, limits);
+  }
   const apiKey = config.themeCustomizerGoogleFontsApiKey;
   const configuredFonts = config.public?.themeCustomizer?.googleFonts?.families ?? [];
   const fallbackFonts = toFontOptions(configuredFonts);

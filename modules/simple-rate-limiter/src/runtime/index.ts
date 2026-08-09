@@ -6,7 +6,8 @@ import { z } from "zod";
 const rateLimitConfigSchema = z.strictObject({
   max: z.number().int().positive(),
   duration: z.number().int().positive(),
-  ban: z.number().int().nonnegative()
+  ban: z.number().int().nonnegative(),
+  trustXForwardedFor: z.boolean().optional()
 });
 
 interface RateLimitEntry {
@@ -80,7 +81,9 @@ export async function enforceGlobalRateLimit(
   throwIfBanned(current, parsedConfig, now);
   if (current && timestamps.length >= parsedConfig.max) {
     const bannedUntil =
-      now + (parsedConfig.ban > 0 ? parsedConfig.ban * 1000 : (timestamps[0] ?? now) - now);
+      parsedConfig.ban > 0
+        ? now + parsedConfig.ban * 1000
+        : (timestamps[0] ?? now) + parsedConfig.duration * 1000;
     await storage.setItem(key, { timestamps, bannedUntil });
     throwRateLimitError(bannedUntil, parsedConfig);
   }
@@ -101,7 +104,10 @@ async function recordGlobalRequest(event: H3Event, ip: string, now: number): Pro
 
 function getRateLimitContext(event: H3Event, config: RateLimitConfig) {
   const parsedConfig = rateLimitConfigSchema.parse(config);
-  const ip = getRequestIP(event, { xForwardedFor: true }) ?? "unknown";
+  const ip =
+    (config.trustXForwardedFor === true
+      ? getRequestIP(event, { xForwardedFor: true })
+      : getRequestIP(event)) ?? "unknown";
 
   return {
     parsedConfig,

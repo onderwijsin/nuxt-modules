@@ -1,5 +1,9 @@
 # @onderwijsin/nuxt-newsletter-signup
 
+> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
+> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
+> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
+
 Provider-independent newsletter signup for Nuxt 4. The module exposes one server endpoint and
 normalizes Loops and Mailchimp into the same request and error contract. Provider credentials and
 provider requests stay on the server; the browser only calls the generated Nuxt endpoint.

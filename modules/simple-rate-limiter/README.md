@@ -1,5 +1,9 @@
 # @onderwijsin/nuxt-simple-rate-limiter
 
+> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
+> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
+> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
+
 Small server-side, per-IP rate limiting for Nuxt 4 endpoints. Limits are stored in Nitro storage and
 can be scoped to one request path or shared across all paths.
 
@@ -48,6 +52,10 @@ With `ban: 0`, `bannedUntil` is the end of the current window.
 
 The storage namespace includes the request path and each entry is keyed by the client IP. Configure
 a shared Nitro storage driver for multi-instance deployments; in-memory storage resets on restart.
+
+`X-Forwarded-For` is not trusted by default. Set `trustXForwardedFor: true` in a helper call only
+when a trusted proxy sanitizes the header and direct origin access is prevented. With `ban: 0`,
+`bannedUntil` is the end of the active window.
 
 ## Global limits
 

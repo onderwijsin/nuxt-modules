@@ -28,6 +28,7 @@ vi.mock("nitropack/runtime", () => ({
 }));
 vi.mock("zod", () => ({
   z: {
+    boolean: () => ({ optional: () => ({}) }),
     number: () => ({
       int: () => ({
         positive: () => ({}),
@@ -79,5 +80,36 @@ describe("enforceRateLimit", () => {
     ).rejects.toMatchObject({
       data: { bannedUntil: expect.any(Number), limits: { max: 2, duration: 60, ban: 0 } }
     });
+  });
+
+  it("uses the end of the active window when global bans are disabled", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:30.000Z"));
+    await Reflect.apply(enforceGlobalRateLimit, undefined, [{}, { max: 1, duration: 60, ban: 0 }]);
+    vi.setSystemTime(new Date("2026-01-01T00:00:45.000Z"));
+
+    await expect(
+      Reflect.apply(enforceGlobalRateLimit, undefined, [{}, { max: 1, duration: 60, ban: 0 }])
+    ).rejects.toMatchObject({
+      data: { bannedUntil: new Date("2026-01-01T00:01:30.000Z").getTime() }
+    });
+    vi.useRealTimers();
+  });
+
+  it("uses the explicit ban duration for global limits", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:30.000Z"));
+    await Reflect.apply(enforceGlobalRateLimit, undefined, [
+      {},
+      { max: 1, duration: 60, ban: 300 }
+    ]);
+    vi.setSystemTime(new Date("2026-01-01T00:00:45.000Z"));
+
+    await expect(
+      Reflect.apply(enforceGlobalRateLimit, undefined, [{}, { max: 1, duration: 60, ban: 300 }])
+    ).rejects.toMatchObject({
+      data: { bannedUntil: new Date("2026-01-01T00:05:45.000Z").getTime() }
+    });
+    vi.useRealTimers();
   });
 });

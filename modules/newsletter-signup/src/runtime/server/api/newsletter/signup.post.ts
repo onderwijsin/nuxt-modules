@@ -13,12 +13,12 @@ import { createNewsletterSignupError, getErrorData } from "../../utils/errors";
 
 const signupSchema = z
   .object({
-    email: z.email({ error: "Ongeldig e-mailadres" }),
-    firstName: z.string().trim().min(1).optional(),
-    lastName: z.string().trim().min(1).optional(),
-    organization: z.string().trim().min(1).optional(),
-    source: z.string().trim().min(1).optional(),
-    listId: z.string().trim().min(1).optional()
+    email: z.email({ error: "Ongeldig e-mailadres" }).max(512),
+    firstName: z.string().trim().min(1).max(256).optional(),
+    lastName: z.string().trim().min(1).max(256).optional(),
+    organization: z.string().trim().min(1).max(1024).optional(),
+    source: z.string().trim().min(1).max(256).optional(),
+    listId: z.string().trim().min(1).max(256).optional()
   })
   .strict();
 

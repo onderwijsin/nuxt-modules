@@ -1,5 +1,9 @@
 # @onderwijsin/nuxt-cache
 
+> Compatibility note: developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares
+> Node.js >=22 and may work with other Nuxt versions allowed by its package metadata, but versions
+> outside the current CI matrix are not continuously tested; Nuxt 3 is not guaranteed.
+
 `@onderwijsin/nuxt-cache` adds cache-entry metadata and a reverse path index to an Unstorage driver.
 It also provides a protected, cache-base-scoped invalidation endpoint. It is CMS-agnostic: mapping a
 content event to a cache base and public route remains the consuming application's responsibility.

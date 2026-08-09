@@ -10,7 +10,7 @@ export default defineConfig({
     }
   },
   test: {
-    passWithNoTests: true,
+    passWithNoTests: false,
     include: ["**/*.{test,spec}.?(c|m)[jt]s?(x)"],
     exclude: ["**/node_modules/**", "**/.nuxt/**", "**/.output/**", "**/dist/**"]
   }
