@@ -12,7 +12,9 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "tailwindcss": "catalog:"
   }
 }
