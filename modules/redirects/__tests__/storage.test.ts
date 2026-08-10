@@ -155,7 +155,7 @@ describe("redirect storage refresh", () => {
       });
 
       await expect(findRedirect("/legacy/page")).resolves.toMatchObject({ to: "/old/page" });
-      vi.advanceTimersByTime(1_001);
+      vi.advanceTimersByTime(10_001);
       await expect(findRedirect("/legacy/page")).resolves.toMatchObject({ to: "/new/page" });
     } finally {
       vi.useRealTimers();

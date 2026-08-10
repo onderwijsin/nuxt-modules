@@ -264,9 +264,9 @@ persisted or sent through Nitro storage.
 - Removing a dynamic origin removes its compiled rule and invalidates dynamic lookup caches.
 - Exact lookups remain storage-key lookups and are always evaluated before dynamic rules.
 - Dynamic rules are not included in the client payload when `dynamicMatching` is disabled.
-- A serving process checks the manifest `updatedAt` at most once per second after reaching dynamic
-  lookup. It recompiles only when that version differs, limiting cross-process skew without adding a
-  manifest read to exact-hit requests.
+- A serving process checks the manifest `updatedAt` at most once per 10 seconds after reaching
+  dynamic lookup. It recompiles only when that version differs, limiting cross-process skew without
+  adding a manifest read to exact-hit requests.
 
 ## Unsupported patterns and troubleshooting
 
