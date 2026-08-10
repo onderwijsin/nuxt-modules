@@ -358,6 +358,12 @@ importers:
       ohash:
         specifier: 'catalog:'
         version: 2.0.11
+      ofetch:
+        specifier: 'catalog:'
+        version: 1.5.1
+      ufo:
+        specifier: 'catalog:'
+        version: 1.6.4
       zod:
         specifier: 'catalog:'
         version: 4.4.3

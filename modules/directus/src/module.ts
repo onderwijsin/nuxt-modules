@@ -2,7 +2,10 @@ import { defu } from "defu";
 import { join } from "node:path";
 import {
   addImports,
+  addImportsDir,
+  addPlugin,
   addServerHandler,
+  addServerImportsDir,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -104,6 +107,10 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
+    addImportsDir(resolver.resolve(runtimeDir, "app/composables"));
+    addServerImportsDir(resolver.resolve(runtimeDir, "server/composables"));
+    addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/client"), mode: "client" });
+    addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/server"), mode: "server" });
     nuxt.options.alias ??= {};
     nuxt.options.alias["#directus"] = resolver.resolve(
       nuxt.options.buildDir,

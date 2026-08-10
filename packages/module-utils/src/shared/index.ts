@@ -1,4 +1,4 @@
-export { attempt, attemptWithRetry } from "./attempt";
+export { attempt, attemptWithRetry, attemptSync } from "./attempt";
 export type { AttemptResult, AttemptRetryOptions } from "./attempt";
 export { fromEntries, toEntries } from "./entries";
 export {

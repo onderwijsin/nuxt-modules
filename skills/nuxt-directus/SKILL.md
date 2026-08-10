@@ -5,13 +5,18 @@ description: Use @onderwijsin/nuxt-directus for server-safe Directus REST access
 
 # Nuxt Directus
 
-The module is under active staged implementation. In stages 1–2, configure a private `baseUrl` and
-optional `staticToken`; only `proxy.path` and `auth.enabled` are exposed in public runtime
-configuration. The default auto-imported SDK commands are `readItem` and `readItems`.
+The module is under active staged implementation. Configure a private `baseUrl` and optional
+`staticToken`; only `proxy.path` and `auth.enabled` are exposed in public runtime configuration. The
+default auto-imported SDK commands are `readItem` and `readItems`.
 
 Do not place Directus credentials in public runtime configuration or client code. The proxy route is
-registered at `/_directus/proxy/**` by default and currently returns `501` until the forwarding
-stage is complete.
+registered at `/_directus/proxy/**` by default and forwards REST requests with server-selected
+credentials. Browser requests use the proxy; server requests use a fresh direct client.
+
+Use `useDirectus(command)` with a typed REST command such as `readItems`. Configure `commands` to
+choose additional validated SDK command auto-imports, or import commands explicitly from
+`@directus/sdk`. Nitro code can use `useDirectusServer(command, event?)` for direct server access.
+The browser client has no static-token or authentication API.
 
 When type generation is configured with both `baseUrl` and `typegen.introspectionToken`, import
 generated interfaces from `#directus` using `import type`; the generated declaration has no runtime

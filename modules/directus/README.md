@@ -1,9 +1,8 @@
 # @onderwijsin/nuxt-directus
 
-`@onderwijsin/nuxt-directus` provides a server-safe Directus REST foundation for Nuxt 4. The module
-is being implemented incrementally; stages 1–3 establish package metadata, validated options,
-private runtime configuration, the same-origin proxy route registration, and build-time schema
-generation.
+`@onderwijsin/nuxt-directus` provides server-safe, typed Directus REST access for Nuxt 4. The module
+is being implemented incrementally; stages 1–4 establish package metadata, validated options,
+private runtime configuration, same-origin proxy forwarding, and build-time schema generation.
 
 ```ts
 export default defineNuxtConfig({
@@ -18,11 +17,25 @@ export default defineNuxtConfig({
 ```
 
 Directus credentials are server-only. The browser-safe runtime configuration contains only the proxy
-path and whether session authentication is enabled. Directus permission rules remain the
-authorization boundary. The proxy currently returns `501` while its forwarding implementation is
-developed in a later plan stage.
+path and whether session authentication is enabled. Browser SDK requests target the same-origin
+proxy; server-side requests target Directus directly with a fresh request-scoped client. The proxy
+discards inbound credentials and selects the configured static token on the server. Directus
+permission rules remain the authorization boundary.
 
-Typed runtime composables are delivered in later stages.
+## REST commands
+
+The module auto-imports the commands listed in `directus.commands` (default: `readItem` and
+`readItems`) and provides `useDirectus` for execution:
+
+```ts
+const articles = await useDirectus(readItems("articles", { limit: 10 }));
+```
+
+The client exposes REST only. Other SDK commands can still be explicitly imported from
+`@directus/sdk`; `commands` controls only the validated auto-import list.
+
+Nitro handlers can use `useDirectusServer(command, event?)` to bypass the browser proxy while
+retaining the same typed command and server credential policy.
 
 ## Type generation
 

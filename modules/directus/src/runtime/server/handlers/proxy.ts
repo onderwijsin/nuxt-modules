@@ -1,8 +1,124 @@
-import { createError, type EventHandler } from "h3";
+import { createError, defineEventHandler, getRequestURL, proxyRequest } from "h3";
+import { useRuntimeConfig } from "#imports";
+import { attemptSync } from "@onderwijsin/nuxt-module-utils";
+import { ofetch } from "ofetch";
+import { hasProtocol, isScriptProtocol, joinURL } from "ufo";
 
-/** Placeholder route registered in stage 2; Directus forwarding is stage 4. */
-const handler: EventHandler = () => {
-  throw createError({ statusCode: 501, statusMessage: "Directus proxy is not implemented yet" });
-};
+import { getDirectusAuthorizationHeader, resolveDirectusCredential } from "../utils/credentials";
 
-export default handler;
+const blockedRequestHeaders = new Set([
+  "authorization",
+  "cookie",
+  "host",
+  "origin",
+  "content-length"
+]);
+const blockedResponseHeaders = new Set(["set-cookie"]);
+
+/**
+ * Resolves a proxy request into a Directus URL while preserving the request query string.
+ *
+ * @param baseUrl Configured Directus URL.
+ * @param proxyPath Configured same-origin proxy prefix.
+ * @param requestUrl Incoming request URL.
+ * @returns A validated upstream URL.
+ */
+export function resolveDirectusProxyUrl(
+  baseUrl: string,
+  proxyPath: string,
+  requestUrl: URL
+): string {
+  const pathname = requestUrl.pathname;
+  if (pathname !== proxyPath && !pathname.startsWith(`${proxyPath}/`)) {
+    throw createError({ statusCode: 404, statusMessage: "Invalid Directus proxy path" });
+  }
+
+  const suffix = pathname.slice(proxyPath.length) || "/";
+  const { data: decodedSuffix } = attemptSync(() => decodeURIComponent(suffix));
+  if (!decodedSuffix) {
+    throw createError({ statusCode: 400, statusMessage: "Malformed Directus proxy path" });
+  }
+
+  if (
+    decodedSuffix.includes("\0") ||
+    decodedSuffix.split("/").some((segment) => segment === "." || segment === "..")
+  ) {
+    throw createError({ statusCode: 400, statusMessage: "Invalid Directus proxy path" });
+  }
+
+  const base = new URL(baseUrl);
+  if (
+    !hasProtocol(baseUrl, { strict: true }) ||
+    isScriptProtocol(base.protocol) ||
+    (base.protocol !== "http:" && base.protocol !== "https:")
+  ) {
+    throw createError({ statusCode: 500, statusMessage: "Directus baseUrl must use HTTP(S)" });
+  }
+
+  const target = new URL(joinURL(baseUrl, decodedSuffix));
+  target.search = requestUrl.search;
+  return target.toString();
+}
+
+/**
+ * Returns request headers that are removed before forwarding to Directus.
+ *
+ * @returns Credential and routing headers that must not cross the proxy boundary.
+ */
+export function getForwardedProxyHeaders(): string[] {
+  return [...blockedRequestHeaders];
+}
+
+/**
+ * Creates a fetch adapter that removes caller credentials before proxying.
+ *
+ * @param credential Server-selected upstream credential.
+ * @returns A sanitized Fetch-compatible adapter.
+ */
+function createSanitizedProxyFetch(
+  credential: ReturnType<typeof resolveDirectusCredential>
+): typeof fetch {
+  return async (input, init) => {
+    const headers = new Headers(init?.headers);
+    for (const header of blockedRequestHeaders) headers.delete(header);
+    const authorization = getDirectusAuthorizationHeader(credential).authorization;
+    if (authorization) headers.set("authorization", authorization);
+
+    const request = input instanceof URL ? input.toString() : input;
+    const response = await ofetch
+      .create({ responseType: "stream" })
+      .raw(request, { ...init, headers });
+    const safeHeaders = new Headers(response.headers);
+    for (const header of blockedResponseHeaders) safeHeaders.delete(header);
+    return new Response(response.body, {
+      headers: safeHeaders,
+      status: response.status,
+      statusText: response.statusText
+    });
+  };
+}
+
+/**
+ * Forwards browser REST traffic to Directus using only server-selected credentials.
+ *
+ * @param event Incoming Nitro request event.
+ * @returns The upstream response body and status as handled by H3.
+ */
+export default defineEventHandler((event) => {
+  const config = useRuntimeConfig(event);
+  const requestUrl = getRequestURL(event);
+  const target = resolveDirectusProxyUrl(
+    config.directus.baseUrl,
+    config.public.directus.proxy.path,
+    requestUrl
+  );
+  const credential = resolveDirectusCredential({ staticToken: config.directus.staticToken });
+
+  return proxyRequest(event, target, {
+    streamRequest: true,
+    fetch: createSanitizedProxyFetch(credential),
+    fetchOptions: {
+      headers: getDirectusAuthorizationHeader(credential)
+    }
+  });
+});
