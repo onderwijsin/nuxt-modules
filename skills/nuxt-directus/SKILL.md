@@ -1,165 +1,248 @@
 ---
 name: nuxt-directus
 description:
-  Use @onderwijsin/nuxt-directus for typed, server-safe Directus REST access, preview lookup, schema
-  generation, error normalization, and optional cookie authentication in Nuxt 4.
+  Use @onderwijsin/nuxt-directus for typed server-safe Directus REST access, preview lookup, schema
+  generation, normalized errors, and optional cookie authentication in Nuxt 4.
 ---
 
 # Nuxt Directus
 
-@onderwijsin/nuxt-directus provides typed Directus SDK access for Nuxt 4. It supports browser and
-SSR requests, Nitro server access, a same-origin proxy, preview-aware item lookup, generated schema
-types, normalized errors, and optional cookie-backed authentication.
+`@onderwijsin/nuxt-directus` provides typed Directus REST access across browser, SSR, and Nitro
+code. It also provides a same-origin proxy, preview-aware item lookup, generated `#directus` types,
+normalized Directus errors, and optional cookie-backed authentication.
 
-## Install and configure
+## Installation and configuration
 
-    pnpm add @onderwijsin/nuxt-directus
+```sh
+pnpm add @onderwijsin/nuxt-directus
+```
 
-    export default defineNuxtConfig({
-      modules: ["@onderwijsin/nuxt-directus"],
-      directus: {
-        baseUrl: process.env.DIRECTUS_URL,
-        staticToken: process.env.DIRECTUS_STATIC_TOKEN
-      }
-    });
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ["@onderwijsin/nuxt-directus"],
+  directus: {
+    baseUrl: process.env.DIRECTUS_URL,
+    staticToken: process.env.DIRECTUS_STATIC_TOKEN
+  }
+});
+```
 
-Keep baseUrl, staticToken, and typegen.introspectionToken server-only. Do not put them in
-runtimeConfig.public or browser code.
+`baseUrl`, `staticToken`, and `typegen.introspectionToken` are server-only. Do not place them in
+`runtimeConfig.public` or browser code.
 
-## Configuration reference
+### Complete option reference
 
-| Option                     | Default                     | Purpose                                     |
-| -------------------------- | --------------------------- | ------------------------------------------- |
-| enabled                    | true                        | Enables the module.                         |
-| baseUrl                    | empty                       | Directus HTTP(S) base URL.                  |
-| staticToken                | —                           | Server-only static credential.              |
-| proxy.path                 | /_directus/proxy            | Same-origin browser proxy.                  |
-| commands                   | readItem, readItems         | Auto-imported SDK commands.                 |
-| preview.enabled            | true                        | Enables preview query parsing.              |
-| preview.versioning         | true                        | Enables versioned preview lookup.           |
-| preview.queryKeys          | preview, token, version, id | Preview query parameter names.              |
-| auth.enabled               | false                       | Enables auth routes and useDirectusAuth.    |
-| auth.cookie.name           | directus_session            | Session cookie name.                        |
-| auth.cookie.secure         | true                        | HTTPS-only cookie flag.                     |
-| auth.cookie.sameSite       | lax                         | Cookie SameSite policy.                     |
-| auth.cookie.path           | /                           | Cookie path.                                |
-| auth.cookie.maxAge         | 2592000                     | Cookie lifetime in seconds.                 |
-| auth.cookie.domain         | —                           | Optional cookie domain.                     |
-| auth.refreshSafetyWindow   | 30000                       | Early-refresh window in milliseconds.       |
-| auth.passwordResetUrl      | —                           | Required for password reset requests.       |
-| typegen.enabled            | true                        | Enables generated #directus declarations.   |
-| typegen.introspectionToken | —                           | Server-only Directus schema token.          |
-| typegen.cache.maxAge       | 3600000                     | Development cache lifetime in milliseconds. |
-| typegen.augmentations      | all false                   | Optional generated-output transforms.       |
-| typegen.rules              | empty object                | Generated field type overrides.             |
-| typegen.transform          | —                           | Final build-time source transform.          |
+All options are configured under `directus`.
 
-The module validates option values and rejects unsafe proxy paths, unsupported SDK command names,
-and incomplete production type-generation configuration.
+| Option                       | Default                             | Contract                                                                                          |
+| ---------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `enabled`                    | `true`                              | Enables the module.                                                                               |
+| `baseUrl`                    | `""`                                | Directus URL. Must use `http` or `https`.                                                         |
+| `staticToken`                | —                                   | Optional server-only static credential.                                                           |
+| `proxy.path`                 | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected. |
+| `commands`                   | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                 |
+| `preview.enabled`            | `true`                              | Enables preview query parsing and request-scoped preview credentials.                             |
+| `preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                                 |
+| `preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                   |
+| `auth.enabled`               | `false`                             | Registers authentication routes and the `useDirectusAuth` auto-import.                            |
+| `auth.cookie.name`           | `directus_session`                  | Session cookie name.                                                                              |
+| `auth.cookie.secure`         | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                    |
+| `auth.cookie.sameSite`       | `lax`                               | Cookie `SameSite` policy.                                                                         |
+| `auth.cookie.path`           | `/`                                 | Cookie path.                                                                                      |
+| `auth.cookie.maxAge`         | `2592000`                           | Cookie lifetime in seconds.                                                                       |
+| `auth.cookie.domain`         | —                                   | Optional cookie domain.                                                                           |
+| `auth.refreshSafetyWindow`   | `30000`                             | Refreshes a session this many milliseconds before expiry.                                         |
+| `auth.passwordResetUrl`      | —                                   | Required for password-request support; sent as Directus `reset_url`.                              |
+| `typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                       |
+| `typegen.introspectionToken` | —                                   | Server-only Directus schema introspection token.                                                  |
+| `typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
+| `typegen.augmentations`      | all `false`                         | Optional generated-output transforms.                                                             |
+| `typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                                     |
+| `typegen.transform`          | —                                   | Final build-time source transform.                                                                |
+
+The module validates option values during Nuxt configuration. Production type generation requires
+both `baseUrl` and `typegen.introspectionToken`.
 
 ## Public auto-imports
 
-### useDirectus
+### `useDirectus`
 
-Runs a typed REST command. Browser calls use the same-origin proxy; SSR calls use the direct server
-client.
+```ts
+useDirectus<Output>(command: RestCommand<Output, Schema>): Promise<Output>
+```
 
-    const articles = await useDirectus(readItems("articles", { limit: 10 }));
+Executes a typed Directus REST command. Browser calls use the same-origin proxy; SSR calls use the
+direct server client. The module chooses preview, session, static, or no credential on the server.
+Callers cannot override that credential with request headers.
 
-### useDirectusServer
+### `useDirectusServer`
 
-Runs a typed command directly from Nitro code. Pass the current event for request-scoped preview and
-session credentials.
+```ts
+useDirectusServer<Output>(
+  command: RestCommand<Output, Schema>,
+  event?: H3Event
+): Promise<Output>
+```
 
-    export default defineEventHandler((event) =>
-      useDirectusServer(readItems("articles", { limit: 10 }), event)
-    );
+Executes a typed command directly from Nitro. Passing the current `H3Event` enables request-scoped
+preview and session credential resolution.
 
-### useDirectusItemByPath
+### `useDirectusItemByPath`
 
-Returns the first item matching a collection query, or null. Normal lookup uses readItems with
-limit 1. A versioned preview requires both a preview token and item id, then uses readItem(id, {
-version }).
+```ts
+useDirectusItemByPath(collection, query): Promise<Item | null>
+```
 
-### useDirectusServerItemByPath
+Queries a collection and returns its first matching item or `null`. Normal lookup always uses
+`readItems` with `limit: 1`. When versioned preview context contains a non-`main` version, the
+helper reads the selected item with `readItem(id, { version })`; the item ID is required for this
+branch. The main version is treated as the normal lookup.
 
-Server equivalent of useDirectusItemByPath. Its signature is useDirectusServerItemByPath(event,
-collection, query).
+### `useDirectusServerItemByPath`
 
-### useDirectusError
+```ts
+useDirectusServerItemByPath(event, collection, query): Promise<Item | null>
+```
 
-Normalizes Directus, SDK, ofetch, and H3 errors. It exposes error messages and these flags:
+Server equivalent of `useDirectusItemByPath`. It reads preview context from the supplied request
+event and uses the server Directus client.
 
-isOtpError, isInvalidCredentialError, isForbiddenError, isTokenExpiredError, isInvalidTokenError,
-isValidationError, isRateLimitError, isServiceUnavailableError, isRouteNotFoundError,
-invalidCredentials, and tokenExpired.
+### `useDirectusError`
 
-### useDirectusAuth
+```ts
+useDirectusError(error: unknown): DirectusErrorResult
+```
 
-Registered when auth.enabled is true. The facade contains:
+Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. A normalized result has:
 
-| Member                         | Type or behavior                                        |
-| ------------------------------ | ------------------------------------------------------- |
-| _session                       | Read-only session snapshot ref.                         |
-| isAuthenticated                | Read-only computed boolean.                             |
-| userId                         | Read-only computed user ID.                             |
-| login(input)                   | Login with email, password, and optional otp.           |
-| refresh()                      | Refresh an expiring session.                            |
-| logout()                       | Revoke the upstream refresh token and clear the cookie. |
-| passwordRequest(email)         | Request a password reset email.                         |
-| passwordReset(token, password) | Complete a password reset.                              |
+- `isDirectusError`;
+- `errors`, containing safe `message`, `code`, and `extensions` values;
+- optional `statusCode`;
+- `isOtpError`;
+- `isInvalidCredentialError` and `invalidCredentials`;
+- `isForbiddenError`;
+- `isTokenExpiredError` and `tokenExpired`;
+- `isInvalidTokenError`;
+- `isValidationError`;
+- `isRateLimitError`;
+- `isServiceUnavailableError`; and
+- `isRouteNotFoundError`.
 
-The SSR server plugin reads the token-free snapshot from the httpOnly cookie into Nuxt state, so the
-client hydrates without a session fetch. Tokens never enter the client state. The snapshot contains
-userId and optional email, firstName, and lastName only.
+Unknown errors return the same boolean fields as `false` and an empty `errors` array.
+
+### `useDirectusAuth`
+
+The auto-import is registered only when `auth.enabled` is `true`.
+
+```ts
+const auth = useDirectusAuth();
+```
+
+#### State
+
+| Member                 | Type                                                 | Contract                       |
+| ---------------------- | ---------------------------------------------------- | ------------------------------ |
+| `auth._session`        | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only token-free snapshot. |
+| `auth.isAuthenticated` | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists. |
+| `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.               |
+
+The snapshot contains `userId` and optional `email`, `firstName`, and `lastName`. It does not
+contain access tokens, refresh tokens, roles, policies, or permissions.
+
+#### Methods
+
+| Method            | Signature                                                                        | Behavior                                                                                                                                                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login`           | `login(input: { email: string; password: string; otp?: string }): Promise<void>` | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                                                                        |
+| `refresh`         | `refresh(): Promise<void>`                                                       | Refreshes only when the server session is inside the safety window, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
+| `logout`          | `logout(): Promise<void>`                                                        | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                                                                               |
+| `passwordRequest` | `passwordRequest(email: string): Promise<void>`                                  | Requests a password-reset email using the configured `auth.passwordResetUrl`.                                                                                                                                                                                 |
+| `passwordReset`   | `passwordReset(token: string, password: string): Promise<void>`                  | Completes a Directus password reset.                                                                                                                                                                                                                          |
+
+The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
+state. Hydration therefore does not require a session request. Server-side refresh coordination uses
+Nitro storage so concurrent requests can share a rotated token result.
+
+## Authentication hooks
+
+Register typed Nuxt app hooks with `useNuxtApp().hook`:
+
+```ts
+const nuxtApp = useNuxtApp();
+
+nuxtApp.hook("directus:auth:login", (session) => {
+  console.log("Signed in as", session.userId);
+});
+```
+
+| Hook                        | Payload                         | Emission contract                                                     |
+| --------------------------- | ------------------------------- | --------------------------------------------------------------------- |
+| `directus:auth:login`       | Read-only `DirectusAuthSession` | After the login cookie and reactive state are written.                |
+| `directus:auth:refresh`     | Read-only `DirectusAuthSession` | After the refreshed cookie and reactive state are written.            |
+| `directus:auth:logout`      | Previous `userId` or `null`     | After local state and cookie clearing, even if upstream logout fails. |
+| `directus:auth:invalidated` | Previous `userId` or `null`     | After a failed/expired refresh clears local state.                    |
+
+Hook payloads never contain token material. Hook failures are logged and do not reject, roll back,
+or otherwise undo the completed authentication transition.
 
 ## Auto-imported SDK commands
 
-The default commands are readItem and readItems. Supported command names are:
+The default auto-imports are `readItem` and `readItems`. The supported command names for
+`directus.commands` are:
 
-aggregate, createComment, updateComment, deleteComment, createField, createItem, createItems,
-deleteField, deleteFile, deleteFiles, readActivities, readActivity, deleteItem, deleteItems,
-deleteUser, deleteUsers, importFile, readCollection, readCollections, createCollection,
-updateCollection, deleteCollection, readContentVersions, readContentVersion, readField,
-readFieldsByCollection, readFields, readFile, readFiles, readItem, readItems, readSingleton, readMe,
-readPolicies, readPolicy, createUser, createUsers, readUser, readUsers, updateField, updateFile,
-updateFiles, updateFolder, updateFolders, updateItem, updateItems, updateSingleton, updateMe,
-updateUser, updateUsers, uploadFiles, withSearch, and withOptions.
+`aggregate`, `createComment`, `updateComment`, `deleteComment`, `createField`, `createItem`,
+`createItems`, `deleteField`, `deleteFile`, `deleteFiles`, `readActivities`, `readActivity`,
+`deleteItem`, `deleteItems`, `deleteUser`, `deleteUsers`, `importFile`, `readCollection`,
+`readCollections`, `createCollection`, `updateCollection`, `deleteCollection`,
+`readContentVersions`, `readContentVersion`, `readField`, `readFieldsByCollection`, `readFields`,
+`readFile`, `readFiles`, `readItem`, `readItems`, `readSingleton`, `readMe`, `readPolicies`,
+`readPolicy`, `createUser`, `createUsers`, `readUser`, `readUsers`, `updateField`, `updateFile`,
+`updateFiles`, `updateFolder`, `updateFolders`, `updateItem`, `updateItems`, `updateSingleton`,
+`updateMe`, `updateUser`, `updateUsers`, `uploadFiles`, `withSearch`, and `withOptions`.
 
-Import any supported command not configured for auto-import directly from @directus/sdk.
+Commands not configured for auto-import can be imported directly from `@directus/sdk`.
 
 ## Authentication routes
 
-When auth.enabled is true:
+When `auth.enabled` is `true`, the module registers:
 
-- POST /_directus/auth/login
-- POST /_directus/auth/refresh
-- POST /_directus/auth/logout
-- GET /_directus/auth/session
-- POST /_directus/auth/password-request
-- POST /_directus/auth/password-reset
+| Method | Route                              | Contract                                                             |
+| ------ | ---------------------------------- | -------------------------------------------------------------------- |
+| `POST` | `/_directus/auth/login`            | Validates email/password/optional OTP and returns the safe snapshot. |
+| `POST` | `/_directus/auth/refresh`          | Refreshes the cookie session and returns the safe snapshot.          |
+| `POST` | `/_directus/auth/logout`           | Attempts upstream logout, clears local state, and returns `204`.     |
+| `GET`  | `/_directus/auth/session`          | Returns the persisted safe snapshot without contacting Directus.     |
+| `POST` | `/_directus/auth/password-request` | Proxies the email and configured reset URL.                          |
+| `POST` | `/_directus/auth/password-reset`   | Proxies the reset token and new password.                            |
 
-Directus MFA login errors are reported as isOtpError. Use secure: false only for local HTTP
-development; production sessions should use the default secure cookie.
+Directus MFA failures are recognized by `useDirectusError(error).isOtpError`.
 
 ## Generated schema types
 
-Import generated declarations type-only:
+Generated declarations are available through the virtual `#directus` module:
 
-    import type { Article } from "#directus";
+```ts
+import type { Article } from "#directus";
+```
 
-Type generation requires baseUrl and typegen.introspectionToken. Available opt-in transforms are
-removeEnums, replaceAnyWithUnknown, replaceJsonWithJSON, applyTypeNameOverrides,
-makeNonNullableOptionalsRequired, and mergeJsDocs. Rules and transform run only during build.
+Available opt-in augmentations are `removeEnums`, `replaceAnyWithUnknown`, `replaceJsonWithJSON`,
+`applyTypeNameOverrides`, `makeNonNullableOptionalsRequired`, and `mergeJsDocs`. `typegen.rules`
+overrides generated field types by collection and field. `typegen.transform` applies a final
+build-time source transform.
 
-## Credential and proxy boundaries
+## Proxy and security contract
 
-- Directus credentials and session tokens are server-only.
-- Browser REST calls use the same-origin proxy at proxy.path.
-- Caller-provided Authorization, cookie, host, origin, and connection headers are removed.
-- Credential precedence is preview token, session token, static token, then unauthenticated.
-- Directus remains the authorization boundary.
+- Browser REST calls use the same-origin `proxy.path`; browser code never receives the Directus URL
+  or a server credential.
+- The proxy removes incoming `Authorization`, `Cookie`, `Host`, `Origin`, connection, and hop-by-hop
+  headers before forwarding.
+- Credential precedence is preview token, current session, static token, then unauthenticated.
+- Upstream `Set-Cookie` headers are not forwarded to the browser.
+- Session cookies are `httpOnly`, `SameSite=Lax`, secure by default, bounded below the usual cookie
+  size limit, and intentionally contain the server token pair plus a compact safe snapshot.
+- Directus remains the final authorization boundary.
 
 ## Compatibility
 
-Nuxt 4 and Node.js 22 or newer.
+Supported environments are Nuxt 4 and Node.js 22 or newer.
