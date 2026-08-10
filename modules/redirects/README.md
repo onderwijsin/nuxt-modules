@@ -15,9 +15,7 @@ call to the original provider.
 - Enable server middleware, the client-side Pinia store, and route middleware independently.
 - Configure Nitro caching separately for both public read endpoints.
 - Exclude namespaces or individual routes using efficient precompiled matchers.
-
-Key configuration options include `storageMount`, `serverMiddleware`, `store`, `routeMiddleware`,
-`storeRefreshInterval`, `excludedNamespaces`, `excludedRoutes`, and `cache`.
+- Opt in to route-pattern redirects with `dynamicMatching` and `match: "pattern"`.
 
 ## Installation
 
@@ -124,7 +122,25 @@ export default defineNuxtConfig({
 
 ## Endpoints and client behavior
 
-`GET /api/_redirects` returns the compact active index as a `{ [origin]: Redirect }` object.
+Dynamic matching is disabled by default. Enable it at both levels:
+
+```ts
+export default defineNuxtConfig({
+  redirects: { dynamicMatching: true }
+});
+```
+
+```ts
+{ from: "/legacy/:section/:slug", to: "/docs/:section/:slug", match: "pattern" }
+```
+
+Pattern rules support named parameters, optional segments, and wildcards. They match the pathname
+only, after exact path-and-query and exact path-only lookups. Query parameters are not implicitly
+copied to dynamic destinations. Raw regular expressions and constrained parameter groups are not
+supported.
+
+`GET /api/_redirects` returns the compact exact index as a `{ [origin]: Redirect }` object. When
+`dynamicMatching` is enabled, the response also includes serializable `dynamic` pattern rules.
 `GET /api/_redirects/:path` looks up one encoded path/query origin and is used when client route
 middleware is on but the store is off. Both are wrapped in `defineCachedEventHandler`; configure
 `cache.index` and `cache.lookup` separately.

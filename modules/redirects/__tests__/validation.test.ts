@@ -23,6 +23,20 @@ describe("redirect validation", () => {
     }
   });
 
+  it("accepts pattern rules and rejects query-bearing patterns", () => {
+    expect(
+      normalizeRedirect({ from: "/legacy/:slug", to: "/docs/:slug", match: "pattern" })
+    ).toEqual({
+      from: "/legacy/:slug",
+      to: "/docs/:slug",
+      statusCode: 302,
+      match: "pattern"
+    });
+    expect(() =>
+      normalizeRedirect({ from: "/legacy/:slug?source=old", to: "/docs/:slug", match: "pattern" })
+    ).toThrow("must not contain query parameters");
+  });
+
   it("rejects unsafe origins, schemes, and control characters", () => {
     expect(() => normalizeRedirect({ from: "old", to: "/new" })).toThrow("must start with");
     for (const to of [

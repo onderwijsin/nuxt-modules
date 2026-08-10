@@ -8,7 +8,10 @@ import { isExternalRedirectDestination } from "../../utils/destination";
 const redirectSchema = z.strictObject({
   from: z.string().trim().min(1),
   to: z.string().trim().min(1),
-  statusCode: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).default(302)
+  statusCode: z
+    .union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)])
+    .default(302),
+  match: z.enum(["exact", "pattern"]).optional()
 });
 
 /**
@@ -32,9 +35,13 @@ function isHttpDestination(destination: string): boolean {
  * @param value - Untrusted source or webhook value.
  * @returns Canonical redirect record.
  */
-export function normalizeRedirect(value: unknown): Required<Redirect> {
+export function normalizeRedirect(
+  value: unknown
+): Redirect & { statusCode: NonNullable<Redirect["statusCode"]> } {
   const redirect = redirectSchema.parse(value);
   if (!redirect.from.startsWith("/")) throw new Error("Redirect origins must start with '/'.");
+  if (redirect.match === "pattern" && redirect.from.includes("?"))
+    throw new Error("Pattern redirect origins must not contain query parameters.");
   if ([...redirect.to].some((character) => character <= "\u001F" || character === "\u007F"))
     throw new Error("Redirect destinations must not contain control characters.");
   if (redirect.to.startsWith("//") || /^https?:\/\//i.test(redirect.to)) {

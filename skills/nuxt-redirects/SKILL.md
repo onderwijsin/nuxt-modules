@@ -42,6 +42,8 @@ export default defineRedirectSource(async (event) => [
 - `serverMiddleware: boolean` — defaults to `true`; enables O(1) storage lookup on server requests.
 - `store: boolean` — defaults to `true`; registers the Pinia redirect index store.
 - `routeMiddleware: boolean` — defaults to `true`; evaluates client navigation redirects.
+- `dynamicMatching: boolean` — defaults to `false`; enables pattern rules when individual records
+  use `match: "pattern"`.
 - `storageMount: string` — defaults to `"redirects"`; names the Nitro storage mount.
 - `storeRefreshInterval: number` — defaults to `3600` seconds; client store refresh interval.
 - `excludedNamespaces: string[]` — defaults to `['/api', '/_nuxt', '/_payload', '/__']`.
@@ -56,7 +58,8 @@ Import from `@onderwijsin/nuxt-redirects/runtime`:
 - `upsertRedirect(redirect)` normalizes and writes one record, updating the manifest; returns the
   normalized redirect.
 - `removeRedirect(origin)` normalizes and removes one record, updating the manifest.
-- `Redirect` is `{ from: string; to: string; statusCode?: 301 | 302 | 307 | 308 }`.
+- `Redirect` is
+  `{ from: string; to: string; statusCode?: 301 | 302 | 307 | 308; match?: "exact" | "pattern" }`.
 - `ResolvedRedirect` is a `Redirect` with a required `statusCode`; `RedirectIndex` maps normalized
   origins to `ResolvedRedirect` values.
 - `RedirectSource` is `(event?: H3Event) => Redirect[] | Promise<Redirect[]>`.
@@ -83,7 +86,8 @@ entries for direct lookup.
 
 ### HTTP API
 
-- `GET /api/_redirects` returns `{ data: RedirectIndex }` from the compact manifest.
+- `GET /api/_redirects` returns `{ data: RedirectIndex }`; when `dynamicMatching` is enabled it also
+  includes a serializable `dynamic` pattern-rule collection.
 - `GET /api/_redirects/:path` returns `{ data: Redirect | null }`, where `:path` is an encoded path
   plus optional query string.
 

@@ -2,6 +2,7 @@ declare module "nuxt/schema" {
   interface RuntimeConfig {
     redirects?: {
       serverMiddleware: boolean;
+      dynamicMatching: boolean;
       storageMount: string;
       excludedNamespaces: string[];
       excludedRoutes: string[];
@@ -16,6 +17,7 @@ declare module "nuxt/schema" {
     redirects?: {
       store: boolean;
       routeMiddleware: boolean;
+      dynamicMatching: boolean;
       storeRefreshInterval: number;
       excludedNamespaces: string[];
       excludedRoutes: string[];

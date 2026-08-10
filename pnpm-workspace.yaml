@@ -55,6 +55,7 @@ catalog:
   unctx: 2.5.0
   zod: 4.4.3
   "@iconify-json/lucide": 1.2.121
+  regexparam: 3.0.0
 
 packages:
   - packages/*

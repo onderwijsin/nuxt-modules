@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const values = new Map<string, unknown>();
 const localFetch = vi.fn();
+let dynamicMatching = false;
 
 vi.mock("nitropack/runtime", () => ({
-  useRuntimeConfig: () => ({ redirects: { storageMount: "redirects" } }),
+  useRuntimeConfig: () => ({ redirects: { storageMount: "redirects", dynamicMatching } }),
   useNitroApp: () => ({ localFetch }),
   useStorage: () => ({
     getItem: async <T>(key: string): Promise<T | null> =>
@@ -30,6 +31,7 @@ import {
 describe("redirect storage refresh", () => {
   beforeEach(() => {
     values.clear();
+    dynamicMatching = false;
     localFetch.mockReset();
     localFetch.mockResolvedValue(undefined);
   });
@@ -73,7 +75,7 @@ describe("redirect storage refresh", () => {
 
     await expect(findRedirect("/old")).resolves.toBeNull();
     await expect(getRedirectManifest()).resolves.toMatchObject({
-      redirects: { "/new": { from: "/new", to: "/after", statusCode: 302 } }
+      exact: { "/new": { from: "/new", to: "/after", statusCode: 302 } }
     });
   });
 
@@ -89,7 +91,7 @@ describe("redirect storage refresh", () => {
     expect(localFetch).toHaveBeenCalledWith("/api/_redirects/%2Fcampaign%3Fa%3D1%26b%3D2");
     await removeRedirect("/campaign?b=2&a=1");
     await expect(findRedirect("/campaign?a=1&b=2")).resolves.toBeNull();
-    await expect(getRedirectManifest()).resolves.toMatchObject({ redirects: {} });
+    await expect(getRedirectManifest()).resolves.toMatchObject({ exact: {}, dynamic: [] });
   });
 
   it("clears every lookup cache when a path-only webhook redirect changes", async () => {
@@ -109,5 +111,31 @@ describe("redirect storage refresh", () => {
       refreshRedirectStorage([[{ from: "not-a-path", to: "/invalid" }]])
     ).rejects.toThrow("Redirect origins must start");
     await expect(findRedirect("/stable")).resolves.toMatchObject({ to: "/current" });
+  });
+
+  it("matches dynamic rules after exact query and path fallbacks", async () => {
+    dynamicMatching = true;
+    await refreshRedirectStorage([
+      [
+        { from: "/products/:slug", to: "/new-products/:slug", statusCode: 301, match: "pattern" },
+        { from: "/products/special", to: "/special-products", statusCode: 302 },
+        { from: "/products", to: "/product-catalog", statusCode: 302 }
+      ]
+    ]);
+
+    await expect(findRedirect("/products/special")).resolves.toMatchObject({
+      to: "/special-products"
+    });
+    await expect(findRedirect("/products/basic?campaign=spring")).resolves.toMatchObject({
+      to: "/new-products/basic",
+      statusCode: 301
+    });
+    await expect(findRedirect("/products?campaign=spring")).resolves.toMatchObject({
+      to: "/product-catalog"
+    });
+    await expect(getRedirectManifest()).resolves.toMatchObject({
+      exact: { "/products": expect.any(Object), "/products/special": expect.any(Object) },
+      dynamic: [expect.objectContaining({ from: "/products/:slug", match: "pattern" })]
+    });
   });
 });
