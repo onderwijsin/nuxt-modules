@@ -43,12 +43,12 @@
     "@nuxt/schema": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "defu": "catalog:",
+    "directus-sdk-typegen": "catalog:",
     "h3": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
-    "directus-sdk-typegen": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"

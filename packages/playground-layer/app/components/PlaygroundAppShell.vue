@@ -8,7 +8,7 @@ const title = computed(() => app.packageName ?? "Nuxt playground");
     <UHeader :title="title" to="/">
       <template #right>
         <slot name="actions" />
-        <UButton v-for="action in app.header?.actions ?? []" v-bind="action" />
+
         <UColorModeButton v-if="app.header?.colorMode" />
         <UButton
           v-if="app.header?.github"

@@ -12,3 +12,9 @@ configuration. The default auto-imported SDK commands are `readItem` and `readIt
 Do not place Directus credentials in public runtime configuration or client code. The proxy route is
 registered at `/_directus/proxy/**` by default and currently returns `501` until the forwarding
 stage is complete.
+
+When type generation is configured with both `baseUrl` and `typegen.introspectionToken`, import
+generated interfaces from `#directus`. Consumer `typegen.rules` use generated interface/field names
+and fail on stale names. Development caching is fingerprinted and is never used in CI or production.
+The reviewed legacy augmentation candidates are opt-in individually; do not enable them globally
+without checking their fixture behavior.

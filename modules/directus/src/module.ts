@@ -1,4 +1,5 @@
 import { defu } from "defu";
+import { join } from "node:path";
 import {
   addImports,
   addServerHandler,
@@ -17,6 +18,7 @@ import {
 
 import { parseDirectusCommands } from "./config/commands";
 import { directusOptionsSchema } from "./config/options.schema";
+import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types/options";
 
@@ -56,6 +58,23 @@ export default defineNuxtModule<ModuleOptions>({
     addTypeTemplate({
       filename: "types/directus-schema-alias.d.ts",
       src: resolver.resolve(runtimeDir, "types/directus-schema-alias.d.ts")
+    });
+    addTypeTemplate({
+      filename: "types/directus-schema.d.ts",
+      getContents: () =>
+        resolveDirectusTypegenDeclaration({
+          directusUrl: options.baseUrl,
+          directusToken: options.typegen.introspectionToken,
+          augmentations: options.typegen.augmentations,
+          rules: options.typegen.rules,
+          transform: options.typegen.transform,
+          cacheFile: join(nuxt.options.buildDir, "directus-typegen-cache.json"),
+          generatedFile: join(nuxt.options.buildDir, "types/directus-schema.d.ts"),
+          maxAge: options.typegen.cache.maxAge,
+          isDevelopment: nuxt.options.dev,
+          isCI: process.env.CI === "true",
+          log
+        })
     });
 
     if (!isEnabled()) return;

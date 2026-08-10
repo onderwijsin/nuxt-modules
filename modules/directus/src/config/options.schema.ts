@@ -17,6 +17,18 @@ const typeExpression = z
   .min(1)
   .refine((value) => !/[\r\n;]/.test(value), "must be a single TypeScript type expression");
 
+const typegenTransform = z.custom<
+  (
+    source: string,
+    context: {
+      directusUrl: string;
+      generatorVersion: string;
+      collections: readonly string[];
+      rules: Readonly<Record<string, Readonly<Record<string, string>>>>;
+    }
+  ) => string
+>((value) => typeof value === "function", "must be a typegen transform function");
+
 const defaultTypegenOptions = {
   cache: { maxAge: 3_600_000 },
   augmentations: {
@@ -53,7 +65,7 @@ const typegenSchema = z.object({
       mergeJsDocs: false
     }),
   rules: z.record(z.string().min(1), z.record(z.string().min(1), typeExpression)).default({}),
-  transform: z.function().optional()
+  transform: typegenTransform.optional()
 });
 
 /** Runtime boundary for the first Directus module stages. */
