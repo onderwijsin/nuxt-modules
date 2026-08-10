@@ -74,8 +74,15 @@ const page = await useDirectusItemByPath("pages", {
 });
 ```
 
-Normal lookups use `readItems` with `limit: 1`. Versioned preview uses `readItem` with the item ID
-and version. Preview tokens are never exposed through public runtime configuration.
+Normal path lookups use `readItems` with `limit: 1`. Versioned preview first resolves the main item
+ID, then fetches that item's selected version with `readItem(mainItemId, { version })`; Directus
+versions are addressed by their main item ID. Preview tokens are request-scoped and are never
+exposed through public runtime configuration.
+
+The default preview query keys are `preview`, `token`, `version`, and `id`; they can be renamed with
+`preview.queryKeys`. Preview mode is enabled by default, but setting `preview.enabled` to `false`
+ignores all preview parameters. Setting `preview.versioning` to `false` ignores only the version
+parameter while retaining other preview behavior.
 
 ## Authentication
 
@@ -95,24 +102,55 @@ if (auth.isAuthenticated.value) {
 }
 ```
 
-The session snapshot is persisted in an `httpOnly` cookie and projected into Nuxt state during SSR,
-so hydration does not require a session fetch. Access and refresh tokens never enter client state.
+The session snapshot is persisted with the access and rotating refresh token in a bounded plain
+`httpOnly` cookie and projected into Nuxt state during SSR, so hydration does not require a session
+fetch. Access and refresh tokens never enter client state or application code. The cookie is not
+encrypted or signed in this first release; Directus remains the authorization boundary.
 
 Directus MFA failures are exposed through `useDirectusError(error).isOtpError`, allowing the UI to
 ask for an OTP and retry `auth.login`.
 
 Authentication routes are registered under `/_directus/auth/`: `login`, `refresh`, `logout`,
-`session`, `password-request`, and `password-reset`.
+`session`, `password-request`, and `password-reset`. Refresh happens immediately before an
+authenticated Directus request when it enters the configured safety window. Concurrent refreshes are
+coalesced through Nitro storage. Cross-instance coordination requires a shared, read-after-write
+consistent Nitro storage driver; the default in-memory driver cannot provide that guarantee, and
+deployment-level refresh races remain possible otherwise.
 
 ## Generated types
 
-When type generation is enabled, use generated collection types with type-only imports:
+When type generation is enabled, use generated collection types and `Schema` with type-only imports:
 
 ```ts
-import type { Article } from "#directus";
+import type { Article, Schema } from "#directus";
 ```
 
-Generation requires `baseUrl` and `typegen.introspectionToken` in production builds.
+Generation uses only `baseUrl` and `typegen.introspectionToken`. It regenerates in CI and
+production; the cache is a development-only optimization and includes a generator/options
+fingerprint. The six built-in augmentations are opt-in and individually configurable.
+`typegen.rules` applies deterministic collection/field type replacements, and `typegen.transform` is
+a final build-time source hook. Missing credentials produce an empty `Schema` only in development
+(or when typegen is disabled); production and CI fail clearly when generation is enabled without
+credentials.
+
+## Live preview and framing
+
+Configure Directus Live Preview to open the application URL with the module's preview query
+parameters. The application must allow Directus in its `frame-src` policy, and the application must
+be allowed by its own `frame-ancestors` policy. A version placeholder should be included in the
+configured preview URL when versioned content is required. The module does not refresh pages
+automatically; the application decides how to react to iframe updates.
+
+## Troubleshooting
+
+- A browser request failing with a Directus permission error is expected when the selected session,
+  static token, or unauthenticated role lacks access. The proxy is not an authorization layer.
+- A missing generated type in production usually means `DIRECTUS_URL` or
+  `DIRECTUS_INTROSPECTION_TOKEN` was not available during `nuxt prepare`/build.
+- A local auth cookie normally needs `auth.cookie.secure: false` when the playground is served over
+  plain HTTP. Keep the secure default in deployed environments.
+- A preview lookup returns `null` when the application path filter matches no item; preview mode
+  does not change lookup semantics or turn an item path into a Directus primary key.
 
 ## Security and compatibility
 

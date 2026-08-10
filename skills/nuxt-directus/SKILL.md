@@ -94,10 +94,9 @@ preview and session credential resolution.
 useDirectusItemByPath(collection, query): Promise<Item | null>
 ```
 
-Queries a collection and returns its first matching item or `null`. Normal lookup always uses
-`readItems` with `limit: 1`. When versioned preview context contains a non-`main` version, the
-helper reads the selected item with `readItem(id, { version })`; the item ID is required for this
-branch. The main version is treated as the normal lookup.
+Queries a collection and returns its first matching item or `null`. Normal path lookup uses
+`readItems` with `limit: 1`. Versioned preview resolves the main item ID and then uses
+`readItem(mainItemId, { version })`, because Directus versions are addressed by their main item ID.
 
 ### `useDirectusServerItemByPath`
 
@@ -148,21 +147,23 @@ const auth = useDirectusAuth();
 | `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.               |
 
 The snapshot contains `userId` and optional `email`, `firstName`, and `lastName`. It does not
-contain access tokens, refresh tokens, roles, policies, or permissions.
+contain access tokens or refresh tokens. The current implementation intentionally keeps the public
+snapshot identity-only; role, policy, and permission helpers are not part of this release.
 
 #### Methods
 
-| Method            | Signature                                                                        | Behavior                                                                                                                                                                                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login`           | `login(input: { email: string; password: string; otp?: string }): Promise<void>` | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                                                                        |
-| `refresh`         | `refresh(): Promise<void>`                                                       | Refreshes only when the server session is inside the safety window, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
-| `logout`          | `logout(): Promise<void>`                                                        | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                                                                               |
-| `passwordRequest` | `passwordRequest(email: string): Promise<void>`                                  | Requests a password-reset email using the configured `auth.passwordResetUrl`.                                                                                                                                                                                 |
-| `passwordReset`   | `passwordReset(token: string, password: string): Promise<void>`                  | Completes a Directus password reset.                                                                                                                                                                                                                          |
+| Method            | Signature                                                                        | Behavior                                                                                                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login`           | `login(input: { email: string; password: string; otp?: string }): Promise<void>` | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                        |
+| `refresh`         | `refresh(): Promise<void>`                                                       | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
+| `logout`          | `logout(): Promise<void>`                                                        | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                               |
+| `passwordRequest` | `passwordRequest(email: string): Promise<void>`                                  | Requests a password-reset email using the configured `auth.passwordResetUrl`.                                                                                                                                 |
+| `passwordReset`   | `passwordReset(token: string, password: string): Promise<void>`                  | Completes a Directus password reset.                                                                                                                                                                          |
 
 The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
 state. Hydration therefore does not require a session request. Server-side refresh coordination uses
-Nitro storage so concurrent requests can share a rotated token result.
+Nitro storage. A shared, read-after-write consistent storage driver is required for coordination
+across processes or Cloudflare isolates; the default in-memory driver is instance-local.
 
 ## Authentication hooks
 
@@ -242,6 +243,8 @@ build-time source transform.
 - Session cookies are `httpOnly`, `SameSite=Lax`, secure by default, bounded below the usual cookie
   size limit, and intentionally contain the server token pair plus a compact safe snapshot.
 - Directus remains the final authorization boundary.
+- The first release uses a plain, bounded, unsigned and unencrypted cookie; sealing and shared
+  storage are future hardening options rather than current guarantees.
 
 ## Compatibility
 
