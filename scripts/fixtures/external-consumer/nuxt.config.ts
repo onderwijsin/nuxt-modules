@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   modules: [
     "@onderwijsin/nuxt-cache",
     "@onderwijsin/nuxt-device",
+    "@onderwijsin/nuxt-directus",
     "@onderwijsin/nuxt-healthcheck",
     "@onderwijsin/nuxt-loops-renderer",
     "@onderwijsin/nuxt-newsletter-signup",
@@ -21,6 +22,10 @@ export default defineNuxtConfig({
   },
   device: {
     enabled: true
+  },
+  directus: {
+    baseUrl: "https://directus.invalid",
+    proxy: { path: "/_directus/proxy" }
   },
   healthcheck: {
     enabled: true,
