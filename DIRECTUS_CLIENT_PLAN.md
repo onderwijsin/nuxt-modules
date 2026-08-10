@@ -406,9 +406,57 @@ typegen-only build tooling out of browser runtime. Update the root module table,
 `skills/nuxt-directus/SKILL.md`, and the internal session-auth decision record under
 `docs/decisions/`; create a changeset when shipping the public package.
 
-The playground uses fake/no credentials by default and demonstrates generated fallback types,
-proxied public reads with a local mock upstream, error rendering, preview query propagation, and the
-auth facade. No test or playground logs a token.
+## Playground
+
+The module playground is a deliberate real-Directus integration surface, separate from deterministic
+automated test fixtures. It reads its Directus URL, static token, and introspection token from
+`modules/directus/playground/.env` and passes them as private module options. Add a committed
+`.env.example` documenting the variable names with empty values; never commit the real `.env` or log
+a token. The playground should fail clearly or show setup instructions when required variables are
+absent.
+
+The playground app must include:
+
+- `app/pages/index.vue`: fetch and render a deliberately protected collection through
+  `useDirectus(readItems(...))`, proving that browser-side data access succeeds through the Nitro
+  proxy with the server-appended static token. Make the demonstration collection/query configurable
+  through documented playground environment values so it is useful against real instances.
+- `app/pages/[path].vue`: resolve the route parameter with
+  `useDirectusItemByPath(collection, { filter: { path: { _eq: path } } })` (with collection and
+  lookup-field configurable), and show the `null`, success, preview, and versioning outcomes.
+- `app/pages/login.vue`: a real credential login flow using Nuxt UI's
+  [`UAuthForm`](https://ui.nuxt.com/docs/components/auth-form). Start with email/password fields;
+  when `useDirectusError(error).isOtpError` is true, reveal an OTP field and resubmit through
+  `useDirectusAuth().login`. Render normalized non-OTP errors safely. Do not prefill or store login
+  credentials in `.env`.
+- `app/pages/_session.vue`: render the readonly, token-free `useDirectusAuth()._session` state plus
+  derived flags and provide logout/navigation controls. It must never render either token or the raw
+  session cookie.
+
+Wrap the playground in the shared `UApp` shell required by Nuxt UI. It must exercise the actual
+public module registration, runtime proxy, typegen, static-token flow, and optional authentication;
+it is not a substitute for automated tests.
+
+## Testing and external-consumer coverage
+
+Testing is a first-class deliverable, not a coverage afterthought. Add extensive package-owned unit
+tests for pure option validation, typegen/cache/augmentation transforms, typed error normalization,
+preview/versioning parsing, cookie/session serialization, `/users/me` mapping, role recursion, and
+refresh coordination. Add module setup tests for registrations, aliases, public-config secrecy,
+conditional auth auto-imports, and invalid option paths/commands.
+
+Add Nitro integration tests with a controlled Directus-like upstream for proxy forwarding,
+credential precedence, static-token protected reads, all auth endpoints, OTP/error paths, refresh
+rotation/failure, and lifecycle hook payloads. Add browser E2E coverage through the Nuxt proxy for
+the index static-token read, `[path]` item lookup, preview/versioning opt-outs, login then OTP
+retry, `/_session` rendering, logout, and relevant failure states. E2E tests must use local
+fixtures/mocks, not a real hosted Directus instance or playground `.env` credentials.
+
+Add `@onderwijsin/nuxt-directus` to the external-consumer fixture's packed-package installation and
+Nuxt registration. The fixture must validate that the packaged module resolves in a clean consumer,
+generated `#directus` declarations and configured auto-imports type-check, and module loading does
+not expose credentials. Keep it deterministic with dummy configuration and a local/mock upstream; do
+not make external-consumer validation depend on a real Directus deployment.
 
 ## Implementation sequence
 
@@ -466,6 +514,10 @@ auth facade. No test or playground logs a token.
 - The first version uses a bounded plain httpOnly cookie with no sealing or persistent server
   storage. It documents that Directus remains the authorization authority and that refresh
   single-flight is limited to one runtime instance.
+- Extensive unit, module, Nitro integration, and browser E2E coverage exercises normal behavior and
+  failure paths; E2E uses a controlled local Directus-like fixture rather than real credentials.
+- The external-consumer fixture installs and registers the packed Directus module, type-checks its
+  generated declarations/auto-imports, and remains deterministic without a hosted Directus instance.
 - The package is Nuxt 4, Node 22+, and Cloudflare Workers compatible, documented, test-covered,
   packable, and externally consumer-validated.
 
