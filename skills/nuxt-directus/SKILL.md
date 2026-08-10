@@ -24,3 +24,7 @@ exports. Consumer `typegen.rules` use generated interface/field names and fail o
 Development caching is fingerprinted and is never used in CI or production. The reviewed legacy
 augmentation candidates are opt-in individually; do not enable them globally without checking their
 fixture behavior.
+
+Use `useDirectusItemByPath(collection, query)` for preview-aware path/filter lookups. It always uses
+`readItems` with `limit: 1` and returns the first item or `null`. Use `useDirectusError(error)` to
+safely inspect Directus error envelopes without depending on raw SDK or ofetch shapes.

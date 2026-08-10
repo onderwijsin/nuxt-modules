@@ -1,7 +1,16 @@
+import type { H3Event } from "h3";
+import { useRuntimeConfig } from "#imports";
+
+import {
+  getDirectusPreviewContext,
+  type DirectusPreviewContext,
+  type DirectusPreviewOptions
+} from "../../utils/preview";
+
 /** A server-side credential selected for one Directus request. */
 export interface DirectusCredential {
   readonly accessToken?: string;
-  readonly source: "session" | "static" | "none";
+  readonly source: "preview" | "session" | "static" | "none";
 }
 
 /**
@@ -14,9 +23,14 @@ export interface DirectusCredential {
  * @returns The single credential that may be sent upstream.
  */
 export function resolveDirectusCredential(options: {
+  readonly previewAccessToken?: string;
   readonly sessionAccessToken?: string;
   readonly staticToken?: string;
 }): DirectusCredential {
+  if (options.previewAccessToken) {
+    return { accessToken: options.previewAccessToken, source: "preview" };
+  }
+
   if (options.sessionAccessToken) {
     return { accessToken: options.sessionAccessToken, source: "session" };
   }
@@ -26,6 +40,53 @@ export function resolveDirectusCredential(options: {
   }
 
   return { source: "none" };
+}
+
+/** All request-scoped Directus context resolved before a client is created. */
+export interface DirectusRequestContext {
+  readonly preview: DirectusPreviewContext;
+  readonly credential: DirectusCredential;
+}
+
+/**
+ * Resolves preview, session, and static credentials in their single precedence boundary.
+ * @param event Optional request event containing preview context.
+ * @param options Credential candidates and preview configuration.
+ * @returns The request preview context and selected credential.
+ */
+export function resolveDirectusRequestContext(
+  event: H3Event | undefined,
+  options: {
+    readonly preview: DirectusPreviewOptions;
+    readonly staticToken?: string;
+    readonly sessionAccessToken?: string;
+  }
+): DirectusRequestContext {
+  const preview = event
+    ? getDirectusPreviewContext(event, options.preview)
+    : ({ isPreview: false } satisfies DirectusPreviewContext);
+
+  return {
+    preview,
+    credential: resolveDirectusCredential({
+      previewAccessToken: preview.token,
+      sessionAccessToken: options.sessionAccessToken,
+      staticToken: options.staticToken
+    })
+  };
+}
+
+/**
+ * Resolves request context from the module's server runtime configuration.
+ * @param event Optional request event.
+ * @returns The request preview context and selected credential.
+ */
+export function resolveDirectusRuntimeRequestContext(event?: H3Event): DirectusRequestContext {
+  const config = useRuntimeConfig(event);
+  return resolveDirectusRequestContext(event, {
+    preview: config.public.directus.preview,
+    staticToken: config.directus.staticToken
+  });
 }
 
 /**

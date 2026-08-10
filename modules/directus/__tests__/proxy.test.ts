@@ -116,6 +116,16 @@ describe("Directus credential selection", () => {
     });
   });
 
+  it("gives a request-scoped preview token highest precedence", () => {
+    expect(
+      resolveDirectusCredential({
+        previewAccessToken: "preview",
+        sessionAccessToken: "session",
+        staticToken: "static"
+      })
+    ).toEqual({ accessToken: "preview", source: "preview" });
+  });
+
   it("falls back to static and then unauthenticated requests", () => {
     expect(resolveDirectusCredential({ staticToken: "static" })).toEqual({
       accessToken: "static",

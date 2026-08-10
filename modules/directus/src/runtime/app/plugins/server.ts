@@ -9,6 +9,6 @@ import { createServerDirectusClient } from "../../server/utils/client";
  */
 export default defineNuxtPlugin(() => {
   return {
-    provide: { directus: createServerDirectusClient(useRequestEvent() ?? undefined) }
+    provide: { directus: createServerDirectusClient(useRequestEvent()) }
   };
 });

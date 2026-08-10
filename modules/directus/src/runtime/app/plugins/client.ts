@@ -1,8 +1,8 @@
-import { createDirectus, rest } from "@directus/sdk";
-import type { Schema } from "#directus";
 import { defineNuxtPlugin } from "#app";
 import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
+
+import { createDirectusRestClient } from "../../utils/client";
 
 /**
  * Installs a browser-only Directus client that can reach the same-origin proxy.
@@ -12,14 +12,10 @@ import { ofetch } from "ofetch";
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const origin = globalThis.location.origin;
-  const directus = createDirectus<Schema>(
-    new URL(config.public.directus.proxy.path, origin).toString(),
-    {
-      globals: {
-        fetch: ofetch.create({ credentials: "same-origin" })
-      }
-    }
-  ).with(rest());
+  const directus = createDirectusRestClient({
+    baseUrl: new URL(config.public.directus.proxy.path, origin).toString(),
+    fetch: ofetch.create({ credentials: "same-origin" })
+  });
 
   return { provide: { directus } };
 });

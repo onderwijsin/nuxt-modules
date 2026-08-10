@@ -10,6 +10,11 @@ declare module "nuxt/schema" {
   interface PublicRuntimeConfig {
     directus: {
       proxy: { path: string };
+      preview: {
+        enabled: boolean;
+        versioning: boolean;
+        queryKeys: { preview: string; token: string; version: string };
+      };
       auth: { enabled: boolean };
     };
   }

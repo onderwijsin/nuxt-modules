@@ -4,7 +4,11 @@ import { attemptSync } from "@onderwijsin/nuxt-module-utils";
 import { ofetch } from "ofetch";
 import { hasProtocol, isScriptProtocol, joinURL } from "ufo";
 
-import { getDirectusAuthorizationHeader, resolveDirectusCredential } from "../utils/credentials";
+import {
+  type DirectusCredential,
+  getDirectusAuthorizationHeader,
+  resolveDirectusRuntimeRequestContext
+} from "../utils/credentials";
 
 const blockedRequestHeaders = new Set([
   "authorization",
@@ -75,9 +79,7 @@ export function getForwardedProxyHeaders(): string[] {
  * @param credential Server-selected upstream credential.
  * @returns A sanitized Fetch-compatible adapter.
  */
-export function createSanitizedProxyFetch(
-  credential: ReturnType<typeof resolveDirectusCredential>
-): typeof fetch {
+export function createSanitizedProxyFetch(credential: DirectusCredential): typeof fetch {
   const directusFetch = ofetch.create({ responseType: "stream" });
 
   return async (input, init) => {
@@ -112,9 +114,11 @@ export default defineEventHandler((event) => {
     config.public.directus.proxy.path,
     requestUrl
   );
-  const credential = resolveDirectusCredential({ staticToken: config.directus.staticToken });
+  const { credential } = resolveDirectusRuntimeRequestContext(event);
+  const targetUrl = new URL(target);
+  targetUrl.searchParams.delete(config.public.directus.preview.queryKeys.token);
 
-  return proxyRequest(event, target, {
+  return proxyRequest(event, targetUrl.toString(), {
     streamRequest: true,
     fetch: createSanitizedProxyFetch(credential),
     fetchOptions: {

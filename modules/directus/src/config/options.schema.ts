@@ -42,6 +42,12 @@ const defaultTypegenOptions = {
   rules: {}
 };
 
+const defaultPreviewOptions = {
+  enabled: true,
+  versioning: true,
+  queryKeys: { preview: "preview", token: "token", version: "version" }
+};
+
 const typegenSchema = z.object({
   introspectionToken: z.string().optional(),
   cache: z
@@ -78,6 +84,19 @@ export const directusOptionsSchema = z
       .object({ path: localPath.default("/_directus/proxy") })
       .default({ path: "/_directus/proxy" }),
     commands: z.array(directusCommandSchema).default(["readItem", "readItems"]),
+    preview: z
+      .object({
+        enabled: z.boolean().default(true),
+        versioning: z.boolean().default(true),
+        queryKeys: z
+          .object({
+            preview: z.string().min(1).default("preview"),
+            token: z.string().min(1).default("token"),
+            version: z.string().min(1).default("version")
+          })
+          .default(defaultPreviewOptions.queryKeys)
+      })
+      .default(defaultPreviewOptions),
     auth: z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
     typegen: typegenSchema.default(defaultTypegenOptions)
   })

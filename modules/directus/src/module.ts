@@ -101,6 +101,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.runtimeConfig.public.directus = defu(
       {
         proxy: { path: options.proxy.path },
+        preview: options.preview,
         auth: { enabled: options.auth.enabled }
       },
       nuxt.options.runtimeConfig.public.directus

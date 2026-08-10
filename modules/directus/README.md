@@ -81,3 +81,14 @@ configuration.
 | `applyTypeNameOverrides`           | Correct reviewed generated type names such as `CandidateStatuse`. | A custom collection can intentionally use the legacy spelling.                   |
 | `makeNonNullableOptionalsRequired` | Mark simple non-nullable optional fields as required.             | Directus metadata can omit a field even when the generated type is non-nullable. |
 | `mergeJsDocs`                      | Merge adjacent JSDoc tag blocks and deduplicate tags.             | Free-form prose in adjacent blocks is not retained by this candidate.            |
+
+## Preview item lookup and errors
+
+`useDirectusItemByPath(collection, query)` and its server equivalent always use `readItems` with a
+limit of one and return the first result or `null`. With preview enabled (the default),
+`preview=true` accepts a request-scoped `token`; a non-`main` version is added to the query when
+versioning is enabled. Preview tokens are never placed in public runtime configuration.
+
+`useDirectusError(error)` normalizes Directus SDK, ofetch, and H3 error envelopes, preserving all
+errors and extension-defined codes while exposing `isOtpError`, `invalidCredentials`, and
+`tokenExpired` flags.
