@@ -35,5 +35,25 @@ export function setupFixture(
   fixture = "basic",
   options?: Partial<Omit<TestOptions, "rootDir">>
 ) {
-  return setup({ ...options, rootDir: resolveFixture(metaUrl, fixture) });
+  const nuxtConfig = options?.nuxtConfig;
+  const nitroConfig = Reflect.get(nuxtConfig ?? {}, "nitro") ?? {};
+  const nitroExternals = Reflect.get(nitroConfig, "externals") ?? {};
+  const inline = Reflect.get(nitroExternals, "inline") ?? [];
+
+  return setup({
+    ...options,
+    nuxtConfig: Object.assign({}, nuxtConfig, {
+      nitro: Object.assign({}, nitroConfig, {
+        externals: Object.assign({}, nitroExternals, {
+          // Keep Vue in the Nitro test bundle because the workspace dependency graph can
+          // otherwise leave the fixture's generated server without `vue/server-renderer`.
+          // This was added on August 10, 2026 after the shared playground layer changed
+          // the workspace peer-resolution topology. Removing it makes SSR E2E requests
+          // return HTTP 500 with an ERR_MODULE_NOT_FOUND error for that Vue subpath.
+          inline: ["vue", ...inline]
+        })
+      })
+    }),
+    rootDir: resolveFixture(metaUrl, fixture)
+  });
 }
