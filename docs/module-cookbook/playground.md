@@ -63,6 +63,26 @@ pnpm --filter example-playground build
 
 Keep the playground focused on observable module behavior. Do not commit generated `.nuxt`,
 `.output`, or build output, and do not duplicate application-specific stores or production UI. The
-layer's app shell and default page can be overridden by adding `app/app.vue` or
-`app/pages/index.vue` when a module needs specialized presentation. Keep module-specific CSS in the
-playground and do not duplicate the layer's Tailwind and Nuxt UI imports.
+layer's default page can be overridden by adding `app/pages/index.vue`. The layer's default
+`app.vue` already uses `PlaygroundAppShell`; when a module needs app-level customization, add
+`app/app.vue` and wrap the content with the shell:
+
+```vue
+<template>
+  <PlaygroundAppShell>
+    <template #actions>
+      <template #right>
+        <UButton label="Open module tool" icon="i-lucide-database" to="/module-tool" />
+      </template>
+    </template>
+
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+  </PlaygroundAppShell>
+</template>
+```
+
+Use the `actions` slot for module-specific header controls. Its nested `right` slot is rendered
+alongside configured header actions, color-mode control, and the GitHub link. Keep module-specific
+CSS in the playground and do not duplicate the layer's Tailwind and Nuxt UI imports.
