@@ -119,7 +119,7 @@ describe("Directus typegen transforms", () => {
     expect(source).toContain("// Article");
   });
 
-  it("uses only a matching development cache manifest", () => {
+  it("uses only a matching development cache manifest", async () => {
     const directory = mkdtempSync(join(tmpdir(), "directus-typegen-"));
     const cacheFile = join(directory, "cache.json");
     const generatedFile = join(directory, "directus-schema.d.ts");
@@ -134,14 +134,14 @@ describe("Directus typegen transforms", () => {
       source: "export interface Schema {}\n"
     };
 
-    writeTypegenCache(cacheFile, manifest);
-    expect(readTypegenCache(cacheFile, generatedFile, manifest, 60_000, true, false)).toBe(
-      manifest.source
-    );
-    expect(
+    await writeTypegenCache(cacheFile, manifest);
+    await expect(
+      readTypegenCache(cacheFile, generatedFile, manifest, 60_000, true, false)
+    ).resolves.toBe(manifest.source);
+    await expect(
       readTypegenCache(cacheFile, generatedFile, manifest, 60_000, false, false)
-    ).toBeUndefined();
-    expect(
+    ).resolves.toBeUndefined();
+    await expect(
       readTypegenCache(
         cacheFile,
         generatedFile,
@@ -150,14 +150,15 @@ describe("Directus typegen transforms", () => {
         true,
         false
       )
-    ).toBeUndefined();
+    ).resolves.toBeUndefined();
     expect(JSON.parse(readFileSync(cacheFile, "utf8"))).not.toHaveProperty("token");
   });
 
   it("falls back to an empty schema without credentials and fails partial production configuration", async () => {
-    const log = { warn: vi.fn(), success: vi.fn() };
+    const log = { warn: vi.fn(), error: vi.fn() };
     const directory = mkdtempSync(join(tmpdir(), "directus-typegen-missing-"));
     const generatedFile = join(directory, "directus-schema.d.ts");
+    writeFileSync(generatedFile, "");
 
     await expect(
       resolveDirectusTypegenDeclaration({
@@ -200,5 +201,22 @@ describe("Directus typegen transforms", () => {
         log
       })
     ).resolves.toContain("articles");
+  });
+
+  it("logs the generator boundary when the Directus generator fails", async () => {
+    const { generateDirectusTypes } = await import("directus-sdk-typegen");
+    const log = { warn: vi.fn(), error: vi.fn() };
+    vi.mocked(generateDirectusTypes).mockRejectedValueOnce(new Error("upstream unavailable"));
+
+    await expect(
+      generateDirectusTypesFile({
+        directusUrl: "https://directus.example.test",
+        directusToken: "introspection-token",
+        augmentations: disabledAugmentations,
+        rules: {},
+        log
+      })
+    ).rejects.toThrow("upstream unavailable");
+    expect(log.error).toHaveBeenCalledWith("Directus schema type generation failed.");
   });
 });

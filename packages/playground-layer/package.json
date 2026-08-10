@@ -9,6 +9,7 @@
     "prepare": "nuxt prepare .playground"
   },
   "dependencies": {
+    "@iconify-json/lucide": "catalog:",
     "@nuxt/ui": "catalog:"
   },
   "devDependencies": {

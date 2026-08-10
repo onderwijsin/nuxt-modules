@@ -15,6 +15,7 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
+import { attempt, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { parseDirectusCommands } from "./config/commands";
 import { directusOptionsSchema } from "./config/options.schema";
@@ -47,7 +48,6 @@ export default defineNuxtModule<ModuleOptions>({
 
     start();
     const options = validateModuleOptions(rawOptions, directusOptionsSchema, log);
-    const commands = parseDirectusCommands(options.commands);
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
@@ -55,30 +55,36 @@ export default defineNuxtModule<ModuleOptions>({
       filename: "types/directus-config.d.ts",
       src: resolver.resolve(runtimeDir, "types/config.d.ts")
     });
-    addTypeTemplate({
-      filename: "types/directus-schema-alias.d.ts",
-      src: resolver.resolve(runtimeDir, "types/directus-schema-alias.d.ts")
-    });
+
     addTypeTemplate({
       filename: "types/directus-schema.d.ts",
-      getContents: () =>
-        resolveDirectusTypegenDeclaration({
-          directusUrl: options.baseUrl,
-          directusToken: options.typegen.introspectionToken,
-          augmentations: options.typegen.augmentations,
-          rules: options.typegen.rules,
-          transform: options.typegen.transform,
-          cacheFile: join(nuxt.options.buildDir, "directus-typegen-cache.json"),
-          generatedFile: join(nuxt.options.buildDir, "types/directus-schema.d.ts"),
-          maxAge: options.typegen.cache.maxAge,
-          isDevelopment: nuxt.options.dev,
-          isCI: process.env.CI === "true",
-          log
-        })
+      getContents: async () => {
+        const result = await attempt(() =>
+          resolveDirectusTypegenDeclaration({
+            directusUrl: options.baseUrl,
+            directusToken: options.typegen.introspectionToken,
+            augmentations: options.typegen.augmentations,
+            rules: options.typegen.rules,
+            transform: options.typegen.transform,
+            cacheFile: join(nuxt.options.buildDir, "directus-typegen-cache.json"),
+            generatedFile: join(nuxt.options.buildDir, "types/directus-schema.d.ts"),
+            maxAge: options.typegen.cache.maxAge,
+            isDevelopment: nuxt.options.dev,
+            isCI: process.env.CI === "true",
+            log
+          })
+        );
+        if (isString(result.data)) {
+          return result.data;
+        }
+        log.error("Directus schema type template failed.");
+        throw result.error;
+      }
     });
 
     if (!isEnabled()) return;
 
+    const commands = parseDirectusCommands(options.commands);
     for (const name of commands) addImports({ name, as: name, from: "@directus/sdk" });
 
     nuxt.options.runtimeConfig.directus = defu(

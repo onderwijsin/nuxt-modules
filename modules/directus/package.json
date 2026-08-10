@@ -45,6 +45,7 @@
     "defu": "catalog:",
     "directus-sdk-typegen": "catalog:",
     "h3": "catalog:",
+    "ohash": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

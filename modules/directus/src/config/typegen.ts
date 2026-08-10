@@ -1,7 +1,15 @@
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { generateDirectusTypes } from "directus-sdk-typegen";
+import {
+  attempt,
+  isDefined,
+  isFiniteNumber,
+  isNonBlankString,
+  isRecord,
+  isString
+} from "@onderwijsin/nuxt-module-utils/shared";
+import { hash } from "ohash";
 
 import type { ResolvedModuleOptions } from "../types/options";
 
@@ -26,6 +34,7 @@ export interface GenerateDirectusTypesOptions {
   augmentations: ResolvedModuleOptions["typegen"]["augmentations"];
   rules: ResolvedModuleOptions["typegen"]["rules"];
   transform?: TypegenTransform;
+  log?: TypegenLogger;
 }
 
 /** Development-only manifest for a generated declaration. It contains no credentials. */
@@ -40,7 +49,7 @@ export interface TypegenCacheManifest {
 /** Minimal logger contract used by the build-time template. */
 export interface TypegenLogger {
   warn(message: string): void;
-  success(message: string): void;
+  error(message: string): void;
 }
 
 interface InterfaceDeclaration {
@@ -89,12 +98,20 @@ export async function generateDirectusTypesFile(
     throw new Error("Directus typegen requires both baseUrl and typegen.introspectionToken.");
   }
 
-  const generated = await generateDirectusTypes({
-    directusUrl: options.directusUrl,
-    directusToken: options.directusToken
+  const result = await attempt(async () => {
+    const generated = await generateDirectusTypes({
+      directusUrl: options.directusUrl,
+      directusToken: options.directusToken
+    });
+    const normalized = applyTypegenTransforms(generated, options);
+    const source = `${HEADER_COMMENT}${normalized.trim()}\n`;
+    return source;
   });
-  const normalized = applyTypegenTransforms(generated, options);
-  return `${HEADER_COMMENT}${normalized.trim()}\n`;
+  if (isString(result.data)) {
+    return result.data;
+  }
+  options.log?.error("Directus schema type generation failed.");
+  throw result.error;
 }
 
 /**
@@ -116,23 +133,23 @@ export async function resolveDirectusTypegenDeclaration(options: {
   isCI: boolean;
   log: TypegenLogger;
 }): Promise<string> {
-  const hasAnyCredential = Boolean(options.directusUrl || options.directusToken);
+  const hasAnyCredential =
+    isNonBlankString(options.directusUrl) || isNonBlankString(options.directusToken);
   if (!hasAnyCredential) {
+    const existing = readExistingDeclaration(options.generatedFile);
+    if (isDefined(existing)) return existing;
     options.log.warn(
       "Skipping Directus type generation: configure directus.baseUrl and directus.typegen.introspectionToken."
     );
-    return existsSync(options.generatedFile)
-      ? readFileSync(options.generatedFile, "utf8")
-      : "export interface Schema {}\n";
+    return "export interface Schema {}\n";
   }
   if (!options.directusUrl || !options.directusToken) {
     if (options.isDevelopment && !options.isCI) {
       options.log.warn(
         "Directus type generation is configured incompletely; using the previous declaration or an empty Schema in development."
       );
-      return existsSync(options.generatedFile)
-        ? readFileSync(options.generatedFile, "utf8")
-        : "export interface Schema {}\n";
+      const existing = readExistingDeclaration(options.generatedFile);
+      return isDefined(existing) ? existing : "export interface Schema {}\n";
     }
     throw new Error(
       "Directus type generation requires both directus.baseUrl and directus.typegen.introspectionToken."
@@ -146,7 +163,7 @@ export async function resolveDirectusTypegenDeclaration(options: {
     generatedAt: 0,
     source: ""
   } satisfies TypegenCacheManifest;
-  const cached = readTypegenCache(
+  const cached = await readTypegenCache(
     options.cacheFile,
     options.generatedFile,
     fingerprint,
@@ -154,23 +171,25 @@ export async function resolveDirectusTypegenDeclaration(options: {
     options.isDevelopment,
     options.isCI
   );
-  if (cached !== undefined) return cached;
+  if (isDefined(cached)) {
+    return cached;
+  }
 
   const source = await generateDirectusTypesFile({
     directusUrl: options.directusUrl,
     directusToken: options.directusToken,
     augmentations: options.augmentations,
     rules: options.rules,
-    transform: options.transform
+    transform: options.transform,
+    log: options.log
   });
   if (options.isDevelopment && !options.isCI) {
-    writeTypegenCache(options.cacheFile, {
+    await writeTypegenCache(options.cacheFile, {
       ...fingerprint,
       generatedAt: Date.now(),
       source
     });
   }
-  options.log.success("Directus schema types generated.");
   return source;
 }
 
@@ -199,15 +218,15 @@ export function applyTypegenTransforms(
   if (options.augmentations.mergeJsDocs) result = mergeJsDocs(result);
 
   result = applyRules(result, options.rules);
-  if (options.transform) {
+  if (isDefined(options.transform)) {
     const interfaces = scanInterfaces(result);
     result = options.transform(result, {
-      directusUrl: options.directusUrl ?? "",
+      directusUrl: isDefined(options.directusUrl) ? options.directusUrl : "",
       generatorVersion: DIRECTUS_TYPEGEN_VERSION,
       collections: interfaces.map((declaration) => declaration.name),
       rules: options.rules
     });
-    if (typeof result !== "string") {
+    if (!isString(result)) {
       throw new Error("directus.typegen.transform must return a string declaration.");
     }
   }
@@ -242,6 +261,14 @@ export function scanInterfaces(source: string): InterfaceDeclaration[] {
   return declarations;
 }
 
+/**
+ * Scans direct fields inside one interface body, preserving multiline type boundaries.
+ *
+ * @param source TypeScript declaration source.
+ * @param bodyStart Interface body opening boundary.
+ * @param bodyEnd Interface body closing boundary.
+ * @returns Field declarations found in the interface body.
+ */
 function scanFields(source: string, bodyStart: number, bodyEnd: number): FieldDeclaration[] {
   const fields: FieldDeclaration[] = [];
   let cursor = bodyStart;
@@ -267,7 +294,7 @@ function scanFields(source: string, bodyStart: number, bodyEnd: number): FieldDe
     const documentationStart = findDocumentationStart(source, nameStart, bodyStart);
     fields.push({
       name,
-      optional: Boolean(fieldMatch[4]),
+      optional: isDefined(fieldMatch[4]),
       type: source
         .slice(colon + 1, fieldEnd)
         .replace(/;\s*$/, "")
@@ -283,6 +310,14 @@ function scanFields(source: string, bodyStart: number, bodyEnd: number): FieldDe
   return fields;
 }
 
+/**
+ * Finds contiguous JSDoc blocks immediately preceding a declaration field.
+ *
+ * @param source TypeScript declaration source.
+ * @param start Field name start offset.
+ * @param lowerBound Interface body start offset.
+ * @returns Start offset of the contiguous documentation region.
+ */
 function findDocumentationStart(source: string, start: number, lowerBound: number): number {
   let cursor = start;
   while (cursor > lowerBound) {
@@ -295,6 +330,14 @@ function findDocumentationStart(source: string, start: number, lowerBound: numbe
   return cursor;
 }
 
+/**
+ * Finds a field semicolon while ignoring nested types, strings, and comments.
+ *
+ * @param source TypeScript declaration source.
+ * @param start Type expression start offset.
+ * @param upperBound Interface body end offset.
+ * @returns Semicolon offset, or `-1` when the declaration is incomplete.
+ */
 function findStatementEnd(source: string, start: number, upperBound: number): number {
   let braces = 0;
   let brackets = 0;
@@ -305,7 +348,8 @@ function findStatementEnd(source: string, start: number, upperBound: number): nu
 
   for (let index = start; index < upperBound; index += 1) {
     const current = source[index]!;
-    const next = source[index + 1] ?? "";
+    const nextValue = source[index + 1];
+    const next = isDefined(nextValue) ? nextValue : "";
 
     if (lineComment) {
       if (current === "\n") lineComment = false;
@@ -349,6 +393,15 @@ function findStatementEnd(source: string, start: number, upperBound: number): nu
   return -1;
 }
 
+/**
+ * Finds the matching closing delimiter while ignoring nested strings and comments.
+ *
+ * @param source TypeScript declaration source.
+ * @param start Opening delimiter offset.
+ * @param opening Opening delimiter.
+ * @param closing Closing delimiter.
+ * @returns Matching closing delimiter offset, or `-1` when incomplete.
+ */
 function findMatchingDelimiter(
   source: string,
   start: number,
@@ -362,7 +415,8 @@ function findMatchingDelimiter(
 
   for (let index = start; index < source.length; index += 1) {
     const current = source[index]!;
-    const next = source[index + 1] ?? "";
+    const nextValue = source[index + 1];
+    const next = isDefined(nextValue) ? nextValue : "";
     if (lineComment) {
       if (current === "\n") lineComment = false;
       continue;
@@ -403,6 +457,13 @@ function findMatchingDelimiter(
   return -1;
 }
 
+/**
+ * Rewrites field type spans using a scanner-provided field declaration.
+ *
+ * @param source TypeScript declaration source.
+ * @param rewrite Field rewrite callback.
+ * @returns Rewritten declaration source.
+ */
 function replaceFieldTypes(
   source: string,
   rewrite: (field: FieldDeclaration, declaration: InterfaceDeclaration) => string | undefined
@@ -411,7 +472,7 @@ function replaceFieldTypes(
   for (const declaration of scanInterfaces(source)) {
     for (const field of declaration.fields) {
       const replacement = rewrite(field, declaration);
-      if (replacement !== undefined) {
+      if (isDefined(replacement)) {
         const colon = source.indexOf(":", field.nameStart);
         if (colon < 0 || colon > field.fieldEnd) continue;
         replacements.push({
@@ -424,6 +485,13 @@ function replaceFieldTypes(
   return applyReplacements(source, replacements);
 }
 
+/**
+ * Applies non-overlapping source replacements from right to left.
+ *
+ * @param source TypeScript declaration source.
+ * @param replacements Inclusive source spans and replacement values.
+ * @returns Rewritten declaration source.
+ */
 function applyReplacements(
   source: string,
   replacements: Array<{ span: SourceSpan; value: string }>
@@ -435,6 +503,12 @@ function applyReplacements(
     }, source);
 }
 
+/**
+ * Removes export enum declarations using balanced declaration boundaries.
+ *
+ * @param source TypeScript declaration source.
+ * @returns Source without enum declarations.
+ */
 function removeEnums(source: string): string {
   const spans: SourceSpan[] = [];
   const enumPattern = /\bexport\s+enum\s+[A-Za-z_$][\w$]*\s*\{/g;
@@ -451,16 +525,34 @@ function removeEnums(source: string): string {
   );
 }
 
+/**
+ * Replaces permissive generated Record values with unknown.
+ *
+ * @param source TypeScript declaration source.
+ * @returns Source with selected Record values rewritten.
+ */
 function replaceAnyWithUnknown(source: string): string {
   return replaceFieldTypes(source, (field) =>
     field.type.replace(/Record\s*<([^,]+),\s*any>/g, "Record<$1, unknown>")
   );
 }
 
+/**
+ * Replaces generated quoted JSON type literals with the JSON type.
+ *
+ * @param source TypeScript declaration source.
+ * @returns Source with selected JSON literals rewritten.
+ */
 function replaceJsonWithJSON(source: string): string {
   return replaceFieldTypes(source, (field) => field.type.replace(/(['"])json\1/g, "JSON"));
 }
 
+/**
+ * Applies reviewed generated type-name corrections.
+ *
+ * @param source TypeScript declaration source.
+ * @returns Source with known type-name corrections applied.
+ */
 function applyTypeNameOverrides(source: string): string {
   return replaceFieldTypes(source, (field) => {
     let type = field.type;
@@ -471,6 +563,12 @@ function applyTypeNameOverrides(source: string): string {
   }).replace(/(interface\s+)CandidateStatuse\b/g, "$1CandidateStatus");
 }
 
+/**
+ * Converts simple non-nullable optional fields to required fields.
+ *
+ * @param source TypeScript declaration source.
+ * @returns Source with selected optional markers removed.
+ */
 function makeNonNullableOptionalsRequired(source: string): string {
   const replacements: Array<{ span: SourceSpan; value: string }> = [];
   for (const declaration of scanInterfaces(source)) {
@@ -482,7 +580,8 @@ function makeNonNullableOptionalsRequired(source: string): string {
       replacements.push({ span: { start: optionalEnd, end: optionalEnd }, value: "" });
       if (!field.documentation.includes("@required")) {
         const indentStart = source.lastIndexOf("\n", field.documentationStart) + 1;
-        const indent = source.slice(indentStart, field.nameStart).match(/^\s*/)?.[0] ?? "";
+        const indentation = source.slice(indentStart, field.nameStart).match(/^\s*/);
+        const indent = isDefined(indentation?.[0]) ? indentation[0] : "";
         replacements.push({
           span: { start: field.documentationStart, end: field.documentationStart - 1 },
           value: `${indent}/** @required */\n`
@@ -493,6 +592,12 @@ function makeNonNullableOptionalsRequired(source: string): string {
   return applyReplacements(source, replacements);
 }
 
+/**
+ * Merges adjacent JSDoc tag blocks and removes duplicate tags.
+ *
+ * @param source TypeScript declaration source.
+ * @returns Source with selected documentation blocks merged.
+ */
 function mergeJsDocs(source: string): string {
   const replacements: Array<{ span: SourceSpan; value: string }> = [];
   const blocks = scanJsDocBlocks(source);
@@ -511,6 +616,12 @@ function mergeJsDocs(source: string): string {
   return applyReplacements(source, replacements);
 }
 
+/**
+ * Scans JSDoc blocks and extracts their tag lines.
+ *
+ * @param source TypeScript declaration source.
+ * @returns JSDoc block spans and normalized tags.
+ */
 function scanJsDocBlocks(source: string): Array<{ start: number; end: number; tags: string[] }> {
   const blocks: Array<{ start: number; end: number; tags: string[] }> = [];
   let cursor = 0;
@@ -530,6 +641,14 @@ function scanJsDocBlocks(source: string): Array<{ start: number; end: number; ta
   return blocks;
 }
 
+/**
+ * Applies validated collection and field type overrides.
+ *
+ * @param source TypeScript declaration source.
+ * @param rules Collection and field type rules.
+ * @returns Rewritten declaration source.
+ * @throws When a configured collection or field is absent.
+ */
 function applyRules(source: string, rules: ResolvedModuleOptions["typegen"]["rules"]): string {
   const declarations = scanInterfaces(source);
   const byName = new Map(declarations.map((declaration) => [declaration.name, declaration]));
@@ -558,6 +677,21 @@ function applyRules(source: string, rules: ResolvedModuleOptions["typegen"]["rul
 }
 
 /**
+ * Reads a previously generated declaration only when it contains usable source.
+ *
+ * Nuxt can create the destination file before invoking `getContents`; returning that empty file
+ * makes Nuxt reject the template with `NUXT_B1001`.
+ *
+ * @param generatedFile Generated declaration path.
+ * @returns Non-blank declaration source, or `undefined` when unavailable.
+ */
+function readExistingDeclaration(generatedFile: string): string | undefined {
+  if (!existsSync(generatedFile)) return undefined;
+  const source = readFileSync(generatedFile, "utf8");
+  return isNonBlankString(source) ? source : undefined;
+}
+
+/**
  * Creates a credential-free fingerprint for development cache validation.
  *
  * @param directusUrl Directus base URL.
@@ -568,17 +702,14 @@ export function createTypegenFingerprint(
   directusUrl: string,
   options: Pick<GenerateDirectusTypesOptions, "augmentations" | "rules" | "transform">
 ): { baseUrlFingerprint: string; optionsFingerprint: string } {
-  const hash = (value: string) => createHash("sha256").update(value).digest("hex");
   return {
     baseUrlFingerprint: hash(directusUrl),
-    optionsFingerprint: hash(
-      JSON.stringify({
-        augmentations: options.augmentations,
-        rules: options.rules,
-        transform: options.transform?.toString() ?? null,
-        generatorVersion: DIRECTUS_TYPEGEN_VERSION
-      })
-    )
+    optionsFingerprint: hash({
+      augmentations: options.augmentations,
+      rules: options.rules,
+      transform: isDefined(options.transform) ? options.transform.toString() : null,
+      generatorVersion: DIRECTUS_TYPEGEN_VERSION
+    })
   };
 }
 
@@ -593,31 +724,28 @@ export function createTypegenFingerprint(
  * @param isCI Whether CI mode is active.
  * @returns Cached declaration source, or `undefined` when regeneration is required.
  */
-export function readTypegenCache(
+export async function readTypegenCache(
   cacheFile: string,
   generatedFile: string,
   fingerprint: TypegenCacheManifest,
   maxAge: number,
   isDevelopment: boolean,
   isCI: boolean
-): string | undefined {
+): Promise<string | undefined> {
   if (!isDevelopment || isCI || !existsSync(cacheFile)) return undefined;
-  try {
-    const manifest: unknown = JSON.parse(readFileSync(cacheFile, "utf8"));
-    if (!isTypegenCacheManifest(manifest)) return undefined;
-    if (
-      manifest.generatorVersion !== fingerprint.generatorVersion ||
-      manifest.baseUrlFingerprint !== fingerprint.baseUrlFingerprint ||
-      manifest.optionsFingerprint !== fingerprint.optionsFingerprint ||
-      Date.now() - manifest.generatedAt >= maxAge
-    ) {
-      return undefined;
-    }
-    if (manifest.source) return manifest.source;
-    return existsSync(generatedFile) ? readFileSync(generatedFile, "utf8") : undefined;
-  } catch {
+  const result = await attempt(() => JSON.parse(readFileSync(cacheFile, "utf8")) as unknown);
+  if (!isDefined(result.data) || !isTypegenCacheManifest(result.data)) return undefined;
+  const manifest = result.data;
+  if (
+    manifest.generatorVersion !== fingerprint.generatorVersion ||
+    manifest.baseUrlFingerprint !== fingerprint.baseUrlFingerprint ||
+    manifest.optionsFingerprint !== fingerprint.optionsFingerprint ||
+    Date.now() - manifest.generatedAt >= maxAge
+  ) {
     return undefined;
   }
+  if (manifest.source) return manifest.source;
+  return existsSync(generatedFile) ? readFileSync(generatedFile, "utf8") : undefined;
 }
 
 /**
@@ -626,22 +754,26 @@ export function readTypegenCache(
  * @param cacheFile Manifest path.
  * @param manifest Manifest contents.
  */
-export function writeTypegenCache(cacheFile: string, manifest: TypegenCacheManifest): void {
-  try {
-    writeFileSync(cacheFile, JSON.stringify(manifest, null, 2));
-  } catch {
-    // Cache failure must never make type generation fail.
-  }
+export async function writeTypegenCache(
+  cacheFile: string,
+  manifest: TypegenCacheManifest
+): Promise<void> {
+  await attempt(() => writeFileSync(cacheFile, JSON.stringify(manifest, null, 2)));
 }
 
+/**
+ * Validates the credential-free cache manifest shape.
+ *
+ * @param value Unknown parsed JSON value.
+ * @returns Whether the value is a valid cache manifest.
+ */
 function isTypegenCacheManifest(value: unknown): value is TypegenCacheManifest {
-  if (!value || typeof value !== "object") return false;
-  const get = (key: string): unknown => Reflect.get(value, key);
+  if (!isRecord(value)) return false;
   return (
-    typeof get("generatorVersion") === "string" &&
-    typeof get("baseUrlFingerprint") === "string" &&
-    typeof get("optionsFingerprint") === "string" &&
-    typeof get("generatedAt") === "number" &&
-    typeof get("source") === "string"
+    isString(value.generatorVersion) &&
+    isString(value.baseUrlFingerprint) &&
+    isString(value.optionsFingerprint) &&
+    isFiniteNumber(value.generatedAt) &&
+    isString(value.source)
   );
 }

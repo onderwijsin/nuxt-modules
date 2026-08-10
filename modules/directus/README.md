@@ -42,6 +42,12 @@ directus: {
 }
 ```
 
+Use a type-only import because the generated declaration has no runtime exports:
+
+```ts
+import type { ExtensionSeoMetadata } from "#directus";
+```
+
 Rules target generated interface and field names and fail clearly when either name is stale. The
 development cache is fingerprinted by generator version, base URL, augmentation settings, rules, and
 transform source; it is bypassed outside development and in CI. Cache files stay under `.nuxt` and
