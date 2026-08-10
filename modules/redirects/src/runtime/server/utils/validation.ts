@@ -2,8 +2,9 @@ import type { Redirect } from "../../../types/redirect";
 
 import { z } from "zod";
 
-import { toRedirectOrigin } from "./path";
 import { isExternalRedirectDestination } from "../../utils/destination";
+import { toRedirectOrigin } from "./path";
+import { withoutTrailingSlash } from "ufo";
 
 const redirectSchema = z.strictObject({
   from: z.string().trim().min(1),
@@ -30,6 +31,29 @@ function isHttpDestination(destination: string): boolean {
 }
 
 /**
+ * Checks whether a question mark in a pattern is an optional parameter marker rather than a query
+ * delimiter.
+ *
+ * @param origin - Pattern origin to inspect.
+ * @returns Whether the origin contains a query string.
+ */
+function hasPatternQuery(origin: string): boolean {
+  for (const [index, character] of [...origin].entries()) {
+    if (character !== "?") continue;
+    const segmentStart = origin.lastIndexOf("/", index - 1) + 1;
+    const token = origin.slice(segmentStart, index);
+    const nextCharacter = origin[index + 1];
+    if (
+      (nextCharacter === undefined || nextCharacter === "/" || nextCharacter === ".") &&
+      (/^:[^/?]+$/.test(token) || token === "*")
+    )
+      continue;
+    return true;
+  }
+  return false;
+}
+
+/**
  * Validates and normalizes a redirect at the module boundary.
  *
  * @param value - Untrusted source or webhook value.
@@ -40,7 +64,7 @@ export function normalizeRedirect(
 ): Redirect & { statusCode: NonNullable<Redirect["statusCode"]> } {
   const redirect = redirectSchema.parse(value);
   if (!redirect.from.startsWith("/")) throw new Error("Redirect origins must start with '/'.");
-  if (redirect.match === "pattern" && redirect.from.includes("?"))
+  if (redirect.match === "pattern" && hasPatternQuery(redirect.from))
     throw new Error("Pattern redirect origins must not contain query parameters.");
   if ([...redirect.to].some((character) => character <= "\u001F" || character === "\u007F"))
     throw new Error("Redirect destinations must not contain control characters.");
@@ -51,5 +75,11 @@ export function normalizeRedirect(
     throw new Error("Redirect destinations must be internal paths or HTTP(S) URLs.");
   }
 
-  return { ...redirect, from: toRedirectOrigin(redirect.from) };
+  return {
+    ...redirect,
+    from:
+      redirect.match === "pattern"
+        ? withoutTrailingSlash(redirect.from)
+        : toRedirectOrigin(redirect.from)
+  };
 }

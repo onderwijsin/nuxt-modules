@@ -15,6 +15,7 @@ import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../util
 import type { CompiledDynamicRedirect } from "../../utils/dynamic";
 
 const MANIFEST_KEY = "manifest";
+const DYNAMIC_MANIFEST_CHECK_INTERVAL_MS = 10_000;
 
 interface RedirectManifest {
   exact: RedirectIndex;
@@ -23,18 +24,31 @@ interface RedirectManifest {
 }
 
 let compiledDynamicRedirects: CompiledDynamicRedirect[] | null = null;
+let compiledDynamicUpdatedAt: string | null = null;
+let lastDynamicManifestCheckAt = 0;
 
 function dynamicMatchingEnabled(): boolean {
   return useRuntimeConfig().redirects?.dynamicMatching === true;
 }
 
-function setDynamicRedirectRules(rules: readonly DynamicRedirectRule[]): void {
+function setDynamicRedirectRules(rules: readonly DynamicRedirectRule[], updatedAt: string): void {
   compiledDynamicRedirects = compileDynamicRedirects(rules);
+  compiledDynamicUpdatedAt = updatedAt;
+  lastDynamicManifestCheckAt = Date.now();
 }
 
 async function ensureDynamicRedirectRules(): Promise<void> {
-  if (compiledDynamicRedirects !== null) return;
-  setDynamicRedirectRules((await getRedirectManifest()).dynamic);
+  const now = Date.now();
+  if (
+    compiledDynamicRedirects !== null &&
+    now - lastDynamicManifestCheckAt < DYNAMIC_MANIFEST_CHECK_INTERVAL_MS
+  )
+    return;
+
+  const manifest = await getRedirectManifest();
+  lastDynamicManifestCheckAt = now;
+  if (compiledDynamicUpdatedAt !== manifest.updatedAt)
+    setDynamicRedirectRules(manifest.dynamic, manifest.updatedAt);
 }
 
 /**
@@ -163,12 +177,13 @@ export async function refreshRedirectStorage(
       .filter((origin) => !exact.has(origin))
       .map((origin) => storage.removeItem(toRedirectStorageKey(origin)))
   );
+  const updatedAt = new Date().toISOString();
   await storage.setItem<RedirectManifest>(MANIFEST_KEY, {
     exact: next,
     dynamic: nextDynamic,
-    updatedAt: new Date().toISOString()
+    updatedAt
   });
-  setDynamicRedirectRules(nextDynamic);
+  setDynamicRedirectRules(nextDynamic, updatedAt);
   await invalidateRedirectCache();
 
   return next;
@@ -210,12 +225,13 @@ export async function upsertRedirect(value: Redirect): Promise<ResolvedRedirect>
 
   if (redirect.match === "pattern") await storage.removeItem(toRedirectStorageKey(redirect.from));
   else await storage.setItem(toRedirectStorageKey(redirect.from), redirect);
+  const updatedAt = new Date().toISOString();
   await storage.setItem<RedirectManifest>(MANIFEST_KEY, {
     exact,
     dynamic,
-    updatedAt: new Date().toISOString()
+    updatedAt
   });
-  setDynamicRedirectRules(dynamic);
+  setDynamicRedirectRules(dynamic, updatedAt);
   await invalidateRedirectCache(redirect.match === "pattern" ? undefined : redirect.from);
   if (redirect.match !== "pattern") await primeRedirectLookupCache(redirect.from);
   return redirect;
@@ -236,12 +252,13 @@ export async function removeRedirect(origin: string): Promise<void> {
   const exact = { ...manifest.exact };
   delete exact[canonicalOrigin];
   const dynamic = manifest.dynamic.filter((rule) => rule.from !== canonicalOrigin);
+  const updatedAt = new Date().toISOString();
   await storage.setItem<RedirectManifest>(MANIFEST_KEY, {
     exact,
     dynamic,
-    updatedAt: new Date().toISOString()
+    updatedAt
   });
-  setDynamicRedirectRules(dynamic);
+  setDynamicRedirectRules(dynamic, updatedAt);
   await invalidateRedirectCache(
     manifest.dynamic.some((rule) => rule.from === canonicalOrigin) ? undefined : canonicalOrigin
   );

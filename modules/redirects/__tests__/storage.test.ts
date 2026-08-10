@@ -138,4 +138,27 @@ describe("redirect storage refresh", () => {
       dynamic: [expect.objectContaining({ from: "/products/:slug", match: "pattern" })]
     });
   });
+
+  it("refreshes process-local dynamic rules after the manifest check interval", async () => {
+    vi.useFakeTimers();
+    try {
+      dynamicMatching = true;
+      await refreshRedirectStorage([
+        [{ from: "/legacy/:slug", to: "/old/:slug", match: "pattern" }]
+      ]);
+      await expect(findRedirect("/legacy/page")).resolves.toMatchObject({ to: "/old/page" });
+
+      values.set("manifest", {
+        exact: {},
+        dynamic: [{ from: "/legacy/:slug", to: "/new/:slug", statusCode: 302, match: "pattern" }],
+        updatedAt: "2099-01-01T00:00:00.000Z"
+      });
+
+      await expect(findRedirect("/legacy/page")).resolves.toMatchObject({ to: "/old/page" });
+      vi.advanceTimersByTime(1_001);
+      await expect(findRedirect("/legacy/page")).resolves.toMatchObject({ to: "/new/page" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

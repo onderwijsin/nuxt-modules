@@ -15,6 +15,18 @@ describe("dynamic redirect matching", () => {
       to: "/downloads/*",
       statusCode: 302,
       match: "pattern"
+    },
+    {
+      from: "/guides/:version?/intro",
+      to: "/documentation/:version?/intro",
+      statusCode: 307,
+      match: "pattern"
+    },
+    {
+      from: "/files/*?/download",
+      to: "/downloads/*?/download",
+      statusCode: 308,
+      match: "pattern"
     }
   ]);
 
@@ -36,5 +48,20 @@ describe("dynamic redirect matching", () => {
       statusCode: 302
     });
     expect(findCompiledDynamicRedirect(compiled, "/unknown")).toBeNull();
+  });
+
+  it("matches optional named and wildcard segments", () => {
+    expect(findCompiledDynamicRedirect(compiled, "/guides/v2/intro")).toMatchObject({
+      to: "/documentation/v2/intro",
+      statusCode: 307
+    });
+    expect(findCompiledDynamicRedirect(compiled, "/guides/intro")).toMatchObject({
+      to: "/documentation/intro",
+      statusCode: 307
+    });
+    expect(findCompiledDynamicRedirect(compiled.slice(3), "/files/download")).toMatchObject({
+      to: "/downloads/download",
+      statusCode: 308
+    });
   });
 });

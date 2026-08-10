@@ -23,15 +23,26 @@ describe("redirect validation", () => {
     }
   });
 
-  it("accepts pattern rules and rejects query-bearing patterns", () => {
+  it("accepts optional pattern segments and rejects query-bearing patterns", () => {
     expect(
-      normalizeRedirect({ from: "/legacy/:slug", to: "/docs/:slug", match: "pattern" })
+      normalizeRedirect({
+        from: "/guides/:version?/intro",
+        to: "/docs/:version?/intro",
+        match: "pattern"
+      })
     ).toEqual({
-      from: "/legacy/:slug",
-      to: "/docs/:slug",
+      from: "/guides/:version?/intro",
+      to: "/docs/:version?/intro",
       statusCode: 302,
       match: "pattern"
     });
+    expect(
+      normalizeRedirect({
+        from: "/files/*?/download",
+        to: "/downloads/*?/download",
+        match: "pattern"
+      })
+    ).toMatchObject({ from: "/files/*?/download", match: "pattern" });
     expect(() =>
       normalizeRedirect({ from: "/legacy/:slug?source=old", to: "/docs/:slug", match: "pattern" })
     ).toThrow("must not contain query parameters");
