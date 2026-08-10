@@ -56,8 +56,14 @@ function findEnvelope(
   error: unknown
 ): { errors: readonly unknown[]; statusCode?: number } | undefined {
   const candidates: unknown[] = [error];
-  if (isRecord(error)) candidates.push(error.data, error.response);
-  for (const candidate of candidates) {
+  const seen = new Set<object>();
+  for (let index = 0; index < candidates.length; index += 1) {
+    const candidate = candidates[index];
+    if (isRecord(candidate)) {
+      if (seen.has(candidate)) continue;
+      seen.add(candidate);
+      candidates.push(candidate.data, candidate.response);
+    }
     const errors = getEnvelope(candidate);
     if (errors) {
       const statusCode =

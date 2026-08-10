@@ -25,7 +25,8 @@ export default defineNuxtConfig({
   },
   directus: {
     baseUrl: "https://directus.invalid",
-    proxy: { path: "/_directus/proxy" }
+    proxy: { path: "/_directus/proxy" },
+    typegen: { enabled: false }
   },
   healthcheck: {
     enabled: true,

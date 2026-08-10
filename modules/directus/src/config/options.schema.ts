@@ -30,6 +30,7 @@ const typegenTransform = z.custom<
 >((value) => typeof value === "function", "must be a typegen transform function");
 
 const defaultTypegenOptions = {
+  enabled: true,
   cache: { maxAge: 3_600_000 },
   augmentations: {
     removeEnums: false,
@@ -49,6 +50,7 @@ const defaultPreviewOptions = {
 };
 
 const typegenSchema = z.object({
+  enabled: z.boolean().default(true),
   introspectionToken: z.string().optional(),
   cache: z
     .object({ maxAge: z.number().int().nonnegative().default(3_600_000) })

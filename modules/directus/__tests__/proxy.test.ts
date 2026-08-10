@@ -46,11 +46,27 @@ describe("Directus proxy boundary", () => {
         new URL("https://app.example.test/_directus/proxy/items")
       )
     ).toThrow(/must use HTTP/);
+
+    expect(() =>
+      resolveDirectusProxyUrl(
+        "not-a-url",
+        "/_directus/proxy",
+        new URL("https://app.example.test/_directus/proxy/items")
+      )
+    ).toThrow(/must use HTTP/);
   });
 
   it("filters all credential and origin headers before forwarding", () => {
     expect(getForwardedProxyHeaders()).toEqual(
-      expect.arrayContaining(["authorization", "cookie", "content-length", "host", "origin"])
+      expect.arrayContaining([
+        "authorization",
+        "cookie",
+        "content-length",
+        "host",
+        "origin",
+        "connection",
+        "transfer-encoding"
+      ])
     );
   });
 

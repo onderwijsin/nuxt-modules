@@ -6,8 +6,9 @@ description: Use @onderwijsin/nuxt-directus for server-safe Directus REST access
 # Nuxt Directus
 
 The module is under active staged implementation. Configure a private `baseUrl` and optional
-`staticToken`; only `proxy.path` and `auth.enabled` are exposed in public runtime configuration. The
-default auto-imported SDK commands are `readItem` and `readItems`.
+`staticToken`; only the proxy path, non-sensitive preview settings, and `auth.enabled` are exposed
+in public runtime configuration. The default auto-imported SDK commands are `readItem` and
+`readItems`.
 
 Do not place Directus credentials in public runtime configuration or client code. The proxy route is
 registered at `/_directus/proxy/**` by default and forwards REST requests with server-selected
@@ -23,7 +24,7 @@ generated interfaces from `#directus` using `import type`; the generated declara
 exports. Consumer `typegen.rules` use generated interface/field names and fail on stale names.
 Development caching is fingerprinted and is never used in CI or production. The reviewed legacy
 augmentation candidates are opt-in individually; do not enable them globally without checking their
-fixture behavior.
+fixture behavior. Set `typegen.enabled: false` when generated types are not needed.
 
 Use `useDirectusItemByPath(collection, query)` for preview-aware path/filter lookups. Normal lookups
 use `readItems` with `limit: 1`; a versioned preview requires the `id` query parameter and switches

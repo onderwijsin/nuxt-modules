@@ -121,6 +121,7 @@ export async function generateDirectusTypesFile(
  * @returns Generated or cached declaration source.
  */
 export async function resolveDirectusTypegenDeclaration(options: {
+  enabled?: boolean;
   directusUrl: string;
   directusToken?: string;
   augmentations: ResolvedModuleOptions["typegen"]["augmentations"];
@@ -133,6 +134,15 @@ export async function resolveDirectusTypegenDeclaration(options: {
   isCI: boolean;
   log: TypegenLogger;
 }): Promise<string> {
+  if (options.enabled === false) {
+    const existing = readExistingDeclaration(options.generatedFile);
+    if (isDefined(existing)) return existing;
+    options.log.warn(
+      "Skipping Directus type generation because directus.typegen.enabled is false."
+    );
+    return "export interface Schema {}\n";
+  }
+
   const hasAnyCredential =
     isNonBlankString(options.directusUrl) || isNonBlankString(options.directusToken);
   if (!hasAnyCredential) {

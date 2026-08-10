@@ -1,11 +1,8 @@
 import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 
-import {
-  getDirectusPreviewContext,
-  type DirectusPreviewContext,
-  type DirectusPreviewOptions
-} from "../../utils/preview";
+import type { DirectusPreviewContext, DirectusPreviewOptions } from "../../utils/preview";
+import { getDirectusPreviewContext } from "./preview";
 
 /** A server-side credential selected for one Directus request. */
 export interface DirectusCredential {

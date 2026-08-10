@@ -80,4 +80,19 @@ describe("Directus error normalization", () => {
       errors: []
     });
   });
+
+  it("finds envelopes nested through an SDK response and preserves its status", () => {
+    expect(
+      useDirectusError({
+        statusCode: 403,
+        response: { data: { errors: [{ message: "denied", extensions: { code: "FORBIDDEN" } }] } }
+      })
+    ).toMatchObject({ isDirectusError: true, statusCode: 403, errors: [{ code: "FORBIDDEN" }] });
+  });
+
+  it("handles cyclic error metadata without recursing forever", () => {
+    const error: { data?: unknown } = {};
+    error.data = error;
+    expect(useDirectusError(error)).toMatchObject({ isDirectusError: false, errors: [] });
+  });
 });

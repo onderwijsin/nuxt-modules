@@ -64,6 +64,7 @@ export default defineNuxtModule<ModuleOptions>({
       getContents: async () => {
         const result = await attempt(() =>
           resolveDirectusTypegenDeclaration({
+            enabled: options.typegen.enabled,
             directusUrl: options.baseUrl,
             directusToken: options.typegen.introspectionToken,
             augmentations: options.typegen.augmentations,

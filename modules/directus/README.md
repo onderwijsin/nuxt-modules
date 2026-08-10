@@ -1,8 +1,9 @@
 # @onderwijsin/nuxt-directus
 
 `@onderwijsin/nuxt-directus` provides server-safe, typed Directus REST access for Nuxt 4. The module
-is being implemented incrementally; stages 1–4 establish package metadata, validated options,
-private runtime configuration, same-origin proxy forwarding, and build-time schema generation.
+is being implemented incrementally; stages 1–6 establish package metadata, validated options,
+private runtime configuration, same-origin proxy forwarding, build-time schema generation,
+preview-aware item lookup, and error normalization.
 
 ```ts
 export default defineNuxtConfig({
@@ -17,10 +18,10 @@ export default defineNuxtConfig({
 ```
 
 Directus credentials are server-only. The browser-safe runtime configuration contains only the proxy
-path and whether session authentication is enabled. Browser SDK requests target the same-origin
-proxy; server-side requests target Directus directly with a fresh request-scoped client. The proxy
-discards inbound credentials and selects the configured static token on the server. Directus
-permission rules remain the authorization boundary.
+path, non-sensitive preview settings, and whether session authentication is enabled. Browser SDK
+requests target the same-origin proxy; server-side requests target Directus directly with a fresh
+request-scoped client. The proxy discards inbound credentials and selects the configured static
+token on the server. Directus permission rules remain the authorization boundary.
 
 ## REST commands
 
@@ -54,6 +55,10 @@ directus: {
   }
 }
 ```
+
+Set `typegen.enabled: false` when an application does not use generated Directus types, such as a
+consumer that only needs the runtime proxy. When enabled, production and CI builds fail clearly if
+the private base URL or introspection token is incomplete.
 
 Use a type-only import because the generated declaration has no runtime exports:
 

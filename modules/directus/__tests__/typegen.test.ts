@@ -203,6 +203,30 @@ describe("Directus typegen transforms", () => {
     ).resolves.toContain("articles");
   });
 
+  it("skips type generation when explicitly disabled", async () => {
+    const log = { warn: vi.fn(), error: vi.fn() };
+    const directory = mkdtempSync(join(tmpdir(), "directus-typegen-disabled-"));
+
+    await expect(
+      resolveDirectusTypegenDeclaration({
+        enabled: false,
+        directusUrl: "https://directus.example.test",
+        directusToken: "introspection-token",
+        augmentations: disabledAugmentations,
+        rules: {},
+        cacheFile: join(directory, "cache.json"),
+        generatedFile: join(directory, "directus-schema.d.ts"),
+        maxAge: 60_000,
+        isDevelopment: false,
+        isCI: true,
+        log
+      })
+    ).resolves.toBe("export interface Schema {}\n");
+    expect(log.warn).toHaveBeenCalledWith(
+      "Skipping Directus type generation because directus.typegen.enabled is false."
+    );
+  });
+
   it("logs the generator boundary when the Directus generator fails", async () => {
     const { generateDirectusTypes } = await import("directus-sdk-typegen");
     const log = { warn: vi.fn(), error: vi.fn() };

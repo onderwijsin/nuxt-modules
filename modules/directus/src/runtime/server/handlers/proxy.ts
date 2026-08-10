@@ -15,9 +15,27 @@ const blockedRequestHeaders = new Set([
   "cookie",
   "host",
   "origin",
-  "content-length"
+  "content-length",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade"
 ]);
-const blockedResponseHeaders = new Set(["set-cookie"]);
+const blockedResponseHeaders = new Set([
+  "set-cookie",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade"
+]);
 
 /**
  * Resolves a proxy request into a Directus URL while preserving the request query string.
@@ -50,7 +68,12 @@ export function resolveDirectusProxyUrl(
     throw createError({ statusCode: 400, statusMessage: "Invalid Directus proxy path" });
   }
 
-  const base = new URL(baseUrl);
+  let base: URL;
+  try {
+    base = new URL(baseUrl);
+  } catch {
+    throw createError({ statusCode: 500, statusMessage: "Directus baseUrl must use HTTP(S)" });
+  }
   if (
     !hasProtocol(baseUrl, { strict: true }) ||
     isScriptProtocol(base.protocol) ||
