@@ -1,7 +1,6 @@
 import type { RestCommand } from "@directus/sdk";
 import type { H3Event } from "h3";
 import type { Schema } from "#directus";
-import { useRequestEvent } from "#imports";
 
 import { createServerDirectusClient } from "../utils/client";
 
@@ -13,13 +12,13 @@ import { createServerDirectusClient } from "../utils/client";
  * the command's result keeps the type inferred by `@directus/sdk`.
  *
  * @param command A Directus SDK REST command, for example `readItems("articles")`.
- * @param event The current request event, or an explicit event when one is not available.
+ * @param event The current request event when request-specific configuration is required.
  * @returns A promise containing the command result, typed from the supplied command.
  */
 export function useDirectusServer<Output>(
   command: RestCommand<Output, Schema>,
   event?: H3Event
 ): Promise<Output> {
-  const client = createServerDirectusClient(event ?? useRequestEvent() ?? undefined);
+  const client = createServerDirectusClient(event);
   return client.request(command);
 }

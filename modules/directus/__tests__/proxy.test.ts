@@ -1,6 +1,8 @@
+import { createServer } from "node:http";
 import { describe, expect, it } from "vitest";
 
 import {
+  createSanitizedProxyFetch,
   getForwardedProxyHeaders,
   resolveDirectusProxyUrl
 } from "../src/runtime/server/handlers/proxy";
@@ -48,8 +50,56 @@ describe("Directus proxy boundary", () => {
 
   it("filters all credential and origin headers before forwarding", () => {
     expect(getForwardedProxyHeaders()).toEqual(
-      expect.arrayContaining(["authorization", "cookie", "host", "origin"])
+      expect.arrayContaining(["authorization", "cookie", "content-length", "host", "origin"])
     );
+  });
+
+  it("sanitizes request and response headers while preserving the streamed body", async () => {
+    let receivedAuthorization: string | undefined;
+    let receivedCookie: string | undefined;
+    const server = createServer((request, response) => {
+      receivedAuthorization = request.headers.authorization;
+      receivedCookie = request.headers.cookie;
+      response.writeHead(200, {
+        "content-type": "text/plain",
+        "set-cookie": "directus_refresh=secret; HttpOnly",
+        "x-upstream": "safe"
+      });
+      response.end("proxied");
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string")
+        throw new Error("Test server did not expose a port");
+
+      const proxyFetch = createSanitizedProxyFetch({
+        accessToken: "server-token",
+        source: "static"
+      });
+      const response = await proxyFetch(`http://127.0.0.1:${address.port}`, {
+        headers: {
+          authorization: "Bearer browser-token",
+          cookie: "browser=secret",
+          origin: "https://app.test"
+        }
+      });
+
+      expect(receivedAuthorization).toBe("Bearer server-token");
+      expect(receivedCookie).toBeUndefined();
+      expect(response.headers.get("set-cookie")).toBeNull();
+      expect(response.headers.get("x-upstream")).toBe("safe");
+      await expect(response.text()).resolves.toBe("proxied");
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve()))
+      );
+    }
   });
 });
 

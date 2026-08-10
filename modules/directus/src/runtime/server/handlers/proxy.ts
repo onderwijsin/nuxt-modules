@@ -75,9 +75,11 @@ export function getForwardedProxyHeaders(): string[] {
  * @param credential Server-selected upstream credential.
  * @returns A sanitized Fetch-compatible adapter.
  */
-function createSanitizedProxyFetch(
+export function createSanitizedProxyFetch(
   credential: ReturnType<typeof resolveDirectusCredential>
 ): typeof fetch {
+  const directusFetch = ofetch.create({ responseType: "stream" });
+
   return async (input, init) => {
     const headers = new Headers(init?.headers);
     for (const header of blockedRequestHeaders) headers.delete(header);
@@ -85,9 +87,7 @@ function createSanitizedProxyFetch(
     if (authorization) headers.set("authorization", authorization);
 
     const request = input instanceof URL ? input.toString() : input;
-    const response = await ofetch
-      .create({ responseType: "stream" })
-      .raw(request, { ...init, headers });
+    const response = await directusFetch.raw(request, { ...init, headers });
     const safeHeaders = new Headers(response.headers);
     for (const header of blockedResponseHeaders) safeHeaders.delete(header);
     return new Response(response.body, {
