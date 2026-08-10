@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.5
+
+### Patch Changes
+
+- da9bec4: Validate Mailchimp server prefixes and clarify that the simple rate limiter provides best-effort,
+  non-security-boundary protection.
+- 71fa936: Import module setup utilities from the build subpath of module-utils
+- Updated dependencies [8613ce0]
+- Updated dependencies [b200d2a]
+- Updated dependencies [da9bec4]
+- Updated dependencies [71fa936]
+- Updated dependencies [84be9dc]
+  - @onderwijsin/nuxt-module-utils@0.3.0
+  - @onderwijsin/nuxt-simple-rate-limiter@0.4.1
+
 ## 1.0.4
 
 ### Patch Changes

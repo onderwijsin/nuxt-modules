@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1
+
+### Patch Changes
+
+- b200d2a: Align the simple rate limiter with the repository's shared Nuxt module setup lifecycle and runtime registration patterns.
+- da9bec4: Validate Mailchimp server prefixes and clarify that the simple rate limiter provides best-effort,
+  non-security-boundary protection.
+- 84be9dc: Add runtime config type augmentation and fix tsconfig extends path
+- Updated dependencies [8613ce0]
+- Updated dependencies [71fa936]
+  - @onderwijsin/nuxt-module-utils@0.3.0
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-storage-admin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Admin-protected CRUD endpoints for explicitly configured Nitro storage mounts.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
