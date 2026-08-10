@@ -25,6 +25,8 @@ Development caching is fingerprinted and is never used in CI or production. The 
 augmentation candidates are opt-in individually; do not enable them globally without checking their
 fixture behavior.
 
-Use `useDirectusItemByPath(collection, query)` for preview-aware path/filter lookups. It always uses
-`readItems` with `limit: 1` and returns the first item or `null`. Use `useDirectusError(error)` to
-safely inspect Directus error envelopes without depending on raw SDK or ofetch shapes.
+Use `useDirectusItemByPath(collection, query)` for preview-aware path/filter lookups. Normal lookups
+use `readItems` with `limit: 1`; a versioned preview requires the `id` query parameter and switches
+to `readItem(id, { version })`. Both return the matching item or `null`. Use
+`useDirectusError(error)` to safely inspect Directus error envelopes without depending on raw SDK or
+ofetch shapes.

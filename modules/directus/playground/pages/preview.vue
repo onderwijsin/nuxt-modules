@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { data, error } = await useAsyncData("simulated-pages-preview", () =>
   useDirectusItemByPath("pages", {
-    fields: ["id"]
+    fields: ["id", "title"]
   })
 );
 </script>
