@@ -21,6 +21,9 @@ export default defineNuxtConfig({
 });
 ```
 
+The module is enabled by default. Set `simpleRateLimiter: { enabled: false }` when the helpers
+should not be registered.
+
 ## Use in a server handler
 
 After registering the module, `enforceRateLimit` is auto-imported in Nitro server handlers:

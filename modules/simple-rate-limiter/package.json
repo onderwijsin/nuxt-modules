@@ -48,6 +48,8 @@
   "dependencies": {
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
+    "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
     "zod": "catalog:"
