@@ -8,6 +8,7 @@
     "build": "nuxt build"
   },
   "dependencies": {
+    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-redirects": "workspace:*",
     "nuxt": "catalog:"
   }

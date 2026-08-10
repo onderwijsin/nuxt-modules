@@ -1,10 +1,12 @@
 export default defineNuxtConfig({
   compatibilityDate: "2026-08-07",
-  modules: ["@onderwijsin/nuxt-redirects"],
+  modules: ["@nuxt/ui", "@onderwijsin/nuxt-redirects"],
+  css: ["~/assets/main.css"],
   redirects: {
     serverMiddleware: true,
     store: true,
     routeMiddleware: true,
+    dynamicMatching: true,
     storeRefreshInterval: 5
   },
   nitro: {

@@ -563,6 +563,9 @@ importers:
 
   modules/redirects/playground:
     dependencies:
+      '@nuxt/ui':
+        specifier: 'catalog:'
+        version: 4.10.0(9145a6cec4b36a79e86df09951ec8fe9)
       '@onderwijsin/nuxt-redirects':
         specifier: workspace:*
         version: link:..
