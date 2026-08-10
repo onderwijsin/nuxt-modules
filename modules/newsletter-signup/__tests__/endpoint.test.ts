@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestEvent } from "../../../packages/test-utils/src";
 
 const runtimeConfig = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
 const body = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
@@ -12,6 +13,7 @@ vi.mock("#imports", () => ({
 }));
 vi.mock("h3", () => ({
   defineEventHandler: (handler: unknown) => handler,
+  createEvent: () => ({}),
   readBody: readBodyMock,
   createError: ({ statusCode, statusMessage, data }: Record<string, unknown>) =>
     Object.assign(new Error(String(statusMessage)), { statusCode, statusMessage, data })
@@ -43,7 +45,7 @@ describe("newsletter signup endpoint", () => {
   it("returns a configuration error when provider credentials are missing", async () => {
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 500 });
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 500 });
     expect(loopsMock).not.toHaveBeenCalled();
     expect(mailchimpMock).not.toHaveBeenCalled();
   });
@@ -55,7 +57,7 @@ describe("newsletter signup endpoint", () => {
     body.value = { email: "not-an-email", unexpected: true };
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
   });
 
   it("accepts payload values at the configured maximum lengths", async () => {
@@ -71,7 +73,7 @@ describe("newsletter signup endpoint", () => {
     };
     const handler = await loadHandler();
 
-    await expect(handler({})).resolves.toEqual({ success: true });
+    await expect(handler(createTestEvent())).resolves.toEqual({ success: true });
   });
 
   it("rejects payload values above their maximum lengths", async () => {
@@ -81,7 +83,7 @@ describe("newsletter signup endpoint", () => {
     body.value = { email: "ada@example.com", organization: "a".repeat(1025) };
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
     expect(loopsMock).not.toHaveBeenCalled();
   });
 
@@ -97,7 +99,7 @@ describe("newsletter signup endpoint", () => {
     body.value = { email: "ada@example.com", listId: "unknown" };
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
     expect(loopsMock).not.toHaveBeenCalled();
   });
 
@@ -111,9 +113,10 @@ describe("newsletter signup endpoint", () => {
     };
     body.value = { email: "ada@example.com", firstName: "Ada" };
     const handler = await loadHandler();
+    const event = createTestEvent();
 
-    await expect(handler({})).resolves.toEqual({ success: true });
-    expect(enforceRateLimitMock).toHaveBeenCalledWith({}, { max: 5, duration: 60, ban: 900 });
+    await expect(handler(event)).resolves.toEqual({ success: true });
+    expect(enforceRateLimitMock).toHaveBeenCalledWith(event, { max: 5, duration: 60, ban: 900 });
     expect(loopsMock).toHaveBeenCalledWith(
       {
         email: "ada@example.com",
@@ -135,7 +138,7 @@ describe("newsletter signup endpoint", () => {
     body.value = { email: "ada@example.com", listId: "other-list" };
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 });
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
     expect(loopsMock).not.toHaveBeenCalled();
   });
 
@@ -151,7 +154,7 @@ describe("newsletter signup endpoint", () => {
     body.value = { email: "ada@example.com", listId: "events", source: "events-page" };
     const handler = await loadHandler();
 
-    await expect(handler({})).resolves.toEqual({ success: true });
+    await expect(handler(createTestEvent())).resolves.toEqual({ success: true });
     expect(mailchimpMock).toHaveBeenCalledWith(
       expect.objectContaining({ source: "events-page", listId: "events" }),
       "events",
@@ -172,7 +175,7 @@ describe("newsletter signup endpoint", () => {
     );
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({
+    await expect(handler(createTestEvent())).rejects.toMatchObject({
       statusCode: 429,
       data: {
         code: "NEWSLETTER_SIGNUP_RATE_LIMITED",
@@ -193,7 +196,7 @@ describe("newsletter signup endpoint", () => {
     body.value = { email: "ada@example.com" };
     const handler = await loadHandler();
 
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 500 });
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 500 });
     expect(mailchimpMock).not.toHaveBeenCalled();
   });
 });
