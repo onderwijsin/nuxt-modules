@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.5
+
+### Patch Changes
+
+- 71fa936: Import module setup utilities from the build subpath of module-utils
+- Updated dependencies [8613ce0]
+- Updated dependencies [71fa936]
+  - @onderwijsin/nuxt-module-utils@0.3.0
+
 ## 0.2.4
 
 ### Patch Changes

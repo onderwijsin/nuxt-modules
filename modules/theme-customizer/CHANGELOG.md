@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.1
+
+### Patch Changes
+
+- 71fa936: Import module setup utilities from the build subpath of module-utils
+- Updated dependencies [8613ce0]
+- Updated dependencies [b200d2a]
+- Updated dependencies [da9bec4]
+- Updated dependencies [71fa936]
+- Updated dependencies [84be9dc]
+  - @onderwijsin/nuxt-module-utils@0.3.0
+  - @onderwijsin/nuxt-simple-rate-limiter@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes

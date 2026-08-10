@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 8613ce0: Add provider-agnostic dynamic redirects with source discovery and Nitro storage indexing. Add a
+  Node-only source-discovery helper for generated module registries.
+
+### Patch Changes
+
+- 71fa936: Import module setup utilities from the build subpath of module-utils
+
 ## 0.2.1
 
 ### Patch Changes
