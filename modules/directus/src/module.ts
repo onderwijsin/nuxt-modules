@@ -2,7 +2,6 @@ import { defu } from "defu";
 import { join } from "node:path";
 import {
   addImports,
-  addImportsDir,
   addPlugin,
   addServerHandler,
   addServerImportsDir,
@@ -58,6 +57,7 @@ export default defineNuxtModule<ModuleOptions>({
       filename: "types/directus-config.d.ts",
       src: resolver.resolve(runtimeDir, "types/config.d.ts")
     });
+    if (!isEnabled()) return;
 
     addTypeTemplate({
       filename: "types/directus-schema.d.ts",
@@ -86,8 +86,6 @@ export default defineNuxtModule<ModuleOptions>({
       }
     });
 
-    if (!isEnabled()) return;
-
     const commands = parseDirectusCommands(options.commands);
     for (const name of commands) addImports({ name, as: name, from: "@directus/sdk" });
 
@@ -95,7 +93,8 @@ export default defineNuxtModule<ModuleOptions>({
       {
         baseUrl: options.baseUrl,
         staticToken: options.staticToken,
-        typegen: { introspectionToken: options.typegen.introspectionToken }
+        typegen: { introspectionToken: options.typegen.introspectionToken },
+        auth: options.auth
       },
       nuxt.options.runtimeConfig.directus
     );
@@ -109,10 +108,43 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
-    addImportsDir(resolver.resolve(runtimeDir, "app/composables"));
+    const appComposables = [
+      ["useDirectus", "directus"],
+      ["useDirectusError", "directus-error"],
+      ["useDirectusItemByPath", "directus-item"]
+    ] as const;
+    for (const [name, file] of appComposables) {
+      addImports({
+        name,
+        from: resolver.resolve(runtimeDir, "app/composables/" + file)
+      });
+    }
     addServerImportsDir(resolver.resolve(runtimeDir, "server/composables"));
     addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/client"), mode: "client" });
     addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/server"), mode: "server" });
+
+    if (options.auth.enabled) {
+      addImports({
+        name: "useDirectusAuth",
+        from: resolver.resolve(runtimeDir, "app/composables/directus-auth")
+      });
+      const authRoutes = [
+        ["login", "post"],
+        ["refresh", "post"],
+        ["logout", "post"],
+        ["session", "get"],
+        ["password-request", "post"],
+        ["password-reset", "post"]
+      ] as const;
+      for (const [name, method] of authRoutes) {
+        const route = "/_directus/auth/" + name;
+        addServerHandler({
+          route,
+          method,
+          handler: resolver.resolve(runtimeDir, "server/handlers/auth/" + name + "." + method)
+        });
+      }
+    }
     nuxt.options.alias ??= {};
     nuxt.options.alias["#directus"] = resolver.resolve(
       nuxt.options.buildDir,

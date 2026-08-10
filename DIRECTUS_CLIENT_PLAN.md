@@ -485,8 +485,8 @@ not make external-consumer validation depend on a real Directus deployment.
    fallback. Document the accepted cross-instance refresh race.
 8. Complete documentation: security model, Directus permission implications, typegen and rules,
    command imports, auth API, cookie/deployment requirements, live preview/version setup, non-goals,
-   and troubleshooting. Add the internal session-auth decision record; update the root table, skill,
-   and changeset.
+   and troubleshooting. Add the internal session-auth decision record in the docs/design/ folder;
+   update the root table, skill, and changeset.
 9. Run format/lint/type/unit/package/playground/external-consumer validation from the workspace
    cookbook, plus targeted Node and Cloudflare-compatible test fixtures. Do not commit generated
    output.

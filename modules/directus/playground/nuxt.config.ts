@@ -5,11 +5,20 @@ export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-directus"],
   appConfig: { packageName },
   runtimeConfig: {
-    public: { playgroundPreviewToken: process.env.DIRECTUS_STATIC_TOKEN ?? "" }
+    public: { playgroundPreviewToken: process.env.DIRECTUS_PREVIEW_TOKEN ?? "" }
   },
   directus: {
     baseUrl: process.env.DIRECTUS_URL,
     staticToken: process.env.DIRECTUS_STATIC_TOKEN,
+    auth: {
+      enabled: true,
+      cookie: {
+        secure: process.env.DIRECTUS_AUTH_COOKIE_SECURE === "true"
+      },
+      ...(process.env.DIRECTUS_PASSWORD_RESET_URL
+        ? { passwordResetUrl: process.env.DIRECTUS_PASSWORD_RESET_URL }
+        : {})
+    },
     typegen: { introspectionToken: process.env.DIRECTUS_INTROSPECTION_TOKEN }
   }
 });

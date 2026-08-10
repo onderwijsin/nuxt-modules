@@ -4,6 +4,19 @@ declare module "nuxt/schema" {
       baseUrl: string;
       staticToken?: string;
       typegen: { introspectionToken?: string };
+      auth: {
+        enabled: boolean;
+        cookie: {
+          name: string;
+          secure: boolean;
+          sameSite: "lax" | "strict" | "none";
+          path: string;
+          maxAge: number;
+          domain?: string;
+        };
+        refreshSafetyWindow: number;
+        passwordResetUrl?: string;
+      };
     };
   }
 

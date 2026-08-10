@@ -49,6 +49,20 @@ const defaultPreviewOptions = {
   queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
 };
 
+const defaultAuthOptions = {
+  enabled: false,
+  cookie: {
+    name: "directus_session",
+    secure: true,
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 2_592_000,
+    domain: undefined
+  },
+  refreshSafetyWindow: 30_000,
+  passwordResetUrl: ""
+};
+
 const typegenSchema = z.object({
   enabled: z.boolean().default(true),
   introspectionToken: z.string().optional(),
@@ -100,7 +114,26 @@ export const directusOptionsSchema = z
           .default(defaultPreviewOptions.queryKeys)
       })
       .default(defaultPreviewOptions),
-    auth: z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
+    auth: z
+      .object({
+        enabled: z.boolean().default(false),
+        cookie: z
+          .object({
+            name: z
+              .string()
+              .regex(/^[A-Za-z0-9_-]+$/, "must be a valid cookie name")
+              .default(defaultAuthOptions.cookie.name),
+            secure: z.boolean().default(defaultAuthOptions.cookie.secure),
+            sameSite: z.enum(["lax", "strict", "none"]).default(defaultAuthOptions.cookie.sameSite),
+            path: localPath.or(z.literal("/")).default(defaultAuthOptions.cookie.path),
+            maxAge: z.number().int().positive().default(defaultAuthOptions.cookie.maxAge),
+            domain: z.string().min(1).optional()
+          })
+          .default(defaultAuthOptions.cookie),
+        refreshSafetyWindow: z.number().int().nonnegative().default(30_000),
+        passwordResetUrl: z.string().url().optional()
+      })
+      .default(defaultAuthOptions),
     typegen: typegenSchema.default(defaultTypegenOptions)
   })
   .superRefine((options, context) => {

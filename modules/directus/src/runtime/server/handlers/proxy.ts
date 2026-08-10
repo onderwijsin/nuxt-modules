@@ -7,8 +7,9 @@ import { hasProtocol, isScriptProtocol, joinURL } from "ufo";
 import {
   type DirectusCredential,
   getDirectusAuthorizationHeader,
-  resolveDirectusRuntimeRequestContext
+  resolveDirectusRequestContext
 } from "../utils/credentials";
+import { ensureFreshDirectusSession } from "../utils/auth";
 
 const blockedRequestHeaders = new Set([
   "authorization",
@@ -129,7 +130,7 @@ export function createSanitizedProxyFetch(credential: DirectusCredential): typeo
  * @param event Incoming Nitro request event.
  * @returns The upstream response body and status as handled by H3.
  */
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
   const requestUrl = getRequestURL(event);
   const target = resolveDirectusProxyUrl(
@@ -137,7 +138,12 @@ export default defineEventHandler((event) => {
     config.public.directus.proxy.path,
     requestUrl
   );
-  const { credential } = resolveDirectusRuntimeRequestContext(event);
+  const session = await ensureFreshDirectusSession(event);
+  const { credential } = resolveDirectusRequestContext(event, {
+    preview: config.public.directus.preview,
+    staticToken: config.directus.staticToken,
+    sessionAccessToken: session?.accessToken
+  });
   const targetUrl = new URL(target);
   targetUrl.searchParams.delete(config.public.directus.preview.queryKeys.token);
 

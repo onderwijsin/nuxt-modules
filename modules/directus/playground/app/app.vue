@@ -1,3 +1,28 @@
+<script setup lang="ts">
+const auth = useDirectusAuth();
+const isAuthenticated = auth.isAuthenticated;
+const router = useRouter();
+const toast = useToast();
+const logoutPending = shallowRef(false);
+
+async function logout(): Promise<void> {
+  logoutPending.value = true;
+  try {
+    await auth.logout();
+    await router.push("/login");
+  } catch (cause) {
+    const directusError = useDirectusError(cause);
+    toast.add({
+      title: "Unable to sign out",
+      description: directusError.errors[0]?.message ?? "The logout request failed.",
+      color: "error"
+    });
+  } finally {
+    logoutPending.value = false;
+  }
+}
+</script>
+
 <template>
   <PlaygroundAppShell>
     <template #actions>
@@ -20,6 +45,30 @@
           to="/error"
           icon="i-lucide-triangle-alert"
           label="Errors"
+          color="neutral"
+          variant="ghost"
+        />
+        <UButton
+          v-if="!isAuthenticated"
+          to="/login"
+          icon="i-lucide-log-in"
+          label="Login"
+          color="neutral"
+          variant="ghost"
+        />
+        <UButton
+          v-else
+          icon="i-lucide-log-out"
+          label="Logout"
+          color="neutral"
+          variant="ghost"
+          :loading="logoutPending"
+          @click="logout"
+        />
+        <UButton
+          to="/_session"
+          icon="i-lucide-user-round"
+          label="Session"
           color="neutral"
           variant="ghost"
         />
