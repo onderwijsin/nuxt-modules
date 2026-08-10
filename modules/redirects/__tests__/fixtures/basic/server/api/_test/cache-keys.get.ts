@@ -7,5 +7,7 @@ import { useStorage } from "nitropack/runtime";
  * @returns Cache storage keys after filtering to redirects entries.
  */
 export default defineEventHandler(async () => ({
-  data: (await useStorage().getKeys()).filter((key) => key.startsWith("cache:redirects:"))
+  data: (await useStorage().getKeys()).filter((key) =>
+    key.startsWith("externalRedirects:cache:redirects:")
+  )
 }));

@@ -6,7 +6,11 @@ export default defineNuxtConfig({
   redirects: {
     serverMiddleware: true,
     store: false,
-    routeMiddleware: false
+    routeMiddleware: false,
+    storageMount: "externalRedirects"
   },
-  nitro: { experimental: { tasks: true } }
+  nitro: {
+    experimental: { tasks: true },
+    storage: { externalRedirects: { driver: "memory" } }
+  }
 });

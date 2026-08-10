@@ -94,8 +94,9 @@ export default defineEventHandler(async (event) => {
 
 ## Storage drivers
 
-The module uses Nitro's normal `redirects` storage mount. Configure any Nitro storage driver under
-that name when the index must be shared across instances or survive process replacement:
+The module stores redirect data and both cached read endpoints in Nitro's configured storage mount.
+It defaults to `redirects`; configure any Nitro storage driver under that name when the index and
+cache must be shared across instances or survive process replacement:
 
 ```ts
 export default defineNuxtConfig({
@@ -110,8 +111,9 @@ export default defineNuxtConfig({
 });
 ```
 
-Use a shared driver for horizontally scaled or serverless production deployments. If your storage
-configuration uses a different mount name, set the matching module option:
+Use a shared driver for horizontally scaled or serverless production deployments. Cache reads,
+writes, and mutation/refresh invalidation follow the same mount. If your storage configuration uses
+a different mount name, set the matching module option:
 
 ```ts
 export default defineNuxtConfig({

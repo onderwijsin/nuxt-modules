@@ -110,8 +110,9 @@ control characters and non-HTTP schemes are rejected during ingestion.
 
 ## Storage drivers
 
-Nitro supplies the default mount. To share redirect data between instances, configure a driver at
-the configured mount name:
+Redirect data, cached endpoint responses, and cache invalidation all use the configured Nitro mount.
+Nitro supplies the default mount. To share them between instances, configure a driver at the
+configured mount name:
 
 ```ts
 export default defineNuxtConfig({

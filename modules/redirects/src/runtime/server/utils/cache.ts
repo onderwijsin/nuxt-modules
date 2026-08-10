@@ -1,4 +1,4 @@
-import { useNitroApp, useStorage } from "nitropack/runtime";
+import { useNitroApp, useRuntimeConfig, useStorage } from "nitropack/runtime";
 import { hash } from "ohash";
 
 import { toRedirectOrigin, toRedirectPath } from "./path";
@@ -6,6 +6,18 @@ import { toRedirectOrigin, toRedirectPath } from "./path";
 const CACHE_PREFIX = "cache:redirects";
 const INDEX_CACHE_KEY = `${CACHE_PREFIX}:index:all.json`;
 const LOOKUP_CACHE_PREFIX = `${CACHE_PREFIX}:lookup:`;
+
+/**
+ * Returns the cache key base routed through the configured redirects storage mount.
+ *
+ * Nitro's cached handlers use the root storage instance. Prefixing the cache base with the mount
+ * name routes those entries through that mount while preserving the existing cache key shape.
+ *
+ * @returns Mount-aware cache base for Nitro cached handlers.
+ */
+export function getRedirectCacheBase(): string {
+  return `${useRuntimeConfig().redirects?.storageMount ?? "redirects"}:cache`;
+}
 
 /**
  * Hashes an encoded redirect lookup origin into Nitro-safe key material.
@@ -41,7 +53,7 @@ function toLookupCacheKey(origin: string): string {
  */
 export async function invalidateRedirectCache(origin?: string): Promise<void> {
   const canonicalOrigin = origin ? toRedirectOrigin(origin) : null;
-  const cache = useStorage();
+  const cache = useStorage(useRuntimeConfig().redirects?.storageMount ?? "redirects");
   const invalidations = [cache.removeItem(INDEX_CACHE_KEY)];
 
   if (!canonicalOrigin || toRedirectPath(canonicalOrigin) === canonicalOrigin) {

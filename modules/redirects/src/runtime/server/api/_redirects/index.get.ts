@@ -1,6 +1,7 @@
 import { defineEventHandler } from "h3";
 import { defineCachedEventHandler, useRuntimeConfig } from "nitropack/runtime";
 
+import { getRedirectCacheBase } from "../../utils/cache";
 import { getRedirectManifest } from "../../utils/storage";
 
 const cache = useRuntimeConfig().redirects?.cache.index ?? {
@@ -16,6 +17,7 @@ export default defineCachedEventHandler(
     ...cache,
     group: "redirects",
     name: "index",
+    base: getRedirectCacheBase(),
     getKey: () => "all"
   }
 );
