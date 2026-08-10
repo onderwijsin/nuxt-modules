@@ -12,8 +12,8 @@
     "build": "nuxt build"
   },
   "dependencies": {
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-storage-admin": "workspace:*",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
   }
 }

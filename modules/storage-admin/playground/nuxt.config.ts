@@ -1,7 +1,10 @@
+import { name as packageName } from "../package.json";
+
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-08",
+  extends: ["playground-layer"],
   css: ["~/assets/main.css"],
-  modules: ["@nuxt/ui", "@onderwijsin/nuxt-storage-admin"],
+  modules: ["@onderwijsin/nuxt-storage-admin"],
+  appConfig: { packageName },
   storageAdmin: {
     enabled: true,
     adminToken: "playground-admin-token",

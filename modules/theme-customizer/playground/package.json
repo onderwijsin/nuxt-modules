@@ -12,9 +12,8 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-theme-customizer": "workspace:*",
     "nuxt": "catalog:",
-    "tailwindcss": "catalog:"
+    "playground-layer": "workspace:*"
   }
 }

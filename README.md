@@ -120,10 +120,11 @@ Module request:
 
 This project contains supporting workspace packages with different publication policies.
 
-| Package                          | Description                                    |
-| -------------------------------- | ---------------------------------------------- |
-| `@onderwijsin/nuxt-module-utils` | Published shared module and runtime utilities. |
-| `test-utils`                     | Private, test-only workspace utilities.        |
+| Package                          | Description                                          |
+| -------------------------------- | ---------------------------------------------------- |
+| `@onderwijsin/nuxt-module-utils` | Published shared module and runtime utilities.       |
+| `test-utils`                     | Private, test-only workspace utilities.              |
+| `playground-layer`               | Private shared Nuxt UI shell for module playgrounds. |
 
 ## 📚 Documentation
 

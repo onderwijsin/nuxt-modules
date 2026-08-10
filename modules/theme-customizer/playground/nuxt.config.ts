@@ -1,4 +1,4 @@
-import { defineNuxtConfig } from "nuxt/config";
+import { name as packageName } from "../package.json";
 
 const blue = {
   50: "#eff6ff",
@@ -85,8 +85,8 @@ const amber = {
 };
 
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-07",
-  modules: ["@onderwijsin/nuxt-theme-customizer", "@nuxt/ui"],
+  extends: ["playground-layer"],
+  modules: ["@onderwijsin/nuxt-theme-customizer"],
   css: ["~/assets/main.css"],
   ui: {
     theme: {
@@ -94,6 +94,7 @@ export default defineNuxtConfig({
     }
   },
   appConfig: {
+    packageName,
     ui: {
       radius: 0.25
     }

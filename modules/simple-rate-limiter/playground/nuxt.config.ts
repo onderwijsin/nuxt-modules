@@ -1,7 +1,9 @@
+import { name as packageName } from "../package.json";
+
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-08",
-  modules: ["@nuxt/ui", "@onderwijsin/nuxt-simple-rate-limiter"],
-  css: ["~/assets/main.css"],
+  extends: ["playground-layer"],
+  modules: ["@onderwijsin/nuxt-simple-rate-limiter"],
+  appConfig: { packageName },
   simpleRateLimiter: {
     global: {
       enabled: true,
