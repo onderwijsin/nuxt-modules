@@ -1,4 +1,10 @@
-import { addServerImports, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
+import {
+  addServerImports,
+  addTypeTemplate,
+  createResolver,
+  defineNuxtModule,
+  useLogger
+} from "@nuxt/kit";
 import { defu } from "defu";
 import {
   moduleSetup,
@@ -42,6 +48,11 @@ export default defineNuxtModule<ModuleOptions>({
     const options = validateModuleOptions(rawOptions, simpleRateLimiterOptionsSchema, log);
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
+
+    addTypeTemplate({
+      filename: "types/simple-rate-limiter-config.d.ts",
+      src: resolver.resolve(runtimeDir, "types/config.d.ts")
+    });
 
     if (!isEnabled()) return;
 

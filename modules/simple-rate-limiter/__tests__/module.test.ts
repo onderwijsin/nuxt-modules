@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const addServerImports = vi.fn();
+const addTypeTemplate = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn() };
 
 vi.mock("defu", () => ({
@@ -9,6 +10,7 @@ vi.mock("defu", () => ({
 
 vi.mock("@nuxt/kit", () => ({
   addServerImports,
+  addTypeTemplate,
   createResolver: () => ({ resolve: (...segments: string[]) => segments.join("/") }),
   defineNuxtModule: <T>(definition: T) => definition,
   useLogger: () => logger
@@ -32,6 +34,7 @@ describe("simple rate limiter module", () => {
   beforeEach(() => {
     vi.resetModules();
     addServerImports.mockReset();
+    addTypeTemplate.mockReset();
     Object.values(logger).forEach((mock) => mock.mockReset());
   });
 
@@ -53,6 +56,10 @@ describe("simple rate limiter module", () => {
       from: "./runtime"
     });
     expect(addServerImports).toHaveBeenCalledTimes(2);
+    expect(addTypeTemplate).toHaveBeenCalledWith({
+      filename: "types/simple-rate-limiter-config.d.ts",
+      src: "./runtime/types/config.d.ts"
+    });
   });
 
   it("skips runtime registration when disabled", async () => {
@@ -63,6 +70,7 @@ describe("simple rate limiter module", () => {
     await Reflect.apply(setup, module, [{ enabled: false }, nuxt]);
 
     expect(addServerImports).not.toHaveBeenCalled();
+    expect(addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(nuxt.options.build.transpile).toEqual([]);
   });
 });
