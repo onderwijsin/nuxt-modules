@@ -1,4 +1,10 @@
 export { removeRedirect, upsertRedirect } from "./server/utils/storage";
 export { refreshRedirects } from "./server/utils/refresh";
 export { defineRedirectSource } from "./source";
-export type { Redirect, RedirectIndex, RedirectSource, ResolvedRedirect } from "../types/redirect";
+export type {
+  DynamicRedirectRule,
+  Redirect,
+  RedirectIndex,
+  RedirectSource,
+  ResolvedRedirect
+} from "../types/redirect";

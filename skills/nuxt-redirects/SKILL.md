@@ -22,14 +22,34 @@ export default defineNuxtConfig({
 });
 ```
 
-Define default-exported sources under `server/redirects/**`:
+Define default-exported sources under `server/redirects/**`. This complete example enables pattern
+matching and keeps the source provider-agnostic:
 
 ```ts
+// server/redirects/legacy.ts
 import { defineRedirectSource } from "@onderwijsin/nuxt-redirects/runtime/source";
 
-export default defineRedirectSource(async (event) => [
-  { from: "/old?q=one", to: "/new?source=redirect", statusCode: 301 }
+export default defineRedirectSource(async () => [
+  { from: "/old?q=one", to: "/new?source=redirect", statusCode: 301 },
+  {
+    from: "/legacy/:section/:slug",
+    to: "/docs/:section/:slug",
+    statusCode: 301,
+    match: "pattern"
+  },
+  { from: "/files/*", to: "/downloads/*", match: "pattern" }
 ]);
+```
+
+Enable the module option in `nuxt.config.ts` for the pattern records to be active:
+
+```ts
+export default defineNuxtConfig({
+  modules: ["@onderwijsin/nuxt-redirects"],
+  redirects: {
+    dynamicMatching: true
+  }
+});
 ```
 
 ## Public API reference
@@ -42,6 +62,8 @@ export default defineRedirectSource(async (event) => [
 - `serverMiddleware: boolean` — defaults to `true`; enables O(1) storage lookup on server requests.
 - `store: boolean` — defaults to `true`; registers the Pinia redirect index store.
 - `routeMiddleware: boolean` — defaults to `true`; evaluates client navigation redirects.
+- `dynamicMatching: boolean` — defaults to `false`; enables pattern rules when individual records
+  use `match: "pattern"`.
 - `storageMount: string` — defaults to `"redirects"`; names the Nitro storage mount.
 - `storeRefreshInterval: number` — defaults to `3600` seconds; client store refresh interval.
 - `excludedNamespaces: string[]` — defaults to `['/api', '/_nuxt', '/_payload', '/__']`.
@@ -56,7 +78,8 @@ Import from `@onderwijsin/nuxt-redirects/runtime`:
 - `upsertRedirect(redirect)` normalizes and writes one record, updating the manifest; returns the
   normalized redirect.
 - `removeRedirect(origin)` normalizes and removes one record, updating the manifest.
-- `Redirect` is `{ from: string; to: string; statusCode?: 301 | 302 | 307 | 308 }`.
+- `Redirect` is
+  `{ from: string; to: string; statusCode?: 301 | 302 | 307 | 308; match?: "exact" | "pattern" }`.
 - `ResolvedRedirect` is a `Redirect` with a required `statusCode`; `RedirectIndex` maps normalized
   origins to `ResolvedRedirect` values.
 - `RedirectSource` is `(event?: H3Event) => Redirect[] | Promise<Redirect[]>`.
@@ -66,6 +89,38 @@ the typed source unchanged. `source(event?)` returns `Redirect[] | Promise<Redir
 
 The runtime also exports `refreshRedirects(event?)` to fetch every source concurrently and replace
 the merged index. Sources are registered once during Nitro startup.
+
+### Dynamic Pattern Matching
+
+For the complete pattern syntax, interpolation rules, precedence model, query behavior, and
+limitations, read [references/pattern-matching.md](references/pattern-matching.md).
+
+Dynamic matching requires two opt-ins:
+
+1. Set `redirects.dynamicMatching` to `true`.
+2. Set `match: "pattern"` on each redirect that should use pattern matching.
+
+```ts
+export default defineNuxtConfig({
+  redirects: { dynamicMatching: true }
+});
+```
+
+Redirects without `match`, or with `match: "exact"`, remain exact. A pattern redirect has this
+shape:
+
+```ts
+{
+  from: "/legacy/:section/:slug",
+  to: "/docs/:section/:slug",
+  statusCode: 301,
+  match: "pattern"
+}
+```
+
+Pattern matching uses `regexparam`; see the reference for supported forms and examples. Pattern
+rules match after exact path-and-query and exact path-only lookup. They match pathname only, and
+incoming query parameters are never appended to dynamic destinations.
 
 Install the task in the consuming application:
 
@@ -83,7 +138,8 @@ entries for direct lookup.
 
 ### HTTP API
 
-- `GET /api/_redirects` returns `{ data: RedirectIndex }` from the compact manifest.
+- `GET /api/_redirects` returns `{ data: RedirectIndex }`; when `dynamicMatching` is enabled it also
+  includes a serializable `dynamic` pattern-rule collection.
 - `GET /api/_redirects/:path` returns `{ data: Redirect | null }`, where `:path` is an encoded path
   plus optional query string.
 

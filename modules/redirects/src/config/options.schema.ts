@@ -13,6 +13,7 @@ export const redirectsOptionsSchema = z.strictObject({
   serverMiddleware: z.boolean().default(true),
   store: z.boolean().default(true),
   routeMiddleware: z.boolean().default(true),
+  dynamicMatching: z.boolean().default(false),
   storageMount: z.string().trim().min(1).default("redirects"),
   storeRefreshInterval: z.number().int().positive().default(3600),
   excludedNamespaces: z

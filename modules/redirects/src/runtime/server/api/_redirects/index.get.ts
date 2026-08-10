@@ -10,9 +10,16 @@ const cache = useRuntimeConfig().redirects?.cache.index ?? {
   swr: true
 };
 
-/** Returns the compact, active redirect index for client-side navigation. */
+/** Returns the compact exact index and, when enabled, dynamic rules for client-side navigation. */
 export default defineCachedEventHandler(
-  defineEventHandler(async () => ({ data: (await getRedirectManifest()).redirects })),
+  defineEventHandler(async () => {
+    const manifest = await getRedirectManifest();
+    const response: { data: typeof manifest.exact; dynamic?: typeof manifest.dynamic } = {
+      data: manifest.exact
+    };
+    if (useRuntimeConfig().redirects?.dynamicMatching) response.dynamic = manifest.dynamic;
+    return response;
+  }),
   {
     ...cache,
     group: "redirects",

@@ -23,6 +23,31 @@ describe("redirect validation", () => {
     }
   });
 
+  it("accepts optional pattern segments and rejects query-bearing patterns", () => {
+    expect(
+      normalizeRedirect({
+        from: "/guides/:version?/intro",
+        to: "/docs/:version?/intro",
+        match: "pattern"
+      })
+    ).toEqual({
+      from: "/guides/:version?/intro",
+      to: "/docs/:version?/intro",
+      statusCode: 302,
+      match: "pattern"
+    });
+    expect(
+      normalizeRedirect({
+        from: "/files/*?/download",
+        to: "/downloads/*?/download",
+        match: "pattern"
+      })
+    ).toMatchObject({ from: "/files/*?/download", match: "pattern" });
+    expect(() =>
+      normalizeRedirect({ from: "/legacy/:slug?source=old", to: "/docs/:slug", match: "pattern" })
+    ).toThrow("must not contain query parameters");
+  });
+
   it("rejects unsafe origins, schemes, and control characters", () => {
     expect(() => normalizeRedirect({ from: "old", to: "/new" })).toThrow("must start with");
     for (const to of [

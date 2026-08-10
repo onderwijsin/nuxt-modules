@@ -15,9 +15,7 @@ call to the original provider.
 - Enable server middleware, the client-side Pinia store, and route middleware independently.
 - Configure Nitro caching separately for both public read endpoints.
 - Exclude namespaces or individual routes using efficient precompiled matchers.
-
-Key configuration options include `storageMount`, `serverMiddleware`, `store`, `routeMiddleware`,
-`storeRefreshInterval`, `excludedNamespaces`, `excludedRoutes`, and `cache`.
+- Opt in to route-pattern redirects with `dynamicMatching` and `match: "pattern"`.
 
 ## Installation
 
@@ -122,9 +120,42 @@ export default defineNuxtConfig({
 });
 ```
 
+## Dynamic Pattern Matching
+
+Dynamic pattern matching is disabled by default. Enable it at the module level, then opt individual
+redirects in with `match: "pattern"`:
+
+```ts
+export default defineNuxtConfig({
+  redirects: { dynamicMatching: true }
+});
+```
+
+```ts
+export default defineRedirectSource(() => [
+  {
+    from: "/legacy/:section/:slug",
+    to: "/docs/:section/:slug",
+    statusCode: 301,
+    match: "pattern"
+  },
+  { from: "/files/*", to: "/downloads/*", match: "pattern" }
+]);
+```
+
+These rules use the `regexparam` route-pattern syntax. `:name` captures one path segment, `:name?`
+makes a segment optional, and `*` captures a wildcard path. Exact query and path-only redirects are
+always checked before pattern rules. Pattern rules match the pathname only, so incoming query
+parameters are not copied to the destination.
+
+For example, `/legacy/guides/getting-started` becomes `/docs/guides/getting-started`, and
+`/files/reports/2026.pdf` becomes `/downloads/reports/2026.pdf`. Raw regular expressions and
+constrained parameter groups such as `:id<[0-9]+>` are not supported.
+
 ## Endpoints and client behavior
 
-`GET /api/_redirects` returns the compact active index as a `{ [origin]: Redirect }` object.
+`GET /api/_redirects` returns the compact exact index as a `{ [origin]: Redirect }` object. When
+`dynamicMatching` is enabled, the response also includes serializable `dynamic` pattern rules.
 `GET /api/_redirects/:path` looks up one encoded path/query origin and is used when client route
 middleware is on but the store is off. Both are wrapped in `defineCachedEventHandler`; configure
 `cache.index` and `cache.lookup` separately.

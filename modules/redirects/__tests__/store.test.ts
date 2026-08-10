@@ -4,7 +4,9 @@ import { createPinia, setActivePinia } from "pinia";
 const { $fetch } = vi.hoisted(() => ({ $fetch: vi.fn() }));
 
 vi.mock("#app", () => ({
-  useRuntimeConfig: () => ({ public: { redirects: { storeRefreshInterval: 60 } } })
+  useRuntimeConfig: () => ({
+    public: { redirects: { storeRefreshInterval: 60, dynamicMatching: true } }
+  })
 }));
 
 vi.mock("ofetch", () => ({ $fetch }));

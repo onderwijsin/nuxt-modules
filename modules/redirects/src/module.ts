@@ -41,7 +41,8 @@ export default defineNuxtModule<ModuleOptions>({
     enabled: true,
     serverMiddleware: true,
     store: true,
-    routeMiddleware: true
+    routeMiddleware: true,
+    dynamicMatching: false
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
     nuxt.options.redirects !== false && nuxt.options.redirects?.store !== false
@@ -67,6 +68,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.runtimeConfig.redirects = defu(nuxt.options.runtimeConfig.redirects, {
       serverMiddleware: options.serverMiddleware,
+      dynamicMatching: options.dynamicMatching,
       storageMount: options.storageMount,
       excludedNamespaces: options.excludedNamespaces,
       excludedRoutes: options.excludedRoutes,
@@ -77,6 +79,7 @@ export default defineNuxtModule<ModuleOptions>({
       {
         store: options.store,
         routeMiddleware: options.routeMiddleware,
+        dynamicMatching: options.dynamicMatching,
         storeRefreshInterval: options.storeRefreshInterval,
         excludedNamespaces: options.excludedNamespaces,
         excludedRoutes: options.excludedRoutes
