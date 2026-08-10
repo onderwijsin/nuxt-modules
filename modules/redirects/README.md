@@ -120,9 +120,10 @@ export default defineNuxtConfig({
 });
 ```
 
-## Endpoints and client behavior
+## Dynamic Pattern Matching
 
-Dynamic matching is disabled by default. Enable it at both levels:
+Dynamic pattern matching is disabled by default. Enable it at the module level, then opt individual
+redirects in with `match: "pattern"`:
 
 ```ts
 export default defineNuxtConfig({
@@ -131,13 +132,27 @@ export default defineNuxtConfig({
 ```
 
 ```ts
-{ from: "/legacy/:section/:slug", to: "/docs/:section/:slug", match: "pattern" }
+export default defineRedirectSource(() => [
+  {
+    from: "/legacy/:section/:slug",
+    to: "/docs/:section/:slug",
+    statusCode: 301,
+    match: "pattern"
+  },
+  { from: "/files/*", to: "/downloads/*", match: "pattern" }
+]);
 ```
 
-Pattern rules support named parameters, optional segments, and wildcards. They match the pathname
-only, after exact path-and-query and exact path-only lookups. Query parameters are not implicitly
-copied to dynamic destinations. Raw regular expressions and constrained parameter groups are not
-supported.
+These rules use the `regexparam` route-pattern syntax. `:name` captures one path segment, `:name?`
+makes a segment optional, and `*` captures a wildcard path. Exact query and path-only redirects are
+always checked before pattern rules. Pattern rules match the pathname only, so incoming query
+parameters are not copied to the destination.
+
+For example, `/legacy/guides/getting-started` becomes `/docs/guides/getting-started`, and
+`/files/reports/2026.pdf` becomes `/downloads/reports/2026.pdf`. Raw regular expressions and
+constrained parameter groups such as `:id<[0-9]+>` are not supported.
+
+## Endpoints and client behavior
 
 `GET /api/_redirects` returns the compact exact index as a `{ [origin]: Redirect }` object. When
 `dynamicMatching` is enabled, the response also includes serializable `dynamic` pattern rules.

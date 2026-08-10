@@ -22,14 +22,34 @@ export default defineNuxtConfig({
 });
 ```
 
-Define default-exported sources under `server/redirects/**`:
+Define default-exported sources under `server/redirects/**`. This complete example enables pattern
+matching and keeps the source provider-agnostic:
 
 ```ts
+// server/redirects/legacy.ts
 import { defineRedirectSource } from "@onderwijsin/nuxt-redirects/runtime/source";
 
-export default defineRedirectSource(async (event) => [
-  { from: "/old?q=one", to: "/new?source=redirect", statusCode: 301 }
+export default defineRedirectSource(async () => [
+  { from: "/old?q=one", to: "/new?source=redirect", statusCode: 301 },
+  {
+    from: "/legacy/:section/:slug",
+    to: "/docs/:section/:slug",
+    statusCode: 301,
+    match: "pattern"
+  },
+  { from: "/files/*", to: "/downloads/*", match: "pattern" }
 ]);
+```
+
+Enable the module option in `nuxt.config.ts` for the pattern records to be active:
+
+```ts
+export default defineNuxtConfig({
+  modules: ["@onderwijsin/nuxt-redirects"],
+  redirects: {
+    dynamicMatching: true
+  }
+});
 ```
 
 ## Public API reference
@@ -69,6 +89,38 @@ the typed source unchanged. `source(event?)` returns `Redirect[] | Promise<Redir
 
 The runtime also exports `refreshRedirects(event?)` to fetch every source concurrently and replace
 the merged index. Sources are registered once during Nitro startup.
+
+### Dynamic Pattern Matching
+
+For the complete pattern syntax, interpolation rules, precedence model, query behavior, and
+limitations, read [references/pattern-matching.md](references/pattern-matching.md).
+
+Dynamic matching requires two opt-ins:
+
+1. Set `redirects.dynamicMatching` to `true`.
+2. Set `match: "pattern"` on each redirect that should use pattern matching.
+
+```ts
+export default defineNuxtConfig({
+  redirects: { dynamicMatching: true }
+});
+```
+
+Redirects without `match`, or with `match: "exact"`, remain exact. A pattern redirect has this
+shape:
+
+```ts
+{
+  from: "/legacy/:section/:slug",
+  to: "/docs/:section/:slug",
+  statusCode: 301,
+  match: "pattern"
+}
+```
+
+Pattern matching uses `regexparam`; see the reference for supported forms and examples. Pattern
+rules match after exact path-and-query and exact path-only lookup. They match pathname only, and
+incoming query parameters are never appended to dynamic destinations.
 
 Install the task in the consuming application:
 
