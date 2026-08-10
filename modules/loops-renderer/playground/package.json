@@ -12,10 +12,10 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-loops-renderer": "workspace:*",
     "@tailwindcss/typography": "catalog:",
     "nuxt": "catalog:",
+    "playground-layer": "workspace:*",
     "tailwindcss": "catalog:"
   }
 }

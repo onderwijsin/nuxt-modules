@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@onderwijsin/nuxt-healthcheck": "workspace:*",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
   }
 }

@@ -12,9 +12,9 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/ui": "catalog:",
     "@nuxtjs/turnstile": "catalog:",
     "@onderwijsin/nuxt-turnstile": "workspace:*",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
   }
 }

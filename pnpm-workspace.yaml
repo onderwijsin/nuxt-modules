@@ -1,8 +1,9 @@
 allowBuilds:
   "@onderwijsin/loops-core": true
-  "@tailwindcss/oxide": false
-  esbuild: false
+  "@tailwindcss/oxide": true
+  esbuild: true
   sharp: true
+  unrs-resolver: true
   vue-demi: true
 
 catalog:
@@ -68,6 +69,3 @@ cleanupUnusedCatalogs: true
 saveExact: true
 minimumReleaseAgeExclude:
   - "@onderwijsin/*"
-  - nuxt-site-config-kit@4.2.0
-  - nuxt-site-config@4.2.0
-  - site-config-stack@4.2.0

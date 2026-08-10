@@ -45,6 +45,8 @@ Supporting packages live under `packages/`:
   with tsup and published alongside modules with public npm access.
 - `test-utils` contains shared test fixtures, assertions, and Vitest helpers. It must never be
   imported by published runtime code.
+- `playground-layer` is a private Nuxt layer containing the shared UI shell and styling used only by
+  module playgrounds. It has no standalone build or release workflow.
 
 Supporting packages are type-checked recursively. `@onderwijsin/nuxt-module-utils` must be built
 before workspace preparation so consuming modules can resolve its generated output. Prepare every

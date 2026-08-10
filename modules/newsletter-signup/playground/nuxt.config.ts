@@ -1,4 +1,4 @@
-import { defineNuxtConfig } from "nuxt/config";
+import { name as packageName } from "../package.json";
 import type { ModuleOptions, NewsletterProvider } from "../src/types/options";
 
 /**
@@ -64,11 +64,10 @@ const mailchimpConfig = {
 } satisfies Partial<ModuleOptions>;
 
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-07",
-  modules: ["@onderwijsin/nuxt-newsletter-signup", "@nuxt/ui"],
-  css: ["~/assets/main.css"],
+  extends: ["playground-layer"],
+  modules: ["@onderwijsin/nuxt-newsletter-signup"],
+  appConfig: { packageName },
   newsletterSignup: {
     ...(SELECTED_PROVIDER === "loops" ? loopsConfig : mailchimpConfig)
-  },
-  devtools: { enabled: false }
+  }
 });

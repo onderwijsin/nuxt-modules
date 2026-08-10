@@ -5,13 +5,15 @@ const storageBrowserPath = useRouter().resolve({ name: "storage-admin" }).href;
 </script>
 
 <template>
-  <UApp>
-    <UHeader title="Storage admin playground" to="/">
+  <PlaygroundAppShell>
+    <template #actions>
       <template #right>
         <UButton icon="i-lucide-database" :to="storageBrowserPath" label="Open storage browser" />
       </template>
-    </UHeader>
+    </template>
 
-    <NuxtPage />
-  </UApp>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+  </PlaygroundAppShell>
 </template>

@@ -5,7 +5,7 @@ const store = useRedirectsStore();
 </script>
 
 <template>
-  <UContainer class="py-10 sm:py-14 space-y-16">
+  <div>
     <UPageHeader
       title="See redirects in action"
       description="Explore exact, parameterized, and wildcard redirects backed by Nitro storage and the Pinia store."
@@ -114,5 +114,5 @@ const store = useRedirectsStore();
         JSON.stringify({ exact: store.records, dynamic: store.dynamicRules }, null, 2)
       }}</pre>
     </UCard>
-  </UContainer>
+  </div>
 </template>

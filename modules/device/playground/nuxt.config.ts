@@ -1,4 +1,7 @@
+import { name as packageName } from "../package.json";
+
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-07",
-  modules: ["@onderwijsin/nuxt-device"]
+  extends: ["playground-layer"],
+  modules: ["@onderwijsin/nuxt-device"],
+  appConfig: { packageName }
 });

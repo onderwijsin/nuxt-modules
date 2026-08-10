@@ -12,10 +12,9 @@
     "build": "nuxt build"
   },
   "dependencies": {
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-cache": "workspace:*",
     "nuxt": "catalog:",
-    "tailwindcss": "catalog:",
+    "playground-layer": "workspace:*",
     "unstorage": "catalog:"
   }
 }

@@ -1,8 +1,9 @@
-import { defineNuxtConfig } from "nuxt/config";
+import { name as packageName } from "../package.json";
 
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-07",
+  extends: ["playground-layer"],
   modules: ["@onderwijsin/nuxt-webmanifest"],
+  appConfig: { packageName },
   image: {
     provider: "ipx"
   },

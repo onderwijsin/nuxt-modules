@@ -1,9 +1,10 @@
 import { fileURLToPath } from "node:url";
+import { name as packageName } from "../package.json";
 
 export default defineNuxtConfig({
-  compatibilityDate: "2026-08-09",
-  modules: ["@nuxt/ui", "@onderwijsin/nuxt-cache"],
-  css: ["~/assets/main.css"],
+  extends: ["playground-layer"],
+  modules: ["@onderwijsin/nuxt-cache"],
+  appConfig: { packageName },
   cache: { enabled: true, devAuthBypass: true },
   nitro: {
     storage: {

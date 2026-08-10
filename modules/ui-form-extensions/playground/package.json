@@ -12,8 +12,8 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-ui-form-extensions": "workspace:*",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
   }
 }
