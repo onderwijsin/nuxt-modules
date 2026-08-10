@@ -95,6 +95,9 @@ configuration.
 item `id`, after which the helper switches to `readItem(id, { version })` because Directus content
 versions are fetched by item ID. Preview tokens are never placed in public runtime configuration.
 
-`useDirectusError(error)` normalizes Directus SDK, ofetch, and H3 error envelopes, preserving all
-errors and extension-defined codes while exposing `isOtpError`, `invalidCredentials`, and
-`tokenExpired` flags.
+`useDirectusError(error)` normalizes Directus SDK, ofetch, and H3 error envelopes. It preserves
+unknown extension codes for logging while recognizing common UI-relevant codes such as `FORBIDDEN`,
+`INVALID_CREDENTIALS`, `TOKEN_EXPIRED`, `FAILED_VALIDATION`, and `REQUESTS_EXCEEDED`. It exposes
+shortcuts such as `isInvalidCredentialError`, `isForbiddenError`, `isTokenExpiredError`,
+`isValidationError`, `isRateLimitError`, and `isServiceUnavailableError`. The existing `isOtpError`,
+`invalidCredentials`, and `tokenExpired` flags remain available for compatibility.

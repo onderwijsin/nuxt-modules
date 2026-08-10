@@ -60,17 +60,55 @@ describe("Directus error normalization", () => {
         ]
       }
     });
-    expect(result).toMatchObject({ isDirectusError: true, statusCode: 401, isOtpError: true });
+    expect(result).toMatchObject({
+      isDirectusError: true,
+      statusCode: 401,
+      isOtpError: true,
+      isInvalidCredentialError: false
+    });
     if (result.isDirectusError) {
       expect(result.errors).toHaveLength(2);
       expect(result.errors[1]?.code).toBe("MY_EXTENSION_CODE");
     }
   });
 
+  it("recognizes common UI error codes and keeps unknown codes extensible", () => {
+    const result = useDirectusError({
+      errors: [
+        { message: "denied", extensions: { code: "FORBIDDEN" } },
+        { message: "invalid", extensions: { code: "FAILED_VALIDATION" } },
+        { message: "custom", extensions: { code: "CUSTOM_EXTENSION" } }
+      ]
+    });
+
+    expect(result).toMatchObject({
+      isDirectusError: true,
+      isForbiddenError: true,
+      isValidationError: true
+    });
+    if (result.isDirectusError) {
+      expect(result.errors.map((entry) => entry.code)).toEqual([
+        "FORBIDDEN",
+        "FAILED_VALIDATION",
+        "CUSTOM_EXTENSION"
+      ]);
+    }
+  });
+
   it("recognizes expiry and safely handles malformed or unknown input", () => {
     expect(
       useDirectusError({ errors: [{ message: "expired", extensions: { code: "TOKEN_EXPIRED" } }] })
-    ).toMatchObject({ isDirectusError: true, tokenExpired: true });
+    ).toMatchObject({ isDirectusError: true, tokenExpired: true, isTokenExpiredError: true });
+    expect(
+      useDirectusError({
+        errors: [{ message: "bad token", extensions: { code: "INVALID_TOKEN" } }]
+      })
+    ).toMatchObject({ isDirectusError: true, isInvalidTokenError: true });
+    expect(
+      useDirectusError({
+        errors: [{ message: "slow down", extensions: { code: "REQUESTS_EXCEEDED" } }]
+      })
+    ).toMatchObject({ isDirectusError: true, isRateLimitError: true });
     expect(useDirectusError({ errors: [{ message: "missing extensions" }] })).toMatchObject({
       isDirectusError: true,
       errors: []
@@ -78,6 +116,23 @@ describe("Directus error normalization", () => {
     expect(useDirectusError(new Error("network"))).toMatchObject({
       isDirectusError: false,
       errors: []
+    });
+  });
+
+  it("exposes shortcuts for credential, availability, and route errors", () => {
+    expect(
+      useDirectusError({
+        errors: [
+          { message: "bad credentials", extensions: { code: "INVALID_CREDENTIALS" } },
+          { message: "offline", extensions: { code: "SERVICE_UNAVAILABLE" } },
+          { message: "missing route", extensions: { code: "ROUTE_NOT_FOUND" } }
+        ]
+      })
+    ).toMatchObject({
+      isDirectusError: true,
+      isInvalidCredentialError: true,
+      isServiceUnavailableError: true,
+      isRouteNotFoundError: true
     });
   });
 
