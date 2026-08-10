@@ -13,7 +13,7 @@ declare module "nuxt/schema" {
       preview: {
         enabled: boolean;
         versioning: boolean;
-        queryKeys: { preview: string; token: string; version: string };
+        queryKeys: { preview: string; token: string; version: string; id: string };
       };
       auth: { enabled: boolean };
     };

@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   extends: ["playground-layer"],
   modules: ["@onderwijsin/nuxt-directus"],
   appConfig: { packageName },
+  runtimeConfig: {
+    public: { playgroundPreviewToken: process.env.DIRECTUS_STATIC_TOKEN ?? "" }
+  },
   directus: {
     baseUrl: process.env.DIRECTUS_URL,
     staticToken: process.env.DIRECTUS_STATIC_TOKEN,

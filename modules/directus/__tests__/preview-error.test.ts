@@ -6,20 +6,21 @@ import { parseDirectusPreviewContext } from "../src/runtime/utils/preview";
 const preview = {
   enabled: true,
   versioning: true,
-  queryKeys: { preview: "preview", token: "token", version: "version" }
+  queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
 };
 
 describe("Directus preview context", () => {
   it("accepts preview tokens and named versions, but omits main", () => {
     expect(
       parseDirectusPreviewContext(
-        { preview: "true", token: "preview-token", version: "draft" },
+        { preview: "true", token: "preview-token", version: "draft", id: "page-1" },
         preview
       )
     ).toEqual({
       isPreview: true,
       token: "preview-token",
-      version: "draft"
+      version: "draft",
+      id: "page-1"
     });
     expect(parseDirectusPreviewContext({ preview: "true", version: "main" }, preview)).toEqual({
       isPreview: true

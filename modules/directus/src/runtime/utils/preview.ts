@@ -9,6 +9,7 @@ export interface DirectusPreviewOptions {
     readonly preview: string;
     readonly token: string;
     readonly version: string;
+    readonly id: string;
   };
 }
 
@@ -17,6 +18,7 @@ export interface DirectusPreviewContext {
   readonly isPreview: boolean;
   readonly token?: string;
   readonly version?: string;
+  readonly id?: string;
 }
 
 const VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -40,13 +42,23 @@ export function parseDirectusPreviewContext(
   }
 
   const token = getString(query[options.queryKeys.token]);
+  const id = getString(query[options.queryKeys.id]);
   const rawVersion = getString(query[options.queryKeys.version]);
   const version =
-    options.versioning && rawVersion && rawVersion !== "main" && VERSION_PATTERN.test(rawVersion)
+    options.versioning &&
+    id &&
+    rawVersion &&
+    rawVersion !== "main" &&
+    VERSION_PATTERN.test(rawVersion)
       ? rawVersion
       : undefined;
 
-  return { isPreview: true, ...(token ? { token } : {}), ...(version ? { version } : {}) };
+  return {
+    isPreview: true,
+    ...(token ? { token } : {}),
+    ...(version ? { version } : {}),
+    ...(id ? { id } : {})
+  };
 }
 
 /**

@@ -1,8 +1,9 @@
-import { readItems, type CollectionType, type Query, type RegularCollections } from "@directus/sdk";
+import type { CollectionType, Query, RegularCollections } from "@directus/sdk";
 import type { Schema } from "#directus";
 import { useRoute, useRuntimeConfig } from "#imports";
 
 import { parseDirectusPreviewContext } from "../../utils/preview";
+import { fetchDirectusItemByPath } from "../../utils/item";
 import { useDirectus } from "./directus";
 
 /** Queries one application path and returns the first matching item, or null.
@@ -16,11 +17,5 @@ export async function useDirectusItemByPath<
 >(collection: Collection, query: TQuery) {
   const config = useRuntimeConfig();
   const preview = parseDirectusPreviewContext(useRoute().query, config.public.directus.preview);
-  const requestQuery: TQuery & { limit: 1; version?: string } = {
-    ...query,
-    limit: 1,
-    ...(preview.version ? { version: preview.version } : {})
-  };
-  const items = await useDirectus(readItems(collection, requestQuery));
-  return items[0] ?? null;
+  return fetchDirectusItemByPath(collection, query, preview, useDirectus);
 }

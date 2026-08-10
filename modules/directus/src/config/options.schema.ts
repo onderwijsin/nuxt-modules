@@ -45,7 +45,7 @@ const defaultTypegenOptions = {
 const defaultPreviewOptions = {
   enabled: true,
   versioning: true,
-  queryKeys: { preview: "preview", token: "token", version: "version" }
+  queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
 };
 
 const typegenSchema = z.object({
@@ -92,7 +92,8 @@ export const directusOptionsSchema = z
           .object({
             preview: z.string().min(1).default("preview"),
             token: z.string().min(1).default("token"),
-            version: z.string().min(1).default("version")
+            version: z.string().min(1).default("version"),
+            id: z.string().min(1).default("id")
           })
           .default(defaultPreviewOptions.queryKeys)
       })

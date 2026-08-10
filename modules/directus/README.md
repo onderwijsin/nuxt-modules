@@ -84,10 +84,11 @@ configuration.
 
 ## Preview item lookup and errors
 
-`useDirectusItemByPath(collection, query)` and its server equivalent always use `readItems` with a
-limit of one and return the first result or `null`. With preview enabled (the default),
-`preview=true` accepts a request-scoped `token`; a non-`main` version is added to the query when
-versioning is enabled. Preview tokens are never placed in public runtime configuration.
+`useDirectusItemByPath(collection, query)` and its server equivalent return the first result or
+`null`. Normal lookups use `readItems` with a limit of one. With preview enabled (the default),
+`preview=true` accepts a request-scoped `token`; a versioned preview must also provide the Directus
+item `id`, after which the helper switches to `readItem(id, { version })` because Directus content
+versions are fetched by item ID. Preview tokens are never placed in public runtime configuration.
 
 `useDirectusError(error)` normalizes Directus SDK, ofetch, and H3 error envelopes, preserving all
 errors and extension-defined codes while exposing `isOtpError`, `invalidCredentials`, and

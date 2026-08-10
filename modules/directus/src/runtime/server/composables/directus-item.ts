@@ -1,9 +1,10 @@
-import { readItems, type CollectionType, type Query, type RegularCollections } from "@directus/sdk";
+import type { CollectionType, Query, RegularCollections } from "@directus/sdk";
 import type { H3Event } from "h3";
 import type { Schema } from "#directus";
 
 import { createServerDirectusClient } from "../utils/client";
 import { resolveDirectusRuntimeRequestContext } from "../utils/credentials";
+import { fetchDirectusItemByPath } from "../../utils/item";
 
 /** Server-side equivalent of `useDirectusItemByPath`.
  * @param event Nitro request event.
@@ -16,12 +17,6 @@ export async function useDirectusServerItemByPath<
   const TQuery extends Query<Schema, CollectionType<Schema, Collection>>
 >(event: H3Event, collection: Collection, query: TQuery) {
   const preview = resolveDirectusRuntimeRequestContext(event).preview;
-  const requestQuery: TQuery & { limit: 1; version?: string } = {
-    ...query,
-    limit: 1,
-    ...(preview.version ? { version: preview.version } : {})
-  };
   const client = createServerDirectusClient(event);
-  const items = await client.request(readItems(collection, requestQuery));
-  return items[0] ?? null;
+  return fetchDirectusItemByPath(collection, query, preview, client.request);
 }
