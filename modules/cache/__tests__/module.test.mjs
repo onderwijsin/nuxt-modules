@@ -12,7 +12,7 @@ vi.mock("@nuxt/kit", () => ({
   useLogger: () => ({ start: vi.fn(), success: vi.fn(), info: vi.fn(), warn })
 }));
 
-vi.mock("@onderwijsin/nuxt-module-utils/shared", () => ({
+vi.mock("@onderwijsin/nuxt-module-utils/build", () => ({
   enabled: { default: () => ({}) },
   moduleSetup: (_name, options) => ({
     start: vi.fn(),

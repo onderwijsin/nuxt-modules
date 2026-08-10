@@ -14,7 +14,7 @@ import {
   resolveModuleName,
   transpileRuntime,
   validateModuleOptions
-} from "@onderwijsin/nuxt-module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/build";
 
 import { version } from "../package.json";
 import { DEFAULT_DEVICE_USER_AGENT, deviceOptionsSchema } from "./config/options.schema";

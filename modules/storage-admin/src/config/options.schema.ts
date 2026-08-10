@@ -1,4 +1,4 @@
-import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 import { z } from "zod";
 
 const permissionSchema = z.enum(["read", "write", "delete"]);

@@ -6,7 +6,7 @@ import {
   resolveLoggerScope,
   resolveModuleName,
   transpileRuntime
-} from "@onderwijsin/nuxt-module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/build";
 
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types";

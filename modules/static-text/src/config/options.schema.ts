@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 
 const relativeContentPathError =
   "content must be a relative path such as assets/ui/content or ./assets/ui/content";

@@ -20,8 +20,8 @@ vi.mock("@nuxt/kit", () => ({
   useLogger: () => logger
 }));
 
-vi.mock("@onderwijsin/nuxt-module-utils/shared", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@onderwijsin/nuxt-module-utils/shared")>()),
+vi.mock("@onderwijsin/nuxt-module-utils/build", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@onderwijsin/nuxt-module-utils/build")>()),
   transpileRuntime: (nuxt: { options: { build: { transpile: string[] } } }, runtimeDir: string) =>
     nuxt.options.build.transpile.push(runtimeDir),
   validateModuleOptions: (options: Record<string, unknown>) => ({

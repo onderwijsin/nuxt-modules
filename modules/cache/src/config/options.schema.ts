@@ -1,4 +1,4 @@
-import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 import { z } from "zod";
 
 /** Runtime validation schema for the public cache module options. */

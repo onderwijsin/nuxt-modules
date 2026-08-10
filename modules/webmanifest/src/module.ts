@@ -5,11 +5,11 @@ import { join } from "pathe";
 import {
   moduleDependenciesWhenEnabled,
   moduleSetup,
-  isString,
   resolveLoggerScope,
   resolveModuleName,
   validateModuleOptions
-} from "@onderwijsin/nuxt-module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/build";
+import { isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { webmanifestOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";

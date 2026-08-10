@@ -9,7 +9,7 @@ import {
   resolveModuleName,
   transpileRuntime,
   validateModuleOptions
-} from "../../src/shared/setup";
+} from "../../src/build/setup";
 
 describe("module naming helpers", () => {
   it("resolves a config key to the repository module name", () => {

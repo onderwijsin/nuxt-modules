@@ -12,7 +12,7 @@ import {
   resolveModuleName,
   transpileRuntime,
   validateModuleOptions
-} from "@onderwijsin/nuxt-module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/build";
 import { version } from "../package.json";
 import { cacheOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./types/options";

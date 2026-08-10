@@ -15,7 +15,7 @@ import {
   resolveModuleName,
   transpileRuntime,
   validateModuleOptions
-} from "@onderwijsin/nuxt-module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/build";
 
 import { version } from "../package.json";
 import { turnstileOptionsSchema } from "./config/options.schema";

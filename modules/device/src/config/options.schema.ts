@@ -1,4 +1,4 @@
-import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 import { z } from "zod";
 
 export const DEFAULT_DEVICE_USER_AGENT =

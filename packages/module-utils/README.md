@@ -23,8 +23,9 @@ receive it transitively when they install a module.
 
 Use the narrowest subpath for the code you are writing:
 
-- `@onderwijsin/nuxt-module-utils/shared` contains framework-neutral and Nuxt module helpers.
-- `@onderwijsin/nuxt-module-utils/build` contains Node-only build-time file discovery helpers.
+- `@onderwijsin/nuxt-module-utils/shared` contains framework-neutral runtime helpers.
+- `@onderwijsin/nuxt-module-utils/build` contains Node-only module setup, option validation, and
+  build-time file discovery helpers.
 - `@onderwijsin/nuxt-module-utils/server` contains H3-dependent request-token and
   administrator-authentication helpers.
 - `@onderwijsin/nuxt-module-utils` is a compatibility alias for the shared exports.
@@ -33,7 +34,7 @@ The separate `server` entrypoint keeps H3-specific code out of shared and app-on
 graphs. The `app` and `types` exports are reserved for package-level compatibility and type-only
 contracts.
 
-Use `moduleDependenciesWhenEnabled` from the `shared` subpath to register dependencies according to
+Use `moduleDependenciesWhenEnabled` from the `build` subpath to register dependencies according to
 the standard module option contract. It returns the dependency map for `undefined`, `{}`, or
 `{ enabled: true }`, and `{}` for `false` or `{ enabled: false }`. Module setup must still skip its
 runtime registrations when disabled.
