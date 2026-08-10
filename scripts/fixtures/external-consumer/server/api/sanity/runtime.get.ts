@@ -14,7 +14,7 @@ import {
   TURNSTILE_TOKEN_HEADER,
   createTurnstileErrorData
 } from "@onderwijsin/nuxt-turnstile/runtime";
-import { resolveModuleName } from "@onderwijsin/nuxt-module-utils";
+import { resolveModuleName } from "@onderwijsin/nuxt-module-utils/build";
 import * as appUtils from "@onderwijsin/nuxt-module-utils/app";
 import * as serverUtils from "@onderwijsin/nuxt-module-utils/server";
 import * as typeExports from "@onderwijsin/nuxt-module-utils/types";
