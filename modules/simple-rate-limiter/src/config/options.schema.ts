@@ -2,6 +2,7 @@ import { z } from "zod";
 
 /** Runtime validation schema for the simple rate limiter module options. */
 export const simpleRateLimiterOptionsSchema = z.strictObject({
+  enabled: z.boolean().optional(),
   global: z
     .strictObject({
       enabled: z.boolean().optional(),

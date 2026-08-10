@@ -16,14 +16,3 @@ export {
   isRecord,
   isString
 } from "./guards";
-export {
-  resolveModuleName,
-  resolveLoggerScope,
-  isPrepareMode,
-  transpileRuntime,
-  moduleSetup,
-  validateModuleOptions,
-  enabled,
-  moduleDependenciesWhenEnabled
-} from "./setup";
-export type { BaseModuleOptions } from "./setup";

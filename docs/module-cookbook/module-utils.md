@@ -13,7 +13,8 @@ Use the public package subpaths rather than source paths:
 | Subpath                                 | Contents                                   | Intended use                                                                             |
 | --------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | `@onderwijsin/nuxt-module-utils`        | Compatibility alias for the shared exports | Existing shared-only imports; prefer `@onderwijsin/nuxt-module-utils/shared` in new code |
-| `@onderwijsin/nuxt-module-utils/shared` | Build-time and framework-neutral helpers   | Module entrypoints, config, and runtime code that does not need `h3`                     |
+| `@onderwijsin/nuxt-module-utils/shared` | Framework-neutral runtime helpers          | Runtime code and shared helpers that do not need Node or `h3`                            |
+| `@onderwijsin/nuxt-module-utils/build`  | Node-only module setup and build helpers   | Module entrypoints, config, and consumer source discovery                                |
 | `@onderwijsin/nuxt-module-utils/server` | H3 request-token helpers                   | Server routes and server utilities only                                                  |
 | `@onderwijsin/nuxt-module-utils/app`    | Reserved client-runtime entrypoint         | Do not import; it currently has no public helpers                                        |
 | `@onderwijsin/nuxt-module-utils/types`  | Shared TypeScript types                    | Type-only imports such as `BaseModuleOptions`                                            |
@@ -35,14 +36,14 @@ use the source-level generic types; type-only exports are listed separately belo
 | `attemptWithRetry`               | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `@onderwijsin/nuxt-module-utils/shared` |
 | `toEntries`                      | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
 | `fromEntries`                    | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
-| `resolveModuleName`              | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `@onderwijsin/nuxt-module-utils/shared` |
-| `resolveLoggerScope`             | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `@onderwijsin/nuxt-module-utils/shared` |
-| `isPrepareMode`                  | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `@onderwijsin/nuxt-module-utils/shared` |
-| `transpileRuntime`               | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `@onderwijsin/nuxt-module-utils/shared` |
-| `moduleSetup`                    | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/shared` |
-| `moduleDependenciesWhenEnabled`  | `moduleDependenciesWhenEnabled<T extends object>(options: false \| { enabled?: boolean } \| undefined, dependencies: T): T \| Record<string, never>`               | `@onderwijsin/nuxt-module-utils/shared` |
-| `validateModuleOptions`          | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `@onderwijsin/nuxt-module-utils/shared` |
-| `enabled`                        | Zod schema: `z.boolean().default(true)`                                                                                                                            | `@onderwijsin/nuxt-module-utils/shared` |
+| `resolveModuleName`              | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `@onderwijsin/nuxt-module-utils/build`  |
+| `resolveLoggerScope`             | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `@onderwijsin/nuxt-module-utils/build`  |
+| `isPrepareMode`                  | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `@onderwijsin/nuxt-module-utils/build`  |
+| `transpileRuntime`               | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `@onderwijsin/nuxt-module-utils/build`  |
+| `moduleSetup`                    | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/build`  |
+| `moduleDependenciesWhenEnabled`  | `moduleDependenciesWhenEnabled<T extends object>(options: false \| { enabled?: boolean } \| undefined, dependencies: T): T \| Record<string, never>`               | `@onderwijsin/nuxt-module-utils/build`  |
+| `validateModuleOptions`          | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `@onderwijsin/nuxt-module-utils/build`  |
+| `enabled`                        | Zod schema: `z.boolean().default(true)`                                                                                                                            | `@onderwijsin/nuxt-module-utils/build`  |
 | `isDefined`                      | `isDefined<T>(value: T): value is Exclude<T, undefined>`                                                                                                           | `@onderwijsin/nuxt-module-utils/shared` |
 | `isRecord`                       | `isRecord(value: unknown): value is Record<string, unknown>`                                                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
 | `isArray`                        | `isArray(value: unknown): value is unknown[]`                                                                                                                      | `@onderwijsin/nuxt-module-utils/shared` |
@@ -60,6 +61,21 @@ use the source-level generic types; type-only exports are listed separately belo
 | `isAdmin`                        | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `@onderwijsin/nuxt-module-utils/server` |
 | `isDevelopmentAuthBypassEnabled` | `isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean`                                                                          | `@onderwijsin/nuxt-module-utils/server` |
 | `assertAdminAccess`              | `assertAdminAccess(event: H3Event, options: AdminAuthOptions, isDevelopment: boolean): void`                                                                       | `@onderwijsin/nuxt-module-utils/server` |
+| `discoverSourceFiles`            | `discoverSourceFiles(directory: string): string[]`                                                                                                                 | `@onderwijsin/nuxt-module-utils/build`  |
+
+## `discoverSourceFiles`
+
+`discoverSourceFiles` recursively finds JavaScript and TypeScript source files for a consumer-owned
+directory during Nuxt module setup. It returns absolute paths in lexicographic order, excludes
+declaration files, and returns an empty list when the directory is absent. Use it for generated
+registries where discovery order forms an explicit precedence rule; do not import this Node-only
+helper from runtime code.
+
+```ts
+import { discoverSourceFiles } from "@onderwijsin/nuxt-module-utils/build";
+
+const sources = discoverSourceFiles(resolve(nuxt.options.rootDir, "server/example"));
+```
 
 ## `attempt`
 
@@ -127,7 +143,7 @@ const optionsByName = fromEntries(toEntries(options));
 example, `resolveModuleName("turnstile")` returns `@onderwijsin/nuxt-turnstile`.
 
 ```ts
-import { resolveModuleName } from "@onderwijsin/nuxt-module-utils/shared";
+import { resolveModuleName } from "@onderwijsin/nuxt-module-utils/build";
 
 const moduleName = resolveModuleName("turnstile");
 ```
@@ -137,7 +153,7 @@ const moduleName = resolveModuleName("turnstile");
 `resolveLoggerScope` converts a module key to the kebab-case scope used by Nuxt's logger.
 
 ```ts
-import { resolveLoggerScope } from "@onderwijsin/nuxt-module-utils/shared";
+import { resolveLoggerScope } from "@onderwijsin/nuxt-module-utils/build";
 
 const log = useLogger(resolveLoggerScope("themeCustomizer"));
 ```
@@ -148,7 +164,7 @@ const log = useLogger(resolveLoggerScope("themeCustomizer"));
 Nuxt preparation from a normal module load.
 
 ```ts
-import { isPrepareMode } from "@onderwijsin/nuxt-module-utils/shared";
+import { isPrepareMode } from "@onderwijsin/nuxt-module-utils/build";
 
 if (isPrepareMode(nuxt)) return;
 ```
@@ -159,7 +175,7 @@ if (isPrepareMode(nuxt)) return;
 modules that publish runtime code consumed by Nuxt.
 
 ```ts
-import { transpileRuntime } from "@onderwijsin/nuxt-module-utils/shared";
+import { transpileRuntime } from "@onderwijsin/nuxt-module-utils/build";
 
 transpileRuntime(nuxt, runtimeDir);
 ```
@@ -171,7 +187,7 @@ returned `start` and `end` functions log loading state; `isEnabled` logs and ret
 `options.enabled === false`.
 
 ```ts
-import { moduleSetup } from "@onderwijsin/nuxt-module-utils/shared";
+import { moduleSetup } from "@onderwijsin/nuxt-module-utils/build";
 
 const { start, end, isEnabled } = moduleSetup(MODULE_NAME, options, log);
 start();
@@ -187,7 +203,7 @@ Use `moduleDependenciesWhenEnabled` when a module's `moduleDependencies` must fo
 for omitted or enabled options and an empty map for `false` or `{ enabled: false }`.
 
 ```ts
-import { moduleDependenciesWhenEnabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { moduleDependenciesWhenEnabled } from "@onderwijsin/nuxt-module-utils/build";
 
 moduleDependencies: (nuxt) =>
   moduleDependenciesWhenEnabled(nuxt.options.example, {
@@ -205,7 +221,7 @@ schema output, logs a formatted validation error, and throws a uniform error whe
 does not extend or modify the schema.
 
 ```ts
-import { validateModuleOptions } from "@onderwijsin/nuxt-module-utils/shared";
+import { validateModuleOptions } from "@onderwijsin/nuxt-module-utils/build";
 import { turnstileOptionsSchema } from "./config/options.schema";
 
 const options = validateModuleOptions(rawOptions, turnstileOptionsSchema, log);
@@ -220,7 +236,7 @@ Define the complete module schema, including the shared `enabled` field, in
 into the module's own schema rather than defining a second enabled default.
 
 ```ts
-import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 
 const schema = z.object({ enabled, otherOption: z.string() });
 ```
@@ -263,7 +279,7 @@ if (isAdmin(event, runtimeConfig.module.adminToken, runtimeConfig.module.adminHe
 
 The package also exports `AttemptResult` and `AttemptRetryOptions` from
 `@onderwijsin/nuxt-module-utils/shared`, and `BaseModuleOptions` from
-`@onderwijsin/nuxt-module-utils/shared` or `@onderwijsin/nuxt-module-utils/types`. Use type-only
+`@onderwijsin/nuxt-module-utils/build` or `@onderwijsin/nuxt-module-utils/types`. Use type-only
 imports for these contracts. Declare `@onderwijsin/nuxt-module-utils` as a `workspace:^` runtime
 dependency, and inspect the generated bundle or tarball to ensure the package resolves correctly.
 Never import `test-utils` from published runtime code.

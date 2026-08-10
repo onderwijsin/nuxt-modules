@@ -1,23 +1,12 @@
-import { existsSync, readdirSync } from "node:fs";
-import { basename, extname, join, relative, resolve } from "node:path";
+import { basename, extname, relative } from "node:path";
+import { discoverSourceFiles } from "@onderwijsin/nuxt-module-utils/build";
 
-const COMPONENT_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".mts"]);
 const COMPONENT_NAME = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const RESERVED_COMPONENT_NAMES = new Set(["cache", "cloudinary", "directus"]);
 
 interface DiscoveredComponent {
   name: string;
   path: string;
-}
-
-function walk(directory: string): string[] {
-  if (!existsSync(directory)) return [];
-
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) return walk(path);
-    return COMPONENT_EXTENSIONS.has(extname(entry.name)) ? [path] : [];
-  });
 }
 
 /**
@@ -27,13 +16,10 @@ function walk(directory: string): string[] {
  * @returns Components sorted by source path for deterministic builds.
  */
 export function discoverHealthcheckComponents(directory: string): DiscoveredComponent[] {
-  const components = walk(directory)
-    .filter((path) => !basename(path).endsWith(".d.ts"))
-    .map((path) => ({
-      name: basename(path, extname(path)),
-      path: resolve(path)
-    }))
-    .sort((left, right) => left.path.localeCompare(right.path));
+  const components = discoverSourceFiles(directory).map((path) => ({
+    name: basename(path, extname(path)),
+    path
+  }));
 
   const names = new Map<string, string>();
   for (const component of components) {

@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     "@onderwijsin/nuxt-healthcheck",
     "@onderwijsin/nuxt-loops-renderer",
     "@onderwijsin/nuxt-newsletter-signup",
+    "@onderwijsin/nuxt-redirects",
     "@onderwijsin/nuxt-simple-rate-limiter",
     "@onderwijsin/nuxt-static-text",
     "@onderwijsin/nuxt-storage-admin",
@@ -42,6 +43,19 @@ export default defineNuxtConfig({
     provider: "loops",
     apiKey: "dummy-loops-key",
     lists: { default: "dummy-list" }
+  },
+  redirects: {
+    enabled: true,
+    serverMiddleware: false,
+    store: true,
+    routeMiddleware: true,
+    storageMount: "externalRedirects"
+  },
+  nitro: {
+    storage: {
+      externalRedirects: { driver: "memory" }
+    },
+    experimental: { tasks: true }
   },
   simpleRateLimiter: {
     global: { enabled: false }

@@ -1,0 +1,14 @@
+{
+  "name": "redirects-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-redirects": "workspace:*",
+    "nuxt": "catalog:"
+  }
+}

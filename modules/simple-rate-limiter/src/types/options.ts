@@ -1,5 +1,7 @@
 /** Public configuration for the simple rate limiter module. */
 export interface ModuleOptions {
+  /** Whether the module registers its runtime helpers. */
+  enabled?: boolean;
   /** Global rate limiting configuration. */
   global?: {
     /** Whether path-scoped requests should be recorded in the global store. */

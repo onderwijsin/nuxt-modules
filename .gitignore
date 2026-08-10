@@ -49,6 +49,8 @@ coverage
 .grunt
 .build/
 build/
+!packages/module-utils/src/build/
+!packages/module-utils/src/build/**
 build-info.json
 .next
 .nuxt

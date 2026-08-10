@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { enabled, fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
+import { fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { hexColorSchema, THEME_SHADES } from "../runtime/app/utils/theme";
 

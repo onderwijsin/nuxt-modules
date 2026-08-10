@@ -1,0 +1,48 @@
+import type { Redirect } from "../../../types/redirect";
+
+import { z } from "zod";
+
+import { toRedirectOrigin } from "./path";
+import { isExternalRedirectDestination } from "../../utils/destination";
+
+const redirectSchema = z.strictObject({
+  from: z.string().trim().min(1),
+  to: z.string().trim().min(1),
+  statusCode: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).default(302)
+});
+
+/**
+ * Checks that an explicit HTTP(S) or protocol-relative destination contains a host.
+ *
+ * @param destination - Untrusted explicit destination URL.
+ * @returns Whether the destination has a valid HTTP(S) origin.
+ */
+function isHttpDestination(destination: string): boolean {
+  try {
+    const url = new URL(destination.startsWith("//") ? `https:${destination}` : destination);
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validates and normalizes a redirect at the module boundary.
+ *
+ * @param value - Untrusted source or webhook value.
+ * @returns Canonical redirect record.
+ */
+export function normalizeRedirect(value: unknown): Required<Redirect> {
+  const redirect = redirectSchema.parse(value);
+  if (!redirect.from.startsWith("/")) throw new Error("Redirect origins must start with '/'.");
+  if ([...redirect.to].some((character) => character <= "\u001F" || character === "\u007F"))
+    throw new Error("Redirect destinations must not contain control characters.");
+  if (redirect.to.startsWith("//") || /^https?:\/\//i.test(redirect.to)) {
+    if (!isHttpDestination(redirect.to))
+      throw new Error("Redirect destinations must contain an HTTP(S) host.");
+  } else if (!redirect.to.startsWith("/") && !isExternalRedirectDestination(redirect.to)) {
+    throw new Error("Redirect destinations must be internal paths or HTTP(S) URLs.");
+  }
+
+  return { ...redirect, from: toRedirectOrigin(redirect.from) };
+}

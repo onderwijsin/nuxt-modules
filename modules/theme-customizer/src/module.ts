@@ -15,15 +15,14 @@ import {
   useLogger
 } from "@nuxt/kit";
 import {
-  fromEntries,
   moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,
   resolveModuleName,
-  toEntries,
   transpileRuntime,
   validateModuleOptions
-} from "@onderwijsin/nuxt-module-utils/shared";
+} from "@onderwijsin/nuxt-module-utils/build";
+import { fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { version } from "../package.json";
 import { themeOptionsSchema } from "./config/options.schema";
 import {

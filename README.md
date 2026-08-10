@@ -21,6 +21,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | [`@onderwijsin/nuxt-simple-rate-limiter`](modules/simple-rate-limiter/README.md) | Path-scoped, per-IP server-side rate limiting for Nuxt endpoints.                              |
 | [`@onderwijsin/nuxt-storage-admin`](modules/storage-admin/README.md)             | Admin-protected CRUD endpoints for Nitro storage mounts.                                       |
 | [`@onderwijsin/nuxt-cache`](modules/cache/README.md)                             | Cache metadata indexing and protected base-scoped invalidation for Nitro storage.              |
+| [`@onderwijsin/nuxt-redirects`](modules/redirects/README.md)                     | Provider-agnostic dynamic redirects backed by a Nitro storage index.                           |
 
 ## 🧱 Requirements
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pre-publish Module Audit"
+  short_description: "Audit a Nuxt module before its first npm release."
+  default_prompt: "Use $prepublish-module-audit to assess this Nuxt module before publishing it."

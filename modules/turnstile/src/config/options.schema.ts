@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { enabled } from "@onderwijsin/nuxt-module-utils/shared";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 
 export const turnstileOptionsSchema = z.object({
   enabled,

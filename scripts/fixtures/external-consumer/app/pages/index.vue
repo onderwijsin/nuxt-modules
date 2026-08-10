@@ -6,6 +6,7 @@
     <p data-sanity="device">Device: {{ device.isMobile ? "mobile" : "desktop" }}</p>
     <p data-sanity="draft-form">Draft: {{ draft.state.value }}</p>
     <p data-sanity="turnstile">Turnstile: {{ turnstile.isEnabled ? "enabled" : "disabled" }}</p>
+    <NuxtLink to="/redirect-sanity" data-sanity="redirect-client-link">Client redirect</NuxtLink>
     <LoopsRenderer :data="loopsAst" :variables="loopsVariables" />
   </main>
 </template>

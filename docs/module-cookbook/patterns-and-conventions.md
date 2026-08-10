@@ -11,6 +11,9 @@ a new contract is explicit.
 - Import Vue, Nuxt, and framework dependencies explicitly in published runtime files.
 - Modules must not read environment variables directly. Consumers pass environment-derived values
   through module configuration instead.
+- Tasks must be owned by the consuming application. A module may export task handlers and task
+  utilities, but the consumer is responsible for registering task files and scheduling them; Nuxt
+  Kit does not currently provide a programmatic task-registration API.
 - Use Zod at external boundaries that need runtime validation.
 - Use `ofetch` for outbound runtime HTTP requests; do not call native `fetch` directly.
 - For server-side caching, use only Nitro's built-in `defineCachedEventHandler` or

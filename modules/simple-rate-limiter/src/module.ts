@@ -1,10 +1,27 @@
-import { addServerImports, createResolver, defineNuxtModule } from "@nuxt/kit";
+import {
+  addServerImports,
+  addTypeTemplate,
+  createResolver,
+  defineNuxtModule,
+  useLogger
+} from "@nuxt/kit";
+import { defu } from "defu";
+import {
+  moduleSetup,
+  resolveLoggerScope,
+  resolveModuleName,
+  transpileRuntime,
+  validateModuleOptions
+} from "@onderwijsin/nuxt-module-utils/build";
 
 import { simpleRateLimiterOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./types/options";
 
+const MODULE_KEY = "simpleRateLimiter";
+const MODULE_NAME = resolveModuleName(MODULE_KEY);
 const DEFAULTS = {
+  enabled: true,
   global: {
     enabled: false,
     pruning: {
@@ -17,28 +34,44 @@ const DEFAULTS = {
 /** Registers the server-only rate limiter auto-import. */
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: "@onderwijsin/nuxt-simple-rate-limiter",
-    configKey: "simpleRateLimiter",
+    name: MODULE_NAME,
+    configKey: MODULE_KEY,
     version,
     compatibility: { nuxt: "^4.0.0" }
   },
   defaults: DEFAULTS,
   setup(rawOptions, nuxt) {
-    const options = simpleRateLimiterOptionsSchema.parse(rawOptions);
-    const resolver = createResolver(import.meta.url);
+    const log = useLogger(resolveLoggerScope(MODULE_KEY));
+    const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
+    start();
 
-    nuxt.options.runtimeConfig = {
-      ...nuxt.options.runtimeConfig,
-      simpleRateLimiter: { global: options.global }
-    };
+    const options = validateModuleOptions(rawOptions, simpleRateLimiterOptionsSchema, log);
+    const resolver = createResolver(import.meta.url);
+    const runtimeDir = resolver.resolve("./runtime");
+
+    addTypeTemplate({
+      filename: "types/simple-rate-limiter-config.d.ts",
+      src: resolver.resolve(runtimeDir, "types/config.d.ts")
+    });
+
+    if (!isEnabled()) return;
+
+    nuxt.options.runtimeConfig.simpleRateLimiter = defu(
+      nuxt.options.runtimeConfig.simpleRateLimiter,
+      { global: options.global }
+    );
+
+    transpileRuntime(nuxt, runtimeDir);
 
     addServerImports({
       name: "enforceRateLimit",
-      from: resolver.resolve("./runtime")
+      from: runtimeDir
     });
     addServerImports({
       name: "enforceGlobalRateLimit",
-      from: resolver.resolve("./runtime")
+      from: runtimeDir
     });
+
+    end();
   }
 });

@@ -137,6 +137,7 @@ try {
     !rootBody.includes('data-sanity="template-translation"') ||
     !rootBody.includes('data-sanity="draft-form"') ||
     !rootBody.includes('data-sanity="turnstile"') ||
+    !rootBody.includes('data-sanity="redirect-client-link"') ||
     !rootBody.includes("Renderer OK")
   ) {
     throw new Error("The external consumer page did not render its assertion text.");
@@ -154,7 +155,9 @@ try {
       body.moduleUtils?.name === "@onderwijsin/nuxt-external-consumer" &&
       body.moduleUtils?.server === true &&
       body.publicSubpaths?.newsletterServer === true &&
-      body.publicSubpaths?.rateLimitPruneTask === true
+      body.publicSubpaths?.rateLimitPruneTask === true &&
+      body.publicSubpaths?.redirectsSource === true &&
+      body.publicSubpaths?.redirectsRefreshTask === true
   );
 
   await readJson(
@@ -167,6 +170,20 @@ try {
       headers: { "x-admin-token": "dummy-storage-token" }
     }),
     (body) => body.data?.mounts?.some((mount) => mount.mount === "cache")
+  );
+
+  await readJson(
+    await waitForResponse(`http://127.0.0.1:${port}/api/sanity/redirects`, { method: "POST" }),
+    (body) => body.data?.["/redirect-sanity"]?.to === "/"
+  );
+  const redirectResponse = await waitForResponse(
+    `http://127.0.0.1:${port}/api/_redirects/%2Fredirect-sanity`,
+    {},
+    200
+  );
+  await readJson(
+    redirectResponse,
+    (body) => body.data?.statusCode === 302 && body.data?.to === "/"
   );
 
   await waitForResponse(`http://127.0.0.1:${port}/thema`);
