@@ -24,6 +24,9 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("#imports", () => ({
+  useNuxtApp: () => ({
+    runWithContext: async <T>(callback: () => T | Promise<T>): Promise<T> => await callback()
+  }),
   useRuntimeConfig: () => state.config
 }));
 
