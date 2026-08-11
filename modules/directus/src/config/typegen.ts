@@ -583,7 +583,7 @@ function makeNonNullableOptionalsRequired(source: string): string {
   const replacements: Array<{ span: SourceSpan; value: string }> = [];
   for (const declaration of scanInterfaces(source)) {
     for (const field of declaration.fields) {
-      const complex = /[({[(]|=>/.test(field.type.trim());
+      const complex = /[({[]|=>/.test(field.type.trim());
       if (!field.optional || field.type.includes("null") || complex) continue;
       const optionalEnd = source.indexOf("?", field.nameStart);
       if (optionalEnd < 0 || optionalEnd > field.fieldEnd) continue;
