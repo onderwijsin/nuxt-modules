@@ -1,19 +1,11 @@
-import type { SitemapUrl } from "@nuxtjs/sitemap";
+import type { DirectusCollectionConfig } from "@onderwijsin/nuxt-directus-config/schema";
 
-declare module "@nuxt/schema" {
-  interface RuntimeConfig {
-    directusSitemaps: {
-      collections: Array<{
-        collection: string;
-        sitemap: string;
-        pathPrefix?: string;
-        endpointPrefix?: string | false;
-        filter: Record<string, unknown>;
-        fields: string[];
-      }>;
-      static: SitemapUrl[];
-    };
-  }
+declare module "#directus-sitemaps-config" {
+  const config: {
+    collections: DirectusCollectionConfig[];
+    static: Array<{ loc: string; [key: string]: unknown }>;
+  };
+  export default config;
 }
 
 export {};

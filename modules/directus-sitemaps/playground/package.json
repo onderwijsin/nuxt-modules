@@ -10,6 +10,7 @@
   "dependencies": {
     "@nuxtjs/sitemap": "catalog:",
     "@onderwijsin/nuxt-directus": "workspace:*",
+    "@onderwijsin/nuxt-directus-config": "workspace:*",
     "@onderwijsin/nuxt-directus-sitemaps": "workspace:*",
     "playground-layer": "workspace:*"
   },

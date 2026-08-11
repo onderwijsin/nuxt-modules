@@ -1,6 +1,7 @@
 import {
   addPrerenderRoutes,
   addServerHandler,
+  addServerTemplate,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -8,6 +9,7 @@ import {
 } from "@nuxt/kit";
 import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
+import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
 import {
   moduleDependenciesWhenEnabled,
   moduleSetup,
@@ -18,8 +20,9 @@ import {
 } from "@onderwijsin/nuxt-module-utils/build";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
+import { generateDirectusSitemapsConfigSource } from "./config/source";
 import type { ModuleOptions } from "./types/options";
-import { createSitemapSources, getSitemapKeys } from "./utils/sitemaps";
+import { createSitemapSource } from "./utils/sitemaps";
 import { version } from "../package.json";
 
 const MODULE_KEY = "directusSitemaps";
@@ -30,12 +33,8 @@ export default defineNuxtModule<ModuleOptions>({
   meta: { name: MODULE_NAME, configKey: MODULE_KEY, version, compatibility: { nuxt: "^4.0.0" } },
   defaults: {
     enabled: true,
-    collections: [],
-    static: [],
-    apiEndpoint: "/api/_directus-sitemaps/urls",
-    enablePrettyUrls: true,
-    cache: { maxAge: 300, staleMaxAge: 0, swr: true },
-    prerender: false
+    collections: {},
+    sitemaps: {}
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
@@ -46,7 +45,15 @@ export default defineNuxtModule<ModuleOptions>({
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
-    const options = validateModuleOptions(rawOptions, directusSitemapsOptionsSchema, log);
+    const sharedConfig = getResolvedDirectusConfig(nuxt);
+    const options = validateModuleOptions(
+      defu(rawOptions, {
+        collections: sharedConfig?.collections,
+        sitemaps: sharedConfig?.sitemaps
+      }),
+      directusSitemapsOptionsSchema,
+      log
+    );
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
     addTypeTemplate({
@@ -55,22 +62,26 @@ export default defineNuxtModule<ModuleOptions>({
     });
     if (!isEnabled()) return;
 
-    const keys = getSitemapKeys(options.collections, options.static);
-    nuxt.options.runtimeConfig.directusSitemaps = defu(
-      { collections: options.collections, static: options.static },
-      nuxt.options.runtimeConfig.directusSitemaps
-    );
-    nuxt.options.sitemap = defu(
-      { sitemaps: createSitemapSources(keys, options.apiEndpoint) },
-      nuxt.options.sitemap
-    );
+    addServerTemplate({
+      filename: "#directus-sitemaps-config",
+      getContents: () =>
+        generateDirectusSitemapsConfigSource(options.sitemaps.static, sharedConfig !== undefined)
+    });
+    if (nuxt.options.sitemap !== false) {
+      nuxt.options.sitemap.sources = [
+        ...createSitemapSource(options.sitemaps.apiEndpoint),
+        ...nuxt.options.sitemap.sources
+      ];
+    } else {
+      log.warn("@nuxtjs/sitemap is disabled; no Directus sitemap source was registered.");
+    }
     transpileRuntime(nuxt, runtimeDir);
     addServerHandler({
       method: "get",
-      route: options.apiEndpoint,
+      route: options.sitemaps.apiEndpoint,
       handler: resolver.resolve(runtimeDir, "server/routes/urls.get")
     });
-    if (options.enablePrettyUrls) {
+    if (options.sitemaps.enablePrettyUrls) {
       addServerHandler({
         method: "get",
         route: "/sitemap/**",
@@ -78,17 +89,13 @@ export default defineNuxtModule<ModuleOptions>({
       });
     }
     nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules[options.apiEndpoint] = {
-      ...nuxt.options.routeRules[options.apiEndpoint],
-      cache: options.cache || false,
-      prerender: options.prerender
+    nuxt.options.routeRules[options.sitemaps.apiEndpoint] = {
+      ...nuxt.options.routeRules[options.sitemaps.apiEndpoint],
+      cache: options.sitemaps.cache || false,
+      prerender: options.sitemaps.prerenderSitemaps
     };
-    if (options.prerender)
-      addPrerenderRoutes([
-        options.apiEndpoint,
-        "/sitemap_index.xml",
-        ...keys.map((key) => `/${key}-sitemap.xml`)
-      ]);
+    if (options.sitemaps.prerenderSitemaps)
+      addPrerenderRoutes([options.sitemaps.apiEndpoint, "/sitemap.xml", "/sitemap_index.xml"]);
     end();
   }
 });

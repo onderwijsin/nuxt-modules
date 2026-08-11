@@ -1,11 +1,10 @@
 import { createError, defineEventHandler, getQuery } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
 import { z } from "zod";
+import config from "#directus-sitemaps-config";
 
 import { buildSitemapUrls } from "../utils/urls";
 
 const querySchema = z.object({
-  sitemap: z.string().trim().min(1).optional(),
   collection: z.string().trim().min(1).optional(),
   includeStatic: z.stringbool().default(true)
 });
@@ -25,12 +24,10 @@ export default defineEventHandler(async (event) => {
       data: z.treeifyError(query.error)
     });
   }
-  const config = useRuntimeConfig(event).directusSitemaps;
   return buildSitemapUrls(
     event,
     config.collections,
     config.static,
-    query.data.sitemap,
     query.data.collection,
     query.data.includeStatic
   );

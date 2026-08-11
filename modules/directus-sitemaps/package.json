@@ -44,6 +44,7 @@
     "@nuxt/schema": "catalog:",
     "@nuxtjs/sitemap": "catalog:",
     "@onderwijsin/nuxt-directus": "workspace:^",
+    "@onderwijsin/nuxt-directus-config": "workspace:^",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "defu": "catalog:",
     "h3": "catalog:",
