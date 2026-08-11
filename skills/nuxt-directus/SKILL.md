@@ -97,8 +97,8 @@ useDirectusItemByPath(collection, query): Promise<Item | null>
 ```
 
 Queries a collection and returns its first matching item or `null`. Normal path lookup uses
-`readItems` with `limit: 1`. Versioned preview resolves the main item ID and then uses
-`readItem(mainItemId, { version })`, because Directus versions are addressed by their main item ID.
+`readItems` with `limit: 1`. When the request contains a valid version-preview context, it uses the
+preview URL's item ID with `readItem(id, { version })` instead.
 
 ### `useDirectusServerItemByPath`
 
@@ -203,6 +203,33 @@ nuxtApp.hook("directus:auth:login", (session) => {
 Hook payloads never contain token material. Hook failures are logged and do not reject, roll back,
 or otherwise undo the completed authentication transition.
 
+## Version previews
+
+Directus Content Versions are unpublished changes to a main item. When a preview URL contains
+`preview=true`, an item `id`, and a version key, `useDirectusItemByPath` and
+`useDirectusServerItemByPath` read that item with `readItem(id, { version })`. Without a valid
+version context they retain their normal query-and-first-item behavior.
+
+Set up Directus for version previews:
+
+1. In **Settings → Data Model**, enable **Content Versioning** for each collection and create
+   versions in the item editor.
+2. Set the collection's Preview URL to the corresponding application route. Use Directus' dynamic
+   value picker to include item **ID** and **Version**, for example:
+   `https://app.example.test/pages/{{slug}}?preview=true&id={{id}}&version={{version}}`.
+3. For unpublished content, give the preview request a short-lived credential. The recommended
+   [Tokenized Preview Endpoint](https://github.com/formfcw/directus-extension-tokenized-preview)
+   adds one: install it in Directus, configure its preview base URL, and prefix the collection URL
+   with `/preview/`. It appends `token`; if configured with another token key, set
+   `preview.queryKeys.token` to match.
+
+Preview tokens are request-scoped and never enter public runtime config. The default query keys are
+`preview`, `token`, `version`, and `id`; rename them with `preview.queryKeys`. Set
+`preview.enabled: false` to ignore all preview parameters, or `preview.versioning: false` to ignore
+only the version. Version previews do not configure Directus' embedded editor; see the Directus
+[Live Preview guide](https://docs.directus.io/guides/headless-cms/live-preview/nuxt-3) for framing
+and refresh behavior.
+
 ## Auto-imported SDK commands
 
 The default auto-imports are `readItem` and `readItems`. The supported command names for
@@ -247,15 +274,37 @@ Generated declarations are available through the virtual `#directus` module:
 import type { Article } from "#directus";
 ```
 
-Available opt-in augmentations are `removeEnums`, `replaceAnyWithUnknown`, `replaceJsonWithJSON`,
-`applyTypeNameOverrides`, `makeNonNullableOptionalsRequired`, and `mergeJsDocs`. `typegen.rules`
-overrides generated field types by collection and field. `typegen.transform` applies a final
-build-time source transform.
+The module uses [directus-sdk-typegen](https://github.com/bryantgillespie/directus-sdk-typegen) to
+generate collection interfaces and `Schema`. Configure it under `directus.typegen`:
+
+| Option               | Contract                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`            | Set `false` to skip generation; an existing declaration is reused when available, otherwise `Schema` is empty.                       |
+| `introspectionToken` | Server-only schema-introspection token. Required for enabled generation outside local development.                                   |
+| `cache.maxAge`       | Development-only cache lifetime in milliseconds. CI and production always regenerate.                                                |
+| `augmentations`      | Individually enable output transforms; every flag defaults to `false`.                                                               |
+| `rules`              | Replace a generated field type by collection and field, for example `{ articles: { body: "RichText" } }`.                            |
+| `transform`          | Final build-time source transform; receives source plus URL, generator version, collections, and rules, and must return source text. |
+
+| Augmentation                       | Effect                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| `removeEnums`                      | Removes generated `export enum` declarations.                                  |
+| `replaceAnyWithUnknown`            | Rewrites generated `Record<…, any>` values to `Record<…, unknown>`.            |
+| `replaceJsonWithJSON`              | Rewrites quoted `"json"` field types to `JSON`.                                |
+| `applyTypeNameOverrides`           | Applies the module's reviewed generated type-name corrections.                 |
+| `makeNonNullableOptionalsRequired` | Makes simple optional fields required when their type does not include `null`. |
+| `mergeJsDocs`                      | Merges adjacent generated JSDoc tag blocks and removes duplicate tags.         |
+
+They run in the shown order before `rules`, then `transform`. Incomplete credentials reuse the prior
+declaration or an empty `Schema` only during local development. CI and production fail when enabled
+generation lacks credentials.
 
 ## Proxy and security contract
 
-- Browser REST calls use the same-origin `proxy.path`; browser code never receives the Directus URL
-  or a server credential.
+The browser endpoint at `proxy.path` (default `/_directus/proxy`) forwards Directus REST calls. It
+preserves method, body, query, response status, and safe response headers, while browser code never
+receives the Directus URL or a server credential.
+
 - The proxy removes incoming `Authorization`, `Cookie`, `Host`, `Origin`, connection, and hop-by-hop
   headers before forwarding.
 - Credential precedence is preview token, current session (when `auth.enabled`), static token, then
@@ -271,6 +320,9 @@ build-time source transform.
 - Directus remains the final authorization boundary.
 - The first release uses a plain, bounded, unsigned and unencrypted cookie; sealing and shared
   storage are future hardening options rather than current guarantees.
+
+The proxy is not a general-purpose proxy, CORS bypass, session-token API, or authorization layer. It
+can only target the configured Directus URL; authorization still happens in Directus.
 
 ## Compatibility
 
