@@ -74,6 +74,7 @@ writeFileSync(
   join(consumerDirectory, "pnpm-workspace.yaml"),
   [
     "allowBuilds:",
+    "  '@sentry/cli': true",
     "  esbuild: true",
     "  sharp: true",
     "  vue-demi: true",
@@ -89,6 +90,32 @@ console.log(`Installing packed packages into ${consumerDirectory}`);
 run("pnpm", ["install", "--no-frozen-lockfile"]);
 run("pnpm", ["exec", "nuxt", "prepare"]);
 run("pnpm", ["exec", "nuxt", "build"]);
+
+const serverEntryPath = join(consumerDirectory, ".output", "server", "index.mjs");
+if (!existsSync(serverEntryPath)) {
+  throw new Error(`Nitro Node entrypoint was not emitted: ${serverEntryPath}`);
+}
+if (!readFileSync(serverEntryPath, "utf8").startsWith("import './sentry.server.config.mjs';")) {
+  throw new Error("Nitro Node entrypoint did not import the Sentry preload first.");
+}
+
+const sentryServerConfigPath = join(
+  consumerDirectory,
+  ".output",
+  "server",
+  "sentry.server.config.mjs"
+);
+if (!existsSync(sentryServerConfigPath)) {
+  throw new Error(`Sentry Node preload was not emitted: ${sentryServerConfigPath}`);
+}
+const sentryServerConfigSource = readFileSync(sentryServerConfigPath, "utf8");
+if (
+  !sentryServerConfigSource.includes('runtime: "node-server"') ||
+  !sentryServerConfigSource.includes("runtimeConfig.public.sentry.dsn") ||
+  !sentryServerConfigSource.includes("init(sentryConfig)")
+) {
+  throw new Error("Sentry Node preload did not contain the expected resolved configuration.");
+}
 
 const port = 31_000 + Math.floor(Math.random() * 1_000);
 const server = spawn("node", [".output/server/index.mjs"], {
@@ -163,7 +190,8 @@ try {
       body.publicSubpaths?.newsletterServer === true &&
       body.publicSubpaths?.rateLimitPruneTask === true &&
       body.publicSubpaths?.redirectsSource === true &&
-      body.publicSubpaths?.redirectsRefreshTask === true
+      body.publicSubpaths?.redirectsRefreshTask === true &&
+      body.publicSubpaths?.sentryConfig === true
   );
 
   await readJson(

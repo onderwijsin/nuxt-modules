@@ -1,11 +1,4 @@
 # ===================================
-# ☁️ Wrangler
-# Production config for cloudflare is done via nitro.cloudflare.wrangler, but NuxtHub still needs wrangler file for local dev. So exclude it in git 
-# ===================================
-wrangler.json
-wrangler.jsonc
-
-# ===================================
 # 👤 User Preferences
 # ===================================
 .DS_Store

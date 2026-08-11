@@ -23,6 +23,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | [`@onderwijsin/nuxt-cache`](modules/cache/README.md)                             | Cache metadata indexing and protected base-scoped invalidation for Nitro storage.              |
 | [`@onderwijsin/nuxt-redirects`](modules/redirects/README.md)                     | Provider-agnostic dynamic redirects backed by a Nitro storage index.                           |
 | [`@onderwijsin/nuxt-directus`](modules/directus/README.md)                       | Server-safe Directus REST integration for Nuxt applications.                                   |
+| [`@onderwijsin/nuxt-sentry-config`](modules/sentry-config/README.md)             | Runtime-portable Sentry server configuration for Node and Cloudflare Nitro deployments.        |
 
 ## 🧱 Requirements
 
