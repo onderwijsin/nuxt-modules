@@ -1,6 +1,6 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
-import { useState } from "#app";
-import { $fetch, useNuxtApp } from "#imports";
+import { useNuxtApp, useState } from "#app";
+import { $fetch } from "#imports";
 
 import type { DirectusSessionSnapshot } from "../../server/utils/session";
 

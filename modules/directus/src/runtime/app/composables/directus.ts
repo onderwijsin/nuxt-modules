@@ -1,6 +1,6 @@
 import type { RestCommand } from "@directus/sdk";
 import type { Schema } from "#directus";
-import { useNuxtApp } from "#imports";
+import { useNuxtApp } from "#app";
 
 /**
  * Runs a Directus REST command from a Nuxt component or composable.

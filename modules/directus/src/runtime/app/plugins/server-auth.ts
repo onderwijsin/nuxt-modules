@@ -12,9 +12,10 @@ const { getDirectusSession } = await import("../../server/utils/session.js");
  * This plugin is registered only when cookie authentication is enabled so applications that use
  * static, preview, or unauthenticated access do not read or serialize session cookies.
  *
+ * @param nuxtApp Current Nuxt application instance.
  * @returns The injected request-scoped client.
  */
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin((nuxtApp) => {
   const event = useRequestEvent();
 
   // Load session into state in server plugin - this keeps the auth composable free of server runtime code
@@ -22,6 +23,6 @@ export default defineNuxtPlugin(() => {
   session.value = event ? (getDirectusSession(event)?.snapshot ?? null) : null;
 
   return {
-    provide: { directus: createServerDirectusClient(event) }
+    provide: { directus: createServerDirectusClient(event, nuxtApp) }
   };
 });
