@@ -10,6 +10,7 @@ export default defineNuxtConfig({
     "@onderwijsin/nuxt-loops-renderer",
     "@onderwijsin/nuxt-newsletter-signup",
     "@onderwijsin/nuxt-redirects",
+    "@onderwijsin/nuxt-sentry-config",
     "@onderwijsin/nuxt-simple-rate-limiter",
     "@onderwijsin/nuxt-static-text",
     "@onderwijsin/nuxt-storage-admin",
@@ -68,6 +69,10 @@ export default defineNuxtConfig({
   },
   simpleRateLimiter: {
     global: { enabled: false }
+  },
+  sentryConfig: {
+    dsn: "https://public@example.ingest.sentry.io/1",
+    configFile: "sentry.config.ts"
   },
   staticText: {
     enabled: true,

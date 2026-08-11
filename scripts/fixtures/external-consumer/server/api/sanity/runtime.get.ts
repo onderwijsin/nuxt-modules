@@ -10,6 +10,7 @@ import * as rateLimitPruneTask from "@onderwijsin/nuxt-simple-rate-limiter/runti
 import * as newsletterServer from "@onderwijsin/nuxt-newsletter-signup/runtime/server";
 import { defineRedirectSource } from "@onderwijsin/nuxt-redirects/runtime/source";
 import * as redirectsRefreshTask from "@onderwijsin/nuxt-redirects/runtime/refresh-task";
+import { defaultSentryServerConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
 import {
   TURNSTILE_TOKEN_HEADER,
   createTurnstileErrorData
@@ -52,7 +53,8 @@ export default defineEventHandler(async (event) => {
       newsletterServer: Object.keys(newsletterServer).includes("getErrorStatus"),
       rateLimitPruneTask: typeof rateLimitPruneTask.default === "object",
       redirectsSource: typeof defineRedirectSource === "function",
-      redirectsRefreshTask: typeof redirectsRefreshTask.default === "object"
+      redirectsRefreshTask: typeof redirectsRefreshTask.default === "object",
+      sentryConfig: defaultSentryServerConfig.sendDefaultPii === false
     }
   };
 });
