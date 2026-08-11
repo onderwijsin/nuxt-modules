@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { data, error, status } = await useAsyncData("simulated-pages-preview", () =>
-  useDirectusItemByPath("pages", { fields: ["id", "title"] })
+  useDirectusItemByPath("articles", { fields: ["id", "title"] })
 );
 
 const isSuccessful = computed(() => status.value === "success" && !error.value);
@@ -18,7 +18,7 @@ const isSuccessful = computed(() => status.value === "success" && !error.value);
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p class="text-sm text-muted">Resolved request</p>
-            <h2 class="mt-1 text-xl font-semibold text-highlighted">pages / page item</h2>
+            <h2 class="mt-1 text-xl font-semibold text-highlighted">articles / article item</h2>
           </div>
           <UBadge :color="isSuccessful ? 'success' : error ? 'error' : 'warning'" variant="subtle">
             {{ isSuccessful ? "Loaded" : error ? "Failed" : "Loading" }}
@@ -29,7 +29,7 @@ const isSuccessful = computed(() => status.value === "success" && !error.value);
       <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-lg bg-muted/30 p-4">
           <dt class="text-xs font-medium uppercase tracking-wide text-muted">Collection</dt>
-          <dd class="mt-1 font-mono text-sm text-highlighted">pages</dd>
+          <dd class="mt-1 font-mono text-sm text-highlighted">articles</dd>
         </div>
         <div class="rounded-lg bg-muted/30 p-4">
           <dt class="text-xs font-medium uppercase tracking-wide text-muted">Item ID</dt>

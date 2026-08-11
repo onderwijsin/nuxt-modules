@@ -10,14 +10,18 @@ export default defineNuxtConfig({
   modules: [directusModule],
   turnstile: { siteKey: "fixture-site-key", secretKey: "fixture-secret-key" },
   directus: {
-    baseUrl: process.env.DIRECTUS_E2E_URL ?? "https://sandbox.directus.com",
-    commands: ["readItems"],
-    auth: {
-      enabled: true,
-      turnstile: { enabled: true },
-      cookie: { secure: false },
-      passwordResetUrl: "https://app.example.test/reset-password"
+    instance: {
+      baseUrl: process.env.DIRECTUS_E2E_URL ?? "https://sandbox.directus.com"
     },
-    typegen: { enabled: false }
+    client: {
+      commands: ["readItems"],
+      auth: {
+        enabled: true,
+        turnstile: { enabled: true },
+        cookie: { secure: false },
+        passwordResetUrl: "https://app.example.test/reset-password"
+      },
+      typegen: { enabled: false }
+    }
   }
 });

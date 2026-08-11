@@ -1,66 +1,12 @@
 import { z } from "zod";
+import {
+  supportedDirectusCommands,
+  directusCommandsSchema
+} from "@onderwijsin/nuxt-directus-config/schema";
 
-/** SDK command exports reviewed for consumer auto-import registration. */
-export const supportedDirectusCommands = [
-  "aggregate",
-  "createComment",
-  "updateComment",
-  "deleteComment",
-  "createField",
-  "createItem",
-  "createItems",
-  "deleteField",
-  "deleteFile",
-  "deleteFiles",
-  "readActivities",
-  "readActivity",
-  "deleteItem",
-  "deleteItems",
-  "deleteUser",
-  "deleteUsers",
-  "importFile",
-  "readCollection",
-  "readCollections",
-  "createCollection",
-  "updateCollection",
-  "deleteCollection",
-  "readContentVersions",
-  "readContentVersion",
-  "readField",
-  "readFieldsByCollection",
-  "readFields",
-  "readFile",
-  "readFiles",
-  "readItem",
-  "readItems",
-  "readSingleton",
-  "readMe",
-  "readPolicies",
-  "readPolicy",
-  "createUser",
-  "createUsers",
-  "readUser",
-  "readUsers",
-  "updateField",
-  "updateFile",
-  "updateFiles",
-  "updateFolder",
-  "updateFolders",
-  "updateItem",
-  "updateItems",
-  "updateSingleton",
-  "updateMe",
-  "updateUser",
-  "updateUsers",
-  "uploadFiles",
-  "withSearch",
-  "withOptions"
-] as const;
-
-export const directusCommandSchema = z.enum(supportedDirectusCommands);
 const supportedCommandSet = new Set<string>(supportedDirectusCommands);
 
-export type DirectusCommand = z.infer<typeof directusCommandSchema>;
+export type DirectusCommand = z.infer<typeof directusCommandsSchema>;
 
 /**
  * Validates the configured command list and gives consumers an actionable error.
@@ -69,11 +15,11 @@ export type DirectusCommand = z.infer<typeof directusCommandSchema>;
  * @returns The validated command names.
  */
 export function parseDirectusCommands(commands: readonly string[]): DirectusCommand[] {
-  const result = z.array(directusCommandSchema).safeParse(commands);
+  const result = z.array(directusCommandsSchema).safeParse(commands);
   if (!result.success) {
     const invalid = commands.filter((command) => !supportedCommandSet.has(command));
     throw new Error(
-      `Invalid directus.commands value${invalid.length === 1 ? "" : "s"}: ${invalid.join(
+      `Invalid directus.client.commands value${invalid.length === 1 ? "" : "s"}: ${invalid.join(
         ", "
       )}. Supported commands: ${supportedDirectusCommands.join(", ")}. Import other SDK commands explicitly from @directus/sdk.`
     );

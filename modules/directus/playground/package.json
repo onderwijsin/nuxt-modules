@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@onderwijsin/nuxt-directus": "workspace:*",
+    "@onderwijsin/nuxt-directus-config": "workspace:*",
     "nuxt": "catalog:",
     "playground-layer": "workspace:*"
   }

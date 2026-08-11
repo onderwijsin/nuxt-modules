@@ -1,5 +1,4 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-
 import { generateDirectusTypes } from "directus-sdk-typegen";
 import {
   attempt,
@@ -11,28 +10,19 @@ import {
 } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
 
+import type { TypegenTransform } from "@onderwijsin/nuxt-directus-config/schema";
+
 import type { ResolvedModuleOptions } from "../types/options";
 
 /** The pinned generator version recorded in development cache manifests. */
 export const DIRECTUS_TYPEGEN_VERSION = "0.2.1";
 
-/** Metadata supplied to an advanced consumer typegen transform. */
-export interface TypegenTransformContext {
-  directusUrl: string;
-  generatorVersion: string;
-  collections: readonly string[];
-  rules: Readonly<Record<string, Readonly<Record<string, string>>>>;
-}
-
-/** Supported build-time typegen transform. */
-export type TypegenTransform = (source: string, context: TypegenTransformContext) => string;
-
 /** Options used to generate, normalize, and cache a Directus declaration. */
 export interface GenerateDirectusTypesOptions {
   directusUrl: string;
-  directusToken: string;
-  augmentations: ResolvedModuleOptions["typegen"]["augmentations"];
-  rules: ResolvedModuleOptions["typegen"]["rules"];
+  directusToken: ResolvedModuleOptions["client"]["typegen"]["introspectionToken"];
+  augmentations: ResolvedModuleOptions["client"]["typegen"]["augmentations"];
+  rules: ResolvedModuleOptions["client"]["typegen"]["rules"];
   transform?: TypegenTransform;
   log?: TypegenLogger;
 }
@@ -124,8 +114,8 @@ export async function resolveDirectusTypegenDeclaration(options: {
   enabled?: boolean;
   directusUrl: string;
   directusToken?: string;
-  augmentations: ResolvedModuleOptions["typegen"]["augmentations"];
-  rules: ResolvedModuleOptions["typegen"]["rules"];
+  augmentations: ResolvedModuleOptions["client"]["typegen"]["augmentations"];
+  rules: ResolvedModuleOptions["client"]["typegen"]["rules"];
   transform?: TypegenTransform;
   cacheFile: string;
   generatedFile: string;
@@ -138,7 +128,7 @@ export async function resolveDirectusTypegenDeclaration(options: {
     const existing = readExistingDeclaration(options.generatedFile);
     if (isDefined(existing)) return existing;
     options.log.warn(
-      "Skipping Directus type generation because directus.typegen.enabled is false."
+      "Skipping Directus type generation because directus.client.typegen.enabled is false."
     );
     return "export interface Schema {}\n";
   }
@@ -149,7 +139,7 @@ export async function resolveDirectusTypegenDeclaration(options: {
     const existing = readExistingDeclaration(options.generatedFile);
     if (isDefined(existing)) return existing;
     options.log.warn(
-      "Skipping Directus type generation: configure directus.baseUrl and directus.typegen.introspectionToken."
+      "Skipping Directus type generation: configure directus.instance.baseUrl and directus.client.typegen.introspectionToken."
     );
     return "export interface Schema {}\n";
   }
@@ -162,7 +152,7 @@ export async function resolveDirectusTypegenDeclaration(options: {
       return isDefined(existing) ? existing : "export interface Schema {}\n";
     }
     throw new Error(
-      "Directus type generation requires both directus.baseUrl and directus.typegen.introspectionToken."
+      "Directus type generation requires both directus.instance.baseUrl and directus.client.typegen.introspectionToken."
     );
   }
 
@@ -237,7 +227,7 @@ export function applyTypegenTransforms(
       rules: options.rules
     });
     if (!isString(result)) {
-      throw new Error("directus.typegen.transform must return a string declaration.");
+      throw new Error("directus.client.typegen.transform must return a string declaration.");
     }
   }
 
@@ -659,7 +649,10 @@ function scanJsDocBlocks(source: string): Array<{ start: number; end: number; ta
  * @returns Rewritten declaration source.
  * @throws When a configured collection or field is absent.
  */
-function applyRules(source: string, rules: ResolvedModuleOptions["typegen"]["rules"]): string {
+function applyRules(
+  source: string,
+  rules: ResolvedModuleOptions["client"]["typegen"]["rules"]
+): string {
   const declarations = scanInterfaces(source);
   const byName = new Map(declarations.map((declaration) => [declaration.name, declaration]));
   const replacements: Array<{ span: SourceSpan; value: string }> = [];
@@ -667,14 +660,16 @@ function applyRules(source: string, rules: ResolvedModuleOptions["typegen"]["rul
   for (const [collection, fields] of Object.entries(rules)) {
     const declaration = byName.get(collection);
     if (!declaration) {
-      throw new Error(`directus.typegen.rules references missing collection "${collection}".`);
+      throw new Error(
+        `directus.client.typegen.rules references missing collection "${collection}".`
+      );
     }
     const fieldMap = new Map(declaration.fields.map((field) => [field.name, field]));
     for (const [fieldName, type] of Object.entries(fields)) {
       const field = fieldMap.get(fieldName);
       if (!field) {
         throw new Error(
-          `directus.typegen.rules references missing field "${collection}.${fieldName}".`
+          `directus.client.typegen.rules references missing field "${collection}.${fieldName}".`
         );
       }
       const colon = source.indexOf(":", field.nameStart);

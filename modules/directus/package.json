@@ -41,6 +41,7 @@
     "@directus/sdk": "catalog:",
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
+    "@onderwijsin/nuxt-directus-config": "workspace:^",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "@onderwijsin/nuxt-turnstile": "workspace:^",
     "defu": "catalog:",

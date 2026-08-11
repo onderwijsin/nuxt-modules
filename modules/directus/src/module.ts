@@ -1,4 +1,5 @@
 import { defu } from "defu";
+import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
 import { join } from "node:path";
 import {
   addImports,
@@ -43,15 +44,13 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {
     enabled: true,
-    baseUrl: "",
-    proxy: { path: "/_directus/proxy" },
-    commands: ["readItem", "readItems"],
-    auth: { enabled: false },
-    typegen: {}
+    instance: {},
+    client: {}
   },
   moduleDependencies: (nuxt): ModuleDependencies => {
-    const directusOptions = nuxt.options.directus;
-    return directusOptions && directusOptions.auth?.turnstile?.enabled
+    const sharedConfig = getResolvedDirectusConfig(nuxt);
+    const directusOptions = defu(nuxt.options.directus, sharedConfig);
+    return directusOptions?.client?.auth?.turnstile?.enabled
       ? { "@onderwijsin/nuxt-turnstile": { version: ">=0.2.5" } }
       : {};
   },
@@ -60,7 +59,13 @@ export default defineNuxtModule<ModuleOptions>({
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
 
     start();
-    const options = validateModuleOptions(rawOptions, directusOptionsSchema, log);
+    const sharedConfig = getResolvedDirectusConfig(nuxt);
+    const options = validateModuleOptions(
+      defu(rawOptions, sharedConfig),
+      directusOptionsSchema,
+      log
+    );
+    const baseUrl = options.instance.baseUrl ?? "";
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
@@ -75,15 +80,15 @@ export default defineNuxtModule<ModuleOptions>({
       getContents: async () => {
         const result = await attempt(() =>
           resolveDirectusTypegenDeclaration({
-            enabled: options.typegen.enabled,
-            directusUrl: options.baseUrl,
-            directusToken: options.typegen.introspectionToken,
-            augmentations: options.typegen.augmentations,
-            rules: options.typegen.rules,
-            transform: options.typegen.transform,
+            enabled: options.client.typegen.enabled,
+            directusUrl: baseUrl,
+            directusToken: options.client.typegen.introspectionToken,
+            augmentations: options.client.typegen.augmentations,
+            rules: options.client.typegen.rules,
+            transform: options.client.typegen.transform,
             cacheFile: join(nuxt.options.buildDir, "directus-typegen-cache.json"),
             generatedFile: join(nuxt.options.buildDir, "types/directus-schema.d.ts"),
-            maxAge: options.typegen.cache.maxAge,
+            maxAge: options.client.typegen.cache.maxAge,
             isDevelopment: nuxt.options.dev,
             isCI: process.env.CI === "true",
             log
@@ -108,23 +113,23 @@ export default defineNuxtModule<ModuleOptions>({
 
     if (!isEnabled()) return;
 
-    if (!isNonBlankString(options.baseUrl) && (nuxt.options._prepare || isCI)) {
+    if (!isNonBlankString(baseUrl) && (nuxt.options._prepare || isCI)) {
       log.warn("Directus baseUrl is not set. Disabling Directus module.");
       return;
     }
 
-    const commands = parseDirectusCommands(options.commands);
+    const commands = parseDirectusCommands(options.client.commands);
     for (const name of commands) addImports({ name, as: name, from: "@directus/sdk" });
 
     nuxt.options.runtimeConfig.directus = defu(
       {
-        baseUrl: options.baseUrl,
-        staticToken: options.staticToken,
-        typegen: { introspectionToken: options.typegen.introspectionToken },
+        baseUrl,
+        staticToken: options.instance.staticToken,
+        typegen: { introspectionToken: options.client.typegen.introspectionToken },
         auth: {
-          ...options.auth,
+          ...options.client.auth,
           turnstile: {
-            ...options.auth.turnstile,
+            ...options.client.auth.turnstile,
             actions: DIRECTUS_TURNSTILE_ACTIONS
           }
         }
@@ -133,12 +138,12 @@ export default defineNuxtModule<ModuleOptions>({
     );
     nuxt.options.runtimeConfig.public.directus = defu(
       {
-        proxy: { path: options.proxy.path },
-        preview: options.preview,
+        proxy: { path: options.client.proxy.path },
+        preview: options.client.preview,
         auth: {
-          enabled: options.auth.enabled,
+          enabled: options.client.auth.enabled,
           turnstile: {
-            enabled: options.auth.turnstile.enabled,
+            enabled: options.client.auth.turnstile.enabled,
             actions: DIRECTUS_TURNSTILE_ACTIONS
           }
         }
@@ -159,12 +164,12 @@ export default defineNuxtModule<ModuleOptions>({
     addPlugin({
       src: resolver.resolve(
         runtimeDir,
-        options.auth.enabled ? "app/plugins/server-auth" : "app/plugins/server"
+        options.client.auth.enabled ? "app/plugins/server-auth" : "app/plugins/server"
       ),
       mode: "server"
     });
 
-    if (options.auth.enabled) {
+    if (options.client.auth.enabled) {
       addImports({
         name: "useDirectusAuth",
         from: resolver.resolve(runtimeDir, "app/composables/directus-auth")
@@ -187,12 +192,12 @@ export default defineNuxtModule<ModuleOptions>({
       }
     }
     addServerHandler({
-      route: `${options.proxy.path}/**`,
+      route: `${options.client.proxy.path}/**`,
       handler: resolver.resolve(runtimeDir, "server/handlers/proxy")
     });
     nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules[`${options.proxy.path}/**`] = {
-      ...nuxt.options.routeRules[`${options.proxy.path}/**`],
+    nuxt.options.routeRules[`${options.client.proxy.path}/**`] = {
+      ...nuxt.options.routeRules[`${options.client.proxy.path}/**`],
       cache: false,
       prerender: false
     };
