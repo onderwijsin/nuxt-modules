@@ -88,13 +88,21 @@ const scenarios = [
 
 const pending = ref<string | null>(null);
 
+async function requestError(url: string): Promise<void> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw { data: await response.json(), statusCode: response.status };
+  }
+}
+
 async function triggerError(key: (typeof scenarios)[number]["key"]) {
   pending.value = key;
   const scenario = scenarios.find((entry) => entry.key === key);
   if (!scenario) return;
+  const errorUrl: string = `/api/directus-errors/${key}`;
 
   try {
-    const result = await attempt(() => $fetch(`/api/directus-errors/${key}`));
+    const result = await attempt(() => requestError(errorUrl));
     if (result.error !== null) {
       const directusError = useDirectusError(result.error);
       const firstError = directusError.errors[0];
