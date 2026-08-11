@@ -4,6 +4,10 @@ Vitest is the repository test runner. Tests are intentionally package-owned: eac
 exercise the package whose behavior it verifies, while the root Vitest configuration discovers and
 runs the complete workspace suite.
 
+Read this article when adding, changing, relocating, or evaluating tests, fixtures, mocks, coverage,
+or shared test infrastructure. Module authors should also read the focused
+[module testing router](module-cookbook/testing.md).
+
 ## Test utilities
 
 `test-utils` is the private workspace package for helpers shared by tests. It is test-only and must

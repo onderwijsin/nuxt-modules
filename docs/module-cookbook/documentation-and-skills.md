@@ -1,5 +1,9 @@
 # Consumer documentation and skills
 
+Read this article whenever public options, exports, components, composables, auto-imports,
+registration behavior, compatibility, requirements, errors, or other consumer-visible behavior could
+change.
+
 Every published module has a package `README.md`, `CHANGELOG.md`, and a consumer-facing installable
 skill in `skills/<module-name>/SKILL.md`.
 
@@ -18,3 +22,19 @@ exports, components, auto-imports, compatibility, or behavior changes.
 
 Use existing module READMEs and skills as local writing patterns. For maintainer guidance, use the
 repository's `authoring-nuxt-modules` skill and this cookbook.
+
+## Synchronization decision
+
+Trace the implementation change through both consumer surfaces:
+
+| Change                                                                                            | README                                        | Consumer skill                                     |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- |
+| Installation, Nuxt registration, or requirements                                                  | Update                                        | Update                                             |
+| Public option, default, or disabled behavior                                                      | Update                                        | Update                                             |
+| Export, component, composable, auto-import, route, or other public API                            | Update                                        | Update                                             |
+| Compatibility, dependency, secret/configuration boundary, limitation, or troubleshooting behavior | Update                                        | Update when it affects agent integration decisions |
+| Internal refactor with identical public behavior                                                  | No content change required; record the reason | No content change required; record the reason      |
+
+The README and consumer skill have different audiences but must describe the same public contract.
+Do not copy maintainer implementation details into either document merely to prove synchronization.
+When no consumer document changes are needed, state the concrete no-impact reason in the handoff.

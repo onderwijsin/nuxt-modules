@@ -1,10 +1,18 @@
 # Working with `@onderwijsin/nuxt-module-utils`
 
+Read this article before adding a new local module helper, importing a shared utility, changing
+`packages/module-utils`, or reviewing a module that duplicates module-agnostic behavior. Read
+[primitive runtime guards](guards.md) as well when narrowing unknown values.
+
 `packages/module-utils` is the publishable, module-agnostic utility package used by modules in this
 repository. It contains build-time Nuxt module helpers, typed object-entry helpers, Zod option
 validation, retryable operation helpers, primitive runtime guards, and server-only request-token
 checks. It is published as a runtime dependency for modules that use its runtime helpers;
 application authors generally should not install or import it directly.
+
+Before implementing a reusable helper, search this reference and the package exports. Prefer an
+existing utility when its documented semantics match. Keep specialized or domain-specific logic in
+the owning module rather than forcing it into the shared package.
 
 ## Runtime subpaths
 

@@ -1,6 +1,10 @@
 # Module package anatomy
 
-This cookbook is the authoritative repository contract for publishable Nuxt modules. Use it together
+Read this article when creating a publishable module or changing package layout, metadata, exports,
+runtime subpaths, or external-consumer coverage. Use the [cookbook index](index.md) to select the
+other articles triggered by the change.
+
+The cookbook is the authoritative repository contract for publishable Nuxt modules. Use it together
 with nearby module implementations; patterns not listed here may still be established elsewhere in
 the repository.
 
@@ -147,10 +151,12 @@ but do not turn them into installable packages unless requested.
 
 ## Further Reading
 
+- [Cookbook task router](index.md)
 - [Documentation and consumer skills](documentation-and-skills.md)
 - [Migrating local modules](migrating-local-modules.md)
 - [Module entrypoint and runtime registration](module-entrypoint.md)
 - [Module utilities](module-utils.md)
+- [Official Nuxt documentation routing](official-nuxt-documentation.md)
 - [Playground conventions](playground.md)
 - [Patterns, conventions, and gotchas](patterns-and-conventions.md)
 - [Testing modules](testing.md)

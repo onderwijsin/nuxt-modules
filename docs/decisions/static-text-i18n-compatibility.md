@@ -1,5 +1,8 @@
 # Static text and Vue I18n compatibility
 
+Read this decision before changing the static-text translation API, `$t`, `useText`, message
+formatting, locale behavior, or coexistence expectations with Vue I18n or Nuxt I18n.
+
 The static-text module is designed for applications with one build-time text dictionary, not as a
 replacement implementation of internationalization. It deliberately omits locale selection, runtime
 message loading, pluralization, and ICU message syntax.

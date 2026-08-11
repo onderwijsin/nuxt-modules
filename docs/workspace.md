@@ -4,6 +4,9 @@ This repository is a pnpm workspace for standalone Nuxt 4 modules and the packag
 them. Package versions are managed through the strict workspace catalog, and package-local scripts
 are included in the root recursive validation commands.
 
+Read this article for dependency, package-manager, generated-output, command, or validation work.
+Agents also use it whenever a routed task requires repository checks.
+
 ## Requirements
 
 - Node.js 24 for local development and CI.
@@ -19,6 +22,30 @@ pnpm install --frozen-lockfile
 ```
 
 Do not add a repository-local pnpm store or override the configured store location.
+
+### Primary-checkout safety
+
+Agents may work in the current checkout when its existing installation is usable. Never install
+dependencies or modify, delete, relink, or repair `node_modules` in the human collaborator's primary
+checkout. Run dependency-mutating commands only when the task requires dependency changes; otherwise
+keep `node_modules`, `pnpm-lock.yaml`, and pnpm configuration unchanged.
+
+If an existing `node_modules` conflicts with the required environment, use an isolated checkout or
+Git worktree with its own installation. Do not reuse `node_modules` created by another environment.
+In that isolated checkout, remove only its own dependency directory and run:
+
+```sh
+corepack pnpm install --frozen-lockfile
+```
+
+Integrate the completed source changes back into the current branch before handoff and do not commit
+them. If isolation is unavailable or pnpm reports a store mismatch, stop and report it instead of
+altering the primary checkout.
+
+Every dependency addition or version change must reference a workspace catalog entry, and every
+catalog version must be an exact pin rather than a range. In user-facing documentation, use
+`pnpm ...` unless Corepack itself is relevant; agents invoke the pinned version as
+`corepack pnpm ...`.
 
 ## Workspace discovery
 
@@ -163,3 +190,16 @@ Apply formatting and lint fixes with `pnpm format` and `pnpm lint:fix`.
 `@onderwijsin/nuxt-module-utils` must be built before workspace preparation so consuming modules
 resolve its generated declarations. Preparation creates module stubs and playground Nuxt types; the
 recursive build performs full production builds.
+
+### Select additional validation by impact
+
+| Change                                                                     | Additional validation                                                                                      |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Focused source behavior                                                    | Run the owning package's focused Vitest target while iterating.                                            |
+| Module setup, generated types, or playground integration                   | Run `pnpm dev:prepare`, the module build, and the affected playground typecheck/build.                     |
+| Public package exports, dependency classification, or emitted runtime code | Run `pnpm build`, `pnpm validate:packages`, and inspect packed artefacts.                                  |
+| Release-facing or pre-publish work                                         | Run `pnpm pack:packages` and `pnpm validate:external-consumer` with a unique temporary artefact directory. |
+
+Formatting, linting, type checking, and tests remain the completion baseline when applicable. If a
+check cannot run, record the exact command, its result, and the blocker; a narrower successful check
+does not imply that a broader skipped check passed.

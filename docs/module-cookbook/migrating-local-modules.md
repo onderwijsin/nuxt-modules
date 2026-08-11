@@ -1,16 +1,20 @@
 # Migrating local modules to the monorepo
 
+Read this checklist for a migration from a consuming application's local module into a publishable
+package. Start with the [cookbook index](index.md) and read every focused article touched by the
+migration.
+
 Use this checklist when moving a Nuxt module copied from a consuming application into a publishable
 package under `modules/`. Although the module anatomy is largely similar between a local module and
 a publishable module, there are distinct differences. The local module might not be fully
-encapsulated, include patterns and conventions from the legacy code base, have the wrong setup, or
-it's assumptions on how the consuming app will utilize the module is too narrow.
+encapsulated, might include patterns and conventions from the legacy codebase, might have the wrong
+setup, or might make assumptions that are too narrow for other consuming applications.
 
-So when migrating the local module to a publishable module in this monorepo, you goal is to:
+When migrating the local module to a publishable module in this monorepo, the goals are to:
 
 - Fully encapsulate it
 - Make it adhere to all conventions in the module cookbook
-- Make it agnostic with regards to the cosnumer
+- Make it agnostic with regard to the consumer
 
 Keep this article living: add a check when a migration finds a recurring app coupling or release
 problem.

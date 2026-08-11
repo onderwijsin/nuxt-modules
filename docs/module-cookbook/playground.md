@@ -1,5 +1,8 @@
 # Module playgrounds
 
+Read this article when adding or changing a module playground, its package metadata, configuration,
+shared shell, demonstration UI, environment example, preparation, typecheck, or build behavior.
+
 Each publishable module owns an isolated Nuxt app at `modules/<module-name>/playground`. Use it to
 exercise public registration, runtime code, auto-imports, components, and production-style builds.
 Playgrounds extend the private [`playground-layer`](../../packages/playground-layer/README.md)
