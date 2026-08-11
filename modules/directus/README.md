@@ -49,7 +49,7 @@ export default defineNuxtConfig({
 });
 ```
 
-Direct module options and the shared source use the same `instance` and `client` shape. When both
+Direct module options and `directus.config.ts` use the same `instance` and `client` shape. When both
 are present, direct module options take precedence. Keep `instance.baseUrl` and
 `instance.staticToken` server-only. Never put Directus credentials in `runtimeConfig.public` or
 browser code.
