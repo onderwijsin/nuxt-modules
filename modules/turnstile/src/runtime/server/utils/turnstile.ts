@@ -10,7 +10,8 @@ import { TURNSTILE_TOKEN_HEADER } from "../../constants";
 
 const turnstileVerificationSchema = z.object({
   success: z.boolean(),
-  action: z.string().optional()
+  action: z.string().optional(),
+  metadata: z.object({ result_with_testing_key: z.boolean().optional() }).optional()
 });
 
 /**
@@ -74,7 +75,7 @@ export async function assertTurnstileToken(event: H3Event, expectedAction: strin
       "TURNSTILE_VALIDATION_FAILED",
       expectedAction
     );
-  if (verification.action !== expectedAction)
+  if (!verification.metadata?.result_with_testing_key && verification.action !== expectedAction)
     throw createTurnstileError(
       403,
       "Turnstile action does not match",

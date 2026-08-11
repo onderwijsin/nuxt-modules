@@ -107,5 +107,7 @@ authorization and business validation in the consuming route after Turnstile suc
 - Empty tokens usually mean the widget has not finished; use `getTokenWithRetry()`.
 - Always reset the widget after a processed submission because Turnstile tokens are single-use.
 - A `TURNSTILE_ACTION_MISMATCH` response means the frontend and backend action strings differ.
+- Cloudflare's official test credentials return `metadata.result_with_testing_key: true` without an
+  action. The module accepts only that verified test-key response without action matching.
 - In development, a missing secret is allowed so local forms remain usable; production treats it as
   a server misconfiguration.

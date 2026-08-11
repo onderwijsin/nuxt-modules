@@ -17,6 +17,10 @@ env:
 jobs:
   code_quality:
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    env:
+      DIRECTUS_URL: ${{ secrets.DIRECTUS_URL }}
+      DIRECTUS_STATIC_TOKEN: ${{ secrets.DIRECTUS_STATIC_TOKEN }}
+      DIRECTUS_INTROSPECTION_TOKEN: ${{ secrets.DIRECTUS_INTROSPECTION_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install pnpm
@@ -49,6 +53,10 @@ jobs:
 
   validate:
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    env:
+      DIRECTUS_URL: ${{ secrets.DIRECTUS_URL }}
+      DIRECTUS_STATIC_TOKEN: ${{ secrets.DIRECTUS_STATIC_TOKEN }}
+      DIRECTUS_INTROSPECTION_TOKEN: ${{ secrets.DIRECTUS_INTROSPECTION_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install pnpm

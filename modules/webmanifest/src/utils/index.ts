@@ -11,6 +11,7 @@ export interface ResolvedIconConfig {
   provider?: "cloudinary" | "ipx";
   appIcon: string;
   maskableAppIcon?: string;
+  favicon: string;
   baseURL?: string;
 }
 
@@ -105,7 +106,7 @@ export function resolveIconConfig(options: ModuleOptions, nuxt: Nuxt): IconConfi
     };
   }
 
-  return { config: { provider, appIcon, maskableAppIcon, baseURL }, warnings };
+  return { config: { provider, appIcon, maskableAppIcon, favicon, baseURL }, warnings };
 }
 
 /**

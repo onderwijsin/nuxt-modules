@@ -12,7 +12,7 @@ export default defineConfig({
   test: {
     passWithNoTests: false,
     include: ["**/*.{test,spec}.?(c|m)[jt]s?(x)"],
-    exclude: ["**/node_modules/**", "**/.nuxt/**", "**/.output/**", "**/dist/**"],
+    exclude: ["**/node_modules/**", "**/.nuxt/**", "**/.output/**", "**/dist/**", "**/tmp/**"],
     reporters: process.env.GITHUB_ACTIONS ? ["default", "github-actions"] : ["default"],
     coverage: {
       provider: "v8",

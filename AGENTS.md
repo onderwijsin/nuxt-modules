@@ -52,6 +52,8 @@ When multiple valid solutions exist, prefer:
 - **MUST** update `docs/module-cookbook/module-utils.md` whenever work changes, documents, or relies
   on `packages/module-utils`, so the cookbook remains synchronized with the actual utility exports
   and runtime subpaths
+- **MUST** create one changeset file per concern; unrelated package changes must use separate
+  changeset entries, even when they affect the same package or share a release level
 
 ### Package Manager Contract
 

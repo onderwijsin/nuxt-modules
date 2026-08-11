@@ -6,6 +6,8 @@ export async function verifyTurnstileToken(token: string) {
       return { success: true, action: "fixture" };
     case "fixture-success-without-action":
       return { success: true };
+    case "fixture-testing-key":
+      return { success: true, metadata: { result_with_testing_key: true } };
     case "fixture-rejected":
       return { success: false };
     case "fixture-action-mismatch":

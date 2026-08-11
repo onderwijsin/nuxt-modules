@@ -46,13 +46,31 @@ vi.mock("@onderwijsin/nuxt-module-utils/build", async (importOriginal) => {
   };
 });
 
-function createNuxt() {
+type TestNuxt = {
+  options: {
+    runtimeConfig: {
+      public: Record<string, unknown>;
+      newsletterSignup?: Record<string, unknown>;
+    };
+    build: { transpile: string[] };
+  };
+};
+
+function createNuxt(): TestNuxt {
   return {
     options: {
       runtimeConfig: { public: {} },
       build: { transpile: [] as string[] }
     }
   };
+}
+
+function setupModule(module: object, options: unknown, nuxt: unknown): unknown {
+  return Reflect.apply(Reflect.get(module, "setup"), module, [options, nuxt]);
+}
+
+function getModuleDependencies(module: object, nuxt: unknown): unknown {
+  return Reflect.apply(Reflect.get(module, "moduleDependencies"), module, [nuxt]);
 }
 
 describe("newsletter signup module setup", () => {
@@ -68,7 +86,7 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    await module.setup({ enabled: true }, nuxt);
+    await setupModule(module, { enabled: true }, nuxt);
 
     expect(nuxt.options.runtimeConfig.newsletterSignup).toEqual({
       enabled: true,
@@ -87,21 +105,21 @@ describe("newsletter signup module setup", () => {
 
   it("does not override consumer API Shield configuration", async () => {
     const module = (await import("../src/module")).default;
-    const dependencies = module.moduleDependencies;
-
-    expect(dependencies({ options: {} })).toMatchObject({
+    expect(getModuleDependencies(module, { options: {} })).toMatchObject({
       "@nuxt/ui": { version: ">=4.0.0" },
       "@onderwijsin/nuxt-simple-rate-limiter": { version: "*" }
     });
-    expect(dependencies({ options: { newsletterSignup: false } })).toEqual({});
-    expect(dependencies({ options: { newsletterSignup: { enabled: false } } })).toEqual({});
+    expect(getModuleDependencies(module, { options: { newsletterSignup: false } })).toEqual({});
+    expect(
+      getModuleDependencies(module, { options: { newsletterSignup: { enabled: false } } })
+    ).toEqual({});
   });
 
   it("ignores endpoint.url while the local endpoint is enabled", async () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    await module.setup({ endpoint: { enabled: true, url: "/not-used" } }, nuxt);
+    await setupModule(module, { endpoint: { enabled: true, url: "/not-used" } }, nuxt);
 
     expect(nuxt.options.runtimeConfig.public.newsletterSignup).toEqual({
       endpoint: { url: "/api/newsletter/signup" }
@@ -112,7 +130,8 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    await module.setup(
+    await setupModule(
+      module,
       {
         endpoint: {
           enabled: false,
@@ -133,7 +152,8 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    await module.setup(
+    await setupModule(
+      module,
       {
         provider: "mailchimp",
         apiKey: "secret-key",
@@ -156,7 +176,7 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    expect(() => module.setup({ endpoint: { enabled: false } }, nuxt)).toThrow(
+    expect(() => setupModule(module, { endpoint: { enabled: false } }, nuxt)).toThrow(
       "Invalid module options"
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -168,7 +188,8 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
 
     expect(() =>
-      module.setup(
+      setupModule(
+        module,
         {
           provider: "mailchimp",
           apiKey: "key",
@@ -186,7 +207,8 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
 
     expect(() =>
-      module.setup(
+      setupModule(
+        module,
         {
           provider: "mailchimp",
           apiKey: "key",
@@ -208,7 +230,7 @@ describe("newsletter signup module setup", () => {
   it("requires a default list or selectable list options", async () => {
     const module = (await import("../src/module")).default;
 
-    expect(() => module.setup({ provider: "loops", apiKey: "key" }, createNuxt())).toThrow(
+    expect(() => setupModule(module, { provider: "loops", apiKey: "key" }, createNuxt())).toThrow(
       "Invalid module options"
     );
     expect(logger.info).toHaveBeenCalledWith("Configure lists.default or lists.options");
@@ -218,7 +240,7 @@ describe("newsletter signup module setup", () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
 
-    await module.setup({ enabled: false }, nuxt);
+    await setupModule(module, { enabled: false }, nuxt);
 
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(addImports).not.toHaveBeenCalled();

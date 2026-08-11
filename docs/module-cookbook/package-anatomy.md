@@ -6,17 +6,42 @@ the repository.
 
 ## Publishable modules
 
-Each publishable module lives in `modules/<module-name>` and normally contains:
+Each publishable module lives in `modules/<module-name>`. The following is the settled package
+layout across the repository. Directories marked optional are added only when the module needs that
+kind of code; do not create empty directories to match the example.
 
 ```text
 modules/<module-name>/
-├── __tests__/
-├── playground/
+├── __tests__/                         # package-owned unit and integration tests
+│   ├── fixtures/                      # minimal Nuxt apps for end-to-end tests (optional)
+│   │   └── basic/
+│   │       ├── app.vue
+│   │       ├── nuxt.config.ts
+│   │       └── package.json
+│   ├── helpers/                       # test-only helpers (optional)
+│   └── <name>.test.ts                 # domain specific test files
+├── playground/                        # manual development and integration app
+│   ├── app/                           # pages, components, assets, and app shell (optional)
+│   ├── server/                        # playground-only routes and handlers (optional)
+│   ├── .env.example                   # required variables without secrets (optional)
+│   ├── nuxt.config.ts
+│   ├── package.json
+│   └── tsconfig.json
 ├── src/
-│   ├── module.ts
-│   ├── config/
-│   ├── runtime/
-│   └── types/
+│   ├── config/                        # module option schema and code generation (optional)
+│   │   └── options.schema.ts
+│   ├── runtime/                       # code installed into the consuming Nuxt app (optional)
+│   │   ├── app/                       # components, composables, plugins, client utilities
+│   │   ├── server/                    # API routes, handlers, server composables and utilities
+│   │   ├── shared/                    # runtime code used by both app and server
+│   │   ├── types/                     # generated or runtime-specific declarations
+│   │   ├── assets/                    # CSS or other runtime assets
+│   │   └── index.ts                   # public runtime subpath entrypoint (optional)
+│   ├── templates/                     # files generated into the consuming app (optional)
+│   ├── types/                         # module options and other build-time types (optional)
+│   │   └── options.ts
+│   ├── utils/                         # module build-time utilities (optional)
+│   └── module.ts                       # Nuxt module entrypoint
 ├── build.config.ts (only when custom unbuild configuration is required)
 ├── CHANGELOG.md
 ├── README.md
@@ -126,7 +151,6 @@ but do not turn them into installable packages unless requested.
 - [Migrating local modules](migrating-local-modules.md)
 - [Module entrypoint and runtime registration](module-entrypoint.md)
 - [Module utilities](module-utils.md)
-- [Server-side caching patterns](server-caching.md)
 - [Playground conventions](playground.md)
 - [Patterns, conventions, and gotchas](patterns-and-conventions.md)
 - [Testing modules](testing.md)

@@ -1,8 +1,11 @@
+const directusDisabled = process.env.DIRECTUS_EXTERNAL_DISABLED === "true";
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-01-01",
   modules: [
     "@onderwijsin/nuxt-cache",
     "@onderwijsin/nuxt-device",
+    "@onderwijsin/nuxt-directus",
     "@onderwijsin/nuxt-healthcheck",
     "@onderwijsin/nuxt-loops-renderer",
     "@onderwijsin/nuxt-newsletter-signup",
@@ -21,6 +24,12 @@ export default defineNuxtConfig({
   },
   device: {
     enabled: true
+  },
+  directus: {
+    enabled: !directusDisabled,
+    ...(directusDisabled ? {} : { baseUrl: "https://directus.invalid" }),
+    proxy: { path: "/_directus/proxy" },
+    typegen: { enabled: false }
   },
   healthcheck: {
     enabled: true,

@@ -1,0 +1,5 @@
+{
+  "name": "directus-e2e-fixture",
+  "private": true,
+  "type": "module"
+}

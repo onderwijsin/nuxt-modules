@@ -2,7 +2,7 @@
 export type AttemptResult<T> = { data: T; error: null } | { data: null; error: unknown };
 
 /**
- * Attempts an operation and exposes a possible failure as data.
+ * Attempts an async operation and exposes a possible failure as data.
  *
  * @param operation - The operation to execute.
  * @returns The operation result or the captured error.
@@ -14,6 +14,21 @@ export async function attempt<T>(operation: () => T | Promise<T>): Promise<Attem
       (data) => ({ data, error: null }) as AttemptResult<T>,
       (error) => ({ data: null, error }) as AttemptResult<T>
     );
+}
+
+/**
+ * Attempts a synchronous operation and exposes a possible failure as data.
+ *
+ * @param operation - The operation to execute.
+ * @returns The operation result or the captured error.
+ */
+export function attemptSync<T>(operation: () => T): AttemptResult<T> {
+  try {
+    const data = operation();
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
 }
 
 /** Options controlling bounded retries for attempted operations. */

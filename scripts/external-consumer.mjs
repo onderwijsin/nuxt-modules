@@ -13,8 +13,13 @@ const packagesDirectory = resolve(
     join(root, ".artifacts", "packages")
 );
 const keepConsumer = process.argv.includes("--keep");
+const directusDisabled = process.argv.includes("--directus-disabled");
 const fixtureDirectory = join(root, "scripts", "fixtures", "external-consumer");
 const consumerDirectory = mkdtempSync(join(tmpdir(), "nuxt-external-consumer-"));
+const consumerEnvironment = {
+  ...process.env,
+  ...(directusDisabled ? { DIRECTUS_EXTERNAL_DISABLED: "true" } : {})
+};
 
 /**
  * Runs a command and exits when it fails.
@@ -25,7 +30,7 @@ const consumerDirectory = mkdtempSync(join(tmpdir(), "nuxt-external-consumer-"))
 function run(command, arguments_) {
   const result = spawnSync(command, arguments_, {
     cwd: consumerDirectory,
-    env: { ...process.env, COREPACK_ENABLE_PROJECT_SPEC: "0" },
+    env: { ...consumerEnvironment, COREPACK_ENABLE_PROJECT_SPEC: "0" },
     stdio: "inherit"
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
@@ -88,7 +93,7 @@ run("pnpm", ["exec", "nuxt", "build"]);
 const port = 31_000 + Math.floor(Math.random() * 1_000);
 const server = spawn("node", [".output/server/index.mjs"], {
   cwd: consumerDirectory,
-  env: { ...process.env, HOST: "127.0.0.1", PORT: String(port) },
+  env: { ...consumerEnvironment, HOST: "127.0.0.1", PORT: String(port) },
   stdio: "inherit"
 });
 
@@ -137,6 +142,7 @@ try {
     !rootBody.includes('data-sanity="template-translation"') ||
     !rootBody.includes('data-sanity="draft-form"') ||
     !rootBody.includes('data-sanity="turnstile"') ||
+    !rootBody.includes('data-sanity="directus"') ||
     !rootBody.includes('data-sanity="redirect-client-link"') ||
     !rootBody.includes("Renderer OK")
   ) {

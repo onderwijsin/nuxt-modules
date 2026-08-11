@@ -7,8 +7,16 @@ workspace package for the shared Nuxt UI shell and baseline styling.
 
 ```text
 playground/
-├── app/
-│   └── pages/index.vue
+├── app/                               # module-specific application UI (optional)
+│   ├── assets/                        # playground-only CSS and supporting assets
+│   ├── components/                    # playground-only components
+│   ├── pages/                         # routes that demonstrate module behavior
+│   │   └── index.vue
+│   ├── app.config.ts                  # app configuration (optional)
+│   └── app.vue                        # shell customization (optional)
+├── public/                            # static assets used by the playground (optional)
+├── server/                            # playground-only API routes and handlers (optional)
+├── .env.example                       # required variables without secrets (optional)
 ├── nuxt.config.ts
 ├── package.json
 └── tsconfig.json
