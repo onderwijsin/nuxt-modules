@@ -10,12 +10,12 @@
 
 import { z } from "zod";
 
-/** Type-level and runtime marker carried by schemas marked with `.sensitive()`. */
+/** Runtime marker carried by schemas marked with `.sensitive()`. */
 const sensitiveSchema = Symbol("sensitive-schema");
 
 /** Schema whose value is omitted from a public configuration projection. */
 export type SensitiveSchema<Schema extends z.core.SomeType> = Schema & {
-  readonly [sensitiveSchema]: true;
+  readonly __sensitiveSchema: true;
 };
 
 type IsSensitiveSchema<Schema extends z.core.SomeType> =
@@ -86,8 +86,9 @@ declare module "zod" {
  * @returns The annotated schema.
  */
 z.ZodType.prototype.sensitive = function sensitive() {
-  const marker: { readonly [sensitiveSchema]: true } = { [sensitiveSchema]: true };
-  return Object.assign(this.meta({ ...this.meta(), sensitive: true }), marker);
+  const schema = this.meta({ ...this.meta(), sensitive: true });
+  Reflect.defineProperty(schema, sensitiveSchema, { value: true });
+  return schema;
 };
 
 const omitted = Symbol("omitted");

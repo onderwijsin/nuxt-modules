@@ -1,6 +1,6 @@
 import type { Nuxt } from "@nuxt/schema";
 
-import { directusConfigSchema } from "./index";
+import { directusConfigSchema } from "./config";
 
 /**
  * Stores validated shared Directus config for downstream Nuxt module setup.

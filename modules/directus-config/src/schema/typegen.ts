@@ -29,6 +29,12 @@ const directusTypegenSchemaDefaults = {
   rules: {}
 } as const;
 
+const typeExpressionSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((value) => !/[\r\n;]/.test(value), "must be a single TypeScript type expression");
+
 /**
  * Zod schema for Directus type generation configuration.
  */
@@ -60,7 +66,7 @@ export const directusTypegenSchema = z
       })
       .default(directusTypegenSchemaDefaults.augmentations),
     rules: z
-      .record(z.string().min(1), z.record(z.string().min(1), z.union([z.string(), z.json()])))
+      .record(z.string().min(1), z.record(z.string().min(1), typeExpressionSchema))
       .default({}),
     transform: z.custom<TypegenTransform>((value) => isFunction(value)).optional()
   })

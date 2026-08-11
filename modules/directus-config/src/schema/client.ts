@@ -6,7 +6,15 @@ import { directusTypegenSchema } from "./typegen";
 const localPath = z
   .string()
   .regex(/^\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/)
-  .refine((value) => value !== "/");
+  .refine(
+    (value) =>
+      value !== "/" && !value.split("/").some((segment) => segment === "." || segment === ".."),
+    "must not contain traversal segments"
+  )
+  .refine(
+    (value) => value !== "/_directus/auth" && !value.startsWith("/_directus/auth/"),
+    "collides with the reserved /_directus/auth route prefix"
+  );
 
 /**
  * Zod schema for Directus proxy configuration.
@@ -105,26 +113,13 @@ const directusAuthSchema = z
   .default(directusAuthSchemaDefaults);
 
 /** Shared Directus client settings excluding instance credentials. */
-export const directusClientSchema = z
-  .strictObject({
-    proxy: proxySchema,
-    commands: z.array(directusCommandsSchema).default(["readItem", "readItems"]).sensitive(),
-    preview: directusPreviewSchema,
-    auth: directusAuthSchema,
-    typegen: directusTypegenSchema.sensitive()
-  })
-  .superRefine((options, context) => {
-    if (
-      options.proxy.path === "/_directus/auth" ||
-      options.proxy.path.startsWith("/_directus/auth/")
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["proxy", "path"],
-        message: "collides with the reserved /_directus/auth route prefix"
-      });
-    }
-  });
+export const directusClientSchema = z.strictObject({
+  proxy: proxySchema,
+  commands: z.array(directusCommandsSchema).default(["readItem", "readItems"]).sensitive(),
+  preview: directusPreviewSchema,
+  auth: directusAuthSchema,
+  typegen: directusTypegenSchema.sensitive()
+});
 
 /** Input type accepted by the shared client schema. */
 export type DirectusClientOptions = z.input<typeof directusClientSchema>;
