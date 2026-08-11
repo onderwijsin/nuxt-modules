@@ -17,6 +17,7 @@ catalog:
   "@nuxt/module-builder": 1.0.3
   "@nuxt/test-utils": 4.1.0
   "@vitest/coverage-v8": 4.1.10
+  "@vitejs/plugin-vue": 6.0.8
   "@types/node": 26.1.2
   husky: 9.1.7
   lint-staged: 17.3.0
