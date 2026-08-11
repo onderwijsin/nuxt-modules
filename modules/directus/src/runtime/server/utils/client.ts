@@ -1,5 +1,5 @@
 import type { H3Event } from "h3";
-import { useRuntimeConfig } from "#imports";
+import { useNuxtApp, useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
 
 import { resolveDirectusRequestContext } from "./credentials";
@@ -20,14 +20,19 @@ export function createServerDirectusClient(event?: H3Event): DirectusSchemaClien
     throw new Error("Directus baseUrl is required before creating a Directus client.");
   }
 
+  const nuxtApp = useNuxtApp();
+
   const serverFetch = ofetch.create({
     onRequest: async ({ options }) => {
       if (!event) return;
 
       let sessionAccessToken: string | undefined;
       if (config.directus.auth.enabled) {
+        console.log("Ensuring fresh Directus session on request");
         const { ensureFreshDirectusSession } = await import("./auth.js");
-        sessionAccessToken = (await ensureFreshDirectusSession(event))?.accessToken;
+        sessionAccessToken = (
+          await nuxtApp.runWithContext(async () => await ensureFreshDirectusSession(event))
+        )?.accessToken;
       }
 
       const { credential } = resolveDirectusRequestContext(event, {

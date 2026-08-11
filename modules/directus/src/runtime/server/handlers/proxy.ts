@@ -184,6 +184,7 @@ export default defineEventHandler(async (event) => {
   );
   let sessionAccessToken: string | undefined;
   if (config.directus.auth.enabled) {
+    console.log("Ensuring fresh Directus session");
     const { ensureFreshDirectusSession } = await import("../utils/auth.js");
     sessionAccessToken = (await ensureFreshDirectusSession(event))?.accessToken;
   }
