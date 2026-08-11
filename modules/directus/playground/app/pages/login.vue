@@ -17,6 +17,7 @@ interface LoginForm {
 const auth = useDirectusAuth();
 const router = useRouter();
 const toast = useToast();
+const turnstileLoginAction = useRuntimeConfig().public.directus.auth.turnstile.actions.login;
 const turnstile = useTemplateRef<{ reset: () => void }>("turnstile");
 const {
   token,
@@ -105,7 +106,7 @@ async function submitLogin(event: { data: LoginForm }): Promise<void> {
       <NuxtTurnstile
         ref="turnstile"
         v-model="token"
-        :options="{ action: 'directus-login', appearance: 'interaction-only' }"
+        :options="{ action: turnstileLoginAction, appearance: 'interaction-only' }"
         class="mb-4"
       />
       <UAuthForm
