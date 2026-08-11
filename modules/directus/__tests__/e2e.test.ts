@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { afterAll, describe, expect, it } from "vitest";
-import { $fetch } from "@nuxt/test-utils/e2e";
+import { $fetch, url } from "@nuxt/test-utils/e2e";
 import { setupFixture } from "../../../packages/test-utils/src";
 
 describe("Directus client and server composables", async () => {
@@ -50,5 +50,27 @@ describe("Directus client and server composables", async () => {
     const html = await $fetch<string>("/");
     expect(html).toContain('<p data-testid="client-ssr-count">1</p>');
     expect(html).toContain('<p data-testid="client-ssr-error"></p>');
+  });
+
+  it.each([
+    "/_directus/auth/login",
+    "/_directus/auth/refresh",
+    "/_directus/auth/logout",
+    "/_directus/auth/password-request",
+    "/_directus/auth/password-reset"
+  ])("rejects cross-origin authentication mutations at %s", async (route) => {
+    await expect(
+      $fetch(route, { method: "POST", headers: { origin: "https://attacker.example.test" } })
+    ).rejects.toMatchObject({ statusCode: 403 });
+    await expect($fetch(route, { method: "POST" })).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("allows a same-origin authentication mutation", async () => {
+    await expect(
+      $fetch("/_directus/auth/logout", {
+        method: "POST",
+        headers: { origin: new URL(url("/")).origin }
+      })
+    ).resolves.toBeUndefined();
   });
 });

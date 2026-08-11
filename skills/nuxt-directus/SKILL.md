@@ -221,6 +221,10 @@ When `auth.enabled` is `true`, the module registers:
 | `POST` | `/_directus/auth/password-request` | Proxies the email and configured reset URL.                          |
 | `POST` | `/_directus/auth/password-reset`   | Proxies the reset token and new password.                            |
 
+All authentication mutations require an `Origin` or `Referer` matching the application origin.
+Missing or cross-origin metadata is rejected with `403`, including when the session cookie uses
+`sameSite: "none"`.
+
 Directus MFA failures are recognized by `useDirectusError(error).isOtpError`.
 
 ## Generated schema types
@@ -248,6 +252,8 @@ build-time source transform.
 - Credentialed `POST`, `PUT`, `PATCH`, and `DELETE` proxy requests require an `Origin` or `Referer`
   matching the application origin. Missing and cross-origin metadata is rejected with `403`,
   including for `sameSite: "none"` cookies.
+- Authentication `POST` routes apply the same origin validation before reading input or changing a
+  session.
 - Session cookies are `httpOnly`, `SameSite=Lax`, secure by default, bounded below the usual cookie
   size limit, and intentionally contain the server token pair plus a compact safe snapshot.
 - Directus remains the final authorization boundary.

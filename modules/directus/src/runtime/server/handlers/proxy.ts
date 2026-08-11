@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getRequestHeader, getRequestURL, proxyRequest } from "h3";
+import { createError, defineEventHandler, getRequestURL, proxyRequest } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { attemptSync } from "@onderwijsin/nuxt-module-utils";
 import { ofetch } from "ofetch";
@@ -9,6 +9,7 @@ import {
   getDirectusAuthorizationHeader,
   resolveDirectusRequestContext
 } from "../utils/credentials";
+import { assertDirectusEventSameOrigin } from "../utils/csrf";
 
 const blockedRequestHeaders = new Set([
   "authorization",
@@ -36,42 +37,6 @@ const blockedResponseHeaders = new Set([
   "transfer-encoding",
   "upgrade"
 ]);
-const csrfProtectedMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
-/**
- * Enforces same-origin metadata for state-changing requests that use a server credential.
- *
- * @param requestUrl Incoming application request URL.
- * @param method Incoming HTTP method.
- * @param origin Origin header, when supplied by the client.
- * @param referer Referer header fallback for clients that omit Origin.
- * @throws A 403 error when the request is missing or fails same-origin validation.
- */
-export function assertDirectusProxySameOrigin(
-  requestUrl: URL,
-  method: string,
-  origin?: string,
-  referer?: string
-): void {
-  if (!csrfProtectedMethods.has(method.toUpperCase())) return;
-
-  const candidate = origin ?? referer;
-  if (!candidate) {
-    throw createError({ statusCode: 403, statusMessage: "Directus proxy CSRF validation failed" });
-  }
-
-  let candidateOrigin: string;
-  try {
-    candidateOrigin = new URL(candidate).origin;
-  } catch {
-    throw createError({ statusCode: 403, statusMessage: "Directus proxy CSRF validation failed" });
-  }
-
-  if (candidateOrigin !== requestUrl.origin) {
-    throw createError({ statusCode: 403, statusMessage: "Directus proxy CSRF validation failed" });
-  }
-}
-
 /**
  * Resolves a proxy request into a Directus URL while preserving the request query string.
  *
@@ -194,12 +159,7 @@ export default defineEventHandler(async (event) => {
     sessionAccessToken
   });
   if (requiresDirectusProxySameOrigin(credential)) {
-    assertDirectusProxySameOrigin(
-      requestUrl,
-      event.method,
-      getRequestHeader(event, "origin"),
-      getRequestHeader(event, "referer")
-    );
+    assertDirectusEventSameOrigin(event);
   }
   const targetUrl = new URL(target);
   targetUrl.searchParams.delete(config.public.directus.preview.queryKeys.token);

@@ -2,6 +2,7 @@ import { defineEventHandler, readValidatedBody } from "h3";
 import { z } from "zod";
 
 import { createDirectusSession } from "../../utils/auth";
+import { assertDirectusEventSameOrigin } from "../../utils/csrf";
 
 const loginSchema = z.object({
   email: z.email(),
@@ -10,6 +11,7 @@ const loginSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
+  assertDirectusEventSameOrigin(event);
   const input = await readValidatedBody(event, loginSchema.parse);
   const session = await createDirectusSession(event, input);
   return session.snapshot;

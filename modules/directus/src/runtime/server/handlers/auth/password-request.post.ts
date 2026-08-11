@@ -4,9 +4,12 @@ import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
 
+import { assertDirectusEventSameOrigin } from "../../utils/csrf";
+
 const passwordRequestSchema = z.object({ email: z.email() });
 
 export default defineEventHandler(async (event) => {
+  assertDirectusEventSameOrigin(event);
   const config = useRuntimeConfig(event);
   const body = await readValidatedBody(event, passwordRequestSchema.parse);
   const resetUrl = config.directus.auth.passwordResetUrl;

@@ -124,6 +124,10 @@ coalesced through Nitro storage. Cross-instance coordination requires a shared, 
 consistent Nitro storage driver; the default in-memory driver cannot provide that guarantee, and
 deployment-level refresh races remain possible otherwise.
 
+Authentication mutations require an `Origin` or `Referer` matching the application origin. Missing
+or cross-origin metadata is rejected with `403`, including when the session cookie uses
+`sameSite: "none"`.
+
 ## Generated types
 
 When type generation is enabled, use generated collection types and `Schema` with type-only imports:
@@ -167,5 +171,7 @@ automatically; the application decides how to react to iframe updates.
 - State-changing proxy requests that use a server credential require a matching `Origin` or
   `Referer` header. Cross-origin or headerless mutations are rejected, including when
   `sameSite: "none"` is configured.
+- Authentication `POST` routes apply the same origin validation before reading input or changing a
+  session.
 - Directus permissions remain the final authorization boundary.
 - Supported environments are Nuxt 4 and Node.js 22 or newer.
