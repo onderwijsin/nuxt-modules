@@ -4,6 +4,7 @@ import {
   createSentryPreloadPlugin,
   generateCloudflareSentryPluginSource,
   generateNodeSentryConfigSource,
+  normalizeRollupPlugins,
   resolveSentryRuntime,
   stripSentryNitroRollupPlugin
 } from "../src/config/runtime";
@@ -74,5 +75,11 @@ describe("Sentry runtime configuration", () => {
     expect(
       stripSentryNitroRollupPlugin([[{ name: "sentry-rollup-plugin" }], false, { name: "nitro" }])
     ).toEqual([{ name: "nitro" }]);
+  });
+
+  it("narrows Rollup plugin values safely", () => {
+    expect(normalizeRollupPlugins([null, false, new Date(), { name: "nitro" }])).toEqual([
+      { name: "nitro" }
+    ]);
   });
 });

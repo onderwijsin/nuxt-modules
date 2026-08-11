@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
+import { isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import type { SentryRuntime } from "../types/options";
 
@@ -150,14 +151,12 @@ export function stripSentryNitroRollupPlugin(plugins?: unknown): RollupPluginLik
  */
 export function normalizeRollupPlugins(plugins?: unknown): RollupPluginLike[] {
   if (!plugins) return [];
-  if (!Array.isArray(plugins)) return isRollupPlugin(plugins) ? [plugins] : [];
+  if (!isArray(plugins)) return isRollupPlugin(plugins) ? [plugins] : [];
   return plugins.flatMap((plugin) => normalizeRollupPlugins(plugin));
 }
 
 function isRollupPlugin(value: unknown): value is RollupPluginLike {
-  return (
-    typeof value === "object" && value !== null && "name" in value && typeof value.name === "string"
-  );
+  return isRecord(value) && isString(value.name);
 }
 
 /**
