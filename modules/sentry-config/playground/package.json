@@ -1,0 +1,24 @@
+{
+  "name": "sentry-config-playground",
+  "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build",
+    "build:cloudflare": "NITRO_PRESET=cloudflare_module nuxt build",
+    "build:node": "NITRO_PRESET=node-server nuxt build"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-sentry-config": "workspace:*",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
+  }
+}

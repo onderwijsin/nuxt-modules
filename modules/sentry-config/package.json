@@ -1,0 +1,63 @@
+{
+  "name": "@onderwijsin/nuxt-sentry-config",
+  "version": "0.1.0",
+  "description": "Runtime-portable Sentry server configuration for Nuxt.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "modules/sentry-config"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prebuild": "pnpm --filter @onderwijsin/nuxt-module-utils build",
+    "build": "nuxt-module-build build",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "dev": "pnpm run dev:prepare && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "predev:prepare": "pnpm --filter @onderwijsin/nuxt-module-utils build",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground"
+  },
+  "dependencies": {
+    "@nuxt/kit": "catalog:",
+    "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "@sentry/nuxt": "catalog:",
+    "nitropack": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "catalog:",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
