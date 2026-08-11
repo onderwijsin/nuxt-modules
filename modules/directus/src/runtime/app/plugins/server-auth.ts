@@ -17,6 +17,7 @@ const { getDirectusSession } = await import("../../server/utils/session.js");
 export default defineNuxtPlugin(() => {
   const event = useRequestEvent();
 
+  // Load session into state in server plugin - this keeps the auth composable free of server runtime code
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
   session.value = event ? (getDirectusSession(event)?.snapshot ?? null) : null;
 
