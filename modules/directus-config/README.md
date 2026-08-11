@@ -1,11 +1,10 @@
 # @onderwijsin/nuxt-directus-config
 
-Shared, executable Directus configuration for Nuxt. The module discovers a `directus.config.ts`
-source file, validates it once during Nuxt setup, and makes the resolved configuration available to
-related Directus modules.
+Shared, executable Directus configuration for Nuxt. It discovers `directus.config.ts`, validates it
+once during Nuxt setup, and makes the resolved settings available to related Directus modules.
 
-It is optional: Directus modules remain configurable directly through `nuxt.config.ts`. When both
-are used, a module's direct options take precedence over its shared configuration.
+The module is optional: each Directus module can still be configured in `nuxt.config.ts`. When both
+are used, direct module options take precedence over shared configuration.
 
 ## Installation
 
@@ -13,9 +12,10 @@ are used, a module's direct options take precedence over its shared configuratio
 pnpm add @onderwijsin/nuxt-directus-config
 ```
 
-Register this module before the Directus modules that consume its configuration:
+Register it before modules that consume the configuration:
 
 ```ts
+// nuxt.config.ts
 export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus"]
 });
@@ -23,7 +23,7 @@ export default defineNuxtConfig({
 
 ## Shared configuration
 
-Create `directus.config.ts` at the application root:
+Create `directus.config.ts` in the application root:
 
 ```ts
 import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
@@ -35,140 +35,154 @@ export default defineDirectusConfig({
   },
   client: {
     commands: ["readItem", "readItems"],
-    preview: { enabled: true },
     auth: { enabled: true }
-  }
-});
-```
-
-### Instance
-
-`instance.baseUrl` and `instance.staticToken` are optional, although the Directus modules don't
-really work without `instance.baseUrl`. However, for compatibility with for example CI environments,
-they can be omitted.
-
-Both `instance.baseUrl` and `instance.staticToken` are marked sensitive and never appear in the
-client application.
-
-### Client
-
-`client` contains settings for the Directus SDK client module. Its schema supplies defaults for the
-proxy path, SDK commands, preview query keys, authentication cookie settings, and type generation.
-Configure only the settings you need:
-
-```ts
-mport { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
-
-export default defineDirectusConfig({
-  instance: {
-    baseUrl: "https://cms.example.com",
-    staticToken: process.env.DIRECTUS_STATIC_TOKEN
   },
-  client: {
-    proxy: {
-      path: "/_directus/proxy"
-    },
-    commands: ["readItem", "readItems"],
-    preview: {
-      enabled: true,
-      versioning: true,
-      queryKeys: {
-        preview: "preview",
-        token: "token",
-        version: "version",
-        id: "id"
+  collections: {
+    collections: [
+      {
+        collection: "articles",
+        sitemap: {
+          filter: { status: { _eq: "published" } },
+          mapper: () => ({ path: "/articles" })
+        },
+        prerender: false
       }
-    },
-    auth: {
-      enabled: true,
-      turnstile: {
-        enabled: true
-      },
-      cookie: {
-        name: "directus_session",
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 2_592_000,
-        domain: "example.com"
-      },
-      refreshSafetyWindow: 30_000,
-      passwordResetUrl: "https://app.example.com/reset-password"
-    },
-    typegen: {
-      enabled: true,
-      introspectionToken: process.env.DIRECTUS_INTROSPECTION_TOKEN,
-      cache: {
-        maxAge: 3_600_000
-      },
-      augmentations: {
-        removeEnums: true,
-        replaceAnyWithUnknown: true,
-        replaceJsonWithJSON: true,
-        applyTypeNameOverrides: true,
-        makeNonNullableOptionalsRequired: true,
-        mergeJsDocs: true
-      },
-      rules: {
-        articles: {
-          body: "RichText"
-        }
-      },
-      transform: (source, context) => {
-        console.log(`Generated ${context.collections.length} Directus collection types.`);
-        return source;
-      }
-    }
+    ]
+  },
+  sitemaps: {
+    static: [{ loc: "/" }],
+    apiEndpoint: "/api/_directus-sitemaps/urls",
+    enablePrettyUrls: true,
+    cache: { maxAge: 300, staleMaxAge: 0, swr: true },
+    prerenderSitemaps: false
   }
 });
 ```
 
-The supported SDK command names are exported as `supportedDirectusCommands` from
+The source is executable TypeScript. Use it for server-only values and functions; Nuxt config is
+serialised and is not suitable for those values.
+
+### `instance`
+
+| Option        | Required | Description                                                              |
+| ------------- | -------- | ------------------------------------------------------------------------ |
+| `baseUrl`     | No       | Directus instance URL. Consumers that make Directus requests require it. |
+| `staticToken` | No       | Server-only static Directus credential.                                  |
+
+Both fields are sensitive and never appear in the client-safe virtual configuration.
+
+### `client`
+
+`client` contains Directus client module settings. Its nested schemas provide defaults.
+
+| Option                       | Default                             | Description                                                                                     |
+| ---------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `proxy.path`                 | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`. |
+| `commands`                   | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                      |
+| `preview.enabled`            | `true`                              | Enables preview query parsing.                                                                  |
+| `preview.versioning`         | `true`                              | Enables Content Version preview lookup.                                                         |
+| `preview.queryKeys`          | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                  |
+| `auth.enabled`               | `false`                             | Enables cookie-backed authentication.                                                           |
+| `auth.turnstile.enabled`     | `false`                             | Enables Turnstile protection for authentication requests.                                       |
+| `auth.cookie`                | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`. |
+| `auth.refreshSafetyWindow`   | `30000`                             | Milliseconds before expiry when a session is refreshed.                                         |
+| `auth.passwordResetUrl`      | —                                   | URL sent to Directus for password-reset requests.                                               |
+| `typegen.enabled`            | `true`                              | Enables generated `#directus` schema declarations.                                              |
+| `typegen.introspectionToken` | —                                   | Server-only schema-introspection token.                                                         |
+| `typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                     |
+| `typegen.augmentations`      | All `true`                          | Generated-source transforms.                                                                    |
+| `typegen.rules`              | `{}`                                | Collection and field type-expression overrides.                                                 |
+| `typegen.transform`          | —                                   | Final executable transform: `(source, context) => string`.                                      |
+
+The default cookie is
+`{ name: "directus_session", secure: true, sameSite: "lax", path: "/", maxAge: 2592000 }`.
+`commands`, authentication cookie settings, refresh timing, password-reset URL, and type-generation
+settings are sensitive and excluded from the client-safe configuration.
+
+The supported command names are exported as `supportedDirectusCommands` from
 `@onderwijsin/nuxt-directus-config/schema`.
 
-## Collection configuration
+### `collections`
 
-Collection configuration allows you to define which role individual Directus collections play during
-setup and build. At provides configuration used by `nuxt-directus-sitemaps` and
-`nuxt-directus-prerender`.
+`collections.collections` is a shared list of executable collection behaviour. It is intentionally
+portable: the sitemap module uses its `sitemap` configuration, and a future prerender module can use
+its `prerender` configuration.
 
-## Virtual modules and secrets
+Each collection entry has these options:
 
-Two virtual modules expose separate trust boundaries:
+| Option            | Description                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `collection`      | Required Directus collection name.                                                                            |
+| `sitemap`         | `false` to exclude the collection, or sitemap configuration.                                                  |
+| `sitemap.fields`  | Optional Directus fields to fetch.                                                                            |
+| `sitemap.filter`  | Optional Directus filter.                                                                                     |
+| `sitemap.fetcher` | Optional async custom fetcher. It receives `{ collection, fields, filter }`; its result is mapped afterwards. |
+| `sitemap.mapper`  | Required mapper called for every fetched item. Return an entry, entries, `null`, or `undefined`.              |
+| `prerender`       | `false` or a reserved object for future prerender behaviour.                                                  |
 
-- `#directus-config` is safe to import from app and client code. It contains only public proxy,
-  preview, and authentication-enabled settings.
-- `#directus-config-server` contains the complete resolved configuration. Import it only from Nitro
-  server code:
+A sitemap mapper returns `{ path, lastUpdated?, noIndex?, priority? }`. `path` must start with `/`;
+`priority` is one of `0`, `0.1`, …, `1`.
 
-  ```ts
-  import directusConfig from "#directus-config-server";
-  ```
+Collection configuration, including mappers and fetchers, is sensitive and never sent to client
+code.
 
-It has no client runtime alias, so credentials cannot be bundled into the browser.
+### `sitemaps`
 
-## Discovery options
+`sitemaps` contains module-wide sitemap delivery settings, independent of which collections are
+selected:
 
-By default the module looks for `<rootDir>/directus.config.ts`. Change or disable discovery in
-`nuxt.config.ts`:
+| Option              | Default                                      | Description                                                                                 |
+| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `static`            | `[]`                                         | Static sitemap entries. Each entry requires `loc`; additional sitemap fields are preserved. |
+| `apiEndpoint`       | `/api/_directus-sitemaps/urls`               | Sitemap source endpoint.                                                                    |
+| `enablePrettyUrls`  | `true`                                       | Enables pretty sitemap URL routes.                                                          |
+| `cache`             | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Endpoint cache options in seconds, or `false` to disable caching.                           |
+| `prerenderSitemaps` | `false`                                      | Prerenders sitemap routes as static output.                                                 |
+
+Sitemap settings are sensitive because they may include static URLs and delivery policy; they are
+available only to consuming server-side modules.
+
+## Virtual modules
+
+The module exposes two aliases with different trust boundaries:
+
+| Alias                     | Where it can be imported     | Default export                                                                                   |
+| ------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `#directus-config`        | App, server, and client code | Sanitized public configuration: proxy, preview, and public authentication-enabled settings only. |
+| `#directus-config-server` | Nitro server code only       | Full `ResolvedDirectusConfig`, including credentials and executable configuration.               |
 
 ```ts
-export default defineNuxtConfig({
-  directusConfig: {
-    configFile: "config/directus.ts"
-  }
-});
+// server/api/example.get.ts
+import directusConfig from "#directus-config-server";
 ```
 
-Use `configFile: false` to disable discovery. A missing default file is valid and resolves to an
-empty shared configuration.
+Never import `#directus-config-server` from client code. Nuxt also type-checks server routes in the
+application context, so this alias is declared for both Nuxt and Nitro type contexts; see
+[Nuxt’s documented limitation](https://nuxt.com/docs/4.x/guide/modules/recipes-advanced#type-checking-server-routes-in-app-context).
 
-## Schema API
+## Discovery and module options
 
-The `@onderwijsin/nuxt-directus-config/schema` subpath exports the source-of-truth Zod schemas and
-their inferred input/output types. Use `DirectusConfig` for source input and
-`ResolvedDirectusConfig` for validated configuration. Fields marked with `.sensitive()` are removed
-automatically from the derived public schema.
+The Nuxt module options are configured under `directusConfig`:
+
+| Option       | Default              | Description                                                              |
+| ------------ | -------------------- | ------------------------------------------------------------------------ |
+| `enabled`    | `true`               | Enables source discovery and virtual-module generation.                  |
+| `configFile` | `directus.config.ts` | Root-relative or absolute config path; set `false` to disable discovery. |
+
+A missing default file is valid and resolves to an empty shared configuration.
+
+## Public API
+
+`@onderwijsin/nuxt-directus-config/config` exports:
+
+- `defineDirectusConfig(config)` — strict, typed configuration helper.
+- `validateDirectusConfig(config)` — validates unknown input and returns `ResolvedDirectusConfig`.
+- `DirectusConfig` and `ResolvedDirectusConfig` types.
+
+`@onderwijsin/nuxt-directus-config/schema` exports the source-of-truth Zod schemas, their inferred
+option types, `supportedDirectusCommands`, `getPublicSchema`, and the resolved-config helpers used
+by related modules. Fields marked `.sensitive()` are automatically removed by `getPublicSchema()`;
+do not maintain a separate client-side sanitizer.
 
 ## Compatibility
 
