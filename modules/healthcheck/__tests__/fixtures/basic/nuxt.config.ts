@@ -2,6 +2,7 @@ import healthcheckModule from "../../../src/module";
 
 export default defineNuxtConfig({
   compatibilityDate: "2026-08-07",
+  srcDir: "app",
   modules: [healthcheckModule],
   healthcheck: {
     cache: { enabled: false },

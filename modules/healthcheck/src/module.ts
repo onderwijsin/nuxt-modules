@@ -61,7 +61,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     if (!isEnabled()) return;
 
-    const componentDirectory = resolve(nuxt.options.srcDir, "server/healthcheck");
+    const componentDirectory = resolve(nuxt.options.serverDir, "healthcheck");
     const components = discoverHealthcheckComponents(componentDirectory);
     const healthHandler = addTemplate({
       filename: "healthcheck-handler.mjs",

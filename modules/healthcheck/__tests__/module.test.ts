@@ -52,7 +52,8 @@ describe("healthcheck module setup", () => {
     const module = (await import("../src/module")).default as any;
     const nuxt: any = {
       options: {
-        srcDir: "/project",
+        srcDir: "/project/app",
+        serverDir: "/project/server",
         runtimeConfig: {},
         build: { transpile: [] },
         routeRules: {}
@@ -86,7 +87,8 @@ describe("healthcheck module setup", () => {
         { directus: { enabled: true, baseUrl: "not-a-url" } },
         {
           options: {
-            srcDir: "/project",
+            srcDir: "/project/app",
+            serverDir: "/project/server",
             runtimeConfig: {},
             build: { transpile: [] },
             routeRules: {}
@@ -99,7 +101,13 @@ describe("healthcheck module setup", () => {
   it("skips runtime registration when disabled after validating options", async () => {
     const module = (await import("../src/module")).default as any;
     const nuxt = {
-      options: { srcDir: "/project", runtimeConfig: {}, build: { transpile: [] }, routeRules: {} }
+      options: {
+        srcDir: "/project/app",
+        serverDir: "/project/server",
+        runtimeConfig: {},
+        build: { transpile: [] },
+        routeRules: {}
+      }
     };
     module.setup({ enabled: false }, nuxt);
     expect(addServerHandler).not.toHaveBeenCalled();
