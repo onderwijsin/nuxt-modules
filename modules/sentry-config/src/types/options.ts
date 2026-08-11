@@ -4,6 +4,20 @@ export const supportedSentryRuntimes = ["node-server", "cloudflare_module"] as c
 
 export type SentryRuntime = (typeof supportedSentryRuntimes)[number];
 
+/** Configuration for one optional Sentry diagnostic route. */
+export interface SentryTestToolRouteOptions {
+  /** Route exposed by the diagnostic tool. */
+  path?: string;
+}
+
+/** Optional diagnostics that validate client and server Sentry capture. */
+export interface SentryTestToolsOptions {
+  /** Browser diagnostic page. Set to `false` to omit it. */
+  page?: SentryTestToolRouteOptions | false;
+  /** Server error endpoint. Set to `false` to omit it. */
+  endpoint?: SentryTestToolRouteOptions | false;
+}
+
 export interface ModuleOptions extends BaseModuleOptions {
   /** Public Sentry DSN exposed to client and server runtime configuration. */
   dsn?: string;
@@ -21,4 +35,6 @@ export interface ModuleOptions extends BaseModuleOptions {
   autoInjectServerConfig?: boolean;
   /** Removes the duplicate Sentry Nitro Rollup upload pass registered by `@sentry/nuxt`. */
   disableNitroSourceMapUpload?: boolean;
+  /** Optional Sentry diagnostic page and deliberate-error endpoint. Set to `false` to omit both. */
+  testTools?: SentryTestToolsOptions | false;
 }

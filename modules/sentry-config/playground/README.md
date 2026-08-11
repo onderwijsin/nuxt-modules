@@ -7,6 +7,12 @@ source-map uploads when `SENTRY_UPLOAD_SOURCE_MAPS=true` and the Sentry environm
 Keep credentials in the local, ignored `.env` file. Do not commit credentials or reuse a production
 auth token for local experimentation.
 
+## Diagnostic tools
+
+The module supplies the playground diagnostics at [/_sentry](/_sentry), rather than the playground
+itself defining a page or server endpoint. This exercises the same module-owned client-error page
+and rate-limited server-error route that consumers receive.
+
 ## Cloudflare preview
 
 Build the Cloudflare Worker, then use the included Wrangler configuration to run the generated

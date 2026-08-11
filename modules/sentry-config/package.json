@@ -46,7 +46,10 @@
   },
   "dependencies": {
     "@nuxt/kit": "catalog:",
+    "@nuxt/schema": "catalog:",
+    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
     "@sentry/nuxt": "catalog:",
     "nitropack": "catalog:",
     "zod": "catalog:"

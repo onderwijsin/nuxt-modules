@@ -41,7 +41,7 @@ function readServerArtifacts(): string {
 }
 
 describe("sentry-config production artifacts", () => {
-  it("emits the Node preload and client defaults without Nitro source-map uploads", () => {
+  it("emits the Node preload, diagnostics, and client defaults without Nitro source-map uploads", () => {
     buildPlayground("build:node");
 
     const serverDirectory = join(playgroundDirectory, ".output", "server");
@@ -53,6 +53,8 @@ describe("sentry-config production artifacts", () => {
     expect(readFileSync(preloadPath, "utf8")).toContain("init(sentryConfig)");
     expect(readFileSync(entryPath, "utf8")).toMatch(/^import '\.\/sentry\.server\.config\.mjs';/);
     expect(readClientArtifacts()).toContain("sendDefaultPii");
+    expect(readClientArtifacts()).toContain("Sentry diagnostics");
+    expect(readServerArtifacts()).toContain("Sentry test API route error");
   }, 30_000);
 
   it("emits a Cloudflare Worker containing the Cloudflare Sentry configuration", () => {

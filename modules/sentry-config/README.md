@@ -105,6 +105,37 @@ When `configFile` is omitted, the module uses these defaults:
 The consumer config is shallow-merged over the defaults, so every field can be replaced. Set
 `enabled: false` to keep the generated wiring inert in a particular deployment.
 
+## Diagnostic test tools
+
+By default, the module provides a small diagnostic page at `/_sentry` and a deliberate-error
+endpoint at `/api/_sentry/trigger-error`. The page sends a client exception, starts a frontend
+trace, and calls the server endpoint. It also displays the active Node or Cloudflare runtime. Use it
+only in an environment where controlled errors are acceptable; the endpoint intentionally creates a
+Sentry event.
+
+The endpoint has a per-IP limit of five requests per minute through
+`@onderwijsin/nuxt-simple-rate-limiter`. This is best-effort abuse control, not an authentication or
+security boundary. Restrict access at your proxy or deployment platform when the route is available
+outside a test environment.
+
+Configure the routes or opt out of one or both tools with `testTools`:
+
+```ts
+export default defineNuxtConfig({
+  sentryConfig: {
+    testTools: {
+      page: { path: "/internal/sentry" },
+      endpoint: { path: "/api/internal/sentry/trigger-error" }
+    }
+  }
+});
+```
+
+Set `testTools: false` to omit both tools, `testTools: { page: false }` to omit the Nuxt UI page, or
+`testTools: { endpoint: false }` to omit the server endpoint. The page remains useful for testing
+client capture if the endpoint is disabled. The module registers `@nuxt/ui` only when the page is
+enabled, and `@onderwijsin/nuxt-simple-rate-limiter` only when the endpoint is enabled.
+
 ## Node runtime
 
 For Node, the module emits `.output/server/sentry.server.config.mjs`. It initializes Sentry before
@@ -207,14 +238,17 @@ to retain the upstream Nitro upload plugin.
 
 ## Options
 
-| Option                        | Default  | Purpose                                                         |
-| ----------------------------- | -------- | --------------------------------------------------------------- |
-| `enabled`                     | `true`   | Enables all module wiring.                                      |
-| `dsn`                         | omitted  | Public Sentry DSN exposed as `runtimeConfig.public.sentry.dsn`. |
-| `runtime`                     | inferred | Overrides `node-server` or `cloudflare_module` detection.       |
-| `configFile`                  | omitted  | Consumer config file, resolved from the Nuxt root.              |
-| `autoInjectServerConfig`      | `true`   | Adds the generated Node preload to Nitro's entry.               |
-| `disableNitroSourceMapUpload` | `true`   | Removes the duplicate Nitro Sentry upload pass.                 |
+| Option                        | Default                      | Purpose                                                         |
+| ----------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| `enabled`                     | `true`                       | Enables all module wiring.                                      |
+| `dsn`                         | omitted                      | Public Sentry DSN exposed as `runtimeConfig.public.sentry.dsn`. |
+| `runtime`                     | inferred                     | Overrides `node-server` or `cloudflare_module` detection.       |
+| `configFile`                  | omitted                      | Consumer config file, resolved from the Nuxt root.              |
+| `autoInjectServerConfig`      | `true`                       | Adds the generated Node preload to Nitro's entry.               |
+| `disableNitroSourceMapUpload` | `true`                       | Removes the duplicate Nitro Sentry upload pass.                 |
+| `testTools`                   | enabled                      | Optional diagnostic page and controlled-error endpoint.         |
+| `testTools.page`              | `/_sentry`                   | Browser diagnostic page; set to `false` to omit it.             |
+| `testTools.endpoint`          | `/api/_sentry/trigger-error` | Rate-limited deliberate-error route; set to `false` to omit it. |
 
 ## Compatibility
 

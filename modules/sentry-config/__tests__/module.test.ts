@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const addServerPlugin = vi.fn();
+const addServerHandler = vi.fn();
 const addServerTemplate = vi.fn((template: { filename: string }) => template);
 const addTypeTemplate = vi.fn();
+const extendPages = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn(), error: vi.fn() };
 
 interface TestRuntimeConfig {
@@ -15,10 +17,12 @@ function createRuntimeConfig(): TestRuntimeConfig {
 
 vi.mock("@nuxt/kit", () => ({
   addServerPlugin,
+  addServerHandler,
   addServerTemplate,
   addTypeTemplate,
   createResolver: () => ({ resolve: (...segments: string[]) => segments.join("/") }),
   defineNuxtModule: (definition: unknown) => definition,
+  extendPages,
   useLogger: () => logger
 }));
 
@@ -31,6 +35,7 @@ vi.mock("@onderwijsin/nuxt-module-utils/build", async (importOriginal) => ({
   }),
   resolveLoggerScope: () => "sentry-config",
   resolveModuleName: () => "@onderwijsin/nuxt-sentry-config",
+  transpileRuntime: vi.fn(),
   validateModuleOptions: (options: Record<string, unknown>) => ({
     enabled: true,
     autoInjectServerConfig: true,
@@ -43,8 +48,10 @@ describe("sentry-config module setup", () => {
   beforeEach(() => {
     vi.resetModules();
     addServerPlugin.mockReset();
+    addServerHandler.mockReset();
     addServerTemplate.mockClear();
     addTypeTemplate.mockReset();
+    extendPages.mockReset();
     Object.values(logger).forEach((mock) => mock.mockReset());
   });
 
@@ -78,7 +85,8 @@ describe("sentry-config module setup", () => {
     expect(nitroOptions.cloudflare).toEqual({ nodeCompat: true });
     expect(runtimeConfig.public.sentry).toEqual({
       dsn: undefined,
-      runtime: "cloudflare_module"
+      runtime: "cloudflare_module",
+      testTools: { endpoint: "/api/_sentry/trigger-error" }
     });
   });
 
@@ -100,7 +108,8 @@ describe("sentry-config module setup", () => {
     expect(addServerPlugin).toHaveBeenCalledWith("./runtime/server/plugins/cloudflare");
     expect(runtimeConfig.public.sentry).toEqual({
       dsn: undefined,
-      runtime: "cloudflare_module"
+      runtime: "cloudflare_module",
+      testTools: { endpoint: "/api/_sentry/trigger-error" }
     });
   });
 
@@ -127,8 +136,14 @@ describe("sentry-config module setup", () => {
     expect(addServerPlugin).not.toHaveBeenCalled();
     expect(runtimeConfig.public.sentry).toEqual({
       dsn: "https://public@example.ingest.sentry.io/1",
-      runtime: "node-server"
+      runtime: "node-server",
+      testTools: { endpoint: "/api/_sentry/trigger-error" }
     });
+    expect(addServerHandler).toHaveBeenCalledWith({
+      handler: "./runtime/server/api/trigger-error.get",
+      route: "/api/_sentry/trigger-error"
+    });
+    expect(extendPages).toHaveBeenCalledTimes(1);
   });
 
   it("does not register runtime wiring when disabled", async () => {
@@ -142,5 +157,32 @@ describe("sentry-config module setup", () => {
 
     expect(nuxt.hook).not.toHaveBeenCalled();
     expect(addServerPlugin).not.toHaveBeenCalled();
+    expect(addTypeTemplate).toHaveBeenCalledWith({
+      filename: "types/sentry-config.d.ts",
+      src: "./runtime/types/config.d.ts"
+    });
+  });
+
+  it("allows each diagnostic tool to be opted out or moved", async () => {
+    const module = (await import("../src/module")).default;
+    const runtimeConfig = createRuntimeConfig();
+    const nuxt = {
+      hook: vi.fn(),
+      options: { rootDir: "/project", nitro: {}, runtimeConfig }
+    };
+
+    await Reflect.get(module, "setup")(
+      { testTools: { page: { path: "/diagnostics" }, endpoint: false } },
+      nuxt
+    );
+
+    expect(addServerHandler).not.toHaveBeenCalled();
+    expect(runtimeConfig.public.sentry).toEqual({ dsn: undefined, runtime: "node-server" });
+    const pagesCallback = extendPages.mock.calls.at(-1)?.[0];
+    const pages: unknown[] = [];
+    pagesCallback(pages);
+    expect(pages).toContainEqual(
+      expect.objectContaining({ name: "sentry-config-test-tools", path: "/diagnostics" })
+    );
   });
 });

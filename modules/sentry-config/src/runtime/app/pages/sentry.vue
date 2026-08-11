@@ -1,74 +1,47 @@
 <script lang="ts" setup>
 import * as Sentry from "@sentry/nuxt";
+import { ref } from "vue";
+import { useRuntimeConfig, useSeoMeta, useToast } from "#imports";
 
-const ICONS = {
-  success: "heroicons:check-circle-20-solid",
-  error: "heroicons:exclamation-triangle-20-solid",
-  warn: "heroicons:exclamation-circle-20-solid"
-};
-
-const title = "Sentry playground";
-const description =
-  "Send client and server errors to Sentry and check if the auto-generated config is working.";
-useSeoMeta({
-  title,
-  description,
-  ogTitle: title,
-  ogDescription: description
-});
+const title = "Sentry diagnostics";
+const description = "Send controlled client and server errors to verify the Sentry integration.";
+useSeoMeta({ title, description, ogTitle: title, ogDescription: description });
 
 const toast = useToast();
 const isTriggeringServerError = ref(false);
-const sentryRuntime = useRuntimeConfig().public.sentry.runtime;
+const sentry = useRuntimeConfig().public.sentry;
+const sentryRuntime = sentry.runtime;
+const serverEndpoint = sentry.testTools?.endpoint;
 const runtimeLabel = sentryRuntime === "cloudflare_module" ? "Cloudflare Worker" : "Node server";
-const runtimeIcon = sentryRuntime === "cloudflare_module" ? "i-lucide-cloud" : "i-lucide-server";
 const runtimeDescription =
   sentryRuntime === "cloudflare_module"
     ? "Sentry is initialized through the Cloudflare Nitro plugin."
     : "Sentry is initialized through the generated Node server preload.";
 
-/**
- * Sends a controlled client-side exception to Sentry.
- *
- * @returns Nothing.
- */
+/** Sends a controlled client-side exception to Sentry. */
 function triggerClientError(): void {
-  const error = new Error("Sentry test client error");
-  const eventId = Sentry.captureException(error);
-
+  const eventId = Sentry.captureException(new Error("Sentry test client error"));
   toast.add({
     title: "Client error triggered",
-    description: `Sentry event-id: ${eventId}`,
-    color: "success",
-    icon: ICONS.success
+    description: `Sentry event ID: ${eventId}`,
+    color: "success"
   });
 }
 
-/**
- * Triggers the server test endpoint inside a traced frontend span.
- *
- * @returns Nothing.
- */
+/** Calls the controlled server-error endpoint inside a frontend trace span. */
 async function triggerServerError(): Promise<void> {
+  if (!serverEndpoint) return;
   isTriggeringServerError.value = true;
 
   try {
-    await Sentry.startSpan(
-      {
-        name: "Sentry test frontend span",
-        op: "test"
-      },
-      async () => {
-        await $fetch("/api/_sentry/trigger-error", { retry: false });
-      }
-    );
-  } catch (error) {
-    console.error("Sentry test server request failed as expected", error);
+    await Sentry.startSpan({ name: "Sentry test frontend span", op: "test" }, async () => {
+      await $fetch(serverEndpoint, { retry: false });
+    });
+  } catch {
     toast.add({
       title: "Server error triggered",
-      description: "The test error has been executed. Check Sentry Issues and Traces.",
-      color: "success",
-      icon: ICONS.success
+      description: "The endpoint threw as expected. Check Sentry Issues and Traces.",
+      color: "success"
     });
   } finally {
     isTriggeringServerError.value = false;
@@ -93,12 +66,7 @@ async function triggerServerError(): Promise<void> {
           <p class="text-sm font-medium text-muted">Active Sentry server runtime</p>
           <p class="mt-1 text-base text-highlighted">{{ runtimeDescription }}</p>
         </div>
-        <UBadge
-          :color="sentryRuntime === 'cloudflare_module' ? 'primary' : 'success'"
-          :icon="runtimeIcon"
-          size="lg"
-          variant="solid"
-        >
+        <UBadge :color="sentryRuntime === 'cloudflare_module' ? 'primary' : 'success'" size="lg">
           {{ runtimeLabel }}
         </UBadge>
       </div>
@@ -108,15 +76,12 @@ async function triggerServerError(): Promise<void> {
       <UPageCard
         title="Client error"
         description="Sends a test exception from the browser to Sentry."
-        :icon="ICONS.error"
-        :ui="{ description: 'text-base' }"
       >
         <template #footer>
           <UButton
             label="Trigger client error"
             color="error"
             variant="soft"
-            :icon="ICONS.error"
             @click="triggerClientError"
           />
         </template>
@@ -124,9 +89,11 @@ async function triggerServerError(): Promise<void> {
 
       <UPageCard
         title="Server error + trace"
-        description="Starts a frontend span and calls the endpoint `/api/_sentry/trigger-error` which deliberately throws an error."
-        :icon="ICONS.warn"
-        :ui="{ description: 'text-base' }"
+        :description="
+          serverEndpoint
+            ? `Calls ${serverEndpoint}, which deliberately throws an error.`
+            : 'The server test endpoint is disabled.'
+        "
       >
         <template #footer>
           <UButton
@@ -134,8 +101,7 @@ async function triggerServerError(): Promise<void> {
             color="warning"
             variant="soft"
             :loading="isTriggeringServerError"
-            :disabled="isTriggeringServerError"
-            :icon="ICONS.warn"
+            :disabled="isTriggeringServerError || !serverEndpoint"
             @click="triggerServerError"
           />
         </template>

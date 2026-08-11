@@ -20,19 +20,19 @@ Register both this module and `@sentry/nuxt/module`. They have separate responsi
 export default defineNuxtConfig({
   modules: ["@sentry/nuxt/module", "@onderwijsin/nuxt-sentry-config"],
   // @sentry/nuxt build-time settings: source-map uploads and credentials.
-  sentry: sentryEnabled
+  sentry: process.env.SENTRY_DSN
     ? {
-        org: ENV.SENTRY_ORG,
-        project: ENV.SENTRY_PROJECT,
-        authToken: ENV.SENTRY_AUTH_TOKEN,
+        org: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
+        authToken: process.env.SENTRY_AUTH_TOKEN,
         sourcemaps: {
-          disable: !sentryEnabled || ENV.SENTRY_UPLOAD_SOURCE_MAPS !== true
+          disable: process.env.SENTRY_UPLOAD_SOURCE_MAPS !== "true"
         }
       }
     : false,
   // Runtime-portable server initialization settings from this module.
   sentryConfig: {
-    dsn: ENV.SENTRY_DSN,
+    dsn: process.env.SENTRY_DSN,
     configFile: "sentry.config.ts"
   }
 });
@@ -120,8 +120,46 @@ credentials and must never be used for an auth token.
 - `configFile`: optional path to the application config file, relative to the Nuxt root.
 - `autoInjectServerConfig` (`true`): injects the generated Node preload into Nitro's entrypoint.
 - `disableNitroSourceMapUpload` (`true`): disables the duplicate Nitro Rollup source-map upload.
+- `testTools` (enabled): optional diagnostic page and controlled-error endpoint. Set `false` to omit
+  both tools.
+- `testTools.page` (`/_sentry`): browser diagnostic route, or `false` to omit only the Nuxt UI page.
+- `testTools.endpoint` (`/api/_sentry/trigger-error`): deliberate-error server route, or `false` to
+  omit only the endpoint.
 
 If `configFile` is omitted, the module initializes with `defaultSentryServerConfig`.
+
+## Diagnostic test tools
+
+Unless disabled, the module exposes a Nuxt UI diagnostic page at `/_sentry` and a deliberate-error
+endpoint at `/api/_sentry/trigger-error`. The page captures a client exception, starts a frontend
+trace, calls the server endpoint, and shows whether the active server integration is Node or
+Cloudflare. The endpoint is intentionally rate limited to five requests per minute per IP through
+`@onderwijsin/nuxt-simple-rate-limiter`.
+
+These tools are for environments where generating a controlled Sentry event is acceptable. The rate
+limiter is best-effort abuse control rather than an access-control boundary, so protect or disable
+these routes at the deployment boundary if they are not intended to be public.
+
+Customize or omit the routes with `testTools`:
+
+```ts
+export default defineNuxtConfig({
+  sentryConfig: {
+    testTools: {
+      page: { path: "/internal/sentry" },
+      endpoint: { path: "/api/internal/sentry/trigger-error" }
+    }
+  }
+});
+```
+
+- `testTools: false` omits both tools.
+- `testTools: { page: false }` omits only the Nuxt UI page and avoids the `@nuxt/ui` dependency.
+- `testTools: { endpoint: false }` omits only the server route and avoids the rate-limiter
+  dependency.
+
+The page can still test client capture when its endpoint is disabled. The configured endpoint path
+is exposed as `runtimeConfig.public.sentry.testTools.endpoint` for the module-owned page.
 
 ## Node runtime
 
