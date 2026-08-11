@@ -22,6 +22,15 @@ describe("Directus module options", () => {
     });
   });
 
+  it("defaults authentication Turnstile protection to disabled", () => {
+    expect(directusOptionsSchema.parse({ auth: { enabled: true } })).toMatchObject({
+      auth: { enabled: true, turnstile: { enabled: false } }
+    });
+    expect(directusOptionsSchema.parse({ auth: { turnstile: { enabled: true } } })).toMatchObject({
+      auth: { turnstile: { enabled: true } }
+    });
+  });
+
   it("rejects root, traversal, and auth-colliding proxy paths", () => {
     for (const path of ["/", "/../proxy", "/_directus/auth/session"]) {
       expect(() => directusOptionsSchema.parse({ proxy: { path } })).toThrow();

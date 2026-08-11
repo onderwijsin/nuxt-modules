@@ -51,6 +51,7 @@ const defaultPreviewOptions = {
 
 const defaultAuthOptions = {
   enabled: false,
+  turnstile: { enabled: false },
   cookie: {
     name: "directus_session",
     secure: true,
@@ -117,6 +118,7 @@ export const directusOptionsSchema = z
     auth: z
       .object({
         enabled: z.boolean().default(false),
+        turnstile: z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
         cookie: z
           .object({
             name: z

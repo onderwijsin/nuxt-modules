@@ -46,6 +46,7 @@ All options are configured under `directus`.
 | `preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                                 |
 | `preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                   |
 | `auth.enabled`               | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.         |
+| `auth.turnstile.enabled`     | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                        |
 | `auth.cookie.name`           | `directus_session`                  | Session cookie name.                                                                              |
 | `auth.cookie.secure`         | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                    |
 | `auth.cookie.sameSite`       | `lax`                               | Cookie `SameSite` policy.                                                                         |
@@ -153,13 +154,13 @@ snapshot identity-only; role, policy, and permission helpers are not part of thi
 
 #### Methods
 
-| Method            | Signature                                                                        | Behavior                                                                                                                                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login`           | `login(input: { email: string; password: string; otp?: string }): Promise<void>` | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                        |
-| `refresh`         | `refresh(): Promise<void>`                                                       | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
-| `logout`          | `logout(): Promise<void>`                                                        | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                               |
-| `passwordRequest` | `passwordRequest(email: string): Promise<void>`                                  | Requests a password-reset email using the configured `auth.passwordResetUrl`.                                                                                                                                 |
-| `passwordReset`   | `passwordReset(token: string, password: string): Promise<void>`                  | Completes a Directus password reset.                                                                                                                                                                          |
+| Method            | Signature                                                       | Behavior                                                                                                                                                                                                      |
+| ----------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login`           | `login(input, meta?): Promise<void>`                            | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                        |
+| `refresh`         | `refresh(): Promise<void>`                                      | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
+| `logout`          | `logout(): Promise<void>`                                       | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                               |
+| `passwordRequest` | `passwordRequest(email: string, meta?): Promise<void>`          | Requests a password-reset email using the configured `auth.passwordResetUrl`.                                                                                                                                 |
+| `passwordReset`   | `passwordReset(token: string, password: string): Promise<void>` | Completes a Directus password reset.                                                                                                                                                                          |
 
 The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
 state. Hydration therefore does not require a session request. Server-side refresh coordination uses
@@ -168,6 +169,17 @@ across processes or Cloudflare isolates; the default in-memory driver is instanc
 
 When `auth.enabled` is `false`, the module does not read, refresh, forward, or serialize Directus
 session cookies. Static, preview, and unauthenticated access continue to work.
+
+### Turnstile protection
+
+Set `auth.turnstile.enabled: true` to register `@onderwijsin/nuxt-turnstile` and protect login plus
+password-reset-email requests. Configure site and secret keys through the top-level `turnstile`
+option. Follow the
+[Turnstile module documentation](https://github.com/onderwijsin/nuxt-modules/tree/main/modules/turnstile)
+to configure keys, render widgets, and manage tokens. Render each widget with the public action key
+at `useRuntimeConfig().public.directus.auth.turnstile.actions.login` or `.passwordRequest`, then
+pass the resulting token as `{ turnstileToken }` metadata to `auth.login` or `auth.passwordRequest`.
+Tokens are single-use, so reset the widget after each processed submission.
 
 ## Authentication hooks
 

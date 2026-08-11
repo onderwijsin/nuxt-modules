@@ -250,17 +250,17 @@ export async function ensureFreshDirectusSession(
  */
 export async function destroyDirectusSession(event: H3Event): Promise<void> {
   const session = getDirectusSession(event);
-  try {
+  const result = await attempt(async () => {
     if (session) {
       await ofetch(getDirectusEndpoint(event, "auth/logout"), {
         method: "POST",
         body: { refresh_token: session.refreshToken, mode: "json" }
       });
     }
-  } finally {
-    clearDirectusSession(event);
-    setResponseStatus(event, 204);
-  }
+  });
+  clearDirectusSession(event);
+  setResponseStatus(event, 204);
+  if (result.error !== null) throw result.error;
 }
 
 /**

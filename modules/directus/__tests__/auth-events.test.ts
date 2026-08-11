@@ -50,6 +50,28 @@ describe("Directus authentication hooks", () => {
     );
   });
 
+  it("forwards Turnstile tokens from authentication request metadata", async () => {
+    const auth = useDirectusAuth();
+    state.fetch.mockResolvedValue({ userId: "user-1" });
+
+    await auth.login(
+      { email: "user@example.test", password: "secret" },
+      { turnstileToken: "login-token" }
+    );
+    await auth.passwordRequest("user@example.test", { turnstileToken: "password-token" });
+
+    expect(state.fetch).toHaveBeenNthCalledWith(
+      1,
+      "/_directus/auth/login",
+      expect.objectContaining({ headers: { "x-turnstile-token": "login-token" } })
+    );
+    expect(state.fetch).toHaveBeenNthCalledWith(
+      2,
+      "/_directus/auth/password-request",
+      expect.objectContaining({ headers: { "x-turnstile-token": "password-token" } })
+    );
+  });
+
   it("emits refresh with the safe snapshot after a successful refresh", async () => {
     const auth = useDirectusAuth();
     const snapshot = { userId: "user-1" };

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { attempt } from "@onderwijsin/nuxt-module-utils";
+
 definePageMeta({
   middleware: () => {
     const auth = useDirectusAuth();
@@ -49,20 +51,23 @@ const fields = computed(() => [
 async function submitLogin(event: { data: LoginForm }): Promise<void> {
   loginPending.value = true;
   try {
-    await auth.login({
-      email: event.data.email,
-      password: event.data.password,
-      ...(event.data.otp ? { otp: event.data.otp } : {})
+    const result = await attempt(async () => {
+      await auth.login({
+        email: event.data.email,
+        password: event.data.password,
+        ...(event.data.otp ? { otp: event.data.otp } : {})
+      });
+      await router.push("/_session");
     });
-    await router.push("/_session");
-  } catch (error) {
-    const directusError = useDirectusError(error);
-    otpRequired.value = directusError.isOtpError;
-    toast.add({
-      title: directusError.isOtpError ? "Additional verification required" : "Unable to sign in",
-      description: directusError.errors[0]?.message ?? "Directus rejected the login request.",
-      color: "error"
-    });
+    if (result.error !== null) {
+      const directusError = useDirectusError(result.error);
+      otpRequired.value = directusError.isOtpError;
+      toast.add({
+        title: directusError.isOtpError ? "Additional verification required" : "Unable to sign in",
+        description: directusError.errors[0]?.message ?? "Directus rejected the login request.",
+        color: "error"
+      });
+    }
   } finally {
     loginPending.value = false;
   }

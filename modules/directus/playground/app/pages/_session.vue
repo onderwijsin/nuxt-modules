@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { attempt } from "@onderwijsin/nuxt-module-utils";
+
 const auth = useDirectusAuth();
 const toast = useToast();
 const loading = shallowRef(false);
@@ -7,14 +9,15 @@ const logoutPending = shallowRef(false);
 async function refreshSession(): Promise<void> {
   loading.value = true;
   try {
-    await auth.refresh();
-  } catch (cause) {
-    const directusError = useDirectusError(cause);
-    toast.add({
-      title: "Session refresh failed",
-      description: directusError.errors[0]?.message ?? "The session could not be refreshed.",
-      color: "error"
-    });
+    const result = await attempt(() => auth.refresh());
+    if (result.error !== null) {
+      const directusError = useDirectusError(result.error);
+      toast.add({
+        title: "Session refresh failed",
+        description: directusError.errors[0]?.message ?? "The session could not be refreshed.",
+        color: "error"
+      });
+    }
   } finally {
     loading.value = false;
   }
@@ -23,14 +26,15 @@ async function refreshSession(): Promise<void> {
 async function logout(): Promise<void> {
   logoutPending.value = true;
   try {
-    await auth.logout();
-  } catch (cause) {
-    const directusError = useDirectusError(cause);
-    toast.add({
-      title: "Unable to sign out",
-      description: directusError.errors[0]?.message ?? "The logout request failed.",
-      color: "error"
-    });
+    const result = await attempt(() => auth.logout());
+    if (result.error !== null) {
+      const directusError = useDirectusError(result.error);
+      toast.add({
+        title: "Unable to sign out",
+        description: directusError.errors[0]?.message ?? "The logout request failed.",
+        color: "error"
+      });
+    }
   } finally {
     logoutPending.value = false;
   }

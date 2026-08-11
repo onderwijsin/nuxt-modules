@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { afterAll, describe, expect, it } from "vitest";
-import { $fetch, url } from "@nuxt/test-utils/e2e";
+import { $fetch, fetch, url } from "@nuxt/test-utils/e2e";
 import { setupFixture } from "../../../packages/test-utils/src";
 
 describe("Directus client and server composables", async () => {
@@ -8,6 +8,28 @@ describe("Directus client and server composables", async () => {
     if (request.url?.startsWith("/items/pages")) {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ data: [{ id: "page-1" }] }));
+      return;
+    }
+
+    if (request.url?.startsWith("/auth/login")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          data: { access_token: "access", refresh_token: "refresh", expires: 60_000 }
+        })
+      );
+      return;
+    }
+
+    if (request.url?.startsWith("/users/me")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ data: { id: "user-1", email: "user@example.test" } }));
+      return;
+    }
+
+    if (request.url?.startsWith("/auth/password/request")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({}));
       return;
     }
 
@@ -72,5 +94,45 @@ describe("Directus client and server composables", async () => {
         headers: { origin: new URL(url("/")).origin }
       })
     ).resolves.toBeUndefined();
+  });
+
+  it.each([
+    ["/_directus/auth/login", "directus-login"],
+    ["/_directus/auth/password-request", "directus-password-request"]
+  ])("requires a Turnstile token for %s", async (route, expectedAction) => {
+    const response = await fetch(route, {
+      method: "POST",
+      headers: { origin: new URL(url("/")).origin }
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      data: { code: "TURNSTILE_TOKEN_MISSING", expectedAction }
+    });
+  });
+
+  it("accepts Turnstile tokens with the action exposed for each protected route", async () => {
+    const headers = { origin: new URL(url("/")).origin };
+    const actions = await $fetch<{ login: string; passwordRequest: string }>(
+      "/api/directus-turnstile-actions"
+    );
+    expect(actions).toEqual({
+      login: "directus-login",
+      passwordRequest: "directus-password-request"
+    });
+    await expect(
+      $fetch("/_directus/auth/login", {
+        method: "POST",
+        body: { email: "user@example.test", password: "password" },
+        headers: { ...headers, "x-turnstile-token": actions.login }
+      })
+    ).resolves.toMatchObject({ userId: "user-1" });
+    await expect(
+      $fetch("/_directus/auth/password-request", {
+        method: "POST",
+        body: { email: "user@example.test" },
+        headers: { ...headers, "x-turnstile-token": actions.passwordRequest }
+      })
+    ).resolves.toEqual({ success: true });
   });
 });

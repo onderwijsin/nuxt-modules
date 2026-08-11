@@ -59,6 +59,7 @@ The most commonly configured options are:
 | `preview.enabled`            | Enables preview query handling; defaults to `true`.                                               |
 | `preview.versioning`         | Enables versioned preview lookup; defaults to `true`.                                             |
 | `auth.enabled`               | Enables cookie authentication, authentication routes, and `useDirectusAuth`; defaults to `false`. |
+| `auth.turnstile.enabled`     | Registers Turnstile and protects login plus password-reset-email requests; defaults to `false`.   |
 | `auth.passwordResetUrl`      | Required when using password reset requests.                                                      |
 | `typegen.introspectionToken` | Server-only token used for schema generation.                                                     |
 
@@ -127,6 +128,30 @@ deployment-level refresh races remain possible otherwise.
 Authentication mutations require an `Origin` or `Referer` matching the application origin. Missing
 or cross-origin metadata is rejected with `403`, including when the session cookie uses
 `sameSite: "none"`.
+
+### Turnstile protection
+
+Set `auth.turnstile.enabled: true` to register `@onderwijsin/nuxt-turnstile` and require a Turnstile
+token for login and password-reset-email requests. Configure the Turnstile site and secret keys
+through the usual top-level `turnstile` option. Follow the
+[Turnstile module guide](../turnstile/README.md) to configure keys, render the widget, and manage
+the token lifecycle. The Directus module exposes the required widget actions through public runtime
+config, and the optional second argument to each auth method forwards the token in
+`x-turnstile-token`:
+
+```ts
+const config = useRuntimeConfig();
+const auth = useDirectusAuth();
+const token = await getTokenWithRetry();
+
+await auth.login({ email: "user@example.test", password: "password" }, { turnstileToken: token });
+
+const passwordRequestAction = config.public.directus.auth.turnstile.actions.passwordRequest;
+```
+
+Use `config.public.directus.auth.turnstile.actions.login` for the login widget and `passwordRequest`
+for the password-reset-request widget. Tokens are required only when the option is enabled; reset
+each widget after its submission because Turnstile tokens are single-use.
 
 ## Generated types
 

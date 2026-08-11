@@ -346,6 +346,9 @@ importers:
       '@onderwijsin/nuxt-module-utils':
         specifier: workspace:^
         version: link:../../packages/module-utils
+      '@onderwijsin/nuxt-turnstile':
+        specifier: workspace:^
+        version: link:../turnstile
       defu:
         specifier: 'catalog:'
         version: 6.1.7

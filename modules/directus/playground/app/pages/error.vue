@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { attempt } from "@onderwijsin/nuxt-module-utils";
+
 const toast = useToast();
 
 type DirectusErrorFlag =
@@ -92,21 +94,23 @@ async function triggerError(key: (typeof scenarios)[number]["key"]) {
   if (!scenario) return;
 
   try {
-    await $fetch(`/api/directus-errors/${key}`);
-  } catch (error: unknown) {
-    const directusError = useDirectusError(error);
-    const firstError = directusError.errors[0];
-    const errorType =
-      firstError?.code ?? (directusError.isDirectusError ? "UNKNOWN" : "UNNORMALIZED_ERROR");
-    const errorMessage =
-      firstError?.message ?? (error instanceof Error ? error.message : "The request failed.");
-    const matchedFlag = directusError.isDirectusError && directusError[scenario.flag];
+    const result = await attempt(() => $fetch(`/api/directus-errors/${key}`));
+    if (result.error !== null) {
+      const directusError = useDirectusError(result.error);
+      const firstError = directusError.errors[0];
+      const errorType =
+        firstError?.code ?? (directusError.isDirectusError ? "UNKNOWN" : "UNNORMALIZED_ERROR");
+      const errorMessage =
+        firstError?.message ??
+        (result.error instanceof Error ? result.error.message : "The request failed.");
+      const matchedFlag = directusError.isDirectusError && directusError[scenario.flag];
 
-    toast.add({
-      title: `Caught ${errorType}`,
-      description: `${errorMessage} · ${matchedFlag ? "Matched" : "Did not match"} ${scenario.flag}`,
-      color: "error"
-    });
+      toast.add({
+        title: `Caught ${errorType}`,
+        description: `${errorMessage} · ${matchedFlag ? "Matched" : "Did not match"} ${scenario.flag}`,
+        color: "error"
+      });
+    }
   } finally {
     pending.value = null;
   }

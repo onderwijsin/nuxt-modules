@@ -1,21 +1,30 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
 import { useNuxtApp, useState } from "#app";
 import { $fetch } from "#imports";
+import { attempt } from "@onderwijsin/nuxt-module-utils";
 
 import type { DirectusSessionSnapshot } from "../../server/utils/session";
 
 /** Token-free session payload delivered to Directus authentication hooks. */
 export type DirectusAuthSession = DeepReadonly<DirectusSessionSnapshot>;
 
+/** Optional metadata forwarded with a Directus authentication mutation. */
+export interface DirectusAuthRequestMeta {
+  readonly turnstileToken?: string;
+}
+
 /** Client-safe authentication facade. Tokens remain exclusively in the httpOnly cookie. */
 export interface DirectusAuthFacade {
   readonly _session: DeepReadonly<Ref<DirectusSessionSnapshot | null>>;
   readonly isAuthenticated: DeepReadonly<ComputedRef<boolean>>;
   readonly userId: DeepReadonly<ComputedRef<string | undefined>>;
-  readonly login: (input: { email: string; password: string; otp?: string }) => Promise<void>;
+  readonly login: (
+    input: { email: string; password: string; otp?: string },
+    meta?: DirectusAuthRequestMeta
+  ) => Promise<void>;
   readonly refresh: () => Promise<void>;
   readonly logout: () => Promise<void>;
-  readonly passwordRequest: (email: string) => Promise<void>;
+  readonly passwordRequest: (email: string, meta?: DirectusAuthRequestMeta) => Promise<void>;
   readonly passwordReset: (token: string, password: string) => Promise<void>;
 }
 
@@ -33,11 +42,9 @@ export function useDirectusAuth(): DirectusAuthFacade {
     name: keyof DirectusAuthHooks,
     callback: () => Promise<void>
   ): Promise<void> => {
-    try {
-      await callback();
-    } catch (error) {
-      console.error(`Directus authentication hook failed: ${name}`, error);
-    }
+    const result = await attempt(callback);
+    if (result.error !== null)
+      console.error(`Directus authentication hook failed: ${name}`, result.error);
   };
   const sessionView = readonly(session);
   const authenticatedView = readonly(computed(() => session.value !== null));
@@ -46,10 +53,11 @@ export function useDirectusAuth(): DirectusAuthFacade {
     _session: sessionView,
     isAuthenticated: authenticatedView,
     userId: userIdView,
-    login: async (input): Promise<void> => {
+    login: async (input, meta): Promise<void> => {
       const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/login", {
         method: "POST",
-        body: input
+        body: input,
+        headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
       });
       setSession(value);
       await emit("directus:auth:login", () =>
@@ -57,7 +65,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
       );
     },
     refresh: async (): Promise<void> => {
-      try {
+      const result = await attempt(async () => {
         const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/refresh", {
           method: "POST"
         });
@@ -65,28 +73,33 @@ export function useDirectusAuth(): DirectusAuthFacade {
         await emit("directus:auth:refresh", () =>
           Promise.resolve(nuxtApp.callHook("directus:auth:refresh", readonly(value)))
         );
-      } catch (error) {
+      });
+      if (result.error !== null) {
         const previousUserId = session.value?.userId ?? null;
         setSession(null);
         await emit("directus:auth:invalidated", () =>
           Promise.resolve(nuxtApp.callHook("directus:auth:invalidated", previousUserId))
         );
-        throw error;
+        throw result.error;
       }
     },
     logout: async (): Promise<void> => {
       const previousUserId = session.value?.userId ?? null;
-      try {
+      const result = await attempt(async () => {
         await $fetch("/_directus/auth/logout", { method: "POST" });
-      } finally {
-        setSession(null);
-        await emit("directus:auth:logout", () =>
-          Promise.resolve(nuxtApp.callHook("directus:auth:logout", previousUserId))
-        );
-      }
+      });
+      setSession(null);
+      await emit("directus:auth:logout", () =>
+        Promise.resolve(nuxtApp.callHook("directus:auth:logout", previousUserId))
+      );
+      if (result.error !== null) throw result.error;
     },
-    passwordRequest: async (email): Promise<void> => {
-      await $fetch("/_directus/auth/password-request", { method: "POST", body: { email } });
+    passwordRequest: async (email, meta): Promise<void> => {
+      await $fetch("/_directus/auth/password-request", {
+        method: "POST",
+        body: { email },
+        headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
+      });
     },
     passwordReset: async (token, password): Promise<void> => {
       await $fetch("/_directus/auth/password-reset", {

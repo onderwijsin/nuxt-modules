@@ -6,6 +6,10 @@ declare module "nuxt/schema" {
       typegen: { introspectionToken?: string };
       auth: {
         enabled: boolean;
+        turnstile: {
+          enabled: boolean;
+          actions: { login: string; passwordRequest: string };
+        };
         cookie: {
           name: string;
           secure: boolean;
@@ -28,7 +32,13 @@ declare module "nuxt/schema" {
         versioning: boolean;
         queryKeys: { preview: string; token: string; version: string; id: string };
       };
-      auth: { enabled: boolean };
+      auth: {
+        enabled: boolean;
+        turnstile: {
+          enabled: boolean;
+          actions: { login: string; passwordRequest: string };
+        };
+      };
     };
   }
 }

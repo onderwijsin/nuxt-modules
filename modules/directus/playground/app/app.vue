@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { attempt } from "@onderwijsin/nuxt-module-utils";
+
 const auth = useDirectusAuth();
 const isAuthenticated = auth.isAuthenticated;
 const router = useRouter();
@@ -8,15 +10,18 @@ const logoutPending = shallowRef(false);
 async function logout(): Promise<void> {
   logoutPending.value = true;
   try {
-    await auth.logout();
-    await router.push("/login");
-  } catch (cause) {
-    const directusError = useDirectusError(cause);
-    toast.add({
-      title: "Unable to sign out",
-      description: directusError.errors[0]?.message ?? "The logout request failed.",
-      color: "error"
+    const result = await attempt(async () => {
+      await auth.logout();
+      await router.push("/login");
     });
+    if (result.error !== null) {
+      const directusError = useDirectusError(result.error);
+      toast.add({
+        title: "Unable to sign out",
+        description: directusError.errors[0]?.message ?? "The logout request failed.",
+        color: "error"
+      });
+    }
   } finally {
     logoutPending.value = false;
   }

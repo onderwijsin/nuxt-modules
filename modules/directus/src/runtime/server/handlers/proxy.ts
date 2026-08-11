@@ -68,10 +68,8 @@ export function resolveDirectusProxyUrl(
     throw createError({ statusCode: 400, statusMessage: "Invalid Directus proxy path" });
   }
 
-  let base: URL;
-  try {
-    base = new URL(baseUrl);
-  } catch {
+  const { data: base } = attemptSync(() => new URL(baseUrl));
+  if (!base) {
     throw createError({ statusCode: 500, statusMessage: "Directus baseUrl must use HTTP(S)" });
   }
   if (

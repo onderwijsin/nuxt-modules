@@ -10,6 +10,7 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
+import type { ModuleDependencies } from "@nuxt/schema";
 import {
   moduleSetup,
   resolveLoggerScope,
@@ -27,6 +28,10 @@ import type { ModuleOptions } from "./types/options";
 
 const MODULE_KEY = "directus";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
+const DIRECTUS_TURNSTILE_ACTIONS = {
+  login: "directus-login",
+  passwordRequest: "directus-password-request"
+};
 
 /** Registers the server-safe Directus module foundation and its validated proxy boundary. */
 export default defineNuxtModule<ModuleOptions>({
@@ -43,6 +48,12 @@ export default defineNuxtModule<ModuleOptions>({
     commands: ["readItem", "readItems"],
     auth: { enabled: false },
     typegen: {}
+  },
+  moduleDependencies: (nuxt): ModuleDependencies => {
+    const directusOptions = nuxt.options.directus;
+    return directusOptions && directusOptions.auth?.turnstile?.enabled
+      ? { "@onderwijsin/nuxt-turnstile": { version: ">=0.2.5" } }
+      : {};
   },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
@@ -110,7 +121,13 @@ export default defineNuxtModule<ModuleOptions>({
         baseUrl: options.baseUrl,
         staticToken: options.staticToken,
         typegen: { introspectionToken: options.typegen.introspectionToken },
-        auth: options.auth
+        auth: {
+          ...options.auth,
+          turnstile: {
+            ...options.auth.turnstile,
+            actions: DIRECTUS_TURNSTILE_ACTIONS
+          }
+        }
       },
       nuxt.options.runtimeConfig.directus
     );
@@ -118,7 +135,13 @@ export default defineNuxtModule<ModuleOptions>({
       {
         proxy: { path: options.proxy.path },
         preview: options.preview,
-        auth: { enabled: options.auth.enabled }
+        auth: {
+          enabled: options.auth.enabled,
+          turnstile: {
+            enabled: options.auth.turnstile.enabled,
+            actions: DIRECTUS_TURNSTILE_ACTIONS
+          }
+        }
       },
       nuxt.options.runtimeConfig.public.directus
     );

@@ -5,11 +5,13 @@ import { joinURL } from "ufo";
 import { z } from "zod";
 
 import { assertDirectusEventSameOrigin } from "../../utils/csrf";
+import { assertDirectusTurnstile } from "../../utils/turnstile";
 
 const passwordRequestSchema = z.object({ email: z.email() });
 
 export default defineEventHandler(async (event) => {
   assertDirectusEventSameOrigin(event);
+  await assertDirectusTurnstile(event, "passwordRequest");
   const config = useRuntimeConfig(event);
   const body = await readValidatedBody(event, passwordRequestSchema.parse);
   const resetUrl = config.directus.auth.passwordResetUrl;
