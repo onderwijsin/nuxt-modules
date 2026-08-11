@@ -58,7 +58,7 @@ All options are configured under `directus`.
 | `typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                       |
 | `typegen.introspectionToken` | —                                   | Server-only Directus schema introspection token.                                                  |
 | `typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
-| `typegen.augmentations`      | all `false`                         | Optional generated-output transforms.                                                             |
+| `typegen.augmentations`      | all `true`                          | Optional generated-output transforms.                                                             |
 | `typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                                     |
 | `typegen.transform`          | —                                   | Final build-time source transform.                                                                |
 
@@ -282,7 +282,7 @@ generate collection interfaces and `Schema`. Configure it under `directus.typege
 | `enabled`            | Set `false` to skip generation; an existing declaration is reused when available, otherwise `Schema` is empty.                       |
 | `introspectionToken` | Server-only schema-introspection token. Required for enabled generation outside local development.                                   |
 | `cache.maxAge`       | Development-only cache lifetime in milliseconds. CI and production always regenerate.                                                |
-| `augmentations`      | Individually enable output transforms; every flag defaults to `false`.                                                               |
+| `augmentations`      | Individually disable output transforms; every flag defaults to `true`.                                                               |
 | `rules`              | Replace a generated field type by collection and field, for example `{ articles: { body: "RichText" } }`.                            |
 | `transform`          | Final build-time source transform; receives source plus URL, generator version, collections, and rules, and must return source text. |
 

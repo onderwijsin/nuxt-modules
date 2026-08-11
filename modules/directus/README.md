@@ -131,7 +131,7 @@ All options are configured under `directus`:
 | `typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                       |
 | `typegen.introspectionToken` | —                                   | Server-only Directus schema introspection token.                                                  |
 | `typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
-| `typegen.augmentations`      | all `false`                         | Optional generated-output transforms.                                                             |
+| `typegen.augmentations`      | all `true`                          | Optional generated-output transforms.                                                             |
 | `typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                                     |
 | `typegen.transform`          | —                                   | Final build-time source transform.                                                                |
 
@@ -276,7 +276,7 @@ Configure it under `directus.typegen`:
 | `enabled`            | Set to `false` to skip generation. An existing declaration is reused when available; otherwise `Schema` is empty.                                                                                       |
 | `introspectionToken` | Supply a server-only token with enough Directus permissions to inspect the schema. It is required for enabled generation outside local development.                                                     |
 | `cache.maxAge`       | Adjust the development-only cache lifetime (milliseconds). CI and production always regenerate.                                                                                                         |
-| `augmentations`      | Enable only the source transforms your schema needs, described below. All default to `false`.                                                                                                           |
+| `augmentations`      | Individually disable a generated-output transform when its default normalization does not fit your schema. All default to `true`.                                                                       |
 | `rules`              | Replace a generated field type deterministically, keyed by collection then field: `{ articles: { body: "RichText" } }`. Values must be a single TypeScript type expression.                             |
 | `transform`          | Apply a final build-time function to the generated source. It receives the source and metadata including the Directus URL, generator version, collection names, and rules, and must return source text. |
 

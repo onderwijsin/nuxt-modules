@@ -17,6 +17,15 @@ interface LoginForm {
 const auth = useDirectusAuth();
 const router = useRouter();
 const toast = useToast();
+const turnstile = useTemplateRef<{ reset: () => void }>("turnstile");
+const {
+  token,
+  getTokenWithRetry,
+  isEnabled,
+  reset,
+  showMissingTokenErrorHint,
+  captureTurnstileError
+} = useTurnstile();
 const loginPending = shallowRef(false);
 const otpRequired = shallowRef(false);
 const fields = computed(() => [
@@ -50,16 +59,26 @@ const fields = computed(() => [
 
 async function submitLogin(event: { data: LoginForm }): Promise<void> {
   loginPending.value = true;
+  const turnstileToken = await getTokenWithRetry();
+  if (isEnabled.value && !turnstileToken) {
+    showMissingTokenErrorHint();
+    loginPending.value = false;
+    return;
+  }
   try {
     const result = await attempt(async () => {
-      await auth.login({
-        email: event.data.email,
-        password: event.data.password,
-        ...(event.data.otp ? { otp: event.data.otp } : {})
-      });
+      await auth.login(
+        {
+          email: event.data.email,
+          password: event.data.password,
+          ...(event.data.otp ? { otp: event.data.otp } : {})
+        },
+        turnstileToken ? { turnstileToken } : undefined
+      );
       await router.push("/_session");
     });
     if (result.error !== null) {
+      if (captureTurnstileError(result.error)) return;
       const directusError = useDirectusError(result.error);
       otpRequired.value = directusError.isOtpError;
       toast.add({
@@ -70,6 +89,7 @@ async function submitLogin(event: { data: LoginForm }): Promise<void> {
     }
   } finally {
     loginPending.value = false;
+    reset(turnstile.value ?? undefined);
   }
 }
 </script>
@@ -82,6 +102,12 @@ async function submitLogin(event: { data: LoginForm }): Promise<void> {
     />
 
     <UCard class="lg:col-start-1">
+      <NuxtTurnstile
+        ref="turnstile"
+        v-model="token"
+        :options="{ action: 'directus-login', appearance: 'interaction-only' }"
+        class="mb-4"
+      />
       <UAuthForm
         :fields="fields"
         :submit="{

@@ -33,12 +33,12 @@ const defaultTypegenOptions = {
   enabled: true,
   cache: { maxAge: 3_600_000 },
   augmentations: {
-    removeEnums: false,
-    replaceAnyWithUnknown: false,
-    replaceJsonWithJSON: false,
-    applyTypeNameOverrides: false,
-    makeNonNullableOptionalsRequired: false,
-    mergeJsDocs: false
+    removeEnums: true,
+    replaceAnyWithUnknown: true,
+    replaceJsonWithJSON: true,
+    applyTypeNameOverrides: true,
+    makeNonNullableOptionalsRequired: true,
+    mergeJsDocs: true
   },
   rules: {}
 };
@@ -72,20 +72,20 @@ const typegenSchema = z.object({
     .default({ maxAge: 3_600_000 }),
   augmentations: z
     .object({
-      removeEnums: z.boolean().default(false),
-      replaceAnyWithUnknown: z.boolean().default(false),
-      replaceJsonWithJSON: z.boolean().default(false),
-      applyTypeNameOverrides: z.boolean().default(false),
-      makeNonNullableOptionalsRequired: z.boolean().default(false),
-      mergeJsDocs: z.boolean().default(false)
+      removeEnums: z.boolean().default(true),
+      replaceAnyWithUnknown: z.boolean().default(true),
+      replaceJsonWithJSON: z.boolean().default(true),
+      applyTypeNameOverrides: z.boolean().default(true),
+      makeNonNullableOptionalsRequired: z.boolean().default(true),
+      mergeJsDocs: z.boolean().default(true)
     })
     .default({
-      removeEnums: false,
-      replaceAnyWithUnknown: false,
-      replaceJsonWithJSON: false,
-      applyTypeNameOverrides: false,
-      makeNonNullableOptionalsRequired: false,
-      mergeJsDocs: false
+      removeEnums: true,
+      replaceAnyWithUnknown: true,
+      replaceJsonWithJSON: true,
+      applyTypeNameOverrides: true,
+      makeNonNullableOptionalsRequired: true,
+      mergeJsDocs: true
     }),
   rules: z.record(z.string().min(1), z.record(z.string().min(1), typeExpression)).default({}),
   transform: typegenTransform.optional()

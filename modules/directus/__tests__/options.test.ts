@@ -31,6 +31,21 @@ describe("Directus module options", () => {
     });
   });
 
+  it("defaults every type-generation augmentation to enabled", () => {
+    expect(directusOptionsSchema.parse({})).toMatchObject({
+      typegen: {
+        augmentations: {
+          removeEnums: true,
+          replaceAnyWithUnknown: true,
+          replaceJsonWithJSON: true,
+          applyTypeNameOverrides: true,
+          makeNonNullableOptionalsRequired: true,
+          mergeJsDocs: true
+        }
+      }
+    });
+  });
+
   it("rejects root, traversal, and auth-colliding proxy paths", () => {
     for (const path of ["/", "/../proxy", "/_directus/auth/session"]) {
       expect(() => directusOptionsSchema.parse({ proxy: { path } })).toThrow();
