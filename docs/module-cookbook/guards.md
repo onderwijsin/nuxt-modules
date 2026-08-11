@@ -1,8 +1,23 @@
 # Primitive runtime guards
 
+Read this article when code narrows unknown network, persisted, configuration, or error data, or
+when considering a new primitive predicate. It defines the selection boundary between a shared
+guard, a local domain predicate, and Zod.
+
 The guards in `@onderwijsin/nuxt-module-utils/shared` are small predicates for ordinary runtime
 control flow and TypeScript narrowing. They are not a schema system, input-validation framework,
 replacement for Zod, parsing/coercion layer, or generic collection for every one-off predicate.
+
+## Selection rule
+
+For a generic primitive narrowing, first use the matching public guard instead of repeating its
+implementation with `typeof`, `Array.isArray`, or `Object.hasOwn`. Compose guards when interpreting
+an unknown record. This keeps narrowing semantics consistent across modules.
+
+Keep a local predicate when it expresses a stricter or domain-specific shape. Use Zod when an
+external boundary needs structured validation, parsing or coercion, composition, or diagnostics. A
+local exception should make the additional semantics clear in its name and implementation; do not
+create an alias that merely duplicates a shared guard.
 
 ## API reference
 

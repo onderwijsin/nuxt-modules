@@ -1,5 +1,10 @@
 # Module entrypoint and runtime registration
 
+Read this article when changing a module's entrypoint, options, setup order, dependencies, runtime
+directories, runtime configuration, type templates, generated declarations, or runtime CSS. Also
+read [patterns and conventions](patterns-and-conventions.md) and the relevant
+[official Nuxt references](official-nuxt-documentation.md).
+
 Use `src/module.ts` as the entrypoint. Keep it focused on metadata, options, lifecycle, and Nuxt Kit
 registration; move build-time helpers to `src/config/` and runtime behavior to `src/runtime/`.
 

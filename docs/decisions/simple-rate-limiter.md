@@ -1,5 +1,8 @@
 # Simple rate limiter
 
+Read this decision before changing rate-limit storage, scope, proxy handling, guarantees, security
+positioning, or use around sensitive flows. It defines the module's intended protection boundary.
+
 The simple rate limiter is intentionally a small, best-effort abuse-control utility rather than a
 general-purpose application security module. Mature Nuxt security modules already provide broader
 security features, and the controls that must withstand deliberate abuse belong at the

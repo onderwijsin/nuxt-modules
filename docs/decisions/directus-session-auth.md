@@ -1,5 +1,9 @@
 # Directus session authentication
 
+Read this decision before changing Directus login, refresh, logout, session cookies, current-user
+snapshots, storage coordination, or the `useDirectusAuth()` facade. The constraints below are an API
+and security decision, not an incidental implementation pattern.
+
 The Directus module uses a plain, bounded, httpOnly cookie as its first session implementation. The
 cookie contains the access token, rotating refresh token, expiry, and a token-free snapshot derived
 from the current-user endpoint. Application code receives only that snapshot through

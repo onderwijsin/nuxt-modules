@@ -2,6 +2,8 @@
 
 GitHub security features provide an additional layer of protection for this repository. They
 complement the local validation and CI checks described in [Workspace and tooling](workspace.md).
+Read this article when work affects dependencies, lockfiles, workflows, permissions, secrets,
+security reports, Dependabot, CodeQL, or a security boundary in a published module.
 
 ## Dependabot
 

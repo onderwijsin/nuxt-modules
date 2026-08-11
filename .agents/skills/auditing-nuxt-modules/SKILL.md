@@ -1,9 +1,9 @@
 ---
-name: prepublish-module-audit
-description: Audit a newly added or substantially changed publishable Nuxt module in the onderwijsin/nuxt-modules repository before its first npm release. Use when asked to assess production readiness, review a module's implementation/tests/package/README/consumer skill, or produce a prioritized, actionable pre-publish handoff.
+name: auditing-nuxt-modules
+description: Audit publishable Nuxt modules in the onderwijsin/nuxt-modules repository. Use when asked to assess production or release readiness, review a new or substantially changed module's implementation, tests, package, README, or consumer skill, validate a module before its first npm release, or produce a prioritized, actionable audit handoff.
 ---
 
-# Pre-publish Module Audit
+# Audit Nuxt modules
 
 Perform a consumer-first, evidence-based audit. Determine whether the **packed npm tarball** is safe to install in an unrelated production Nuxt application—not merely whether the workspace source passes checks.
 
@@ -13,7 +13,11 @@ The audit is read-only by default. Do not fix findings, add tests, change packag
 
 1. Identify the target under `modules/<name>` and confirm it is publishable rather than local-only.
 2. Inspect its `package.json`, module entrypoint, runtime tree, public types/exports, tests, fixture/playground, README, and its consumer skill at `skills/<name>/SKILL.md`.
-3. Read the applicable cookbook pages before judging a pattern. The authoritative starting point is [package anatomy](../../../docs/module-cookbook/package-anatomy.md); follow its linked pages for entrypoints, testing, playgrounds, documentation/skills, and conventions. Use [workspace tooling](../../../docs/workspace.md) and [publishing](../../../docs/publishing.md) for the actual validation and release contracts.
+3. Read [`AGENTS.md`](../../../AGENTS.md) and
+   [the agent workflow](../../../docs/agent-workflow.md), then use the
+   [cookbook index](../../../docs/module-cookbook/index.md) to select every applicable article before
+   judging a pattern. Use [workspace tooling](../../../docs/workspace.md) and
+   [publishing](../../../docs/publishing.md) for the actual validation and release contracts.
 4. Inspect a comparable published module when the cookbook leaves a choice open. Treat a deviation as a finding only when it violates a documented contract, breaks a consumer expectation, or is unjustified by the module's requirements.
 5. State the audit scope and unavailable evidence. Do not infer a pass from uninspected code, generated output, or skipped validation.
 
@@ -112,3 +116,8 @@ Finish with:
 5. whether you would trust the packed package in an unrelated production Nuxt application, including any unverified validation.
 
 If there are no findings, say what was inspected and validated so the next agent can trust the conclusion.
+
+Deliver the verdict, findings, validation evidence, contract impact, risks, and suggested commit
+message inside the read-only assessment handoff defined by
+[`docs/agent-workflow.md`](../../../docs/agent-workflow.md). Use
+`N/A — read-only assessment; no change to commit` when there is no coherent fix commit to suggest.

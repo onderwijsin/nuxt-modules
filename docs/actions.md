@@ -1,5 +1,8 @@
 # Custom GitHub Actions
 
+Read this article for changes under `.github/actions/**` or `.github/workflows/**`. Also read the
+[security guide](security.md) for permissions, secrets, and third-party action requirements.
+
 ## Pin third-party actions
 
 Every third-party action referenced from `.github/workflows/**` must use a full immutable commit

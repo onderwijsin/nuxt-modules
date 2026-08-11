@@ -4,6 +4,9 @@ Publishing uses a manually prepared version pull request and runs automatically 
 request is merged to `main`. The publish workflow remains manually dispatchable for recovery or
 re-runs.
 
+Read this article when a task changes a publishable package, Changeset, release workflow, package
+artefact, tag, GitHub Release, or release notification.
+
 ## Local developer workflow
 
 When a change affects a published module, create a Changeset locally before opening the pull
@@ -18,6 +21,9 @@ Select every affected publishable package, choose the appropriate SemVer impact,
 release note. Commit the generated `.changeset/<name>.md` file with the code change. Changesets
 posts a status comment on the pull request showing the release impact. Documentation-only or CI-only
 changes may use the `no-changeset` label instead.
+
+Use one Changeset file per concern. Do not combine unrelated package changes into one release note,
+even when they affect the same package or use the same SemVer level.
 
 The local Changeset is input to the release process. Its summary remains the curated release note;
 the configured `@changesets/changelog-git` generator also appends links to the commits included in

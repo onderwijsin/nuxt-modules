@@ -1,5 +1,8 @@
 # Working with `test-utils`
 
+Read this article before adding a shared test helper or repeating fixture/H3-event setup across
+packages. Also read the detailed [testing guide](../testing.md).
+
 `packages/test-utils` is a private workspace package for behavior shared by package tests. Use it
 when the same setup or test infrastructure is needed by more than one package; keep domain-specific
 fixtures, mocks, and assertions next to the tests that own them. Never import it from published

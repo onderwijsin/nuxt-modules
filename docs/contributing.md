@@ -3,13 +3,17 @@
 This is the repeatable workflow for adding or changing a module. Keep changes inside the package
 they affect and preserve the isolated playground contract. Review the repository's
 [security guide](security.md) when a change affects dependencies, workflows, or security findings.
+Agents must first follow the [agent workflow and documentation router](agent-workflow.md); this
+article describes the contributor-facing package workflow it selects.
 
 ## Before coding
 
 1. Use Node.js 24 and run `corepack enable` once to activate the pinned pnpm version.
 2. Install with `pnpm install --frozen-lockfile`.
-3. Read the relevant package README and the [module cookbook](module-cookbook/package-anatomy.md).
-4. Confirm whether the change affects a published package and therefore needs a Changeset.
+3. Read the relevant package README and use the [module cookbook index](module-cookbook/index.md) to
+   select every applicable maintainer article.
+4. Confirm whether the change affects code, tests, maintainer docs, public documentation, the
+   consumer skill, package metadata, compatibility, or a published package release.
 
 ## Package workflow
 
@@ -57,6 +61,17 @@ Check the result with `pnpm changeset:status`. Changesets also posts the propose
 the pull request. Use the `no-changeset` pull request label only for changes that do not affect a
 published package. Versioning and publishing are performed by the manual release workflows after
 merge.
+
+Create one Changeset file per concern. Unrelated changes require separate entries even when they
+affect the same package or have the same SemVer level, so each release note describes one coherent
+consumer impact.
+
+## Before handoff
+
+Review the complete diff and reconcile the implementation, tests, maintainer docs, package README,
+consumer skill, dependency, compatibility, and Changeset impact. Agents use the exact handoff in
+[`agent-workflow.md`](agent-workflow.md); human contributors should provide the same evidence in a
+pull request description.
 
 ## Pull requests
 
