@@ -68,6 +68,8 @@ packages:
 
 catalogMode: "strict"
 cleanupUnusedCatalogs: true
+overrides:
+  zod: 4.4.3
 saveExact: true
 minimumReleaseAgeExclude:
   - "@onderwijsin/*"

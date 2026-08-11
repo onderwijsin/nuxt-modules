@@ -4,9 +4,12 @@ import { parseDirectusCommands } from "../src/config/commands";
 import { directusOptionsSchema } from "../src/config/options.schema";
 
 describe("Directus module options", () => {
-  it("requires baseUrl when enabled", () => {
-    expect(() => directusOptionsSchema.parse({})).toThrow(/required/);
-    expect(() => directusOptionsSchema.parse({ typegen: { enabled: false } })).toThrow(/required/);
+  it("allows enabled modules without a baseUrl", () => {
+    expect(directusOptionsSchema.parse({})).toMatchObject({ enabled: true, baseUrl: "" });
+    expect(directusOptionsSchema.parse({ typegen: { enabled: false } })).toMatchObject({
+      enabled: true,
+      baseUrl: ""
+    });
   });
 
   it("allows disabled modules without a baseUrl", () => {

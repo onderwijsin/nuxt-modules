@@ -38,14 +38,14 @@ All options are configured under `directus`.
 | Option                       | Default                             | Contract                                                                                          |
 | ---------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `enabled`                    | `true`                              | Enables the module.                                                                               |
-| `baseUrl`                    | `""`                                | Directus URL. Must use `http` or `https`.                                                         |
+| `baseUrl`                    | —                                   | Required when enabled; must use `http` or `https`.                                                |
 | `staticToken`                | —                                   | Optional server-only static credential.                                                           |
 | `proxy.path`                 | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected. |
 | `commands`                   | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                 |
 | `preview.enabled`            | `true`                              | Enables preview query parsing and request-scoped preview credentials.                             |
 | `preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                                 |
 | `preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                   |
-| `auth.enabled`               | `false`                             | Registers authentication routes and the `useDirectusAuth` auto-import.                            |
+| `auth.enabled`               | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.         |
 | `auth.cookie.name`           | `directus_session`                  | Session cookie name.                                                                              |
 | `auth.cookie.secure`         | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                    |
 | `auth.cookie.sameSite`       | `lax`                               | Cookie `SameSite` policy.                                                                         |
@@ -61,8 +61,9 @@ All options are configured under `directus`.
 | `typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                                     |
 | `typegen.transform`          | —                                   | Final build-time source transform.                                                                |
 
-The module validates option values during Nuxt configuration. Production type generation requires
-both `baseUrl` and `typegen.introspectionToken`.
+The module validates option values during Nuxt configuration. `baseUrl` is required whenever the
+module is enabled, even when type generation is disabled. Set `enabled: false` when Directus is not
+configured. Production type generation additionally requires `typegen.introspectionToken`.
 
 ## Public auto-imports
 
@@ -73,8 +74,8 @@ useDirectus<Output>(command: RestCommand<Output, Schema>): Promise<Output>
 ```
 
 Executes a typed Directus REST command. Browser calls use the same-origin proxy; SSR calls use the
-direct server client. The module chooses preview, session, static, or no credential on the server.
-Callers cannot override that credential with request headers.
+direct server client. The module chooses preview, session (only with `auth.enabled`), static, or no
+credential on the server. Callers cannot override that credential with request headers.
 
 ### `useDirectusServer`
 
@@ -86,7 +87,7 @@ useDirectusServer<Output>(
 ```
 
 Executes a typed command directly from Nitro. Passing the current `H3Event` enables request-scoped
-preview and session credential resolution.
+preview and, when enabled, session credential resolution.
 
 ### `useDirectusItemByPath`
 
@@ -165,6 +166,9 @@ state. Hydration therefore does not require a session request. Server-side refre
 Nitro storage. A shared, read-after-write consistent storage driver is required for coordination
 across processes or Cloudflare isolates; the default in-memory driver is instance-local.
 
+When `auth.enabled` is `false`, the module does not read, refresh, forward, or serialize Directus
+session cookies. Static, preview, and unauthenticated access continue to work.
+
 ## Authentication hooks
 
 Register typed Nuxt app hooks with `useNuxtApp().hook`:
@@ -238,8 +242,12 @@ build-time source transform.
   or a server credential.
 - The proxy removes incoming `Authorization`, `Cookie`, `Host`, `Origin`, connection, and hop-by-hop
   headers before forwarding.
-- Credential precedence is preview token, current session, static token, then unauthenticated.
+- Credential precedence is preview token, current session (when `auth.enabled`), static token, then
+  unauthenticated.
 - Upstream `Set-Cookie` headers are not forwarded to the browser.
+- Credentialed `POST`, `PUT`, `PATCH`, and `DELETE` proxy requests require an `Origin` or `Referer`
+  matching the application origin. Missing and cross-origin metadata is rejected with `403`,
+  including for `sameSite: "none"` cookies.
 - Session cookies are `httpOnly`, `SameSite=Lax`, secure by default, bounded below the usual cookie
   size limit, and intentionally contain the server token pair plus a compact safe snapshot.
 - Directus remains the final authorization boundary.

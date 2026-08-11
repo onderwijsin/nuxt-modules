@@ -8,8 +8,7 @@ import {
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
-  useLogger,
-  addImportsDir
+  useLogger
 } from "@nuxt/kit";
 import {
   moduleSetup,
@@ -60,13 +59,6 @@ export default defineNuxtModule<ModuleOptions>({
       filename: "types/directus-config.d.ts",
       src: resolver.resolve(runtimeDir, "types/config.d.ts")
     });
-    if (!isEnabled()) return;
-
-    if (!isNonBlankString(options.baseUrl) && (nuxt.options._prepare || isCI)) {
-      log.warn("Directus baseUrl is not set. Disabling Directus module.");
-      return;
-    }
-
     addTypeTemplate({
       filename: "types/directus-schema.d.ts",
       getContents: async () => {
@@ -93,6 +85,22 @@ export default defineNuxtModule<ModuleOptions>({
         throw result.error;
       }
     });
+    nuxt.options.alias ??= {};
+    nuxt.options.alias["#directus"] = resolver.resolve(
+      nuxt.options.buildDir,
+      "types/directus-schema.d.ts"
+    );
+    const nodeTsConfig = (nuxt.options.typescript.nodeTsConfig ??= {});
+    nodeTsConfig.compilerOptions ??= {};
+    nodeTsConfig.compilerOptions.paths ??= {};
+    nodeTsConfig.compilerOptions.paths["#directus"] = ["./types/directus-schema"];
+
+    if (!isEnabled()) return;
+
+    if (!isNonBlankString(options.baseUrl) && (nuxt.options._prepare || isCI)) {
+      log.warn("Directus baseUrl is not set. Disabling Directus module.");
+      return;
+    }
 
     const commands = parseDirectusCommands(options.commands);
     for (const name of commands) addImports({ name, as: name, from: "@directus/sdk" });
@@ -116,7 +124,13 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
-    addImportsDir(resolver.resolve(runtimeDir, "app/composables"));
+    for (const [name, file] of [
+      ["useDirectus", "directus"],
+      ["useDirectusError", "directus-error"],
+      ["useDirectusItemByPath", "directus-item"]
+    ] as const) {
+      addImports({ name, from: resolver.resolve(runtimeDir, "app/composables", file) });
+    }
     addServerImportsDir(resolver.resolve(runtimeDir, "server/composables"));
     addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/client"), mode: "client" });
     addPlugin({
@@ -149,16 +163,6 @@ export default defineNuxtModule<ModuleOptions>({
         });
       }
     }
-    nuxt.options.alias ??= {};
-    nuxt.options.alias["#directus"] = resolver.resolve(
-      nuxt.options.buildDir,
-      "types/directus-schema.d.ts"
-    );
-    const nodeTsConfig = (nuxt.options.typescript.nodeTsConfig ??= {});
-    nodeTsConfig.compilerOptions ??= {};
-    nodeTsConfig.compilerOptions.paths ??= {};
-    nodeTsConfig.compilerOptions.paths["#directus"] = ["./types/directus-schema"];
-
     addServerHandler({
       route: `${options.proxy.path}/**`,
       handler: resolver.resolve(runtimeDir, "server/handlers/proxy")

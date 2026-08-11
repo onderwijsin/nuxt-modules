@@ -1,3 +1,5 @@
+const directusDisabled = process.env.DIRECTUS_EXTERNAL_DISABLED === "true";
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-01-01",
   modules: [
@@ -24,7 +26,8 @@ export default defineNuxtConfig({
     enabled: true
   },
   directus: {
-    baseUrl: "https://directus.invalid",
+    enabled: !directusDisabled,
+    ...(directusDisabled ? {} : { baseUrl: "https://directus.invalid" }),
     proxy: { path: "/_directus/proxy" },
     typegen: { enabled: false }
   },

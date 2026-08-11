@@ -168,7 +168,13 @@ build-info.json
 code-review.md
 tmp
 
-shared/generated/content-manifest.ts
-
-# Skilld references (recreated by `skilld install`)
+# ===================================
+# 🤖 Agents
+# ===================================
 .skilld
+
+# ===================================
+# ⚙️ Application artifacts
+# ===================================
+shared/generated/content-manifest.ts
+.artifacts
