@@ -8,7 +8,8 @@ import {
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
-  useLogger
+  useLogger,
+  addImportsDir
 } from "@nuxt/kit";
 import {
   moduleSetup,
@@ -17,7 +18,7 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import { attempt, isString } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { parseDirectusCommands } from "./config/commands";
 import { directusOptionsSchema } from "./config/options.schema";
@@ -53,11 +54,18 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
+    const isCI = process.env.CI === "true";
+
     addTypeTemplate({
       filename: "types/directus-config.d.ts",
       src: resolver.resolve(runtimeDir, "types/config.d.ts")
     });
     if (!isEnabled()) return;
+
+    if (!isNonBlankString(options.baseUrl) && (nuxt.options._prepare || isCI)) {
+      log.warn("Directus baseUrl is not set. Disabling Directus module.");
+      return;
+    }
 
     addTypeTemplate({
       filename: "types/directus-schema.d.ts",
@@ -108,20 +116,16 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
-    const appComposables = [
-      ["useDirectus", "directus"],
-      ["useDirectusError", "directus-error"],
-      ["useDirectusItemByPath", "directus-item"]
-    ] as const;
-    for (const [name, file] of appComposables) {
-      addImports({
-        name,
-        from: resolver.resolve(runtimeDir, "app/composables/" + file)
-      });
-    }
+    addImportsDir(resolver.resolve(runtimeDir, "app/composables"));
     addServerImportsDir(resolver.resolve(runtimeDir, "server/composables"));
     addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/client"), mode: "client" });
-    addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/server"), mode: "server" });
+    addPlugin({
+      src: resolver.resolve(
+        runtimeDir,
+        options.auth.enabled ? "app/plugins/server-auth" : "app/plugins/server"
+      ),
+      mode: "server"
+    });
 
     if (options.auth.enabled) {
       addImports({

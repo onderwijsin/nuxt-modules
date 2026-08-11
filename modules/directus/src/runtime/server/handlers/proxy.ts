@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getRequestURL, proxyRequest } from "h3";
+import { createError, defineEventHandler, getRequestHeader, getRequestURL, proxyRequest } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { attemptSync } from "@onderwijsin/nuxt-module-utils";
 import { ofetch } from "ofetch";
@@ -9,7 +9,6 @@ import {
   getDirectusAuthorizationHeader,
   resolveDirectusRequestContext
 } from "../utils/credentials";
-import { ensureFreshDirectusSession } from "../utils/auth";
 
 const blockedRequestHeaders = new Set([
   "authorization",
@@ -37,6 +36,41 @@ const blockedResponseHeaders = new Set([
   "transfer-encoding",
   "upgrade"
 ]);
+const csrfProtectedMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Enforces same-origin metadata for state-changing requests that use a server credential.
+ *
+ * @param requestUrl Incoming application request URL.
+ * @param method Incoming HTTP method.
+ * @param origin Origin header, when supplied by the client.
+ * @param referer Referer header fallback for clients that omit Origin.
+ * @throws A 403 error when the request is missing or fails same-origin validation.
+ */
+export function assertDirectusProxySameOrigin(
+  requestUrl: URL,
+  method: string,
+  origin?: string,
+  referer?: string
+): void {
+  if (!csrfProtectedMethods.has(method.toUpperCase())) return;
+
+  const candidate = origin ?? referer;
+  if (!candidate) {
+    throw createError({ statusCode: 403, statusMessage: "Directus proxy CSRF validation failed" });
+  }
+
+  let candidateOrigin: string;
+  try {
+    candidateOrigin = new URL(candidate).origin;
+  } catch {
+    throw createError({ statusCode: 403, statusMessage: "Directus proxy CSRF validation failed" });
+  }
+
+  if (candidateOrigin !== requestUrl.origin) {
+    throw createError({ statusCode: 403, statusMessage: "Directus proxy CSRF validation failed" });
+  }
+}
 
 /**
  * Resolves a proxy request into a Directus URL while preserving the request query string.
@@ -98,6 +132,16 @@ export function getForwardedProxyHeaders(): string[] {
 }
 
 /**
+ * Returns whether a proxy request using the selected credential must prove same-origin intent.
+ *
+ * @param credential Server-selected Directus credential.
+ * @returns Whether state-changing requests require Origin or Referer validation.
+ */
+export function requiresDirectusProxySameOrigin(credential: DirectusCredential): boolean {
+  return credential.accessToken !== undefined;
+}
+
+/**
  * Creates a fetch adapter that removes caller credentials before proxying.
  *
  * @param credential Server-selected upstream credential.
@@ -138,12 +182,24 @@ export default defineEventHandler(async (event) => {
     config.public.directus.proxy.path,
     requestUrl
   );
-  const session = await ensureFreshDirectusSession(event);
+  let sessionAccessToken: string | undefined;
+  if (config.directus.auth.enabled) {
+    const { ensureFreshDirectusSession } = await import("../utils/auth.js");
+    sessionAccessToken = (await ensureFreshDirectusSession(event))?.accessToken;
+  }
   const { credential } = resolveDirectusRequestContext(event, {
     preview: config.public.directus.preview,
     staticToken: config.directus.staticToken,
-    sessionAccessToken: session?.accessToken
+    sessionAccessToken
   });
+  if (requiresDirectusProxySameOrigin(credential)) {
+    assertDirectusProxySameOrigin(
+      requestUrl,
+      event.method,
+      getRequestHeader(event, "origin"),
+      getRequestHeader(event, "referer")
+    );
+  }
   const targetUrl = new URL(target);
   targetUrl.searchParams.delete(config.public.directus.preview.queryKeys.token);
 

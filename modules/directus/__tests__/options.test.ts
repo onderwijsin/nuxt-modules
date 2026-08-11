@@ -4,9 +4,15 @@ import { parseDirectusCommands } from "../src/config/commands";
 import { directusOptionsSchema } from "../src/config/options.schema";
 
 describe("Directus module options", () => {
-  it("applies safe defaults", () => {
-    expect(directusOptionsSchema.parse({})).toMatchObject({
-      enabled: true,
+  it("requires baseUrl when enabled", () => {
+    expect(() => directusOptionsSchema.parse({})).toThrow(/required/);
+    expect(() => directusOptionsSchema.parse({ typegen: { enabled: false } })).toThrow(/required/);
+  });
+
+  it("allows disabled modules without a baseUrl", () => {
+    expect(directusOptionsSchema.parse({ enabled: false })).toMatchObject({
+      enabled: false,
+      baseUrl: "",
       proxy: { path: "/_directus/proxy" },
       commands: ["readItem", "readItems"],
       auth: { enabled: false }

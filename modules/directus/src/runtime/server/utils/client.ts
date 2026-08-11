@@ -2,7 +2,6 @@ import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
 
-import { ensureFreshDirectusSession } from "./auth";
 import { resolveDirectusRequestContext } from "./credentials";
 import { createDirectusRestClient, type DirectusRestClient } from "../../utils/client";
 
@@ -24,12 +23,17 @@ export function createServerDirectusClient(event?: H3Event): DirectusSchemaClien
   const serverFetch = ofetch.create({
     onRequest: async ({ options }) => {
       if (!event) return;
-      const session = await ensureFreshDirectusSession(event);
+
+      let sessionAccessToken: string | undefined;
+      if (config.directus.auth.enabled) {
+        const { ensureFreshDirectusSession } = await import("./auth.js");
+        sessionAccessToken = (await ensureFreshDirectusSession(event))?.accessToken;
+      }
 
       const { credential } = resolveDirectusRequestContext(event, {
         preview: config.public.directus.preview,
         staticToken: config.directus.staticToken,
-        sessionAccessToken: session?.accessToken
+        sessionAccessToken
       });
 
       const headers = new Headers(options.headers);

@@ -14,7 +14,7 @@ pnpm add @onderwijsin/nuxt-directus
 export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-directus"],
   directus: {
-    baseUrl: process.env.DIRECTUS_URL,
+    baseUrl: process.env.DIRECTUS_URL!,
     staticToken: process.env.DIRECTUS_STATIC_TOKEN
   }
 });
@@ -22,6 +22,9 @@ export default defineNuxtConfig({
 
 Keep `baseUrl` and `staticToken` server-only. Never put Directus credentials in
 `runtimeConfig.public` or browser code.
+
+`baseUrl` is required whenever the module is enabled, including when type generation is disabled.
+Set `directus.enabled: false` when an application does not configure Directus.
 
 ## Quick start
 
@@ -47,17 +50,17 @@ export default defineEventHandler((event) =>
 
 The most commonly configured options are:
 
-| Option                       | Purpose                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------- |
-| `baseUrl`                    | Directus HTTP(S) URL.                                                     |
-| `staticToken`                | Optional server-only token for static/server access.                      |
-| `proxy.path`                 | Same-origin browser proxy path; defaults to `/_directus/proxy`.           |
-| `commands`                   | SDK commands to auto-import; defaults to `readItem` and `readItems`.      |
-| `preview.enabled`            | Enables preview query handling; defaults to `true`.                       |
-| `preview.versioning`         | Enables versioned preview lookup; defaults to `true`.                     |
-| `auth.enabled`               | Enables authentication routes and `useDirectusAuth`; defaults to `false`. |
-| `auth.passwordResetUrl`      | Required when using password reset requests.                              |
-| `typegen.introspectionToken` | Server-only token used for schema generation.                             |
+| Option                       | Purpose                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| `baseUrl`                    | Required Directus HTTP(S) URL when the module is enabled.                                         |
+| `staticToken`                | Optional server-only token for static/server access.                                              |
+| `proxy.path`                 | Same-origin browser proxy path; defaults to `/_directus/proxy`.                                   |
+| `commands`                   | SDK commands to auto-import; defaults to `readItem` and `readItems`.                              |
+| `preview.enabled`            | Enables preview query handling; defaults to `true`.                                               |
+| `preview.versioning`         | Enables versioned preview lookup; defaults to `true`.                                             |
+| `auth.enabled`               | Enables cookie authentication, authentication routes, and `useDirectusAuth`; defaults to `false`. |
+| `auth.passwordResetUrl`      | Required when using password reset requests.                                                      |
+| `typegen.introspectionToken` | Server-only token used for schema generation.                                                     |
 
 See the [consumer skill](../../skills/nuxt-directus/SKILL.md) for the complete option reference and
 public API contracts.
@@ -110,6 +113,10 @@ encrypted or signed in this first release; Directus remains the authorization bo
 Directus MFA failures are exposed through `useDirectusError(error).isOtpError`, allowing the UI to
 ask for an OTP and retry `auth.login`.
 
+When `auth.enabled` is `false`, Directus session cookies are ignored: they are not read, refreshed,
+forwarded upstream, or added to the SSR payload. Static, preview, and unauthenticated access remain
+available.
+
 Authentication routes are registered under `/_directus/auth/`: `login`, `refresh`, `logout`,
 `session`, `password-request`, and `password-reset`. Refresh happens immediately before an
 authenticated Directus request when it enters the configured safety window. Concurrent refreshes are
@@ -157,5 +164,8 @@ automatically; the application decides how to react to iframe updates.
 - Directus URLs, credentials, and session tokens are server-only.
 - Browser requests cross the same-origin proxy, which strips caller-supplied credential and origin
   headers.
+- State-changing proxy requests that use a server credential require a matching `Origin` or
+  `Referer` header. Cross-origin or headerless mutations are rejected, including when
+  `sameSite: "none"` is configured.
 - Directus permissions remain the final authorization boundary.
 - Supported environments are Nuxt 4 and Node.js 22 or newer.

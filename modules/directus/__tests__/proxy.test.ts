@@ -2,8 +2,10 @@ import { createServer } from "node:http";
 import { describe, expect, it } from "vitest";
 
 import {
+  assertDirectusProxySameOrigin,
   createSanitizedProxyFetch,
   getForwardedProxyHeaders,
+  requiresDirectusProxySameOrigin,
   resolveDirectusProxyUrl
 } from "../src/runtime/server/handlers/proxy";
 import {
@@ -12,6 +14,41 @@ import {
 } from "../src/runtime/server/utils/credentials";
 
 describe("Directus proxy boundary", () => {
+  it("requires same-origin metadata for credentialed mutations", () => {
+    const requestUrl = new URL("https://app.example.test/_directus/proxy/items/articles");
+
+    expect(() =>
+      assertDirectusProxySameOrigin(requestUrl, "POST", "https://attacker.example.test")
+    ).toThrow(/CSRF/);
+    expect(() => assertDirectusProxySameOrigin(requestUrl, "POST")).toThrow(/CSRF/);
+    expect(() =>
+      assertDirectusProxySameOrigin(requestUrl, "POST", "https://app.example.test")
+    ).not.toThrow();
+    expect(() =>
+      assertDirectusProxySameOrigin(requestUrl, "POST", undefined, "https://app.example.test/page")
+    ).not.toThrow();
+  });
+
+  it("does not require CSRF metadata for safe methods", () => {
+    expect(() =>
+      assertDirectusProxySameOrigin(
+        new URL("https://app.example.test/_directus/proxy/items/articles"),
+        "GET"
+      )
+    ).not.toThrow();
+  });
+
+  it("requires same-origin metadata for every server-selected credential", () => {
+    expect(requiresDirectusProxySameOrigin({ source: "none" })).toBe(false);
+    expect(requiresDirectusProxySameOrigin({ source: "session", accessToken: "session" })).toBe(
+      true
+    );
+    expect(requiresDirectusProxySameOrigin({ source: "static", accessToken: "static" })).toBe(true);
+    expect(requiresDirectusProxySameOrigin({ source: "preview", accessToken: "preview" })).toBe(
+      true
+    );
+  });
+
   it("joins the configured Directus base path and preserves queries", () => {
     expect(
       resolveDirectusProxyUrl(
