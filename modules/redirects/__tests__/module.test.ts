@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const addPlugin = vi.fn();
 const addServerHandler = vi.fn();
@@ -7,6 +11,7 @@ const addServerScanDir = vi.fn();
 const addTemplate = vi.fn();
 const addTypeTemplate = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn(), error: vi.fn() };
+const temporaryDirectories: string[] = [];
 
 vi.mock("@nuxt/kit", () => ({
   addPlugin,
@@ -52,6 +57,7 @@ function createNuxt() {
   return {
     options: {
       rootDir: "/project",
+      serverDir: "/project/server",
       runtimeConfig: { public: {} },
       build: { transpile: [] as string[] },
       routeRules: {}
@@ -62,6 +68,12 @@ function createNuxt() {
 function setupModule(module: object, options: Record<string, unknown>, nuxt: object): void {
   Reflect.get(module, "setup")(options, nuxt);
 }
+
+afterEach(() => {
+  for (const directory of temporaryDirectories.splice(0)) {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 describe("redirects module setup", () => {
   beforeEach(() => {
@@ -100,6 +112,23 @@ describe("redirects module setup", () => {
     expect(Reflect.get(nuxt.options.routeRules, "/api/_redirects/**")).toEqual({
       prerender: false
     });
+  });
+
+  it("discovers redirect sources from a custom server directory", async () => {
+    const module = (await import("../src/module")).default;
+    const serverDirectory = mkdtempSync(join(tmpdir(), "nuxt-redirects-server-"));
+    temporaryDirectories.push(serverDirectory);
+    const redirectsDirectory = join(serverDirectory, "redirects");
+    mkdirSync(redirectsDirectory);
+    const sourcePath = join(redirectsDirectory, "example.ts");
+    writeFileSync(sourcePath, "export default () => []");
+    const nuxt = createNuxt();
+    nuxt.options.serverDir = serverDirectory;
+
+    setupModule(module, {}, nuxt);
+
+    const template = addTemplate.mock.calls[0]?.[0];
+    expect(template.getContents()).toContain(`import source0 from ${JSON.stringify(sourcePath)};`);
   });
 
   it("keeps route middleware available without registering a Pinia store", async () => {

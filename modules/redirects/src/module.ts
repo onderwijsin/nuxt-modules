@@ -103,7 +103,7 @@ export default defineNuxtModule<ModuleOptions>({
       write: true,
       getContents: () =>
         generateRedirectsSourceRegistry(
-          discoverRedirectSources(resolve(nuxt.options.rootDir, "server/redirects"))
+          discoverRedirectSources(resolve(nuxt.options.serverDir, "redirects"))
         )
     });
     addServerPlugin(registry.dst);
