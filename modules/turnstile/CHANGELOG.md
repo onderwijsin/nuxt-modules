@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.6
+
+### Patch Changes
+
+- 93f1b2f: Accept verified Cloudflare test-key responses that omit an action while retaining action validation for normal credentials.
+- Updated dependencies [743f501]
+  - @onderwijsin/nuxt-module-utils@0.3.1
+
 ## 0.2.5
 
 ### Patch Changes

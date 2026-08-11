@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- 743f501: Add attemptSync utility
+
 ## 0.3.0
 
 ### Minor Changes
