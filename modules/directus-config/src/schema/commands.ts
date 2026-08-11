@@ -1,0 +1,63 @@
+import { z } from "zod";
+
+/** SDK command exports reviewed for consumer auto-import registration. */
+export const supportedDirectusCommands = [
+  "aggregate",
+  "createComment",
+  "updateComment",
+  "deleteComment",
+  "createField",
+  "createItem",
+  "createItems",
+  "deleteField",
+  "deleteFile",
+  "deleteFiles",
+  "readActivities",
+  "readActivity",
+  "deleteItem",
+  "deleteItems",
+  "deleteUser",
+  "deleteUsers",
+  "importFile",
+  "readCollection",
+  "readCollections",
+  "createCollection",
+  "updateCollection",
+  "deleteCollection",
+  "readContentVersions",
+  "readContentVersion",
+  "readField",
+  "readFieldsByCollection",
+  "readFields",
+  "readFile",
+  "readFiles",
+  "readItem",
+  "readItems",
+  "readSingleton",
+  "readMe",
+  "readPolicies",
+  "readPolicy",
+  "createUser",
+  "createUsers",
+  "readUser",
+  "readUsers",
+  "updateField",
+  "updateFile",
+  "updateFiles",
+  "updateFolder",
+  "updateFolders",
+  "updateItem",
+  "updateItems",
+  "updateSingleton",
+  "updateMe",
+  "updateUser",
+  "updateUsers",
+  "uploadFiles",
+  "withSearch",
+  "withOptions"
+] as const;
+
+/**
+ * Zod schema for validating supported Directus SDK commands.
+ */
+export const directusCommandsSchema = z.enum(supportedDirectusCommands);
