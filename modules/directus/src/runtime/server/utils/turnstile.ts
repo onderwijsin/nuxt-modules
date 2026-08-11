@@ -17,5 +17,6 @@ export async function assertDirectusTurnstile(
   if (!turnstile.enabled) return;
 
   const { assertTurnstileToken } = await import("@onderwijsin/nuxt-turnstile/runtime");
+
   await assertTurnstileToken(event, turnstile.actions[action]);
 }

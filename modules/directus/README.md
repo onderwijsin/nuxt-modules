@@ -256,8 +256,10 @@ const passwordRequestAction = config.public.directus.auth.turnstile.actions.pass
 ```
 
 Use `config.public.directus.auth.turnstile.actions.login` for the login widget and `passwordRequest`
-for the password-reset-request widget. Tokens are required only when the option is enabled; reset
-each widget after its submission because Turnstile tokens are single-use.
+for the password-reset-request widget. Cloudflare's test credentials return a verified test-key
+response without an action, which the module recognizes only for those credentials. Tokens are
+required only when the option is enabled; reset each widget after its submission because Turnstile
+tokens are single-use.
 
 ## Generated types
 

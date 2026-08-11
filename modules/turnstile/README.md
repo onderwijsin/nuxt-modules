@@ -107,6 +107,10 @@ The helper reads `x-turnstile-token` and verifies it through `@nuxtjs/turnstile`
 missing, failed, unavailable, or mismatched-action tokens. In development, an absent secret leaves
 local forms usable; in production, it produces `TURNSTILE_SERVER_MISCONFIGURED`.
 
+Cloudflare's official test credentials return `metadata.result_with_testing_key: true` without an
+`action`. The helper accepts only that verified test-key response without action matching, so test
+credentials can exercise protected flows while normal credentials remain action-aware.
+
 ## Trusted administrator bypass
 
 Configure `adminToken` for trusted server-to-server or administrative requests. The configured

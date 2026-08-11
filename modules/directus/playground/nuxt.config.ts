@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     public: { playgroundPreviewToken: process.env.DIRECTUS_PREVIEW_TOKEN ?? "" }
   },
   turnstile: {
-    siteKey: "1x00000000000000000000AA",
+    siteKey: "1x00000000000000000000BB",
     secretKey: "1x0000000000000000000000000000000AA"
   },
   directus: {

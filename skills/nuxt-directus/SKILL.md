@@ -179,7 +179,9 @@ option. Follow the
 to configure keys, render widgets, and manage tokens. Render each widget with the public action key
 at `useRuntimeConfig().public.directus.auth.turnstile.actions.login` or `.passwordRequest`, then
 pass the resulting token as `{ turnstileToken }` metadata to `auth.login` or `auth.passwordRequest`.
-Tokens are single-use, so reset the widget after each processed submission.
+Cloudflare's test credentials return a verified test-key response without an action, which the
+module recognizes only for those credentials. Tokens are single-use, so reset the widget after each
+processed submission.
 
 ## Authentication hooks
 

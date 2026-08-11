@@ -80,6 +80,15 @@ describe("turnstile module", async () => {
     });
   });
 
+  it("accepts a verified Cloudflare test-key response without an action", async () => {
+    await expect(
+      $fetch("/api/turnstile/validate", {
+        method: "POST",
+        headers: { "x-turnstile-token": "fixture-testing-key" }
+      })
+    ).resolves.toEqual({ ok: true });
+  });
+
   it("maps verifier transport failures to 502", async () => {
     await expectTurnstileError("fixture-transport-failure", 502, {
       code: "TURNSTILE_VALIDATION_UNAVAILABLE",

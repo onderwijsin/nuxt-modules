@@ -133,15 +133,28 @@ async function submitLogin(event: { data: LoginForm }): Promise<void> {
       <ul class="space-y-4 text-sm leading-6 text-muted">
         <li class="flex gap-3">
           <UIcon name="i-lucide-check" class="mt-1 size-4 shrink-0 text-success" />
-          The browser calls the same-origin Nitro auth route.
+          The invisible Turnstile widget issues a short-lived token. The login form forwards it only
+          to the same-origin Nitro auth route, where the configured login action is verified.
         </li>
         <li class="flex gap-3">
           <UIcon name="i-lucide-check" class="mt-1 size-4 shrink-0 text-success" />
-          Access and refresh tokens stay in the httpOnly session cookie.
+          The auth route rejects cross-origin requests before it reads credentials or changes the
+          session.
         </li>
         <li class="flex gap-3">
           <UIcon name="i-lucide-check" class="mt-1 size-4 shrink-0 text-success" />
-          Directus MFA errors reveal the OTP field without exposing raw tokens.
+          Directus exchanges the submitted credentials for access and refresh tokens; they stay in
+          the bounded httpOnly session cookie and never enter client state.
+        </li>
+        <li class="flex gap-3">
+          <UIcon name="i-lucide-check" class="mt-1 size-4 shrink-0 text-success" />
+          The token-free session snapshot is hydrated into Nuxt state, then available on the current
+          session route without another session request.
+        </li>
+        <li class="flex gap-3">
+          <UIcon name="i-lucide-check" class="mt-1 size-4 shrink-0 text-success" />
+          Directus MFA errors reveal the OTP field without exposing raw tokens; logout and refresh
+          are available from the session route.
         </li>
       </ul>
       <UButton
