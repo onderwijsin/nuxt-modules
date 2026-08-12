@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   generateDirectusServerConfigDeclarationSource,
   generateDirectusServerConfigSource,
+  getResolvedDirectusConfigFromSource,
   loadDirectusConfigSource,
   generateDirectusRuntimeConfigSource,
   resolveDirectusConfigFile
@@ -47,7 +48,22 @@ describe("Directus config source discovery", () => {
       instance: { baseUrl: "https://cms.example.test" },
       client: { proxy: { path: "/_directus/proxy" }, preview: { enabled: true } }
     });
-    await expect(loadDirectusConfigSource()).resolves.toEqual({});
+    await expect(loadDirectusConfigSource()).resolves.toEqual({ collections: [] });
+  });
+
+  it("loads a resolved source for dependency discovery", async () => {
+    const root = mkdtempSync(join(tmpdir(), "nuxt-directus-config-"));
+    directories.push(root);
+    const configFile = join(root, "directus.config.ts");
+    writeFileSync(
+      configFile,
+      "export default { client: { auth: { turnstile: { enabled: true } } } };"
+    );
+
+    await expect(getResolvedDirectusConfigFromSource(root, configFile)).resolves.toMatchObject({
+      client: { auth: { turnstile: { enabled: true } } }
+    });
+    await expect(getResolvedDirectusConfigFromSource(root, false)).resolves.toBeUndefined();
   });
 
   it("rejects invalid executable config sources", async () => {

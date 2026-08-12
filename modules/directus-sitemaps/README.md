@@ -41,8 +41,8 @@ export default defineNuxtConfig({
 
 ## Configuration
 
-The sitemap module works standalone. Its direct `directusSitemaps.collections` option is data-only
-and supports `fields`, `filter`, `_sitemap`, and `fieldmap`. The optional
+The sitemap module works standalone. Its direct `directusSitemaps` options are data-only and support
+`collections`, `static`, `cache`, and the other delivery settings. The optional
 `@onderwijsin/nuxt-directus-config` module adds executable shared configuration.
 
 ### Standalone field mapping
@@ -171,14 +171,15 @@ Configure delivery independently of collection selection under `sitemaps`:
 | `cache`              | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Nitro cache policy for the source endpoint, or `false`.                             |
 | `prerenderSitemaps`  | `false`                                      | Prerenders the source endpoint and sitemap XML, including named sitemap routes.     |
 
-`directusSitemaps` accepts the same `collections` and `sitemaps` option shape, plus `enabled`:
+`directusSitemaps` accepts `collections` and the delivery settings directly, plus `enabled`:
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
   directusSitemaps: {
     enabled: true,
-    sitemaps: { cache: false, prerenderSitemaps: true }
+    cache: false,
+    prerenderSitemaps: true
   }
 });
 ```

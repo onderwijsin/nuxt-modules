@@ -45,7 +45,10 @@ export async function fetchItemsFromCollection(
     filter: sitemap.filter ?? {}
   };
 
-  if (isFunction(sitemap.fetcher)) return await sitemap.fetcher(context);
+  if (isFunction(sitemap.fetcher)) {
+    const records = await sitemap.fetcher(context);
+    return isArray(records) ? records : [];
+  }
 
   const records = await useDirectusServer(
     readItems<GenericDirectusSchema, string, GenericDirectusQuery>(context.collection, {

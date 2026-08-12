@@ -1,4 +1,5 @@
 import { defu } from "defu";
+import { getResolvedDirectusConfigFromSource } from "@onderwijsin/nuxt-directus-config/config";
 import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
 import { join } from "node:path";
 import {
@@ -19,7 +20,12 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  attempt,
+  isNonBlankString,
+  isRecord,
+  isString
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { parseDirectusCommands } from "./config/commands";
 import { directusOptionsSchema } from "./config/options.schema";
@@ -47,8 +53,22 @@ export default defineNuxtModule<ModuleOptions>({
     instance: {},
     client: {}
   },
-  moduleDependencies: (nuxt): ModuleDependencies => {
-    const sharedConfig = getResolvedDirectusConfig(nuxt);
+  moduleDependencies: async (nuxt): Promise<ModuleDependencies> => {
+    const directusConfigModuleRegistered = nuxt.options.modules.some(
+      (module) => module === "@onderwijsin/nuxt-directus-config"
+    );
+    const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
+    const configFile: string | false =
+      directusConfigModuleRegistered &&
+      isRecord(directusConfigOptions) &&
+      (isString(directusConfigOptions.configFile) || directusConfigOptions.configFile === false)
+        ? directusConfigOptions.configFile
+        : "directus.config.ts";
+    const sharedConfig =
+      getResolvedDirectusConfig(nuxt) ??
+      (directusConfigModuleRegistered
+        ? await getResolvedDirectusConfigFromSource(nuxt.options.rootDir, configFile)
+        : undefined);
     const directusOptions = defu(nuxt.options.directus, sharedConfig);
     return directusOptions?.client?.auth?.turnstile?.enabled
       ? { "@onderwijsin/nuxt-turnstile": { version: ">=0.2.5" } }

@@ -64,7 +64,7 @@ writeFileSync(
       private: true,
       type: "module",
       packageManager: "pnpm@11.13.1",
-      dependencies: { nuxt: "4.5.2", ...packedDependencies }
+      dependencies: { "@nuxtjs/sitemap": "8.3.0", nuxt: "4.5.2", ...packedDependencies }
     },
     null,
     2
@@ -192,6 +192,13 @@ try {
       body.publicSubpaths?.redirectsSource === true &&
       body.publicSubpaths?.redirectsRefreshTask === true &&
       body.publicSubpaths?.sentryConfig === true
+  );
+
+  await readJson(
+    await waitForResponse(`http://127.0.0.1:${port}/api/_directus-sitemaps/urls`),
+    (body) =>
+      Array.isArray(body) &&
+      body.some((entry) => entry.loc === "/external-about" && entry.changefreq === "monthly")
   );
 
   await readJson(

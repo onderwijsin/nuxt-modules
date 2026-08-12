@@ -33,6 +33,21 @@ export async function loadDirectusConfigSource(configFile?: string) {
 }
 
 /**
+ * Loads shared Directus configuration for Nuxt dependency discovery.
+ *
+ * @param rootDir Nuxt application root.
+ * @param configFile Root-relative or absolute consumer configuration source path.
+ * @returns Validated shared configuration, or undefined when no source is configured.
+ */
+export async function getResolvedDirectusConfigFromSource(
+  rootDir: string,
+  configFile: string | false = "directus.config.ts"
+) {
+  const resolvedConfigFile = resolveDirectusConfigFile(rootDir, configFile);
+  return resolvedConfigFile ? loadDirectusConfigSource(resolvedConfigFile) : undefined;
+}
+
+/**
  * Generates a virtual module that exports the client safe consumer Directus config without serializing it.
  *
  * @param configFile Consumer config source path, when present.

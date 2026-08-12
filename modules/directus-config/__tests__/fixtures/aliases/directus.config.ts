@@ -13,15 +13,13 @@ export default {
     },
     typegen: { introspectionToken: "server-only-introspection-token" }
   },
-  collections: {
-    collections: [
-      {
-        collection: "articles",
-        sitemap: { mapper: () => ({ path: "/articles" }) },
-        prerender: false
-      }
-    ]
-  },
+  collections: [
+    {
+      collection: "articles",
+      sitemap: { mapper: () => ({ loc: "/articles" }) },
+      prerender: false
+    }
+  ],
   sitemaps: {
     apiEndpoint: "/api/sitemap-source",
     prerenderSitemaps: true

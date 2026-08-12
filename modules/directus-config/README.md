@@ -187,6 +187,8 @@ A missing default file is valid and resolves to an empty shared configuration.
 
 - `defineDirectusConfig(config)` — strict, typed configuration helper.
 - `validateDirectusConfig(config)` — validates unknown input and returns `ResolvedDirectusConfig`.
+- `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a consumer source
+  during Nuxt module dependency discovery.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.
 
 `@onderwijsin/nuxt-directus-config/schema` exports the source-of-truth Zod schemas, their inferred

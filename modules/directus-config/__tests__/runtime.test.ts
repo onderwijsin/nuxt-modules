@@ -29,7 +29,7 @@ describe("Directus config helpers", () => {
   });
 
   it("accepts an empty optional shared configuration", () => {
-    expect(validateDirectusConfig({})).toEqual({});
+    expect(validateDirectusConfig({})).toEqual({ collections: [] });
   });
 
   it("drops unknown values from the public projection", () => {
@@ -50,32 +50,28 @@ describe("Directus config helpers", () => {
     ).toThrow("Invalid directus.config.ts configuration.");
     expect(() =>
       validateDirectusConfig({
-        collections: {
-          collections: [{ collection: "articles", sitemap: false, prerender: false, unknown: true }]
-        }
+        collections: [{ collection: "articles", sitemap: false, prerender: false, unknown: true }]
       })
     ).toThrow("Invalid directus.config.ts configuration.");
   });
 
   it("accepts executable collection configuration and omits it from public output", () => {
     const fetcher = async () => [{ slug: "welcome" }];
-    const mapper = () => ({ path: "/welcome", priority: 0.8 });
+    const mapper = () => ({ loc: "/welcome", priority: 0.8 });
     const validated = validateDirectusConfig({
-      collections: {
-        collections: [
-          {
-            collection: "articles",
-            sitemap: {
-              _sitemap: "articles",
-              fields: ["slug"],
-              filter: { status: { _eq: "published" } },
-              fetcher,
-              mapper
-            },
-            prerender: false
-          }
-        ]
-      },
+      collections: [
+        {
+          collection: "articles",
+          sitemap: {
+            _sitemap: "articles",
+            fields: ["slug"],
+            filter: { status: { _eq: "published" } },
+            fetcher,
+            mapper
+          },
+          prerender: false
+        }
+      ],
       sitemaps: {
         static: [{ loc: "/" }],
         cache: false,
@@ -83,7 +79,7 @@ describe("Directus config helpers", () => {
       }
     });
 
-    expect(validated.collections?.collections[0]?.sitemap).toMatchObject({
+    expect(validated.collections?.[0]?.sitemap).toMatchObject({
       _sitemap: "articles",
       fields: ["slug"],
       fetcher,
@@ -96,28 +92,24 @@ describe("Directus config helpers", () => {
   it("rejects invalid collection functions and sitemap entry shapes", () => {
     expect(() =>
       directusConfigSchema.parse({
-        collections: {
-          collections: [
-            {
-              collection: "articles",
-              sitemap: { mapper: "not-a-function" },
-              prerender: false
-            }
-          ]
-        }
+        collections: [
+          {
+            collection: "articles",
+            sitemap: { mapper: "not-a-function" },
+            prerender: false
+          }
+        ]
       })
     ).toThrow();
     expect(() =>
       directusConfigSchema.parse({
-        collections: {
-          collections: [
-            {
-              collection: "articles",
-              sitemap: { _sitemap: " ", mapper: () => ({ path: "/articles" }) },
-              prerender: false
-            }
-          ]
-        }
+        collections: [
+          {
+            collection: "articles",
+            sitemap: { _sitemap: " ", mapper: () => ({ loc: "/articles" }) },
+            prerender: false
+          }
+        ]
       })
     ).toThrow();
     expect(() =>

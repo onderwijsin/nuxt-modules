@@ -130,10 +130,7 @@ export default defineNuxtModule<ModuleOptions>({
       const sources = nuxt.options.sitemap.sources;
       nuxt.options.sitemap.sources = [options.apiEndpoint, ...(isArray(sources) ? sources : [])];
     } else {
-      console.log("!!! REGISTERING SITEMAPS", sitemapNamespaces);
       registerSitemapNamespaces(nuxt.options.sitemap, sitemapNamespaces, options.apiEndpoint);
-
-      console.log(nuxt.options.sitemap);
     }
 
     const configuredPathPrefix = options.sitemapsPathPrefix.replace(/\/$/u, "");

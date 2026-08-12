@@ -33,7 +33,7 @@ describe("directus-config virtual aliases", () => {
         typegen: { introspectionToken: "server-only-introspection-token" },
         auth: { cookie: { name: "cms_session" } }
       },
-      collections: { collections: [{ collection: "articles" }] },
+      collections: [{ collection: "articles" }],
       sitemaps: { apiEndpoint: "/api/sitemap-source", prerenderSitemaps: true }
     });
   });

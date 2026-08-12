@@ -127,6 +127,8 @@ default `directus.config.ts` is valid and resolves to empty shared configuration
 
 - `defineDirectusConfig(config)` — typed identity helper for a strict config source.
 - `validateDirectusConfig(value)` — runtime validation returning `ResolvedDirectusConfig`.
+- `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a source for
+  dependent module dependency discovery.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.
 
 `@onderwijsin/nuxt-directus-config/schema` exports the config, instance, client, typegen, command,

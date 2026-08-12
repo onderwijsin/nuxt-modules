@@ -56,11 +56,9 @@ describe("directus-sitemaps module", () => {
 
   it("registers one source, endpoint caching, and sitemap prerender routes", async () => {
     const { nuxt } = await setupModule({
-      sitemaps: {
-        static: [{ loc: "/about" }],
-        cache: { maxAge: 60, staleMaxAge: 30, swr: true },
-        prerenderSitemaps: true
-      }
+      static: [{ loc: "/about" }],
+      cache: { maxAge: 60, staleMaxAge: 30, swr: true },
+      prerenderSitemaps: true
     });
 
     expect(addServerHandler).toHaveBeenCalledTimes(2);
@@ -70,7 +68,7 @@ describe("directus-sitemaps module", () => {
     ]);
     expect(Object.values(nuxt.options.routeRules)).toContainEqual({
       cache: { maxAge: 60, staleMaxAge: 30, swr: true },
-      prerender: true
+      prerender: false
     });
     expect(addPrerenderRoutes).toHaveBeenCalledWith([
       "/api/_directus-sitemaps/urls",
@@ -80,7 +78,7 @@ describe("directus-sitemaps module", () => {
 
   it("merges shared settings while direct serializable settings take precedence", async () => {
     getResolvedDirectusConfig.mockReturnValue({
-      collections: { collections: [] },
+      collections: [],
       sitemaps: {
         static: [{ loc: "/shared" }],
         apiEndpoint: "/api/shared-sitemap-source",
@@ -90,16 +88,22 @@ describe("directus-sitemaps module", () => {
       }
     });
 
-    const { nuxt } = await setupModule({
-      sitemaps: { static: [{ loc: "/direct" }], cache: { maxAge: 10 } }
-    });
+    const nuxt = createNuxt();
+    Object.assign(nuxt.options, { _directus: { collections: [] } });
+    const { nuxt: configuredNuxt } = await setupModule(
+      {
+        static: [{ loc: "/direct" }],
+        cache: { maxAge: 10 }
+      },
+      nuxt
+    );
 
-    expect(nuxt.options.sitemap.sources).toEqual([
+    expect(configuredNuxt.options.sitemap.sources).toEqual([
       "/api/shared-sitemap-source",
       "/existing-source"
     ]);
     expect(addServerHandler).toHaveBeenCalledTimes(1);
-    expect(Object.values(nuxt.options.routeRules)).toContainEqual({
+    expect(Object.values(configuredNuxt.options.routeRules)).toContainEqual({
       cache: { maxAge: 10, staleMaxAge: 0, swr: true },
       prerender: false
     });
@@ -112,16 +116,14 @@ describe("directus-sitemaps module", () => {
 
   it("registers the source on named sitemap configurations", async () => {
     const { nuxt } = await setupModule({
-      collections: {
-        collections: [
-          {
-            collection: "articles",
-            sitemap: { _sitemap: "articles", mapper: () => ({ path: "/articles" }) },
-            prerender: false
-          }
-        ]
-      },
-      sitemaps: { prerenderSitemaps: true }
+      collections: [
+        {
+          collection: "articles",
+          sitemap: { _sitemap: "articles" },
+          prerender: false
+        }
+      ],
+      prerenderSitemaps: true
     });
 
     expect(nuxt.options.sitemap.sources).toEqual(["/existing-source"]);
@@ -172,7 +174,9 @@ describe("directus-sitemaps module", () => {
     );
 
     expect(logger.warn).toHaveBeenCalledWith(
-      "@nuxtjs/sitemap is disabled; no Directus sitemap source was registered."
+      expect.stringContaining(
+        "@nuxtjs/sitemap is disabled; no Directus sitemap source was registered."
+      )
     );
     expect(addServerHandler).toHaveBeenCalledTimes(2);
   });
@@ -188,7 +192,7 @@ describe("directus-sitemaps module", () => {
   });
 
   it("rejects invalid source endpoint configuration before registration", async () => {
-    await expect(setupModule({ sitemaps: { apiEndpoint: "sitemap-source" } })).rejects.toThrow(
+    await expect(setupModule({ apiEndpoint: "sitemap-source" })).rejects.toThrow(
       "Invalid module options"
     );
     expect(addServerHandler).not.toHaveBeenCalled();

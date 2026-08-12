@@ -5,7 +5,10 @@ export default defineNuxtConfig({
   modules: [
     "@onderwijsin/nuxt-cache",
     "@onderwijsin/nuxt-device",
+    "@onderwijsin/nuxt-directus-config",
     "@onderwijsin/nuxt-directus",
+    "@onderwijsin/nuxt-directus-sitemaps",
+    "@nuxtjs/sitemap",
     "@onderwijsin/nuxt-healthcheck",
     "@onderwijsin/nuxt-loops-renderer",
     "@onderwijsin/nuxt-newsletter-signup",
@@ -27,10 +30,10 @@ export default defineNuxtConfig({
     enabled: true
   },
   directus: {
-    enabled: !directusDisabled,
-    ...(directusDisabled ? {} : { baseUrl: "https://directus.invalid" }),
-    proxy: { path: "/_directus/proxy" },
-    typegen: { enabled: false }
+    enabled: !directusDisabled
+  },
+  directusSitemaps: {
+    enabled: true
   },
   healthcheck: {
     enabled: true,
