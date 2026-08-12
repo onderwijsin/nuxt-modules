@@ -30,14 +30,14 @@ import {
 } from "./config/runtime";
 import { sentryConfigOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";
-import type { ModuleOptions, SentryTestToolsOptions } from "./types/options";
+import type { ModuleOptions, SentryTestToolsOptions } from "./config/options.schema";
 
 export type {
   ModuleOptions,
   SentryRuntime,
   SentryTestToolRouteOptions,
   SentryTestToolsOptions
-} from "./types/options";
+} from "./config/options.schema";
 
 const MODULE_KEY = "sentryConfig";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

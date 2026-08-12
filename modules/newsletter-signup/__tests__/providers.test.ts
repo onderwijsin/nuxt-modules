@@ -8,7 +8,7 @@ import { subscribeToLoops } from "../src/runtime/server/providers/loops";
 import { subscribeToMailchimp } from "../src/runtime/server/providers/mailchimp";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../src/runtime/types/errors";
 import type { NewsletterSignupInput } from "../src/runtime/shared";
-import type { ModuleOptions } from "../src/types/options";
+import type { ModuleOptions } from "../src/config/options.schema";
 
 const input: NewsletterSignupInput = {
   email: "ada@example.com",

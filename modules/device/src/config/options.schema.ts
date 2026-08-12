@@ -11,3 +11,5 @@ export const deviceOptionsSchema = z.object({
 });
 
 export type DeviceOptionsSchema = typeof deviceOptionsSchema;
+export type ModuleOptions = z.input<typeof deviceOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof deviceOptionsSchema>;

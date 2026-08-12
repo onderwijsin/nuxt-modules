@@ -9,7 +9,8 @@ import {
 } from "@onderwijsin/nuxt-module-utils/build";
 
 import { version } from "../package.json";
-import type { ModuleOptions } from "./types";
+import { loopsRendererOptionsSchema } from "./config/options.schema";
+import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "loopsRenderer";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
@@ -26,9 +27,7 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: "^4.0.0"
     }
   },
-  defaults: {
-    // applyInlineStyles: true
-  },
+  defaults: { enabled: true, applyInlineStyles: true },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.loopsRenderer, {
       "@nuxt/ui": { version: ">=4.0.0" }
@@ -43,11 +42,12 @@ export default defineNuxtModule<ModuleOptions>({
       return;
     }
 
+    const validatedOptions = loopsRendererOptionsSchema.parse(options);
     nuxt.options.appConfig.loopsRenderer = {
-      applyInlineStyles: options.applyInlineStyles ?? true
+      applyInlineStyles: validatedOptions.applyInlineStyles
     };
     Object.assign(nuxt.options.appConfig.loopsRenderer as object, {
-      evaluate: options.evaluate
+      evaluate: validatedOptions.evaluate
     });
 
     const resolver = createResolver(import.meta.url);

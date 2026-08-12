@@ -11,3 +11,5 @@ export const cacheOptionsSchema = z.strictObject({
 });
 
 export type CacheOptionsSchema = typeof cacheOptionsSchema;
+export type ModuleOptions = z.input<typeof cacheOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof cacheOptionsSchema>;

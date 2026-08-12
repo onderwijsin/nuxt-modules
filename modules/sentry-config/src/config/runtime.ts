@@ -3,7 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
-import type { SentryRuntime } from "../types/options";
+import type { SentryRuntime } from "./options.schema";
 
 const SENTRY_NITRO_ROLLUP_PLUGIN_NAME = "sentry-rollup-plugin";
 const SENTRY_PRELOAD_FILENAME = "sentry.server.config.mjs";

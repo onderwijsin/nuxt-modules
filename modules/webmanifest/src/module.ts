@@ -12,8 +12,18 @@ import {
 import { isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { webmanifestOptionsSchema } from "./config/options.schema";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 import { generateWebManifest, resolveIconConfig } from "./utils";
+
+export type {
+  ModuleOptions,
+  ResolvedModuleOptions,
+  WebManifest,
+  WebManifestIcon,
+  WebManifestProtocolHandler,
+  WebManifestScreenshot,
+  WebManifestShortcut
+} from "./config/options.schema";
 
 const MODULE_KEY = "webmanifest";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

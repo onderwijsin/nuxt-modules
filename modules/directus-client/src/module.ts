@@ -31,7 +31,7 @@ import { parseDirectusCommands } from "./config/commands";
 import { directusClientOptionsSchema } from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { version } from "../package.json";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "directusClient";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

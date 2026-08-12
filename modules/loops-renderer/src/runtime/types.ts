@@ -1,11 +1,7 @@
-import type { EvaluateLoopsLmxOptions } from "@onderwijsin/loops-core";
+import type { ModuleOptions } from "../config/options.schema";
 
 /** Options shared by the root renderer and every recursive LMX node renderer. */
-export interface LoopsRendererConfig {
+export type LoopsRendererConfig = Partial<Pick<ModuleOptions, "applyInlineStyles" | "evaluate">> & {
   /** Render unsupported nodes in an inline developer-only block. */
   debug?: boolean;
-  /** Overrides the module default for applying LMX node styles inline. */
-  applyInlineStyles?: boolean;
-  /** Overrides the module defaults for conditional Section evaluation. */
-  evaluate?: EvaluateLoopsLmxOptions;
-}
+};

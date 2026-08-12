@@ -1,5 +1,5 @@
 import { isString, isRecord, isArray, fromEntries } from "@onderwijsin/nuxt-module-utils";
-import type { ResolvedModuleOptions } from "../types/options";
+import type { ResolvedModuleOptions } from "../config/options.schema";
 import type { ModuleOptions as NuxtSitemapModuleOptions } from "@nuxtjs/sitemap";
 import { defu } from "defu";
 import { joinURL } from "ufo";

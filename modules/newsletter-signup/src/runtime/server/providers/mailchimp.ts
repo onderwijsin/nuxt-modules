@@ -2,10 +2,9 @@ import { createHash } from "node:crypto";
 import { $fetch } from "ofetch";
 import { z } from "zod";
 import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";
-import type { ModuleOptions } from "../../../types/options";
+import type { ModuleOptions, NewsletterFieldConfig } from "../../../config/options.schema";
 import { DEFAULT_TARGETS } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";
-import type { NewsletterFieldConfig } from "../../../types/options";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../types/errors";
 import { createNewsletterSignupError, getErrorStatus } from "../utils/errors";
 

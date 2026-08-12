@@ -1,6 +1,6 @@
 import type { H3Event } from "h3";
 
-import type { RedirectIndex, RedirectSource } from "../../../types/redirect";
+import type { RedirectIndex, RedirectSource } from "../../types/redirect";
 import { useNitroApp } from "nitropack/runtime";
 
 import { refreshRedirectStorage } from "./storage";

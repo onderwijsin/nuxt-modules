@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { themeOptionsSchema } from "../src/config/options.schema";
-import type { ThemePalette } from "../src/types";
+import type { ThemePalette } from "../src/config/options.schema";
 
 const palette = fromEntries(
   [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#123456"])

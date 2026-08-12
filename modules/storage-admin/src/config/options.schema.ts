@@ -43,3 +43,5 @@ export const storageAdminOptionsSchema = z.strictObject({
 });
 
 export type StorageAdminOptionsSchema = typeof storageAdminOptionsSchema;
+export type ModuleOptions = z.input<typeof storageAdminOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof storageAdminOptionsSchema>;

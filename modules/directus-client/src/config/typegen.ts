@@ -12,7 +12,7 @@ import { hash } from "ohash";
 
 import type { TypegenTransform } from "@onderwijsin/nuxt-directus-config/schema";
 
-import type { ResolvedModuleOptions } from "../types/options";
+import type { ResolvedModuleOptions } from "./options.schema";
 
 /** The pinned generator version recorded in development cache manifests. */
 export const DIRECTUS_TYPEGEN_VERSION = "0.2.1";

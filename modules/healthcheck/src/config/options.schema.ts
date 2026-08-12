@@ -59,3 +59,5 @@ export const healthcheckOptionsSchema = z.strictObject({
 });
 
 export type HealthcheckOptionsSchema = typeof healthcheckOptionsSchema;
+export type ModuleOptions = z.input<typeof healthcheckOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof healthcheckOptionsSchema>;

@@ -24,7 +24,8 @@ while enabled. It derives `name`, `short_name`, and `categories` from `schemaOrg
 `name`/`description` from the global `site` configuration. Multi-tenancy is not supported.
 
 Set icon sources and explicit manifest values under `webmanifest`. Supplying `manifest.icons`
-bypasses automatic icon generation:
+bypasses automatic icon generation. Manifest metadata and collection entries are validated against
+the supported W3C shapes during setup:
 
 ```ts
 export default defineNuxtConfig({

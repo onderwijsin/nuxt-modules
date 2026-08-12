@@ -11,3 +11,6 @@ export const directusSitemapsOptionsSchema = z.strictObject({
   collections: z.array(directusSitemapsCollectionConfigSchema).default([]),
   ...directusSitemapsSchema.shape
 });
+
+export type ModuleOptions = z.input<typeof directusSitemapsOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof directusSitemapsOptionsSchema>;
