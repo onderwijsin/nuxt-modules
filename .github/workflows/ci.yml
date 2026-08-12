@@ -42,7 +42,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: pnpm ci:detect-changes
 
-  focused:
+  focused_quality_check:
     needs: detect_changes
     if: needs.detect_changes.outputs.full == 'false' && github.event_name == 'pull_request'
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -82,7 +82,7 @@ jobs:
             pnpm exec vitest run $TEST_PATHS --coverage
           fi
 
-  full:
+  full_quality_check:
     needs: detect_changes
     if: needs.detect_changes.outputs.full == 'true'
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -129,7 +129,7 @@ jobs:
           language: JavaScript
           label: code-coverage/vitest
 
-  external_consumer:
+  external_consumer_check:
     needs: full
     if: needs.full.result == 'success'
     runs-on: blacksmith-4vcpu-ubuntu-2404
