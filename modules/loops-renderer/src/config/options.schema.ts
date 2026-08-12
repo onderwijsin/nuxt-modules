@@ -13,11 +13,11 @@ export const loopsRendererOptionsSchema = z.strictObject({
   evaluate: z
     .strictObject({
       /** Result for a valid variable whose value is null or undefined. */
-      onMissingVariable: z.boolean().default(false),
+      onMissingVariable: z.boolean().default(EVALUATE_DEFAULTS.onMissingVariable),
       /** Result for malformed rules, unsupported variables, or unknown operations. */
-      onInvalidCondition: z.boolean().default(false),
+      onInvalidCondition: z.boolean().default(EVALUATE_DEFAULTS.onInvalidCondition),
       /** Result when an operation cannot compare the resolved value. */
-      onInvalidComparison: z.boolean().default(false)
+      onInvalidComparison: z.boolean().default(EVALUATE_DEFAULTS.onInvalidComparison)
     })
     .default(EVALUATE_DEFAULTS)
 });

@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 
 export const turnstileOptionsSchema = z.object({
-  enabled: z.boolean().default(true),
+  enabled,
   siteKey: z.string().default(""),
   secretKey: z.string().default(""),
   adminToken: z.string().default(""),
