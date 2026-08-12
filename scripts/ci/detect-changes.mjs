@@ -62,6 +62,44 @@ function writeOutput(name, value) {
   } else appendFileSync(outputFile, `${name}=${text}\n`);
 }
 
+function formatList(items, empty = "none") {
+  return items.length ? items.map((item) => `  • ${item}`).join("\n") : `  • ${empty}`;
+}
+
+function logResults({ directAffected, dependentAffected }) {
+  const scope = full ? "FULL" : "FOCUSED";
+  const icon = full ? "🛡️" : "🎯";
+  const source = changed === null ? "unavailable" : `${changed.length} file(s)`;
+
+  console.log(`\n${icon} CI validation scope: ${scope}`);
+  console.log("═".repeat(56));
+  console.log(`📌 Reason: ${reason}`);
+  console.log(`📂 Changed files: ${source}`);
+  console.log(`📦 Selected packages: ${selected.length}`);
+  console.log(`🧪 Selected test paths: ${testPaths.length}`);
+
+  console.log("\n📝 Changed paths");
+  console.log(formatList(changed ?? [], "diff unavailable; validation fails closed"));
+
+  console.log("\n🎯 Directly affected packages");
+  console.log(formatList([...directAffected].sort()));
+
+  console.log("\n🔗 Dependent packages added");
+  console.log(formatList([...dependentAffected].sort()));
+
+  console.log("\n📦 Validation packages");
+  console.log(formatList(selected));
+
+  console.log("\n🧪 Test paths");
+  console.log(formatList(testPaths));
+
+  console.log("\n📤 GitHub outputs");
+  console.log(`  • full=${full}`);
+  console.log(`  • packages=${selected.join(" ") || "(empty)"}`);
+  console.log(`  • test_paths=${testPaths.join(" ") || "(empty)"}`);
+  console.log("═".repeat(56));
+}
+
 const packages = discoverPackages();
 const packageByName = new Map(packages.map((entry) => [entry.manifest.name, entry]));
 const packageByDirectory = packages
@@ -112,6 +150,8 @@ if (!full) {
   }
 }
 
+const directAffected = new Set(affected);
+
 const dependencyFields = [
   "dependencies",
   "devDependencies",
@@ -138,6 +178,10 @@ for (let changedPackage = true; !full && changedPackage;) {
   }
 }
 
+const dependentAffected = new Set(
+  [...affected].filter((packageName) => !directAffected.has(packageName))
+);
+
 const selected = full ? packages.map((entry) => entry.manifest.name) : [...affected].sort();
 const selectedEntries = selected.map((name) => packageByName.get(name)).filter(Boolean);
 const testPaths = selectedEntries
@@ -152,8 +196,13 @@ writeOutput("reason", reason);
 writeOutput("packages", selected.join(" "));
 writeOutput("test_paths", testPaths.join(" "));
 
+logResults({ directAffected, dependentAffected });
+
 if (summaryFile)
   appendFileSync(
     summaryFile,
-    `### CI validation scope\n\n- Scope: **${full ? "full" : "focused"}**\n- Reason: ${reason}\n- Packages: ${selected.length ? selected.join(", ") : "none"}\n`
+    `### ${full ? "🛡️" : "🎯"} CI validation scope: ${full ? "full" : "focused"}\n\n` +
+      `| Result | Value |\n| --- | --- |\n| Reason | ${reason} |\n| Changed files | ${changed?.length ?? "unavailable"} |\n| Direct packages | ${directAffected.size} |\n| Dependent packages | ${dependentAffected.size} |\n| Selected packages | ${selected.length} |\n| Test paths | ${testPaths.length} |\n\n` +
+      `#### 📦 Validation packages\n\n${formatList(selected)}\n\n` +
+      `#### 🧪 Test paths\n\n${formatList(testPaths)}\n`
   );
