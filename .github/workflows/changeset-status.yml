@@ -3,6 +3,7 @@ name: Changeset status
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
+  merge_group:
 
 permissions: {}
 
@@ -12,6 +13,7 @@ concurrency:
 
 jobs:
   changeset_status:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,6 +27,7 @@ jobs:
 
   changeset_comment:
     needs: changeset_status
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

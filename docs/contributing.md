@@ -49,11 +49,11 @@ pnpm --filter ui-form-extensions-playground typecheck
 pnpm --filter ui-form-extensions-playground build
 ```
 
-CI validation is change-aware. Ordinary pull requests use `scripts/detect-changes.mjs` to select the
-smallest safe package closure: documentation-only changes run formatting and linting, while package
-changes run preparation, typechecking, and tests for the changed packages and their dependents.
-Changes to root configuration, dependencies, scripts, workflows, shared packages, or unclassified
-paths fail closed into full validation.
+CI validation is change-aware. Ordinary pull requests use `scripts/detect-changes.mjs` directly with
+Node to select the smallest safe package closure: documentation-only and explicitly ignored paths
+run formatting and linting, while package changes run preparation, typechecking, and tests for the
+changed packages and their dependents. Changes to root configuration, dependencies, scripts,
+workflows, shared packages, or unclassified paths fail closed into full validation.
 
 Merge queue and manually dispatched CI always run the full suite: formatting, linting, recursive
 typechecking, coverage tests, all package builds, package metadata validation, packed-artifact
