@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const sitemapUrl = "/sitemap_index.xml";
+const sitemapUrl = "/sitemap.xml";
 </script>
 
 <template>

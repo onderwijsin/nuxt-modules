@@ -26,8 +26,8 @@ export default defineNuxtConfig({
   modules: [
     "@onderwijsin/nuxt-directus-config",
     "@onderwijsin/nuxt-directus",
-    "@nuxtjs/sitemap",
-    "@onderwijsin/nuxt-directus-sitemaps"
+    "@onderwijsin/nuxt-directus-sitemaps",
+    "@nuxtjs/sitemap"
   ]
 });
 ```
@@ -49,6 +49,7 @@ export default defineDirectusConfig({
       {
         collection: "articles",
         sitemap: {
+          _sitemap: "articles",
           fields: ["slug", "updated_at"],
           filter: { status: { _eq: "published" } },
           mapper: (item) => {
@@ -89,15 +90,16 @@ export default defineDirectusConfig({
 `collections.collections` is shared with related Directus modules. A collection uses sitemap
 generation when `sitemap` is an object; set it to `false` to exclude it.
 
-| Option            | Required         | Description                                                                                      |
-| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
-| `collection`      | Yes              | Directus collection name.                                                                        |
-| `sitemap`         | Yes              | `false`, or the sitemap configuration below.                                                     |
-| `sitemap.fields`  | No               | Directus fields passed to the default fetcher. Defaults to `['*']`.                              |
-| `sitemap.filter`  | No               | Directus filter passed to the default fetcher. Defaults to `{}`.                                 |
-| `sitemap.fetcher` | No               | Async replacement fetcher. It receives `{ collection, fields, filter }` and resolves to records. |
-| `sitemap.mapper`  | Yes when enabled | Maps each fetched record to sitemap entries.                                                     |
-| `prerender`       | Yes              | Reserved shared setting; use `false` until the Directus prerender module is available.           |
+| Option             | Required         | Description                                                                                      |
+| ------------------ | ---------------- | ------------------------------------------------------------------------------------------------ |
+| `collection`       | Yes              | Directus collection name.                                                                        |
+| `sitemap`          | Yes              | `false`, or the sitemap configuration below.                                                     |
+| `sitemap._sitemap` | No               | Named `@nuxtjs/sitemap` sitemap that receives this collection’s mapped URLs.                     |
+| `sitemap.fields`   | No               | Directus fields passed to the default fetcher. Defaults to `['*']`.                              |
+| `sitemap.filter`   | No               | Directus filter passed to the default fetcher. Defaults to `{}`.                                 |
+| `sitemap.fetcher`  | No               | Async replacement fetcher. It receives `{ collection, fields, filter }` and resolves to records. |
+| `sitemap.mapper`   | Yes when enabled | Maps each fetched record to sitemap entries.                                                     |
+| `prerender`        | Yes              | Reserved shared setting; use `false` until the Directus prerender module is available.           |
 
 The default fetcher reads the configured collection with its `fields` and `filter`. A custom
 `fetcher` replaces only that data source; the module always applies `mapper` to its records.
@@ -111,6 +113,11 @@ The default fetcher reads the configured collection with its `fields` and `filte
 | `noIndex`     | `boolean`                   | When `true`, the entry is omitted.            |
 | `priority`    | `0`–`1` in `0.1` increments | Optional sitemap priority.                    |
 
+Set `sitemap._sitemap` to route a collection’s entries to a named sitemap. The module registers the
+corresponding child source with `@nuxtjs/sitemap`; multiple collections may use the same name. Named
+XML routes use the sitemap module’s `sitemapsPathPrefix` (by default, `/__sitemap__/<name>.xml`) and
+`/sitemap` redirects to `/sitemap_index.xml`.
+
 ## Sitemap delivery options
 
 Configure delivery independently of collection selection under `sitemaps`:
@@ -119,9 +126,9 @@ Configure delivery independently of collection selection under `sitemaps`:
 | ------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `static`            | `[]`                                         | Static sitemap entries. Each needs `loc`; other sitemap entry fields are preserved. |
 | `apiEndpoint`       | `/api/_directus-sitemaps/urls`               | Dynamic source endpoint registered with `@nuxtjs/sitemap`.                          |
-| `enablePrettyUrls`  | `true`                                       | Redirects `/sitemap` and `/sitemap.xml` to `/sitemap_index.xml`.                    |
+| `enablePrettyUrls`  | `true`                                       | Redirects `/sitemap` to the sitemap XML or sitemap index.                           |
 | `cache`             | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Nitro cache policy for the source endpoint, or `false`.                             |
-| `prerenderSitemaps` | `false`                                      | Prerenders the source endpoint, `/sitemap.xml`, and `/sitemap_index.xml`.           |
+| `prerenderSitemaps` | `false`                                      | Prerenders the source endpoint and sitemap XML, including named sitemap routes.     |
 
 `directusSitemaps` accepts the same `collections` and `sitemaps` option shape, plus `enabled`:
 

@@ -1,5 +1,5 @@
 import type { H3Event } from "h3";
-import { readItems } from "@directus/sdk";
+import { readItems, type Query } from "@directus/sdk";
 import {
   directusSitemapEntrySchema,
   type DirectusCollectionConfig,
@@ -11,12 +11,17 @@ import { useDirectusServer } from "#imports";
 type SitemapUrl = Omit<DirectusSitemapEntry, "path" | "lastUpdated" | "noIndex"> & {
   loc: string;
   lastmod?: string;
+  _sitemap?: string;
 };
 
-interface StaticSitemapUrl {
+/** Static URL entry forwarded to the sitemap source response. */
+export interface StaticSitemapUrl {
   loc: string;
   [key: string]: unknown;
 }
+
+type GenericDirectusSchema = Record<string, Array<Record<string, unknown>>>;
+type GenericDirectusQuery = Query<GenericDirectusSchema, GenericDirectusSchema[string][number]>;
 
 /**
  * Produces URLs for one collection with its configured fetcher and mapper.
@@ -39,7 +44,7 @@ export async function getCollectionUrls(
   const records = sitemap.fetcher
     ? await sitemap.fetcher(context)
     : await useDirectusServer(
-        readItems<Record<string, Record<string, unknown>>>(context.collection, {
+        readItems<GenericDirectusSchema, string, GenericDirectusQuery>(context.collection, {
           fields: context.fields,
           filter: context.filter,
           limit: -1
@@ -48,7 +53,7 @@ export async function getCollectionUrls(
       );
 
   if (!isArray(records)) return [];
-  return records.flatMap((record) => toSitemapUrls(sitemap.mapper(record)));
+  return records.flatMap((record) => toSitemapUrls(sitemap.mapper(record), sitemap._sitemap));
 }
 
 /**
@@ -85,7 +90,7 @@ export async function buildSitemapUrls(
   return includeStatic ? [...dynamic, ...staticEntries] : dynamic;
 }
 
-function toSitemapUrls(result: unknown): SitemapUrl[] {
+function toSitemapUrls(result: unknown, sitemapName?: string): SitemapUrl[] {
   if (!result) return [];
   const entries = isArray(result) ? result : [result];
   return entries.flatMap((entry) => {
@@ -101,7 +106,8 @@ function toSitemapUrls(result: unknown): SitemapUrl[] {
           {
             loc: sitemapEntry.path,
             lastmod: sitemapEntry.lastUpdated,
-            priority: sitemapEntry.priority
+            priority: sitemapEntry.priority,
+            _sitemap: sitemapName
           }
         ];
   });

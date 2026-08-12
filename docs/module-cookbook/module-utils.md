@@ -70,6 +70,9 @@ use the source-level generic types; type-only exports are listed separately belo
 | `isDevelopmentAuthBypassEnabled` | `isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean`                                                                          | `@onderwijsin/nuxt-module-utils/server` |
 | `assertAdminAccess`              | `assertAdminAccess(event: H3Event, options: AdminAuthOptions, isDevelopment: boolean): void`                                                                       | `@onderwijsin/nuxt-module-utils/server` |
 | `discoverSourceFiles`            | `discoverSourceFiles(directory: string): string[]`                                                                                                                 | `@onderwijsin/nuxt-module-utils/build`  |
+| `instanceSchema`                 | Shared Directus instance schema (`baseUrl`, `staticToken`)                                                                                                         | `@onderwijsin/nuxt-module-utils/build`  |
+| `clientSchema`                   | Shared Directus client schema excluding instance credentials                                                                                                       | `@onderwijsin/nuxt-module-utils/build`  |
+| `sitemapSchema`                  | Shared Directus sitemap source schema                                                                                                                              | `@onderwijsin/nuxt-module-utils/build`  |
 
 ## `discoverSourceFiles`
 

@@ -186,7 +186,9 @@ describe("Directus typegen transforms", () => {
         isCI: false,
         log
       })
-    ).rejects.toThrow("requires both directus.baseUrl");
+    ).rejects.toThrow(
+      "requires both directus.instance.baseUrl and directus.client.typegen.introspectionToken."
+    );
     writeFileSync(generatedFile, "export interface Schema { articles: Article[]; }\n");
     await expect(
       resolveDirectusTypegenDeclaration({
@@ -223,7 +225,7 @@ describe("Directus typegen transforms", () => {
       })
     ).resolves.toBe("export interface Schema {}\n");
     expect(log.warn).toHaveBeenCalledWith(
-      "Skipping Directus type generation because directus.typegen.enabled is false."
+      "Skipping Directus type generation because directus.client.typegen.enabled is false."
     );
   });
 

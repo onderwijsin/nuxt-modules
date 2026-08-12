@@ -14,4 +14,10 @@ describe("Directus sitemap server config source", () => {
       'export default { collections: [], static: [{"loc":"/about"}] };\n'
     );
   });
+
+  it("falls back to an empty static list when static entries cannot be serialized", () => {
+    expect(generateDirectusSitemapsConfigSource(undefined, false)).toBe(
+      "export default { collections: [], static: [] };\n"
+    );
+  });
 });

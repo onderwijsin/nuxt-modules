@@ -1,6 +1,8 @@
 export * from "./instance";
 export * from "./commands";
 export * from "./client";
+export * from "./collections";
+export * from "./sitemap";
 export * from "./typegen";
 export * from "./config";
 export { getPublicSchema } from "./sensitive";

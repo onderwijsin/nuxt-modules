@@ -26,6 +26,7 @@ describe("Directus sitemap URLs", () => {
       getCollectionUrls(undefined, {
         collection: "articles",
         sitemap: {
+          _sitemap: "articles",
           fields: ["slug", "updatedAt"],
           filter: { status: { _eq: "published" } },
           mapper: (item) => {
@@ -41,7 +42,12 @@ describe("Directus sitemap URLs", () => {
         prerender: false
       })
     ).resolves.toEqual([
-      { loc: "/articles/hello", lastmod: "2026-08-01T10:00:00.000Z", priority: 0.8 }
+      {
+        loc: "/articles/hello",
+        lastmod: "2026-08-01T10:00:00.000Z",
+        priority: 0.8,
+        _sitemap: "articles"
+      }
     ]);
   });
 
@@ -66,6 +72,39 @@ describe("Directus sitemap URLs", () => {
       filter: { published: { _eq: true } }
     });
     expect(useDirectusServer).not.toHaveBeenCalled();
+  });
+
+  it("uses default fetch settings and ignores a non-array Directus response", async () => {
+    useDirectusServer.mockResolvedValue({ data: [] });
+
+    await expect(
+      getCollectionUrls(undefined, {
+        collection: "articles",
+        sitemap: { mapper: () => ({ path: "/articles" }) },
+        prerender: false
+      })
+    ).resolves.toEqual([]);
+    expect(useDirectusServer).toHaveBeenCalledOnce();
+  });
+
+  it("accepts arrays from a mapper and removes only no-index entries", async () => {
+    await expect(
+      getCollectionUrls(undefined, {
+        collection: "pages",
+        sitemap: {
+          fetcher: async () => [{ id: "page" }],
+          mapper: () => [
+            { path: "/visible", priority: 0.4 },
+            { path: "/hidden", noIndex: true },
+            { path: "/also-visible", lastUpdated: "2026-08-03" }
+          ]
+        },
+        prerender: false
+      })
+    ).resolves.toEqual([
+      { loc: "/visible", lastmod: undefined, priority: 0.4 },
+      { loc: "/also-visible", lastmod: "2026-08-03", priority: undefined }
+    ]);
   });
 
   it("keeps static and successful collection entries when another collection fails", async () => {
@@ -117,6 +156,63 @@ describe("Directus sitemap URLs", () => {
         [{ loc: "/about" }]
       )
     ).resolves.toEqual([{ loc: "/about" }]);
+    expect(error).toHaveBeenCalledOnce();
+  });
+
+  it("filters dynamic URLs by collection and can omit static entries", async () => {
+    await expect(
+      buildSitemapUrls(
+        undefined,
+        [
+          {
+            collection: "pages",
+            sitemap: { fetcher: async () => [{}], mapper: () => ({ path: "/page" }) },
+            prerender: false
+          },
+          {
+            collection: "excluded",
+            sitemap: false,
+            prerender: false
+          },
+          {
+            collection: "articles",
+            sitemap: { fetcher: async () => [{}], mapper: () => ({ path: "/article" }) },
+            prerender: false
+          }
+        ],
+        [{ loc: "/about" }],
+        "articles",
+        false
+      )
+    ).resolves.toEqual([{ loc: "/article", lastmod: undefined, priority: undefined }]);
+  });
+
+  it("preserves successful URLs when a mapper throws", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(
+      buildSitemapUrls(
+        undefined,
+        [
+          {
+            collection: "working",
+            sitemap: { fetcher: async () => [{}], mapper: () => ({ path: "/working" }) },
+            prerender: false
+          },
+          {
+            collection: "broken-mapper",
+            sitemap: {
+              fetcher: async () => [{}],
+              mapper: () => {
+                throw new Error("Mapper failed");
+              }
+            },
+            prerender: false
+          }
+        ],
+        []
+      )
+    ).resolves.toEqual([{ loc: "/working", lastmod: undefined, priority: undefined }]);
     expect(error).toHaveBeenCalledOnce();
   });
 });

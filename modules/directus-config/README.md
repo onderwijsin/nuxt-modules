@@ -42,6 +42,7 @@ export default defineDirectusConfig({
       {
         collection: "articles",
         sitemap: {
+          _sitemap: "articles",
           filter: { status: { _eq: "published" } },
           mapper: () => ({ path: "/articles" })
         },
@@ -110,15 +111,16 @@ its `prerender` configuration.
 
 Each collection entry has these options:
 
-| Option            | Description                                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------------------------- |
-| `collection`      | Required Directus collection name.                                                                            |
-| `sitemap`         | `false` to exclude the collection, or sitemap configuration.                                                  |
-| `sitemap.fields`  | Optional Directus fields to fetch.                                                                            |
-| `sitemap.filter`  | Optional Directus filter.                                                                                     |
-| `sitemap.fetcher` | Optional async custom fetcher. It receives `{ collection, fields, filter }`; its result is mapped afterwards. |
-| `sitemap.mapper`  | Required mapper called for every fetched item. Return an entry, entries, `null`, or `undefined`.              |
-| `prerender`       | `false` or a reserved object for future prerender behaviour.                                                  |
+| Option             | Description                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `collection`       | Required Directus collection name.                                                                            |
+| `sitemap`          | `false` to exclude the collection, or sitemap configuration.                                                  |
+| `sitemap._sitemap` | Optional named `@nuxtjs/sitemap` destination for this collection’s mapped URLs.                               |
+| `sitemap.fields`   | Optional Directus fields to fetch.                                                                            |
+| `sitemap.filter`   | Optional Directus filter.                                                                                     |
+| `sitemap.fetcher`  | Optional async custom fetcher. It receives `{ collection, fields, filter }`; its result is mapped afterwards. |
+| `sitemap.mapper`   | Required mapper called for every fetched item. Return an entry, entries, `null`, or `undefined`.              |
+| `prerender`        | `false` or a reserved object for future prerender behaviour.                                                  |
 
 A sitemap mapper returns `{ path, lastUpdated?, noIndex?, priority? }`. `path` must start with `/`;
 `priority` is one of `0`, `0.1`, …, `1`.

@@ -1,5 +1,6 @@
 import { isFunction } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
+import { markSensitiveSchema } from "./sensitive";
 
 /**
  * Collection field definition
@@ -43,6 +44,7 @@ export type DirectusCollectionMapper<Item = unknown, Result = unknown> = (
 ) => Result | Result[] | null | undefined;
 
 const directusCollectionSitemapSchema = z.strictObject({
+  _sitemap: z.string().trim().min(1).optional(),
   fields: fields.optional(),
   filter: filter.optional(),
   mapper: z.custom<DirectusCollectionMapper>((value) => isFunction(value), "must be a function"),
@@ -65,7 +67,7 @@ export type DirectusCollectionConfig = z.output<typeof directusCollectionConfigS
  * Directus Collection config schema
  */
 export const directusCollectionSchema = z.strictObject({
-  collections: z.array(directusCollectionConfigSchema).default([]).sensitive()
+  collections: markSensitiveSchema(z.array(directusCollectionConfigSchema).default([]))
 });
 
 export type DirectusCollectionOptions = z.input<typeof directusCollectionSchema>;

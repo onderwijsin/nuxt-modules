@@ -5,8 +5,8 @@ export default defineNuxtConfig({
   modules: [
     "@onderwijsin/nuxt-directus-config",
     "@onderwijsin/nuxt-directus",
-    "@nuxtjs/sitemap",
-    "@onderwijsin/nuxt-directus-sitemaps"
+    "@onderwijsin/nuxt-directus-sitemaps",
+    "@nuxtjs/sitemap"
   ],
   appConfig: { packageName }
 });

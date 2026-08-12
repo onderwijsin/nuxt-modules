@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { defineDirectusConfig, validateDirectusConfig } from "../src/config";
-import { directusPublicConfigSchema } from "../src/schema";
+import { directusConfigSchema, directusPublicConfigSchema } from "../src/schema";
 
 describe("Directus config helpers", () => {
   it("validates shared instance and client configuration", () => {
@@ -34,5 +34,96 @@ describe("Directus config helpers", () => {
 
   it("drops unknown values from the public projection", () => {
     expect(directusPublicConfigSchema.parse({ unknown: true })).toEqual({});
+  });
+
+  it("rejects invalid strict configuration at every shared boundary", () => {
+    expect(() => validateDirectusConfig({ unknown: true })).toThrow(
+      "Invalid directus.config.ts configuration."
+    );
+    expect(() => validateDirectusConfig({ client: { unknown: true } })).toThrow(
+      "Invalid directus.config.ts configuration."
+    );
+    expect(() =>
+      validateDirectusConfig({
+        client: { proxy: { path: "/_directus/auth/session" } }
+      })
+    ).toThrow("Invalid directus.config.ts configuration.");
+    expect(() =>
+      validateDirectusConfig({
+        collections: {
+          collections: [{ collection: "articles", sitemap: false, prerender: false, unknown: true }]
+        }
+      })
+    ).toThrow("Invalid directus.config.ts configuration.");
+  });
+
+  it("accepts executable collection configuration and omits it from public output", () => {
+    const fetcher = async () => [{ slug: "welcome" }];
+    const mapper = () => ({ path: "/welcome", priority: 0.8 });
+    const validated = validateDirectusConfig({
+      collections: {
+        collections: [
+          {
+            collection: "articles",
+            sitemap: {
+              _sitemap: "articles",
+              fields: ["slug"],
+              filter: { status: { _eq: "published" } },
+              fetcher,
+              mapper
+            },
+            prerender: false
+          }
+        ]
+      },
+      sitemaps: {
+        static: [{ loc: "/" }],
+        cache: false,
+        prerenderSitemaps: true
+      }
+    });
+
+    expect(validated.collections?.collections[0]?.sitemap).toMatchObject({
+      _sitemap: "articles",
+      fields: ["slug"],
+      fetcher,
+      mapper
+    });
+    expect(validated.sitemaps).toMatchObject({ cache: false, prerenderSitemaps: true });
+    expect(directusPublicConfigSchema.parse(validated)).toEqual({});
+  });
+
+  it("rejects invalid collection functions and sitemap entry shapes", () => {
+    expect(() =>
+      directusConfigSchema.parse({
+        collections: {
+          collections: [
+            {
+              collection: "articles",
+              sitemap: { mapper: "not-a-function" },
+              prerender: false
+            }
+          ]
+        }
+      })
+    ).toThrow();
+    expect(() =>
+      directusConfigSchema.parse({
+        collections: {
+          collections: [
+            {
+              collection: "articles",
+              sitemap: { _sitemap: " ", mapper: () => ({ path: "/articles" }) },
+              prerender: false
+            }
+          ]
+        }
+      })
+    ).toThrow();
+    expect(() =>
+      directusConfigSchema.parse({
+        sitemaps: { cache: { maxAge: -1 } }
+      })
+    ).toThrow();
   });
 });

@@ -8,6 +8,6 @@ import { z } from "zod";
 /** Runtime boundary for directus-sitemaps module configuration. */
 export const directusSitemapsOptionsSchema = z.strictObject({
   enabled: enabled.default(true),
-  collections: directusCollectionSchema.prefault({}),
+  collections: directusCollectionSchema.prefault({ collections: [] }),
   sitemaps: directusSitemapsSchema.prefault({})
 });

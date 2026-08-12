@@ -1,4 +1,5 @@
 import { z } from "zod";
+import "./sensitive";
 
 /**
  * Default values for the directusSitemapsCacheSchema

@@ -113,7 +113,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     if (!isEnabled()) return;
 
-    if (!isNonBlankString(baseUrl) && (nuxt.options._prepare || isCI)) {
+    if (!isNonBlankString(baseUrl) && !nuxt.options._prepare && !isCI) {
       log.warn("Directus baseUrl is not set. Disabling Directus module.");
       return;
     }
