@@ -1,4 +1,5 @@
 import { z } from "zod";
+// Registers the shared Zod sensitivity method used below.
 import "./sensitive";
 
 /** Shared Directus instance credentials. */

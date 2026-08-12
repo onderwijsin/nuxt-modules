@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { directusCommandsSchema } from "./commands";
+// Registers the shared Zod sensitivity method used below.
 import "./sensitive";
 import { directusTypegenSchema } from "./typegen";
 

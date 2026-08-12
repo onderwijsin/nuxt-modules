@@ -1,6 +1,8 @@
 import { isFunction } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
-import { markSensitiveSchema } from "./sensitive";
+// Registers the shared Zod sensitivity method used below.
+import "./sensitive";
+import type { SitemapUrl } from "./sitemap-entry";
 
 /**
  * Collection field definition
@@ -24,24 +26,15 @@ export const directusCollectionFetchContextSchema = z.strictObject({
   filter
 });
 
-const priorities = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] as const;
-
-/** Normalized result returned by a sitemap collection mapper. */
-export const directusSitemapEntrySchema = z.strictObject({
-  path: z.string().trim().startsWith("/"),
-  lastUpdated: z.string().optional(),
-  noIndex: z.boolean().optional(),
-  priority: z.literal(priorities).optional()
-});
+export type MappedDirectusSitemapEntry = Omit<SitemapUrl, "_sitemap"> & { noIndex?: boolean };
 
 export type DirectusCollectionFetchContext = z.output<typeof directusCollectionFetchContextSchema>;
-export type DirectusSitemapEntry = z.output<typeof directusSitemapEntrySchema>;
 export type DirectusCollectionFetcher<Item = unknown> = (
   context: DirectusCollectionFetchContext
-) => Promise<readonly Item[]>;
-export type DirectusCollectionMapper<Item = unknown, Result = unknown> = (
+) => Promise<Item[]>;
+export type DirectusCollectionMapper<Item = unknown> = (
   item: Item
-) => Result | Result[] | null | undefined;
+) => MappedDirectusSitemapEntry | null | undefined;
 
 const directusCollectionSitemapSchema = z.strictObject({
   _sitemap: z.string().trim().min(1).optional(),
@@ -66,9 +59,10 @@ export type DirectusCollectionConfig = z.output<typeof directusCollectionConfigS
 /**
  * Directus Collection config schema
  */
-export const directusCollectionSchema = z.strictObject({
-  collections: markSensitiveSchema(z.array(directusCollectionConfigSchema).default([]))
-});
+export const directusCollectionSchema = z
+  .array(directusCollectionConfigSchema)
+  .default([])
+  .sensitive();
 
 export type DirectusCollectionOptions = z.input<typeof directusCollectionSchema>;
 export type ResolvedDirectusCollectionOptions = z.output<typeof directusCollectionSchema>;

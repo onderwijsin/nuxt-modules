@@ -37,22 +37,21 @@ export default defineDirectusConfig({
     commands: ["readItem", "readItems"],
     auth: { enabled: true }
   },
-  collections: {
-    collections: [
-      {
-        collection: "articles",
-        sitemap: {
-          _sitemap: "articles",
-          filter: { status: { _eq: "published" } },
-          mapper: () => ({ path: "/articles" })
-        },
-        prerender: false
-      }
-    ]
-  },
+  collections: [
+    {
+      collection: "articles",
+      sitemap: {
+        _sitemap: "articles",
+        filter: { status: { _eq: "published" } },
+        mapper: () => ({ loc: "/articles" })
+      },
+      prerender: false
+    }
+  ],
   sitemaps: {
     static: [{ loc: "/" }],
     apiEndpoint: "/api/_directus-sitemaps/urls",
+    sitemapsPathPrefix: "/__sitemap__/",
     enablePrettyUrls: true,
     cache: { maxAge: 300, staleMaxAge: 0, swr: true },
     prerenderSitemaps: false
@@ -105,9 +104,9 @@ The supported command names are exported as `supportedDirectusCommands` from
 
 ### `collections`
 
-`collections.collections` is a shared list of executable collection behaviour. It is intentionally
-portable: the sitemap module uses its `sitemap` configuration, and a future prerender module can use
-its `prerender` configuration.
+`collections` is a shared list of executable collection behaviour. It is intentionally portable: the
+sitemap module uses its `sitemap` configuration, and a future prerender module can use its
+`prerender` configuration.
 
 Each collection entry has these options:
 
@@ -119,11 +118,16 @@ Each collection entry has these options:
 | `sitemap.fields`   | Optional Directus fields to fetch.                                                                            |
 | `sitemap.filter`   | Optional Directus filter.                                                                                     |
 | `sitemap.fetcher`  | Optional async custom fetcher. It receives `{ collection, fields, filter }`; its result is mapped afterwards. |
-| `sitemap.mapper`   | Required mapper called for every fetched item. Return an entry, entries, `null`, or `undefined`.              |
+| `sitemap.mapper`   | Required mapper called for every fetched item. Return one sitemap entry, `null`, or `undefined`.              |
 | `prerender`        | `false` or a reserved object for future prerender behaviour.                                                  |
 
-A sitemap mapper returns `{ path, lastUpdated?, noIndex?, priority? }`. `path` must start with `/`;
-`priority` is one of `0`, `0.1`, …, `1`.
+A sitemap mapper returns a sitemap entry with required `loc` and optional `lastmod`, `changefreq`,
+`priority`, `images`, `videos`, `news`, `alternatives`, and sitemap metadata fields. The entry may
+also include `noIndex: true` to omit it. `priority` is one of `0`, `0.1`, …, `1`.
+
+The complete sitemap-entry schema is maintained in
+[`src/schema/sitemap-entry.ts`](src/schema/sitemap-entry.ts). Import its exports from
+`@onderwijsin/nuxt-directus-config/schema` instead of recreating the shape.
 
 Collection configuration, including mappers and fetchers, is sensitive and never sent to client
 code.
@@ -133,13 +137,14 @@ code.
 `sitemaps` contains module-wide sitemap delivery settings, independent of which collections are
 selected:
 
-| Option              | Default                                      | Description                                                                                 |
-| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `static`            | `[]`                                         | Static sitemap entries. Each entry requires `loc`; additional sitemap fields are preserved. |
-| `apiEndpoint`       | `/api/_directus-sitemaps/urls`               | Sitemap source endpoint.                                                                    |
-| `enablePrettyUrls`  | `true`                                       | Enables pretty sitemap URL routes.                                                          |
-| `cache`             | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Endpoint cache options in seconds, or `false` to disable caching.                           |
-| `prerenderSitemaps` | `false`                                      | Prerenders sitemap routes as static output.                                                 |
+| Option               | Default                                      | Description                                                                                 |
+| -------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `static`             | `[]`                                         | Static sitemap entries. Each entry requires `loc`; additional sitemap fields are preserved. |
+| `apiEndpoint`        | `/api/_directus-sitemaps/urls`               | Sitemap source endpoint.                                                                    |
+| `sitemapsPathPrefix` | `/__sitemap__/`                              | Path prefix for named sitemap XML routes.                                                   |
+| `enablePrettyUrls`   | `true`                                       | Enables pretty sitemap URL routes.                                                          |
+| `cache`              | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Endpoint cache options in seconds, or `false` to disable caching.                           |
+| `prerenderSitemaps`  | `false`                                      | Prerenders sitemap routes as static output.                                                 |
 
 Sitemap settings are sensitive because they may include static URLs and delivery policy; they are
 available only to consuming server-side modules.

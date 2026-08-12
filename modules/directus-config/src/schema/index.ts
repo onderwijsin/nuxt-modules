@@ -5,6 +5,7 @@ export * from "./collections";
 export * from "./sitemap";
 export * from "./typegen";
 export * from "./config";
+export * from "./sitemap-entry";
 export { getPublicSchema } from "./sensitive";
 export type { SensitiveSchema } from "./sensitive";
 export { getResolvedDirectusConfig, setResolvedDirectusConfig } from "./resolved-config";

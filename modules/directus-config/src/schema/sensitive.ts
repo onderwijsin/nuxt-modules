@@ -91,16 +91,6 @@ z.ZodType.prototype.sensitive = function sensitive() {
   return schema;
 };
 
-/**
- * Marks a schema as sensitive while retaining the sensitivity runtime in bundled schema consumers.
- *
- * @param schema Schema to annotate.
- * @returns The annotated schema.
- */
-export function markSensitiveSchema<Schema extends z.ZodType>(schema: Schema) {
-  return schema.sensitive();
-}
-
 const omitted = Symbol("omitted");
 
 /**

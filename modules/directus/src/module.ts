@@ -57,20 +57,23 @@ export default defineNuxtModule<ModuleOptions>({
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
-
     start();
+
+    // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
     const options = validateModuleOptions(
       defu(rawOptions, sharedConfig),
       directusOptionsSchema,
       log
     );
+
     const baseUrl = options.instance.baseUrl ?? "";
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
     const isCI = process.env.CI === "true";
 
+    // Add type template even if module is disbaled. This prevent typecheck failures in ci
     addTypeTemplate({
       filename: "types/directus-config.d.ts",
       src: resolver.resolve(runtimeDir, "types/config.d.ts")

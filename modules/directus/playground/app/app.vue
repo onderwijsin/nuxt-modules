@@ -47,6 +47,13 @@ async function logout(): Promise<void> {
           variant="ghost"
         />
         <UButton
+          to="/server"
+          icon="i-lucide-server"
+          label="Server"
+          color="neutral"
+          variant="ghost"
+        />
+        <UButton
           to="/error"
           icon="i-lucide-triangle-alert"
           label="Errors"

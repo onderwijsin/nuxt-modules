@@ -121,6 +121,15 @@ useDirectusServer<Output>(
 Executes a typed command directly from Nitro. Passing the current `H3Event` enables request-scoped
 preview and, when enabled, session credential resolution.
 
+For reusable server-side module code, import it from the published runtime entrypoint:
+
+```ts
+import {
+  useDirectusServer,
+  useDirectusServerItemByPath
+} from "@onderwijsin/nuxt-directus/runtime/server";
+```
+
 ### `useDirectusItemByPath`
 
 ```ts

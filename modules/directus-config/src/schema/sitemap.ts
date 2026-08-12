@@ -1,5 +1,7 @@
 import { z } from "zod";
+// Registers the shared Zod sensitivity method used below.
 import "./sensitive";
+import { sitemapUrlSchema } from "./sitemap-entry";
 
 /**
  * Default values for the directusSitemapsCacheSchema
@@ -30,6 +32,7 @@ const directusSitemapsCacheSchema = z
 const directusSitemapsSchemaDefaults = {
   static: [],
   apiEndpoint: "/api/_directus-sitemaps/urls",
+  sitemapsPathPrefix: "/__sitemap__/",
   enablePrettyUrls: true,
   cache: directusSitemapsCacheSchemaDefaults,
   prerenderSitemaps: false
@@ -40,14 +43,12 @@ const directusSitemapsSchemaDefaults = {
  */
 export const directusSitemapsSchema = z
   .object({
-    static: z
-      .array(
-        z.looseObject({
-          loc: z.string().trim().min(1)
-        })
-      )
-      .default(directusSitemapsSchemaDefaults.static),
+    static: z.array(sitemapUrlSchema).default(directusSitemapsSchemaDefaults.static),
     apiEndpoint: z.string().startsWith("/").default(directusSitemapsSchemaDefaults.apiEndpoint),
+    sitemapsPathPrefix: z
+      .string()
+      .startsWith("/")
+      .default(directusSitemapsSchemaDefaults.sitemapsPathPrefix),
     enablePrettyUrls: z.boolean().default(directusSitemapsSchemaDefaults.enablePrettyUrls),
     cache: directusSitemapsCacheSchema,
     prerenderSitemaps: z.boolean().default(directusSitemapsSchemaDefaults.prerenderSitemaps)

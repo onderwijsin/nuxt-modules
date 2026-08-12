@@ -78,6 +78,16 @@ export default defineEventHandler((event) =>
 );
 ```
 
+When importing the helper from reusable server-side module code, use the published server runtime
+entrypoint:
+
+```ts
+import {
+  useDirectusServer,
+  useDirectusServerItemByPath
+} from "@onderwijsin/nuxt-directus/runtime/server";
+```
+
 ## Composables
 
 All composables below are auto-imported. Import commands that are not configured in
