@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-directus-sitemaps",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Config-driven @nuxtjs/sitemap sources backed by Directus collections.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 6826e72: Rename the Directus client module and package from `@onderwijsin/nuxt-directus` to `@onderwijsin/nuxt-directus-client`. This new package replaces the old package; update the Nuxt module/config key to `directusClient` and install the new package name.
+- 44945f6: Align Directus module options with the shared `instance` and `client` configuration shape.
+
+### Patch Changes
+
+- c5b960c: Resolve conditional Directus module dependencies from executable shared configuration during Nuxt dependency discovery.
+- f78b723: Co-locate public module option types with their Zod schemas and preserve runtime domain types in published runtime-owned locations.
+- 1fbac08: Expose the server Directus composables through a published runtime subpath for reusable Nitro code.
+- Updated dependencies [44945f6]
+- Updated dependencies [44945f6]
+- Updated dependencies [91ebdd2]
+- Updated dependencies [b7a6f6f]
+- Updated dependencies [b7a6f6f]
+- Updated dependencies [c5b960c]
+- Updated dependencies [b1cd828]
+- Updated dependencies [f78b723]
+- Updated dependencies [b7a6f6f]
+- Updated dependencies [91ebdd2]
+  - @onderwijsin/nuxt-directus-config@0.2.0
+  - @onderwijsin/nuxt-turnstile@0.2.7
+  - @onderwijsin/nuxt-module-utils@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes

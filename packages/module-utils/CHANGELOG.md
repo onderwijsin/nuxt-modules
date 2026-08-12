@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 91ebdd2: Add the typed `keys` helper to the shared module utilities.
+
 ## 0.3.1
 
 ### Patch Changes

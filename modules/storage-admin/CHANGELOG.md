@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- f78b723: Co-locate public module option types with their Zod schemas and preserve runtime domain types in published runtime-owned locations.
+- Updated dependencies [91ebdd2]
+  - @onderwijsin/nuxt-module-utils@0.4.0
+
 ## 0.2.2
 
 ### Patch Changes

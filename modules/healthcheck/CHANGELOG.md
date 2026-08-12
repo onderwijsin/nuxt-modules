@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.6
+
+### Patch Changes
+
+- 8563adc: Fix discovery of custom healthcheck components in Nuxt 4 applications that use the default `app/` source directory.
+- f78b723: Co-locate public module option types with their Zod schemas and preserve runtime domain types in published runtime-owned locations.
+- Updated dependencies [91ebdd2]
+  - @onderwijsin/nuxt-module-utils@0.4.0
+
 ## 0.3.5
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.2
+
+### Patch Changes
+
+- f78b723: Co-locate public module option types with their Zod schemas and preserve runtime domain types in published runtime-owned locations.
+- Updated dependencies [f78b723]
+- Updated dependencies [91ebdd2]
+  - @onderwijsin/nuxt-simple-rate-limiter@0.4.2
+  - @onderwijsin/nuxt-module-utils@0.4.0
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-module-utils",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Shared runtime and Nuxt module utilities for Onderwijs in modules.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
