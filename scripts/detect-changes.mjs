@@ -278,10 +278,6 @@ function logResults({ full, reason, changed, direct, dependent, selected, testPa
   console.log("\n🔗 Dependent packages added\n" + formatList([...dependent].sort()));
   console.log("\n📦 Validation packages\n" + formatList(selected));
   console.log("\n🧪 Test paths\n" + formatList(testPaths));
-  console.log("\n📤 GitHub outputs");
-  console.log(`  • full=${full}`);
-  console.log(`  • packages=${selected.join(" ") || "(empty)"}`);
-  console.log(`  • test_paths=${testPaths.join(" ") || "(empty)"}`);
   console.log("═".repeat(56));
 }
 
