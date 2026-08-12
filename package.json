@@ -24,6 +24,7 @@
     "e2e": "pnpm --recursive --if-present run e2e",
     "pack:packages": "node scripts/pack-packages.mjs",
     "validate:external-consumer": "node scripts/external-consumer.mjs",
+    "ci:detect-changes": "node scripts/detect-changes.mjs",
     "validate:packages": "node scripts/validate-packages.mjs",
     "changeset": "changeset",
     "changeset:status": "changeset status",

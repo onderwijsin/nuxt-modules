@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+  merge_group:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
@@ -15,7 +17,74 @@ env:
   HUSKY: 0
 
 jobs:
-  code_quality:
+  detect_changes:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    outputs:
+      full: ${{ steps.detect.outputs.full }}
+      packages: ${{ steps.detect.outputs.packages }}
+      test_paths: ${{ steps.detect.outputs.test_paths }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+      - name: Detect validation scope
+        id: detect
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: pnpm ci:detect-changes
+
+  focused_quality_check:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.full == 'false' && github.event_name == 'pull_request'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    env:
+      DIRECTUS_URL: ${{ secrets.DIRECTUS_URL }}
+      DIRECTUS_STATIC_TOKEN: ${{ secrets.DIRECTUS_STATIC_TOKEN }}
+      DIRECTUS_INTROSPECTION_TOKEN: ${{ secrets.DIRECTUS_INTROSPECTION_TOKEN }}
+      AFFECTED_PACKAGES: ${{ needs.detect_changes.outputs.packages }}
+      TEST_PATHS: ${{ needs.detect_changes.outputs.test_paths }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:utils
+      - name: Prepare affected packages
+        shell: bash
+        run: |
+          for package in $AFFECTED_PACKAGES; do
+            pnpm --filter "$package" --if-present run dev:prepare
+          done
+      - name: Run focused checks
+        shell: bash
+        run: |
+          pnpm format:check
+          pnpm lint
+          for package in $AFFECTED_PACKAGES; do
+            pnpm --filter "$package" --if-present run typecheck
+          done
+          if [[ -n "$TEST_PATHS" ]]; then
+            pnpm exec vitest run $TEST_PATHS --coverage
+          fi
+
+  full_quality_check:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.full == 'true'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       DIRECTUS_URL: ${{ secrets.DIRECTUS_URL }}
@@ -34,46 +103,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:utils
       - run: pnpm dev:prepare
-      - parallel:
-          - name: Format check
-            run: pnpm run format:check
-          - name: Lint
-            run: pnpm run lint
-          - name: Typecheck
-            run: pnpm run typecheck
-          - name: Test
-            run: pnpm run test:coverage
-      - name: Upload coverage report
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/upload-code-coverage@1c15be36fc3733ba839b1dd643bd9556e4426dc1 # v1
-        with:
-          file: coverage/cobertura-coverage.xml
-          language: JavaScript
-          label: code-coverage/vitest
-
-  validate:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    env:
-      DIRECTUS_URL: ${{ secrets.DIRECTUS_URL }}
-      DIRECTUS_STATIC_TOKEN: ${{ secrets.DIRECTUS_STATIC_TOKEN }}
-      DIRECTUS_INTROSPECTION_TOKEN: ${{ secrets.DIRECTUS_INTROSPECTION_TOKEN }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
-        with:
-          run_install: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:utils
-      - run: pnpm dev:prepare
+      - name: Run full quality checks
+        shell: bash
+        run: |
+          pnpm format:check
+          pnpm lint
+          pnpm typecheck
+          pnpm test:coverage
       - run: pnpm build
-      - name: Validate package metadata
-        run: pnpm validate:packages
-      - name: Validate packed package artifacts
+      - run: pnpm validate:packages
+      - name: Pack and validate package artifacts
         run: pnpm pack:packages "$RUNNER_TEMP/packages"
       - name: Upload packed package artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -82,9 +121,17 @@ jobs:
           path: ${{ runner.temp }}/packages
           if-no-files-found: error
           retention-days: 1
+      - name: Upload coverage report
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@1c15be36fc3733ba839b1dd643bd9556e4426dc1 # v1
+        with:
+          file: coverage/cobertura-coverage.xml
+          language: JavaScript
+          label: code-coverage/vitest
 
-  external_consumer:
-    needs: validate
+  external_consumer_check:
+    needs: full_quality_check
+    if: needs.full_quality_check.result == 'success'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
