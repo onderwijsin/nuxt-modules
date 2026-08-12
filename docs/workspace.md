@@ -147,6 +147,13 @@ not run playground package build scripts. The recursive `typecheck` script also 
 playgrounds. Package validation checks publishable metadata and confirms that private workspace
 dependencies do not leak into runtime output.
 
+Pull request CI is change-aware to reduce repeated resource consumption. Ordinary package changes
+run focused preparation, typechecking, and tests for the changed package closure. Root tooling,
+dependency, workflow, script, shared-package, and ambiguous changes run the complete validation
+suite. Merge queue validation and manually dispatched CI always run the complete suite, including
+packed artifacts and the external consumer. Change detection fails closed when it cannot classify a
+path safely.
+
 ## Generated output
 
 Do not commit generated workspace output. The following are ignored and should be regenerated
