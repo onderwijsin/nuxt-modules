@@ -7,13 +7,14 @@ description:
 # Nuxt Directus Sitemaps
 
 Use `@onderwijsin/nuxt-directus-sitemaps` to add a Directus-backed source to `@nuxtjs/sitemap`.
-Collection configuration explicitly controls the Directus fields, filter, optional data fetcher, and
-mapper. Do not assume `slug`, dates, SEO fields, path prefixes, or named sitemaps.
+Collection configuration explicitly controls the Directus fields, filter, declarative fieldmap, and
+optional executable shared mapper/fetcher. Do not assume `slug`, dates, SEO fields, path prefixes,
+or named sitemaps.
 
 ## Install and register
 
 ```sh
-pnpm add @onderwijsin/nuxt-directus-config @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
+pnpm add @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
 ```
 
 ```ts
@@ -90,36 +91,37 @@ export default defineDirectusConfig({
 | `noIndex`     | `boolean`                   | No       | Omits the entry when `true`.         |
 | `priority`    | `0`–`1` in `0.1` increments | No       | Sitemap priority.                    |
 
-The default fetcher uses the configured collection, fields, and filter. `fetcher(context)` replaces
-that source and receives `{ collection, fields, filter }`; it must resolve to records, which are
-then passed to `mapper`.
+The default fetcher uses the configured collection, fields, and filter. Runtime mapping uses this
+precedence: shared `fetcher`, shared executable `mapper`, declarative `fieldmap`, then identity
+mapping. A custom fetcher is supported only in shared `directus.config.ts`.
 
 ## Complete module option reference
 
-Configure direct module settings under `directusSitemaps`. They use the same `collections` and
-`sitemaps` schema as `directus.config.ts`; serializable direct settings take precedence. Keep
-collection mappers and custom fetchers in the shared config source.
+Configure direct module settings under `directusSitemaps`. Collection settings are serializable and
+are merged by collection name with shared configuration. Keep executable mappers and custom fetchers
+in the shared config source.
 
-| Prop name                                                     | Data type                                                       | Required         | Description                                                                           |
-| ------------------------------------------------------------- | --------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------- |
-| `directusSitemaps.enabled`                                    | `boolean`                                                       | No               | Defaults to `true`; disables module setup when `false`.                               |
-| `directusSitemaps.collections`                                | `{ collections: DirectusCollectionConfig[] }`                   | No               | Shared collection settings; defaults to `{ collections: [] }`.                        |
-| `directusSitemaps.collections.collections[].collection`       | non-empty `string`                                              | Yes              | Directus collection name.                                                             |
-| `directusSitemaps.collections.collections[].sitemap`          | `false \| object`                                               | Yes              | `false` excludes this collection; otherwise enables sitemap generation.               |
-| `directusSitemaps.collections.collections[].sitemap._sitemap` | non-empty `string`                                              | No               | Named sitemap receiving this collection’s URLs.                                       |
-| `directusSitemaps.collections.collections[].sitemap.fields`   | non-empty `string[]`                                            | No               | Directus fields for the default fetcher; defaults to `['*']`.                         |
-| `directusSitemaps.collections.collections[].sitemap.filter`   | `Record<string, unknown>`                                       | No               | Directus filter for the default fetcher; defaults to `{}`.                            |
-| `directusSitemaps.collections.collections[].sitemap.fetcher`  | `({ collection, fields, filter }) => Promise<readonly Item[]>`  | No               | Replaces the default fetcher; mapper still runs afterward.                            |
-| `directusSitemaps.collections.collections[].sitemap.mapper`   | `(item) => SitemapEntry \| SitemapEntry[] \| null \| undefined` | Yes when enabled | Maps each fetched record.                                                             |
-| `directusSitemaps.collections.collections[].prerender`        | `false \| {}`                                                   | Yes              | Reserved for the future Directus prerender module; set `false`.                       |
-| `directusSitemaps.sitemaps.static`                            | `Array<{ loc: string; … }>`                                     | No               | Defaults to `[]`; entries need `loc` and may include other sitemap fields.            |
-| `directusSitemaps.sitemaps.apiEndpoint`                       | absolute path string                                            | No               | Defaults to `/api/_directus-sitemaps/urls`.                                           |
-| `directusSitemaps.sitemaps.enablePrettyUrls`                  | `boolean`                                                       | No               | Defaults to `true`; redirects `/sitemap` to `/sitemap.xml`.                           |
-| `directusSitemaps.sitemaps.cache`                             | `false \| { maxAge, staleMaxAge, swr }`                         | No               | Defaults to `{ maxAge: 300, staleMaxAge: 0, swr: true }`; source-response cache only. |
-| `directusSitemaps.sitemaps.cache.maxAge`                      | non-negative integer                                            | No               | Fresh response lifetime in seconds; defaults to `300`.                                |
-| `directusSitemaps.sitemaps.cache.staleMaxAge`                 | non-negative integer                                            | No               | Stale response lifetime in seconds; defaults to `0`.                                  |
-| `directusSitemaps.sitemaps.cache.swr`                         | `boolean`                                                       | No               | Enables stale-while-revalidate; defaults to `true`.                                   |
-| `directusSitemaps.sitemaps.prerenderSitemaps`                 | `boolean`                                                       | No               | Defaults to `false`; prerenders the source and sitemap XML routes.                    |
+| Prop name                                                     | Data type                                     | Required | Description                                                                           |
+| ------------------------------------------------------------- | --------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `directusSitemaps.enabled`                                    | `boolean`                                     | No       | Defaults to `true`; disables module setup when `false`.                               |
+| `directusSitemaps.collections`                                | `{ collections: DirectusCollectionConfig[] }` | No       | Shared collection settings; defaults to `{ collections: [] }`.                        |
+| `directusSitemaps.collections.collections[].collection`       | non-empty `string`                            | Yes      | Directus collection name.                                                             |
+| `directusSitemaps.collections.collections[].sitemap`          | `false \| object`                             | Yes      | `false` excludes this collection; otherwise enables sitemap generation.               |
+| `directusSitemaps.collections.collections[].sitemap._sitemap` | non-empty `string`                            | No       | Named sitemap receiving this collection’s URLs.                                       |
+| `directusSitemaps.collections.collections[].sitemap.fields`   | non-empty `string[]`                          | No       | Directus fields for the default fetcher; defaults to `['*']`.                         |
+| `directusSitemaps.collections.collections[].sitemap.filter`   | `Record<string, unknown>`                     | No       | Directus filter for the default fetcher; defaults to `{}`.                            |
+| `directusSitemaps.collections.collections[].sitemap.fieldmap` | `{ loc: string; [property: string]: string }` | No       | Maps sitemap properties to Directus record properties.                                |
+| `directusSitemaps.collections.collections[].sitemap.fetcher`  | Not supported in direct options               | No       | Use shared `directus.config.ts` for custom fetchers.                                  |
+| `directusSitemaps.collections.collections[].sitemap.mapper`   | Not supported in direct options               | No       | Use shared `directus.config.ts` for executable mappers.                               |
+| `directusSitemaps.collections.collections[].prerender`        | `false \| {}`                                 | Yes      | Reserved for the future Directus prerender module; set `false`.                       |
+| `directusSitemaps.sitemaps.static`                            | `Array<{ loc: string; … }>`                   | No       | Defaults to `[]`; entries need `loc` and may include other sitemap fields.            |
+| `directusSitemaps.sitemaps.apiEndpoint`                       | absolute path string                          | No       | Defaults to `/api/_directus-sitemaps/urls`.                                           |
+| `directusSitemaps.sitemaps.enablePrettyUrls`                  | `boolean`                                     | No       | Defaults to `true`; redirects `/sitemap` to `/sitemap.xml`.                           |
+| `directusSitemaps.sitemaps.cache`                             | `false \| { maxAge, staleMaxAge, swr }`       | No       | Defaults to `{ maxAge: 300, staleMaxAge: 0, swr: true }`; source-response cache only. |
+| `directusSitemaps.sitemaps.cache.maxAge`                      | non-negative integer                          | No       | Fresh response lifetime in seconds; defaults to `300`.                                |
+| `directusSitemaps.sitemaps.cache.staleMaxAge`                 | non-negative integer                          | No       | Stale response lifetime in seconds; defaults to `0`.                                  |
+| `directusSitemaps.sitemaps.cache.swr`                         | `boolean`                                     | No       | Enables stale-while-revalidate; defaults to `true`.                                   |
+| `directusSitemaps.sitemaps.prerenderSitemaps`                 | `boolean`                                     | No       | Defaults to `false`; prerenders the source and sitemap XML routes.                    |
 
 ## Endpoint and runtime behavior
 

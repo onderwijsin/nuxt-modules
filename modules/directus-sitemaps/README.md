@@ -10,12 +10,19 @@ Directus schema, slug field, or SEO structure.
 | ----------------------------------- | -------------------------------------------------------------------------------- |
 | `@onderwijsin/nuxt-directus`        | Provides the server-side Directus client used by the default collection fetcher. |
 | `@nuxtjs/sitemap`                   | Renders the registered dynamic source as sitemap XML.                            |
-| `@onderwijsin/nuxt-directus-config` | Recommended for executable collection mappers and custom fetchers.               |
+| `@onderwijsin/nuxt-directus-config` | Optional; enables executable shared mappers and fetchers.                        |
 
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-directus-config @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
+pnpm add @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
+```
+
+Install `@onderwijsin/nuxt-directus-config` too when you need shared executable mappers or custom
+fetchers:
+
+```sh
+pnpm add @onderwijsin/nuxt-directus-config
 ```
 
 Register the shared config module before its consumers:
@@ -32,7 +39,35 @@ export default defineNuxtConfig({
 });
 ```
 
-## Shared configuration
+## Configuration
+
+The sitemap module works standalone. Its direct `directusSitemaps.collections` option is data-only
+and supports `fields`, `filter`, `_sitemap`, and `fieldmap`. The optional
+`@onderwijsin/nuxt-directus-config` module adds executable shared configuration.
+
+### Standalone field mapping
+
+```ts
+export default defineNuxtConfig({
+  directusSitemaps: {
+    collections: [
+      {
+        collection: "articles",
+        sitemap: {
+          fields: ["slug", "updated_at"],
+          fieldmap: { loc: "slug", lastmod: "updated_at" }
+        },
+        prerender: false
+      }
+    ]
+  }
+});
+```
+
+`fieldmap` maps sitemap properties to properties on each Directus record. `loc` is required. If no
+fieldmap or mapper is configured, the fetched record is passed directly to sitemap-entry validation.
+
+### Shared configuration
 
 Create `directus.config.ts` in the Nuxt root. This is the recommended place for sitemap collections:
 the source is server-only, so it preserves `mapper` and `fetcher` functions without serializing them
@@ -88,19 +123,21 @@ export default defineDirectusConfig({
 `collections` is shared with related Directus modules. A collection uses sitemap generation when
 `sitemap` is an object; set it to `false` to exclude it.
 
-| Option             | Required         | Description                                                                                      |
-| ------------------ | ---------------- | ------------------------------------------------------------------------------------------------ |
-| `collection`       | Yes              | Directus collection name.                                                                        |
-| `sitemap`          | Yes              | `false`, or the sitemap configuration below.                                                     |
-| `sitemap._sitemap` | No               | Named `@nuxtjs/sitemap` sitemap that receives this collection’s mapped URLs.                     |
-| `sitemap.fields`   | No               | Directus fields passed to the default fetcher. Defaults to `['*']`.                              |
-| `sitemap.filter`   | No               | Directus filter passed to the default fetcher. Defaults to `{}`.                                 |
-| `sitemap.fetcher`  | No               | Async replacement fetcher. It receives `{ collection, fields, filter }` and resolves to records. |
-| `sitemap.mapper`   | Yes when enabled | Maps each fetched record to one sitemap entry, or `null`/`undefined` to omit it.                 |
-| `prerender`        | Yes              | Reserved shared setting; use `false` until the Directus prerender module is available.           |
+| Option             | Required | Description                                                                                      |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------------ |
+| `collection`       | Yes      | Directus collection name.                                                                        |
+| `sitemap`          | Yes      | `false`, or the sitemap configuration below.                                                     |
+| `sitemap._sitemap` | No       | Named `@nuxtjs/sitemap` sitemap that receives this collection’s mapped URLs.                     |
+| `sitemap.fields`   | No       | Directus fields passed to the default fetcher. Defaults to `['*']`.                              |
+| `sitemap.filter`   | No       | Directus filter passed to the default fetcher. Defaults to `{}`.                                 |
+| `sitemap.fetcher`  | No       | Async replacement fetcher. It receives `{ collection, fields, filter }` and resolves to records. |
+| `sitemap.fieldmap` | No       | Maps sitemap properties to Directus record properties; `loc` is required.                        |
+| `sitemap.mapper`   | No       | Executable mapper from shared `directus.config.ts`; maps each fetched record.                    |
+| `prerender`        | Yes      | Reserved shared setting; use `false` until the Directus prerender module is available.           |
 
-The default fetcher reads the configured collection with its `fields` and `filter`. A custom
-`fetcher` replaces only that data source; the module always applies `mapper` to its records.
+The default fetcher reads the configured collection with its `fields` and `filter`. Runtime mapping
+uses this precedence: custom shared `fetcher`, executable shared `mapper`, declarative `fieldmap`,
+then identity mapping. Direct module options cannot contain executable functions.
 
 `mapper(item)` returns one entry, `null`, or `undefined`:
 
@@ -146,9 +183,9 @@ export default defineNuxtConfig({
 });
 ```
 
-Direct module settings take precedence over shared settings. Put executable collection definitions
-in `directus.config.ts`; Nuxt module options are serialized and cannot safely carry mapper or
-fetcher functions to the server runtime.
+Direct module settings take precedence over matching shared collection settings by collection name.
+Nested sitemap settings are merged. Executable shared `mapper` and `fetcher` functions are
+preserved; direct module options cannot define or replace them.
 
 ## Source endpoint
 

@@ -4,7 +4,6 @@ import { readItems, type Query } from "@directus/sdk";
 import {
   sitemapUrlSchema,
   type DirectusCollectionConfig,
-  type MappedDirectusSitemapEntry,
   type SitemapUrl
 } from "@onderwijsin/nuxt-directus-config/schema";
 import {
@@ -12,7 +11,9 @@ import {
   isFunction,
   isRecord,
   hasKey,
-  isDefined
+  isDefined,
+  fromEntries,
+  toEntries
 } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { useDirectusServer } from "@onderwijsin/nuxt-directus/runtime/server";
@@ -68,10 +69,7 @@ export async function fetchItemsFromCollection(
  * @param _sitemap - Optional namespace for this sitemap
  * @returns a validated SitemapUrl compatible with @nuxtjs/sitemap
  */
-export function toSitemapUrl(
-  entry: MappedDirectusSitemapEntry | null | undefined,
-  _sitemap?: string
-): SitemapUrl | null {
+export function toSitemapUrl(entry: unknown, _sitemap?: string): SitemapUrl | null {
   // If not and object, or if not indexable, return early
   if (!entry || !isRecord(entry) || (hasKey(entry, "noIndex") && entry.noIndex)) return null;
 
@@ -89,6 +87,21 @@ export function toSitemapUrl(
     ...parsed.data,
     _sitemap
   };
+}
+
+/**
+ * Maps sitemap fields from a Directus item using a declarative field map.
+ *
+ * @param item Directus record to map.
+ * @param fieldmap Sitemap property names and their Directus source properties.
+ * @returns The mapped sitemap candidate, or the original item when it is not an object.
+ */
+export function mapDirectusItem(item: unknown, fieldmap: Record<string, string>): unknown {
+  if (!isRecord(item)) return item;
+
+  return fromEntries(
+    toEntries(fieldmap).map(([target, source]) => [target, Reflect.get(item, source)])
+  );
 }
 
 type EnabledCollectionConfig = Omit<DirectusCollectionConfig, "sitemap"> & {
@@ -132,11 +145,19 @@ export async function buildSitemapUrls(
     selectedCollections.map(async (collectionConfig) => {
       const records = await fetchItemsFromCollection(event, collectionConfig);
       const { sitemap } = collectionConfig;
-      const mappedRecords = records.flatMap((record) =>
-        isDefined(record) && record !== null
-          ? toSitemapUrl(sitemap.mapper(record), sitemap._sitemap)
-          : null
-      );
+      const mappedRecords = records.flatMap((record) => {
+        if (!isDefined(record) || record === null) return [];
+
+        const entry = isFunction(sitemap.mapper)
+          ? sitemap.mapper(record)
+          : sitemap.fieldmap
+            ? mapDirectusItem(record, sitemap.fieldmap)
+            : record;
+
+        return [toSitemapUrl(entry, sitemap._sitemap)].filter(
+          (value): value is SitemapUrl => value !== null
+        );
+      });
       return mappedRecords.filter((record): record is SitemapUrl => record !== null);
     })
   );

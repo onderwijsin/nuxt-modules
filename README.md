@@ -24,6 +24,8 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | [`@onderwijsin/nuxt-redirects`](modules/redirects/README.md)                     | Provider-agnostic dynamic redirects backed by a Nitro storage index.                           |
 | [`@onderwijsin/nuxt-directus`](modules/directus/README.md)                       | Server-safe Directus REST integration for Nuxt applications.                                   |
 | [`@onderwijsin/nuxt-sentry-config`](modules/sentry-config/README.md)             | Runtime-portable Sentry server configuration for Node and Cloudflare Nitro deployments.        |
+| [`@onderwijsin/nuxt-directus-config`](modules/directus-config/README.md)         | Centralized, executable and type safe configuration for Directus modules.                      |
+| [`@onderwijsin/nuxt-directus-sitemaps`](modules/directus-sitemaps/README.md)     | Automagically generated sitemaps from Directus collections with `@nuxtjs/sitemap`.             |
 
 ## 🧱 Requirements
 

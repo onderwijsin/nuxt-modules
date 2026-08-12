@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { fromEntries, toEntries } from "../../src/shared/entries";
+import { fromEntries, keys, toEntries } from "../../src/shared/object";
 
-describe("typed entry helpers", () => {
+describe("typed object helpers", () => {
   it("returns typed object entries and rebuilds an object", () => {
     const entries = toEntries({ enabled: true, retries: 2 });
 
@@ -15,5 +15,10 @@ describe("typed entry helpers", () => {
   it("handles empty objects and iterable entries", () => {
     expect(toEntries({})).toEqual([]);
     expect(fromEntries(new Map([["name", "example"]]))).toEqual({ name: "example" });
+  });
+
+  it("returns typed enumerable own keys", () => {
+    expect(keys({ enabled: true, retries: 2 })).toEqual(["enabled", "retries"]);
+    expect(keys({})).toEqual([]);
   });
 });

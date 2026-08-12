@@ -117,13 +117,16 @@ Each collection entry has these options:
 | `sitemap._sitemap` | Optional named `@nuxtjs/sitemap` destination for this collection’s mapped URLs.                               |
 | `sitemap.fields`   | Optional Directus fields to fetch.                                                                            |
 | `sitemap.filter`   | Optional Directus filter.                                                                                     |
+| `sitemap.fieldmap` | Optional declarative map from sitemap properties to Directus record properties; `loc` is required.            |
 | `sitemap.fetcher`  | Optional async custom fetcher. It receives `{ collection, fields, filter }`; its result is mapped afterwards. |
-| `sitemap.mapper`   | Required mapper called for every fetched item. Return one sitemap entry, `null`, or `undefined`.              |
+| `sitemap.mapper`   | Optional executable mapper called for every fetched item. Return one sitemap entry, `null`, or `undefined`.   |
 | `prerender`        | `false` or a reserved object for future prerender behaviour.                                                  |
 
-A sitemap mapper returns a sitemap entry with required `loc` and optional `lastmod`, `changefreq`,
-`priority`, `images`, `videos`, `news`, `alternatives`, and sitemap metadata fields. The entry may
-also include `noIndex: true` to omit it. `priority` is one of `0`, `0.1`, …, `1`.
+Runtime mapping prefers a custom fetcher, then an executable mapper, then a fieldmap, and finally
+the record itself. A sitemap mapper returns a sitemap entry with required `loc` and optional
+`lastmod`, `changefreq`, `priority`, `images`, `videos`, `news`, `alternatives`, and sitemap
+metadata fields. The entry may also include `noIndex: true` to omit it. `priority` is one of `0`,
+`0.1`, …, `1`.
 
 The complete sitemap-entry schema is maintained in
 [`src/schema/sitemap-entry.ts`](src/schema/sitemap-entry.ts). Import its exports from

@@ -18,10 +18,19 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import { isArray, isDefined, isNonBlankString } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  isArray,
+  isDefined,
+  isNonBlankString,
+  hasKey,
+  isRecord
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
-import { generateDirectusSitemapsConfigSource } from "./config/source";
+import {
+  generateDirectusSitemapsConfigSource,
+  mergeDirectusSitemapCollections
+} from "./config/source";
 import type { ModuleOptions } from "./types/options";
 import {
   set,
@@ -52,11 +61,10 @@ export default defineNuxtModule<ModuleOptions>({
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
 
-    // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
+    // Only merge general sitemap config from shared config into module options. Collections will be handled seperately
     const options = validateModuleOptions(
       defu(rawOptions, {
-        collections: sharedConfig?.collections,
         ...(sharedConfig?.sitemaps ?? {})
       }),
       directusSitemapsOptionsSchema,
@@ -94,7 +102,13 @@ export default defineNuxtModule<ModuleOptions>({
     addServerTemplate({
       filename: "#directus-sitemaps-config",
       getContents: () =>
-        generateDirectusSitemapsConfigSource(options.collections, options.static ?? [])
+        generateDirectusSitemapsConfigSource(
+          options.collections,
+          options.static ?? [],
+          hasKey(nuxt.options, "_directus") &&
+            isRecord(nuxt.options._directus) &&
+            hasKey(nuxt.options._directus, "collections")
+        )
     });
 
     // Get the config property for @nuxtjs/sitemap
@@ -102,15 +116,24 @@ export default defineNuxtModule<ModuleOptions>({
 
     const isNuxtSitemapEnabled = isDefined(sitemap) && sitemap !== false;
 
+    // Merge serializable sitemap collection overrides into executable shared configuration.
+    const effectiveCollections = mergeDirectusSitemapCollections(
+      sharedConfig?.collections ?? [],
+      options.collections
+    );
+
     // Get an array of unique sitemap names. If empty, all entries should be placed in the default index sitemap
-    const sitemapNamespaces = resolveSitemapNamespaces(options);
+    const sitemapNamespaces = resolveSitemapNamespaces({
+      ...options,
+      collections: effectiveCollections
+    });
 
     if (!isNuxtSitemapEnabled) {
       log.warn(
         `@nuxtjs/sitemap is disabled; no Directus sitemap source was registered. The server endpoint "${options.apiEndpoint}" will be registered, but you are responsible for handling the rendering of an .xml file containing sitemap entries.`
       );
     } else if (!sitemapNamespaces.length) {
-      const sources = Reflect.get(sitemap, "sources");
+      const sources = get(sitemap, "sources");
       // Merge our custom source endpoint with any sources that were provided directly to @nuxtjs/sitemap
       set(sitemap, "sources", [options.apiEndpoint, ...(isArray(sources) ? sources : [])]);
     } else {

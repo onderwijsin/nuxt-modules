@@ -17,3 +17,13 @@ export function fromEntries<K extends PropertyKey, V>(
 ): Record<K, V> {
   return Object.fromEntries(entries) as Record<K, V>;
 }
+
+/**
+ * Returns the enumerable own keys of an object while preserving its key type.
+ *
+ * @param object - Object whose keys should be returned.
+ * @returns The object's keys typed as `keyof T`.
+ */
+export function keys<T extends object>(object: T): Array<keyof T> {
+  return Object.keys(object) as Array<keyof T>;
+}
