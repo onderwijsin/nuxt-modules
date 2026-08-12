@@ -67,18 +67,5 @@ the repository. Pass secrets explicitly when calling reusable workflows.
 - Update the relevant workflow and documentation in the same change.
 - Validate JavaScript syntax, formatting, linting, and representative action input payloads locally.
 
-## CI validation tiers
-
-Pull requests use `scripts/detect-changes.mjs` to select the smallest safe validation scope.
-Documentation-only changes run formatting and linting. Package changes run preparation,
-typechecking, and tests for the changed packages plus their workspace dependents. Changes to root
-configuration, dependencies, scripts, workflows, shared packages, or unclassified paths select full
-validation.
-
-The detector fails closed. Merge queue runs and manually dispatched CI always run the full suite:
-formatting, linting, recursive typechecking, coverage tests, all package builds, package metadata
-and packed-artifact checks, followed by clean external consumer validation. The external consumer
-always installs the exact packed artifacts produced by the full validation job.
-
 The Slack release notification action in `.github/actions/slack-notification/` is the reference
 implementation for a dependency-free local action.

@@ -49,9 +49,18 @@ pnpm --filter ui-form-extensions-playground typecheck
 pnpm --filter ui-form-extensions-playground build
 ```
 
-CI also runs `pack` and Publint against every non-private package. Before review, inspect the
-resulting tarball and confirm it contains only the intended `dist` entrypoints, declarations,
-documentation, and licence. Do not commit `.nuxt`, `.output`, `dist`, coverage, or `.tgz` output.
+CI validation is change-aware. Ordinary pull requests use `scripts/detect-changes.mjs` to select the
+smallest safe package closure: documentation-only changes run formatting and linting, while package
+changes run preparation, typechecking, and tests for the changed packages and their dependents.
+Changes to root configuration, dependencies, scripts, workflows, shared packages, or unclassified
+paths fail closed into full validation.
+
+Merge queue and manually dispatched CI always run the full suite: formatting, linting, recursive
+typechecking, coverage tests, all package builds, package metadata validation, packed-artifact
+validation, and the clean external consumer check. The external consumer installs the exact packed
+artifacts produced by the full validation job. Before review, inspect packed output when relevant
+and confirm it contains only the intended `dist` entrypoints, declarations, documentation, and
+licence. Do not commit `.nuxt`, `.output`, `dist`, coverage, or `.tgz` output.
 
 ## Changesets
 
