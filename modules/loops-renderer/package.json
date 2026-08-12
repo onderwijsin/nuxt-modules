@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-loops-renderer",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Nuxt module for rendering Loops LMX email content.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

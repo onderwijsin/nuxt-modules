@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 473480b: Fix discovery of consumer redirect sources when the Nuxt server directory is customized.
+- f78b723: Co-locate public module option types with their Zod schemas and preserve runtime domain types in published runtime-owned locations.
+- Updated dependencies [91ebdd2]
+  - @onderwijsin/nuxt-module-utils@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes

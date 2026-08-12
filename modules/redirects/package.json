@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-redirects",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Provider-agnostic dynamic redirects for Nuxt.",
   "license": "MIT",
   "author": {
