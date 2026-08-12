@@ -1,8 +1,11 @@
-import type { DirectusCollectionConfig } from "@onderwijsin/nuxt-directus-config/schema";
+import type {
+  DirectusCollectionConfig,
+  SitemapUrl
+} from "@onderwijsin/nuxt-directus-config/schema";
 
 declare const config: {
   collections: DirectusCollectionConfig[];
-  static: Array<{ loc: string; [key: string]: unknown }>;
+  static: SitemapUrl[];
 };
 
 export default config;

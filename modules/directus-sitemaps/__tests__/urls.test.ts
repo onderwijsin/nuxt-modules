@@ -3,9 +3,10 @@ import { isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 const useDirectusServer = vi.fn();
 
-vi.mock("#imports", () => ({ useDirectusServer }));
+vi.mock("@onderwijsin/nuxt-directus/runtime/server", () => ({ useDirectusServer }));
 
-const { buildSitemapUrls, getCollectionUrls } = await import("../src/runtime/server/utils/urls");
+const { buildSitemapUrls, getCollectionUrls } =
+  await import("../src/runtime/server/utils/sitemap-urls");
 
 describe("Directus sitemap URLs", () => {
   beforeEach(() => {

@@ -18,12 +18,18 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import { isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
+import { isArray, isDefined, isNonBlankString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
 import { generateDirectusSitemapsConfigSource } from "./config/source";
 import type { ModuleOptions } from "./types/options";
-import { createSitemapSource } from "./utils/sitemaps";
+import {
+  set,
+  get,
+  resolveSitemapNamespaces,
+  registerSitemapNamespaces,
+  resolveNamespacedSitemapRoute
+} from "./utils/helpers";
 import { version } from "../package.json";
 
 const MODULE_KEY = "directusSitemaps";
@@ -34,8 +40,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: { name: MODULE_NAME, configKey: MODULE_KEY, version, compatibility: { nuxt: "^4.0.0" } },
   defaults: {
     enabled: true,
-    collections: { collections: [] },
-    sitemaps: {}
+    collections: []
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
@@ -46,17 +51,23 @@ export default defineNuxtModule<ModuleOptions>({
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
+
+    // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
     const options = validateModuleOptions(
       defu(rawOptions, {
         collections: sharedConfig?.collections,
-        sitemaps: sharedConfig?.sitemaps
+        ...(sharedConfig?.sitemaps ?? {})
       }),
       directusSitemapsOptionsSchema,
       log
     );
+
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
+
+    // TODO this type template { nitro: true, nuxt: true }. Thats not an established pattern,
+    // and i dont know what it does
     const serverConfigTypes = addTypeTemplate(
       {
         filename: "types/directus-sitemaps-config.d.ts",
@@ -64,6 +75,14 @@ export default defineNuxtModule<ModuleOptions>({
       },
       { nitro: true, nuxt: true }
     );
+
+    /**
+     * Why via tsConfig? Im not saying its wrong though.
+     * We also want this import to only be available in nitro runtime (similar to the full directus config from the directus-config module)
+     *
+     * Ah i now see that dirctus-config follows this patterns as well
+     * the directus module follows a different pattern though
+     */
     nuxt.options.typescript.tsConfig ??= {};
     nuxt.options.typescript.tsConfig.compilerOptions ??= {};
     nuxt.options.typescript.tsConfig.compilerOptions.paths ??= {};
@@ -75,98 +94,83 @@ export default defineNuxtModule<ModuleOptions>({
     addServerTemplate({
       filename: "#directus-sitemaps-config",
       getContents: () =>
-        generateDirectusSitemapsConfigSource(options.sitemaps.static, sharedConfig !== undefined)
+        generateDirectusSitemapsConfigSource(options.collections, options.static ?? [])
     });
-    const sitemap = Reflect.get(nuxt.options, "sitemap");
-    const sitemapNames = resolveSitemapNames(options);
-    if (sitemap === false) {
-      log.warn("@nuxtjs/sitemap is disabled; no Directus sitemap source was registered.");
-    } else if (isRecord(sitemap)) {
-      if (sitemapNames.length > 0) {
-        registerNamedSitemaps(sitemap, sitemapNames, options.sitemaps.apiEndpoint);
-      } else {
-        const sources = Reflect.get(sitemap, "sources");
-        Reflect.set(sitemap, "sources", [
-          ...createSitemapSource(options.sitemaps.apiEndpoint),
-          ...(isArray(sources) ? sources : [])
-        ]);
-      }
+
+    // Get the config property for @nuxtjs/sitemap
+    const sitemap = get(nuxt.options, "sitemap");
+
+    const isNuxtSitemapEnabled = isDefined(sitemap) && sitemap !== false;
+
+    // Get an array of unique sitemap names. If empty, all entries should be placed in the default index sitemap
+    const sitemapNamespaces = resolveSitemapNamespaces(options);
+
+    if (!isNuxtSitemapEnabled) {
+      log.warn(
+        `@nuxtjs/sitemap is disabled; no Directus sitemap source was registered. The server endpoint "${options.apiEndpoint}" will be registered, but you are responsible for handling the rendering of an .xml file containing sitemap entries.`
+      );
+    } else if (!sitemapNamespaces.length) {
+      const sources = Reflect.get(sitemap, "sources");
+      // Merge our custom source endpoint with any sources that were provided directly to @nuxtjs/sitemap
+      set(sitemap, "sources", [options.apiEndpoint, ...(isArray(sources) ? sources : [])]);
     } else {
-      Reflect.set(nuxt.options, "sitemap", {
-        ...(sitemapNames.length > 0
-          ? {
-              sitemaps: Object.fromEntries(
-                sitemapNames.map((name) => [
-                  name,
-                  { sources: createSitemapSource(options.sitemaps.apiEndpoint) }
-                ])
-              )
-            }
-          : { sources: createSitemapSource(options.sitemaps.apiEndpoint) })
-      });
+      registerSitemapNamespaces(sitemap, sitemapNamespaces, options.apiEndpoint);
     }
+
+    const configuredPathPrefix = options.sitemapsPathPrefix.replace(/\/$/u, "");
+    // Path prefix provided to @nuxtjs/sitemap takes precedence
+    const sitemapsPathPrefix =
+      isNuxtSitemapEnabled && isNonBlankString(get(sitemap, "sitemapsPathPrefix"))
+        ? (get(sitemap, "sitemapsPathPrefix") as string)
+        : configuredPathPrefix;
+
+    if (isNuxtSitemapEnabled) {
+      set(sitemap, "sitemapsPathPrefix", sitemapsPathPrefix);
+    }
+
     transpileRuntime(nuxt, runtimeDir);
     addServerHandler({
       method: "get",
-      route: options.sitemaps.apiEndpoint,
+      route: options.apiEndpoint,
       handler: resolver.resolve(runtimeDir, "server/routes/urls.get")
     });
-    if (options.sitemaps.enablePrettyUrls) {
+    if (options.enablePrettyUrls) {
       addServerHandler({
         method: "get",
         route: "/sitemap",
-        handler: resolver.resolve(runtimeDir, "server/routes/pretty.get")
+        handler: resolver.resolve(runtimeDir, "server/routes/pretty-url.get")
       });
     }
     nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules[options.sitemaps.apiEndpoint] = {
-      ...nuxt.options.routeRules[options.sitemaps.apiEndpoint],
-      cache: options.sitemaps.cache || false,
-      prerender: options.sitemaps.prerenderSitemaps
-    };
-    if (options.sitemaps.prerenderSitemaps) {
-      addPrerenderRoutes([
-        options.sitemaps.apiEndpoint,
-        ...(sitemapNames.length > 0
-          ? ["/sitemap_index.xml", ...resolveNamedSitemapRoutes(sitemap, sitemapNames)]
-          : ["/sitemap.xml"])
-      ]);
+    nuxt.options.routeRules[options.apiEndpoint] = defu(
+      {
+        cache: options.cache,
+        prerender: false
+      },
+      nuxt.options.routeRules[options.apiEndpoint]
+    );
+
+    // Only prerender sitemap routes if @nuxtjs/sitemap is enabled.
+    // Otherwise there is nothing to prerender
+    if (options.prerenderSitemaps) {
+      if (sitemap === false) {
+        console.warn(
+          `@nuxtjs/sitemap is disabled; thus prerendering the sitemap routes has no effect. Skipping prerender routes.`
+        );
+      } else {
+        addPrerenderRoutes([
+          options.apiEndpoint,
+          ...(sitemapNamespaces.length > 0
+            ? [
+                "/sitemap_index.xml",
+                ...sitemapNamespaces.map((name) =>
+                  resolveNamespacedSitemapRoute(name, sitemapsPathPrefix)
+                )
+              ]
+            : ["/sitemap.xml"])
+        ]);
+      }
     }
     end();
   }
 });
-
-function resolveSitemapNames(options: ModuleOptions): string[] {
-  const names = new Set<string>();
-  for (const collection of options.collections?.collections ?? []) {
-    if (collection.sitemap !== false && collection.sitemap._sitemap) {
-      names.add(collection.sitemap._sitemap);
-    }
-  }
-  for (const entry of options.sitemaps?.static ?? []) {
-    if (!isRecord(entry)) continue;
-    const sitemapName = Reflect.get(entry, "_sitemap");
-    if (isString(sitemapName) && sitemapName.trim()) names.add(sitemapName);
-  }
-  return [...names];
-}
-
-function registerNamedSitemaps(sitemap: object, sitemapNames: string[], source: string): void {
-  if (sitemapNames.length === 0) return;
-  const current = Reflect.get(sitemap, "sitemaps");
-  const currentSitemaps = isRecord(current) ? current : {};
-  const namedSitemaps = Object.fromEntries(
-    sitemapNames.map((name) => {
-      const currentSitemap = Reflect.get(currentSitemaps, name);
-      const sources = isRecord(currentSitemap) ? Reflect.get(currentSitemap, "sources") : undefined;
-      return [name, { sources: [source, ...(isArray(sources) ? sources : [])] }];
-    })
-  );
-  Reflect.set(sitemap, "sitemaps", defu(namedSitemaps, currentSitemaps));
-}
-
-function resolveNamedSitemapRoutes(sitemap: unknown, sitemapNames: string[]): string[] {
-  const prefix = isRecord(sitemap) ? Reflect.get(sitemap, "sitemapsPathPrefix") : undefined;
-  const pathPrefix = isString(prefix) ? prefix.replace(/\/$/u, "") : "/__sitemap__";
-  return sitemapNames.map((name) => `${pathPrefix}/${name}.xml`);
-}

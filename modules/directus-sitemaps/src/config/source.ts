@@ -1,21 +1,21 @@
+import type {
+  SitemapUrl,
+  ResolvedDirectusCollectionOptions
+} from "@onderwijsin/nuxt-directus-config/schema";
 /**
  * Generates the Nitro-only configuration module consumed by sitemap handlers.
  *
- * Collection mappers and fetchers are executable values. When the shared
- * Directus config module is present, importing its server-only alias retains
- * those values without placing them in Nuxt runtime config.
+ * Collection config contains executable code (mappers and fetchers), thus
+ * cannot be stringified like the static url list
  *
+ * @param collectionConfig Validated Directus collection configuration.
  * @param staticEntries Validated static sitemap entries.
- * @param useSharedConfig Whether the directus-config module resolved a config.
  * @returns Source for the generated Nitro virtual module.
  */
 export function generateDirectusSitemapsConfigSource(
-  staticEntries: unknown,
-  useSharedConfig: boolean
+  collectionConfig: ResolvedDirectusCollectionOptions,
+  staticEntries: SitemapUrl[]
 ): string {
   const staticSource = JSON.stringify(staticEntries) ?? "[]";
-  if (!useSharedConfig) {
-    return `export default { collections: [], static: ${staticSource} };\n`;
-  }
-  return `import directusConfig from "#directus-config-server";\nexport default { collections: directusConfig.collections?.collections ?? [], static: ${staticSource} };\n`;
+  return `export default { collections: ${collectionConfig}, static: ${staticSource} };\n`;
 }

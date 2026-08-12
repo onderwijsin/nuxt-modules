@@ -44,38 +44,36 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 
 export default defineDirectusConfig({
   instance: { baseUrl: "https://cms.example.com" },
-  collections: {
-    collections: [
-      {
-        collection: "articles",
-        sitemap: {
-          _sitemap: "articles",
-          fields: ["slug", "updated_at"],
-          filter: { status: { _eq: "published" } },
-          mapper: (item) => {
-            if (
-              !item ||
-              typeof item !== "object" ||
-              !("slug" in item) ||
-              typeof item.slug !== "string"
-            ) {
-              return null;
-            }
-
-            return {
-              path: `/articles/${item.slug}`,
-              lastUpdated:
-                "updated_at" in item && typeof item.updated_at === "string"
-                  ? item.updated_at
-                  : undefined,
-              priority: 0.8
-            };
+  collections: [
+    {
+      collection: "articles",
+      sitemap: {
+        _sitemap: "articles",
+        fields: ["slug", "updated_at"],
+        filter: { status: { _eq: "published" } },
+        mapper: (item) => {
+          if (
+            !item ||
+            typeof item !== "object" ||
+            !("slug" in item) ||
+            typeof item.slug !== "string"
+          ) {
+            return null;
           }
-        },
-        prerender: false
-      }
-    ]
-  },
+
+          return {
+            loc: `/articles/${item.slug}`,
+            lastmod:
+              "updated_at" in item && typeof item.updated_at === "string"
+                ? item.updated_at
+                : undefined,
+            priority: 0.8
+          };
+        }
+      },
+      prerender: false
+    }
+  ],
   sitemaps: {
     static: [{ loc: "/about" }],
     apiEndpoint: "/api/_directus-sitemaps/urls",
@@ -87,8 +85,8 @@ export default defineDirectusConfig({
 
 ### Collection configuration
 
-`collections.collections` is shared with related Directus modules. A collection uses sitemap
-generation when `sitemap` is an object; set it to `false` to exclude it.
+`collections` is shared with related Directus modules. A collection uses sitemap generation when
+`sitemap` is an object; set it to `false` to exclude it.
 
 | Option             | Required         | Description                                                                                      |
 | ------------------ | ---------------- | ------------------------------------------------------------------------------------------------ |
@@ -98,20 +96,25 @@ generation when `sitemap` is an object; set it to `false` to exclude it.
 | `sitemap.fields`   | No               | Directus fields passed to the default fetcher. Defaults to `['*']`.                              |
 | `sitemap.filter`   | No               | Directus filter passed to the default fetcher. Defaults to `{}`.                                 |
 | `sitemap.fetcher`  | No               | Async replacement fetcher. It receives `{ collection, fields, filter }` and resolves to records. |
-| `sitemap.mapper`   | Yes when enabled | Maps each fetched record to sitemap entries.                                                     |
+| `sitemap.mapper`   | Yes when enabled | Maps each fetched record to one sitemap entry, or `null`/`undefined` to omit it.                 |
 | `prerender`        | Yes              | Reserved shared setting; use `false` until the Directus prerender module is available.           |
 
 The default fetcher reads the configured collection with its `fields` and `filter`. A custom
 `fetcher` replaces only that data source; the module always applies `mapper` to its records.
 
-`mapper(item)` may return one entry, an array, `null`, or `undefined`:
+`mapper(item)` returns one entry, `null`, or `undefined`:
 
-| Property      | Type                        | Description                                   |
-| ------------- | --------------------------- | --------------------------------------------- |
-| `path`        | `string`                    | Required application path beginning with `/`. |
-| `lastUpdated` | `string`                    | Optional value rendered as sitemap `lastmod`. |
-| `noIndex`     | `boolean`                   | When `true`, the entry is omitted.            |
-| `priority`    | `0`–`1` in `0.1` increments | Optional sitemap priority.                    |
+| Property       | Type                        | Description                                 |
+| -------------- | --------------------------- | ------------------------------------------- |
+| `loc`          | `string`                    | Required URL or path for the sitemap entry. |
+| `lastmod`      | `string` or `Date`          | Optional last-modified value.               |
+| `changefreq`   | sitemap frequency           | Optional change frequency.                  |
+| `images`       | image entries               | Optional image sitemap metadata.            |
+| `videos`       | video entries               | Optional video sitemap metadata.            |
+| `news`         | Google News entry           | Optional Google News metadata.              |
+| `alternatives` | alternate links             | Optional hreflang alternatives.             |
+| `noIndex`      | `boolean`                   | When `true`, the entry is omitted.          |
+| `priority`     | `0`–`1` in `0.1` increments | Optional sitemap priority.                  |
 
 Set `sitemap._sitemap` to route a collection’s entries to a named sitemap. The module registers the
 corresponding child source with `@nuxtjs/sitemap`; multiple collections may use the same name. Named
@@ -122,13 +125,14 @@ XML routes use the sitemap module’s `sitemapsPathPrefix` (by default, `/__site
 
 Configure delivery independently of collection selection under `sitemaps`:
 
-| Option              | Default                                      | Description                                                                         |
-| ------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `static`            | `[]`                                         | Static sitemap entries. Each needs `loc`; other sitemap entry fields are preserved. |
-| `apiEndpoint`       | `/api/_directus-sitemaps/urls`               | Dynamic source endpoint registered with `@nuxtjs/sitemap`.                          |
-| `enablePrettyUrls`  | `true`                                       | Redirects `/sitemap` to the sitemap XML or sitemap index.                           |
-| `cache`             | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Nitro cache policy for the source endpoint, or `false`.                             |
-| `prerenderSitemaps` | `false`                                      | Prerenders the source endpoint and sitemap XML, including named sitemap routes.     |
+| Option               | Default                                      | Description                                                                         |
+| -------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `static`             | `[]`                                         | Static sitemap entries. Each needs `loc`; other sitemap entry fields are preserved. |
+| `apiEndpoint`        | `/api/_directus-sitemaps/urls`               | Dynamic source endpoint registered with `@nuxtjs/sitemap`.                          |
+| `sitemapsPathPrefix` | `/__sitemap__/`                              | Path prefix for named sitemap XML routes.                                           |
+| `enablePrettyUrls`   | `true`                                       | Redirects `/sitemap` to the sitemap XML or sitemap index.                           |
+| `cache`              | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Nitro cache policy for the source endpoint, or `false`.                             |
+| `prerenderSitemaps`  | `false`                                      | Prerenders the source endpoint and sitemap XML, including named sitemap routes.     |
 
 `directusSitemaps` accepts the same `collections` and `sitemaps` option shape, plus `enabled`:
 

@@ -48,6 +48,7 @@
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "defu": "catalog:",
     "h3": "catalog:",
+    "ufo": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

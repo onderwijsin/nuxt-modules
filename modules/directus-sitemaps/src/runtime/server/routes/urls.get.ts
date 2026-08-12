@@ -2,7 +2,7 @@ import { createError, defineEventHandler, getQuery } from "h3";
 import { z } from "zod";
 import config from "#directus-sitemaps-config";
 
-import { buildSitemapUrls } from "../utils/urls";
+import { buildSitemapUrls } from "../utils/sitemap-urls";
 
 const querySchema = z.object({
   collection: z.string().trim().min(1).optional(),
