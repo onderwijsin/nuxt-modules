@@ -69,7 +69,7 @@ the repository. Pass secrets explicitly when calling reusable workflows.
 
 ## CI validation tiers
 
-Pull requests use `scripts/ci/detect-changes.mjs` to select the smallest safe validation scope.
+Pull requests use `scripts/detect-changes.mjs` to select the smallest safe validation scope.
 Documentation-only changes run formatting and linting. Package changes run preparation,
 typechecking, and tests for the changed packages plus their workspace dependents. Changes to root
 configuration, dependencies, scripts, workflows, shared packages, or unclassified paths select full
