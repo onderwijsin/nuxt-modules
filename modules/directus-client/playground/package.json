@@ -1,0 +1,20 @@
+{
+  "name": "directus-playground",
+  "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-directus-client": "workspace:*",
+    "@onderwijsin/nuxt-directus-config": "workspace:*",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
+  }
+}

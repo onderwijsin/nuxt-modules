@@ -3,10 +3,10 @@
 Shared utilities for building the Onderwijs in Nuxt modules.
 
 This package exists to keep recurring module concerns in one place: module setup and lifecycle
-logging, option validation, typed object helpers, conditional dependency registration, retryable
-operations, server-side administrator authentication and request token checks, and primitive runtime
-guards. Keeping these contracts shared prevents each module from implementing subtly different
-behavior.
+logging, option validation, typed object helpers (`toEntries`, `fromEntries`, and `keys`),
+conditional dependency registration, retryable operations, server-side administrator authentication
+and request token checks, and primitive runtime guards. Keeping these contracts shared prevents each
+module from implementing subtly different behavior.
 
 ## Why is this a published package?
 

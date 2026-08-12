@@ -1,0 +1,21 @@
+{
+  "name": "directus-sitemaps-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@nuxtjs/sitemap": "catalog:",
+    "@onderwijsin/nuxt-directus-client": "workspace:*",
+    "@onderwijsin/nuxt-directus-config": "workspace:*",
+    "@onderwijsin/nuxt-directus-sitemaps": "workspace:*",
+    "playground-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "nuxt": "catalog:",
+    "typescript": "catalog:"
+  }
+}

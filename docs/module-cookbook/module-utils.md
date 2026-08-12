@@ -44,6 +44,7 @@ use the source-level generic types; type-only exports are listed separately belo
 | `attemptWithRetry`               | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `@onderwijsin/nuxt-module-utils/shared` |
 | `toEntries`                      | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
 | `fromEntries`                    | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
+| `keys`                           | `keys<T extends object>(object: T): (keyof T)[]`                                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
 | `resolveModuleName`              | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `@onderwijsin/nuxt-module-utils/build`  |
 | `resolveLoggerScope`             | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `@onderwijsin/nuxt-module-utils/build`  |
 | `isPrepareMode`                  | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `@onderwijsin/nuxt-module-utils/build`  |
@@ -70,6 +71,9 @@ use the source-level generic types; type-only exports are listed separately belo
 | `isDevelopmentAuthBypassEnabled` | `isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean`                                                                          | `@onderwijsin/nuxt-module-utils/server` |
 | `assertAdminAccess`              | `assertAdminAccess(event: H3Event, options: AdminAuthOptions, isDevelopment: boolean): void`                                                                       | `@onderwijsin/nuxt-module-utils/server` |
 | `discoverSourceFiles`            | `discoverSourceFiles(directory: string): string[]`                                                                                                                 | `@onderwijsin/nuxt-module-utils/build`  |
+| `instanceSchema`                 | Shared Directus instance schema (`baseUrl`, `staticToken`)                                                                                                         | `@onderwijsin/nuxt-module-utils/build`  |
+| `clientSchema`                   | Shared Directus client schema excluding instance credentials                                                                                                       | `@onderwijsin/nuxt-module-utils/build`  |
+| `sitemapSchema`                  | Shared Directus sitemap source schema                                                                                                                              | `@onderwijsin/nuxt-module-utils/build`  |
 
 ## `discoverSourceFiles`
 
@@ -143,6 +147,17 @@ when transforming option or configuration maps.
 import { fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 const optionsByName = fromEntries(toEntries(options));
+```
+
+## `keys`
+
+`keys` is a typed equivalent of `Object.keys`, preserving the object's key type for iteration or
+lookup.
+
+```ts
+import { keys } from "@onderwijsin/nuxt-module-utils/shared";
+
+const optionNames = keys(options);
 ```
 
 ## `resolveModuleName`

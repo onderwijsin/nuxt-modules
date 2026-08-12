@@ -47,3 +47,6 @@ new contract is explicit.
 Consult the [official Nuxt documentation router](official-nuxt-documentation.md) before inventing a
 workaround, especially for templates, runtime config, app config, modules, auto-imports, components,
 plugins, pages, routes, and hooks.
+
+Module setup code accesses typed `nuxt.options` properties directly. We do not use the Reflect API
+to interact with `nuxt.options` in the module setup function.
