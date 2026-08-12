@@ -31,6 +31,5 @@ export const redirectsOptionsSchema = z.strictObject({
     })
 });
 
-export type RedirectsOptionsSchema = typeof redirectsOptionsSchema;
 export type ModuleOptions = z.input<typeof redirectsOptionsSchema>;
 export type ResolvedModuleOptions = z.output<typeof redirectsOptionsSchema>;

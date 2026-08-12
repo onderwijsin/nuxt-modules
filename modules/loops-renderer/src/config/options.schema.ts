@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 
+export const EVALUATE_DEFAULTS = {
+  onMissingVariable: false,
+  onInvalidCondition: false,
+  onInvalidComparison: false
+};
+
 export const loopsRendererOptionsSchema = z.strictObject({
   enabled,
   applyInlineStyles: z.boolean().default(true),
@@ -13,11 +19,7 @@ export const loopsRendererOptionsSchema = z.strictObject({
       /** Result when an operation cannot compare the resolved value. */
       onInvalidComparison: z.boolean().default(false)
     })
-    .default({
-      onMissingVariable: false,
-      onInvalidCondition: false,
-      onInvalidComparison: false
-    })
+    .default(EVALUATE_DEFAULTS)
 });
 
 export type ModuleOptions = z.input<typeof loopsRendererOptionsSchema>;

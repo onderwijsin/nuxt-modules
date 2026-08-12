@@ -9,10 +9,9 @@ import { z } from "zod";
 /** Runtime boundary for Directus client module configuration. */
 export const directusClientOptionsSchema = directusConfigSchema.safeExtend({
   enabled: enabled.default(true),
-  instance: directusInstanceSchema.default({}),
+  instance: directusInstanceSchema.prefault({}),
   client: directusClientSchema.prefault({})
 });
 
-export type DirectusClientOptionsSchema = typeof directusClientOptionsSchema;
 export type ModuleOptions = z.input<typeof directusClientOptionsSchema>;
 export type ResolvedModuleOptions = z.output<typeof directusClientOptionsSchema>;

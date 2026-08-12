@@ -9,7 +9,7 @@ import {
 } from "@onderwijsin/nuxt-module-utils/build";
 
 import { version } from "../package.json";
-import { loopsRendererOptionsSchema } from "./config/options.schema";
+import { EVALUATE_DEFAULTS, loopsRendererOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "loopsRenderer";
@@ -30,11 +30,7 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     enabled: true,
     applyInlineStyles: true,
-    evaluate: {
-      onMissingVariable: false,
-      onInvalidCondition: false,
-      onInvalidComparison: false
-    }
+    evaluate: EVALUATE_DEFAULTS
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.loopsRenderer, {
