@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: |
           for package in $AFFECTED_PACKAGES; do
-            pnpm --filter "$package" --if-present run dev:prepare
+            pnpm --filter "$package"... --if-present run dev:prepare
           done
       - name: Run focused checks
         shell: bash
