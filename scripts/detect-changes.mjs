@@ -116,6 +116,33 @@ function isDocumentationOnly(files) {
 }
 
 /**
+ * Determines whether a changed path is intentionally excluded from full validation detection.
+ *
+ * @param {string} file Repository-relative changed path.
+ * @returns {boolean} Whether the path should not select full validation.
+ */
+function isIgnoredForFullValidation(file) {
+  const ignoredDirectory =
+    /^(?:\.agents|\.artifacts|\.changeset|\.codex|\.husky|\.vscode|docs|skills)(?:\/|$)/u;
+  const ignoredGithubPath = /^(?:\.github\/actions(?:\/|$)|\.github\/dependabot\.yml$)/u;
+  const rootExceptions = new Set([
+    ".npmrc",
+    ".nvmrc",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "tsconfig.json",
+    "vitest.config.ts"
+  ]);
+
+  return (
+    ignoredDirectory.test(file) ||
+    ignoredGithubPath.test(file) ||
+    (!file.includes("/") && !rootExceptions.has(file))
+  );
+}
+
+/**
  * Classifies changed paths and records directly affected packages.
  *
  * @param {string[] | null} changed Changed repository-relative paths.
@@ -141,12 +168,15 @@ function classifyChanges(changed, packages) {
     ? "No trustworthy pull-request diff is available."
     : "Changed package paths were classified.";
 
-  if (full || isDocumentationOnly(changed ?? [])) {
-    if (!full) reason = "Documentation-only change.";
+  const relevantChanged = (changed ?? []).filter((file) => !isIgnoredForFullValidation(file));
+
+  if (full || relevantChanged.length === 0 || isDocumentationOnly(relevantChanged)) {
+    if (!full && relevantChanged.length === 0) reason = "Ignored paths only.";
+    else if (!full) reason = "Documentation-only change.";
     return { full, reason, direct };
   }
 
-  for (const file of changed) {
+  for (const file of relevantChanged) {
     // Root tooling and unrecognized paths can affect every package, so fail closed.
     if (fullPathPatterns.some((pattern) => pattern.test(file))) {
       return {

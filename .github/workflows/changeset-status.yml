@@ -3,6 +3,7 @@ name: Changeset status
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
+  merge_group:
 
 permissions: {}
 
@@ -12,6 +13,7 @@ concurrency:
 
 jobs:
   changeset_status:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,6 +27,7 @@ jobs:
 
   changeset_comment:
     needs: changeset_status
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -33,3 +36,21 @@ jobs:
         uses: changesets/action/pr-comment@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
         with:
           body: ${{ needs.changeset_status.outputs.comment-body }}
+
+  changeset_merge_group_status:
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check Changesets status
+        run: pnpm changeset:status

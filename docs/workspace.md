@@ -150,9 +150,10 @@ dependencies do not leak into runtime output.
 Pull request CI is change-aware to reduce repeated resource consumption. Ordinary package changes
 run focused preparation, typechecking, and tests for the changed package closure. Root tooling,
 dependency, workflow, script, shared-package, and ambiguous changes run the complete validation
-suite. Merge queue validation and manually dispatched CI always run the complete suite, including
-packed artifacts and the external consumer. Change detection fails closed when it cannot classify a
-path safely.
+suite. Repository metadata, documentation, skills, local agent configuration, generated artifacts,
+and other explicitly ignored paths do not select the full package build. Merge queue validation and
+manually dispatched CI always run the complete suite, including packed artifacts and the external
+consumer. Change detection fails closed when it cannot classify a path safely.
 
 ## Generated output
 

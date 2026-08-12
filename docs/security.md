@@ -27,10 +27,21 @@ Dependabot pull request. Use the pinned pnpm version and the frozen lockfile ins
 
 ## CodeQL
 
-GitHub CodeQL default setup is enabled for the repository's JavaScript and TypeScript code. CodeQL
-runs on pushes and pull requests targeting `main`, with a weekly scheduled scan. Findings are
-available in GitHub code scanning and should be triaged rather than suppressed solely to make a
-check pass.
+CodeQL uses the repository-managed workflow at `.github/workflows/codeql.yml`. It analyzes
+JavaScript/TypeScript and GitHub Actions workflows on pushes and pull requests targeting `main`,
+merge-queue groups, weekly on Mondays, and manual dispatch. The shared configuration at
+`.github/codeql/codeql-config.yml` excludes generated output, fixtures, tests, playgrounds, and
+documentation from analysis.
+
+Because this repository uses advanced setup, GitHub CodeQL default setup must be disabled in the
+repository's Settings → Code security → Code scanning configuration. Do not enable both setups:
+GitHub's default setup can disable a custom workflow and block its uploads, and multiple active
+configurations can create duplicate or stale results. Existing code-scanning alerts remain available
+for triage after switching configurations.
+
+The workflow grants only read access to repository and Actions metadata plus
+`security-events: write` for SARIF result uploads. Findings are available in GitHub code scanning
+and should be triaged rather than suppressed solely to make a check pass.
 
 CodeQL is a security analysis check, not a replacement for formatting, linting, type checking,
 tests, builds, or package validation. Keep those checks in the normal CI workflow.
