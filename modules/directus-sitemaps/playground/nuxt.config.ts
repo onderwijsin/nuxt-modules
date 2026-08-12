@@ -8,5 +8,6 @@ export default defineNuxtConfig({
     "@onderwijsin/nuxt-directus-sitemaps",
     "@nuxtjs/sitemap"
   ],
-  appConfig: { packageName }
+  appConfig: { packageName },
+  sitemap: false
 });

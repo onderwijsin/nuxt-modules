@@ -5,7 +5,7 @@ const sitemapRoutes = [
     description: "The generated index linking to the named pages and posts sitemaps.",
     path: "/sitemap_index.xml",
     icon: "i-lucide-file-code-2",
-    color: "primary" as const,
+    color: "secondary" as const,
     action: "Open index"
   },
   {
@@ -21,7 +21,7 @@ const sitemapRoutes = [
     description: "Published pages mapped from their Directus permalink values.",
     path: "/__sitemap__/pages.xml",
     icon: "i-lucide-file-text",
-    color: "primary" as const,
+    color: "secondary" as const,
     action: "Open pages"
   },
   {
@@ -33,12 +33,12 @@ const sitemapRoutes = [
     action: "Open posts"
   },
   {
-    title: "Source endpoint",
-    description: "The JSON source registered with @nuxtjs/sitemap for dynamic URL entries.",
-    path: "/api/_directus-sitemaps/urls",
+    title: "Raw source data",
+    description: "Inspect the JSON URL entries returned by the sitemap source.",
+    path: "/raw",
     icon: "i-lucide-braces",
     color: "neutral" as const,
-    action: "Open JSON"
+    action: "Inspect JSON"
   }
 ];
 </script>

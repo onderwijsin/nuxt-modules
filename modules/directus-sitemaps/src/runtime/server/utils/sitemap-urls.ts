@@ -99,9 +99,7 @@ export function toSitemapUrl(entry: unknown, _sitemap?: string): SitemapUrl | nu
 export function mapDirectusItem(item: unknown, fieldmap: Record<string, string>): unknown {
   if (!isRecord(item)) return item;
 
-  return fromEntries(
-    toEntries(fieldmap).map(([target, source]) => [target, Reflect.get(item, source)])
-  );
+  return fromEntries(toEntries(fieldmap).map(([target, source]) => [target, item[source]]));
 }
 
 type EnabledCollectionConfig = Omit<DirectusCollectionConfig, "sitemap"> & {

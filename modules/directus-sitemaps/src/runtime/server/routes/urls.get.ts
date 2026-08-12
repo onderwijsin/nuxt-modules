@@ -24,11 +24,8 @@ export default defineEventHandler(async (event) => {
       data: z.treeifyError(query.error)
     });
   }
-  return buildSitemapUrls(
-    event,
-    config.collections,
-    config.static,
-    query.data.collection,
-    query.data.includeStatic
-  );
+  return buildSitemapUrls(event, config.collections, config.static, {
+    filterByCollection: query.data.collection,
+    excludeStaticUrls: !query.data.includeStatic
+  });
 });

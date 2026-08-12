@@ -7,6 +7,7 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
+import type { ModuleOptions as NuxtSitemapModuleOptions } from "@nuxtjs/sitemap";
 import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
@@ -18,13 +19,7 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import {
-  isArray,
-  isDefined,
-  isNonBlankString,
-  hasKey,
-  isRecord
-} from "@onderwijsin/nuxt-module-utils/shared";
+import { isArray, isNonBlankString, hasKey, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
 import {
@@ -33,8 +28,6 @@ import {
 } from "./config/source";
 import type { ModuleOptions } from "./types/options";
 import {
-  set,
-  get,
   resolveSitemapNamespaces,
   registerSitemapNamespaces,
   resolveNamespacedSitemapRoute
@@ -111,10 +104,10 @@ export default defineNuxtModule<ModuleOptions>({
         )
     });
 
-    // Get the config property for @nuxtjs/sitemap
-    const sitemap = get(nuxt.options, "sitemap");
-
-    const isNuxtSitemapEnabled = isDefined(sitemap) && sitemap !== false;
+    // Get the config property for @nuxtjs/sitemap. Initialize the object on Nuxt itself so
+    // subsequent mutations remain visible to Nuxt and other modules.
+    // @nuxtjs/sitemap types don't allow for empty object, so let's trick it
+    nuxt.options.sitemap ??= {} as NuxtSitemapModuleOptions;
 
     // Merge serializable sitemap collection overrides into executable shared configuration.
     const effectiveCollections = mergeDirectusSitemapCollections(
@@ -128,30 +121,32 @@ export default defineNuxtModule<ModuleOptions>({
       collections: effectiveCollections
     });
 
-    if (!isNuxtSitemapEnabled) {
+    if (nuxt.options.sitemap === false) {
       log.warn(
         `@nuxtjs/sitemap is disabled; no Directus sitemap source was registered. The server endpoint "${options.apiEndpoint}" will be registered, but you are responsible for handling the rendering of an .xml file containing sitemap entries.`
       );
     } else if (!sitemapNamespaces.length) {
-      const sources = get(sitemap, "sources");
       // Merge our custom source endpoint with any sources that were provided directly to @nuxtjs/sitemap
-      set(sitemap, "sources", [options.apiEndpoint, ...(isArray(sources) ? sources : [])]);
+      const sources = nuxt.options.sitemap.sources;
+      nuxt.options.sitemap.sources = [options.apiEndpoint, ...(isArray(sources) ? sources : [])];
     } else {
-      registerSitemapNamespaces(sitemap, sitemapNamespaces, options.apiEndpoint);
+      console.log("!!! REGISTERING SITEMAPS", sitemapNamespaces);
+      registerSitemapNamespaces(nuxt.options.sitemap, sitemapNamespaces, options.apiEndpoint);
+
+      console.log(nuxt.options.sitemap);
     }
 
     const configuredPathPrefix = options.sitemapsPathPrefix.replace(/\/$/u, "");
     // Path prefix provided to @nuxtjs/sitemap takes precedence
     const sitemapsPathPrefix =
-      isNuxtSitemapEnabled && isNonBlankString(get(sitemap, "sitemapsPathPrefix"))
-        ? (get(sitemap, "sitemapsPathPrefix") as string)
+      nuxt.options.sitemap !== false && isNonBlankString(nuxt.options.sitemap?.sitemapsPathPrefix)
+        ? nuxt.options.sitemap.sitemapsPathPrefix
         : configuredPathPrefix;
 
-    if (isNuxtSitemapEnabled) {
-      set(sitemap, "sitemapsPathPrefix", sitemapsPathPrefix);
-    }
+    if (nuxt.options.sitemap) nuxt.options.sitemap.sitemapsPathPrefix = sitemapsPathPrefix;
 
     transpileRuntime(nuxt, runtimeDir);
+
     addServerHandler({
       method: "get",
       route: options.apiEndpoint,
@@ -176,7 +171,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Only prerender sitemap routes if @nuxtjs/sitemap is enabled.
     // Otherwise there is nothing to prerender
     if (options.prerenderSitemaps) {
-      if (sitemap === false) {
+      if (nuxt.options.sitemap === false) {
         console.warn(
           `@nuxtjs/sitemap is disabled; thus prerendering the sitemap routes has no effect. Skipping prerender routes.`
         );

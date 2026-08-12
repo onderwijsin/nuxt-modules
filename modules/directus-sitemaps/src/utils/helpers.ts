@@ -5,27 +5,6 @@ import { defu } from "defu";
 import { joinURL } from "ufo";
 
 /**
- * Gets the value of the specified property from the given object.
- *
- * @param obj The object to retrieve the property from.
- * @param prop The property key to retrieve.
- * @returns The value of the specified property.
- */
-export const get = <T extends object, K extends keyof T>(obj: T, prop: K) => Reflect.get(obj, prop);
-
-/**
- * Sets the value of the specified property on the given object that was retrieved using Reflect.get
- * (or via the `get` alias).
- *
- * @param obj The object to set the property on.
- * @param prop The property key to set.
- * @param value The value to set for the property.
- * @returns A boolean indicating whether the property was successfully set.
- */
-export const set = <T extends object, K extends keyof T>(obj: T, prop: K, value: T[K]) =>
-  Reflect.set(obj, prop, value);
-
-/**
  * Resolve unique sitemap namespaces for the given sitemap configuration.
  * @param options - the resolved module options
  * @returns An array of unique sitemap names.
@@ -39,7 +18,7 @@ export function resolveSitemapNamespaces(options: ResolvedModuleOptions): string
     }
   }
   for (const entry of options.static ?? []) {
-    const sitemapName = get(entry, "_sitemap");
+    const sitemapName = entry._sitemap;
     if (isString(sitemapName) && sitemapName.trim()) names.add(sitemapName);
   }
   return [...names];
@@ -63,16 +42,19 @@ export function registerSitemapNamespaces(
     );
     return;
   }
-  const preExitsingNamespaces = get(moduleOptions, "sitemaps");
-  const currentSitemaps = isRecord(preExitsingNamespaces) ? preExitsingNamespaces : {};
+  moduleOptions.sitemaps ??= {};
+  if (!isRecord(moduleOptions.sitemaps)) {
+    moduleOptions.sitemaps = {};
+  }
+  const currentSitemaps = moduleOptions.sitemaps;
   const namedSitemaps = fromEntries(
     sitemapNamespaces.map((name) => {
-      const currentSitemap = get(currentSitemaps, name);
-      const sources = isRecord(currentSitemap) ? get(currentSitemap, "sources") : undefined;
+      const currentSitemap = currentSitemaps[name];
+      const sources = isRecord(currentSitemap) ? currentSitemap.sources : undefined;
       return [name, { sources: [sourceApiEndpoint, ...(isArray(sources) ? sources : [])] }];
     })
   );
-  set(moduleOptions, "sitemaps", defu(namedSitemaps, currentSitemaps));
+  moduleOptions.sitemaps = defu(namedSitemaps, currentSitemaps);
 }
 
 /**

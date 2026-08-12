@@ -45,5 +45,5 @@ export default defineDirectusConfig({
       prerender: false
     }
   ],
-  sitemaps: { static: [{ loc: "/" }] }
+  sitemaps: { static: [{ loc: "/test" }] }
 });
