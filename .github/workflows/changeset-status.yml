@@ -36,12 +36,3 @@ jobs:
         uses: changesets/action/pr-comment@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
         with:
           body: ${{ needs.changeset_status.outputs.comment-body }}
-
-  changeset_merge_group_status:
-    name: Changeset status (merge group)
-    if: github.event_name == 'merge_group'
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Mark Changesets status as successful
-        run: echo "Changesets status is not evaluated for merge groups."
