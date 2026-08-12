@@ -1,4 +1,4 @@
-import { $fetch, setup } from "@nuxt/test-utils/e2e";
+import { $fetch, setup, useTestContext } from "@nuxt/test-utils/e2e";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -16,14 +16,17 @@ function readFiles(directory: string): string[] {
   });
 }
 
-const clientBundle = readFiles(
-  fileURLToPath(new URL("./fixtures/aliases/.output/public/_nuxt", import.meta.url))
-).join("\n");
-
-expect(clientBundle).not.toContain("server-only-static-token");
-expect(clientBundle).not.toContain("server-only-introspection-token");
-
 describe("directus-config virtual aliases", () => {
+  it("does not expose server-only configuration in the client bundle", () => {
+    const outputDir = useTestContext().nuxt?.options.nitro.output.dir;
+    if (!outputDir) throw new Error("Nuxt test output directory is unavailable");
+
+    const clientBundle = readFiles(join(outputDir, "public/_nuxt")).join("\n");
+
+    expect(clientBundle).not.toContain("server-only-static-token");
+    expect(clientBundle).not.toContain("server-only-introspection-token");
+  });
+
   it("exposes only the sanitized configuration through the client-safe alias", async () => {
     await expect($fetch("/api/public-config")).resolves.toEqual({
       client: {
