@@ -1,4 +1,4 @@
-import type { DynamicRedirectRule, RedirectIndex, ResolvedRedirect } from "../../../types/redirect";
+import type { DynamicRedirectRule, RedirectIndex, ResolvedRedirect } from "../../types/redirect";
 
 import { $fetch } from "ofetch";
 import { defineStore } from "pinia";

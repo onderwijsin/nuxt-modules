@@ -8,7 +8,7 @@ import {
 } from "@onderwijsin/nuxt-module-utils/build";
 
 import { version } from "../package.json";
-import type { ModuleOptions } from "./types";
+import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "uiFormExtensions";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
@@ -25,6 +25,7 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: "^4.0.0"
     }
   },
+  defaults: { enabled: true },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.uiFormExtensions, {
       "@nuxt/ui": { version: ">=4.0.0" }

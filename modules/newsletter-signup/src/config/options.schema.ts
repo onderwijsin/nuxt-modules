@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 
-const field = z.object({
+export const newsletterFieldSchema = z.object({
   target: z.string().trim().min(1).optional(),
   required: z.boolean().optional()
 });
 
-const endpoint = z.object({
+export const newsletterEndpointSchema = z.object({
   enabled: z.boolean().optional(),
   url: z
     .string()
@@ -18,26 +18,26 @@ const endpoint = z.object({
     .optional()
 });
 
-const list = z.object({
+export const newsletterListSchema = z.object({
   label: z.string().trim().min(1),
   id: z.string().trim().min(1)
 });
 
-const mailchimpServer = z
+export const mailchimpServerSchema = z
   .string()
   .regex(/^us\d+$/, { error: "must be a Mailchimp server prefix such as us21" });
 
 const commonOptionsShape = {
   enabled,
   apiKey: z.string().optional(),
-  endpoint: endpoint.optional(),
+  endpoint: newsletterEndpointSchema.optional(),
   fields: z
     .object({
-      email: field.optional(),
-      firstName: field.optional(),
-      lastName: field.optional(),
-      organization: field.optional(),
-      source: field.optional()
+      email: newsletterFieldSchema.optional(),
+      firstName: newsletterFieldSchema.optional(),
+      lastName: newsletterFieldSchema.optional(),
+      organization: newsletterFieldSchema.optional(),
+      source: newsletterFieldSchema.optional()
     })
     .optional()
 };
@@ -48,7 +48,7 @@ const loopsOptionsSchema = z.strictObject({
   lists: z
     .object({
       default: z.string().trim().min(1).optional(),
-      options: z.array(list).min(1).optional()
+      options: z.array(newsletterListSchema).min(1).optional()
     })
     .optional()
 });
@@ -56,14 +56,14 @@ const loopsOptionsSchema = z.strictObject({
 const mailchimpOptionsSchema = z.strictObject({
   ...commonOptionsShape,
   provider: z.literal("mailchimp"),
-  server: mailchimpServer.optional(),
+  server: mailchimpServerSchema.optional(),
   lists: z
     .object({
       default: z.string().trim().min(1).optional(),
       options: z
         .array(
-          list.extend({
-            server: mailchimpServer
+          newsletterListSchema.extend({
+            server: mailchimpServerSchema
           })
         )
         .min(1)
@@ -83,7 +83,7 @@ const noProviderOptionsSchema = z.strictObject({
   lists: z
     .object({
       default: z.string().trim().min(1).optional(),
-      options: z.array(list).min(1).optional()
+      options: z.array(newsletterListSchema).min(1).optional()
     })
     .optional()
 });
@@ -92,3 +92,26 @@ export const newsletterSignupOptionsSchema = z.union([
   providerOptionsSchema,
   noProviderOptionsSchema
 ]);
+
+/** Ergonomic consumer input shape accepted before provider-specific validation. */
+export const newsletterSignupModuleOptionsSchema = z.strictObject({
+  ...commonOptionsShape,
+  provider: z.enum(["loops", "mailchimp"]).optional(),
+  server: mailchimpServerSchema.optional(),
+  lists: z
+    .object({
+      default: z.string().trim().min(1).optional(),
+      options: z
+        .array(newsletterListSchema.extend({ server: mailchimpServerSchema.optional() }))
+        .min(1)
+        .optional()
+    })
+    .optional()
+});
+
+export type NewsletterProvider = "loops" | "mailchimp";
+export type NewsletterListOption = z.infer<typeof newsletterListSchema>;
+export type NewsletterFieldConfig = z.infer<typeof newsletterFieldSchema>;
+export type NewsletterEndpointConfig = z.infer<typeof newsletterEndpointSchema>;
+export type ModuleOptions = z.input<typeof newsletterSignupModuleOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof newsletterSignupOptionsSchema>;

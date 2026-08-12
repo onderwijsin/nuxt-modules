@@ -16,7 +16,7 @@ import {
 
 import { simpleRateLimiterOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "simpleRateLimiter";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

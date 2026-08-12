@@ -1,4 +1,4 @@
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 
 import { resolve } from "node:path";
 import {
@@ -21,7 +21,7 @@ import {
 import { staticTextOptionsSchema } from "./config/options.schema";
 import { version } from "../package.json";
 
-export type { TextDictionary, TextKey, TextTranslator } from "./types/dictionary";
+export type { TextDictionary, TextKey, TextTranslator } from "./runtime/types/dictionary";
 
 const MODULE_KEY = "staticText";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

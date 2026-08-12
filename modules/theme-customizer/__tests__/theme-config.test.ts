@@ -8,7 +8,7 @@ import {
   configuredUiColors,
   generateThemeCss
 } from "../src/config/theme";
-import type { ThemePalette } from "../src/types";
+import type { ThemePalette } from "../src/config/options.schema";
 
 const palette = fromEntries(
   [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#123456"])

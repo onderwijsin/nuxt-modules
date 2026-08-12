@@ -10,4 +10,5 @@ export const cacheOptionsSchema = z.strictObject({
   maxInvalidatedEntries: z.number().int().positive().max(10_000).default(1_000)
 });
 
-export type CacheOptionsSchema = typeof cacheOptionsSchema;
+export type ModuleOptions = z.input<typeof cacheOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof cacheOptionsSchema>;

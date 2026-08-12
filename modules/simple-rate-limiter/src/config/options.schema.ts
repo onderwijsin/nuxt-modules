@@ -15,3 +15,6 @@ export const simpleRateLimiterOptionsSchema = z.strictObject({
     })
     .optional()
 });
+
+export type ModuleOptions = z.input<typeof simpleRateLimiterOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof simpleRateLimiterOptionsSchema>;

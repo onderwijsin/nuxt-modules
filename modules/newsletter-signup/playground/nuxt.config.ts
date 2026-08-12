@@ -1,5 +1,5 @@
 import { name as packageName } from "../package.json";
-import type { ModuleOptions, NewsletterProvider } from "../src/types/options";
+import type { ModuleOptions, NewsletterProvider } from "../src/config/options.schema";
 
 /**
  * Selects the provider used by the playground configuration.

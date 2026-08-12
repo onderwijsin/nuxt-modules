@@ -12,7 +12,7 @@ import {
 import { isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { webmanifestOptionsSchema } from "./config/options.schema";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 import { generateWebManifest, resolveIconConfig } from "./utils";
 
 const MODULE_KEY = "webmanifest";

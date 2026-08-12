@@ -1,4 +1,4 @@
-import type { WebManifestIcon } from "../types/manifest";
+import type { WebManifestIcon } from "../config/options.schema";
 
 type Size = 16 | 32 | 48 | 72 | 96 | 144 | 192 | 512;
 type Format = "webp" | "png" | "ico" | "svg";

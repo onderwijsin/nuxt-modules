@@ -7,4 +7,4 @@ export type {
   RedirectIndex,
   RedirectSource,
   ResolvedRedirect
-} from "../types/redirect";
+} from "./types/redirect";

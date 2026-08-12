@@ -26,7 +26,7 @@ import {
   generateDirectusSitemapsConfigSource,
   mergeDirectusSitemapCollections
 } from "./config/source";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 import {
   resolveSitemapNamespaces,
   registerSitemapNamespaces,

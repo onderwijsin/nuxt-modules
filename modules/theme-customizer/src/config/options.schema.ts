@@ -10,7 +10,7 @@ const palette = z.object(
 
 export const themePaletteSchema = z.record(z.string(), palette);
 
-const googleFontsOptionsSchema = z.object({
+export const googleFontsOptionsSchema = z.object({
   apiKey: z.string().trim().min(1).optional(),
   families: z
     .array(z.string().trim().min(1).max(100))
@@ -19,18 +19,18 @@ const googleFontsOptionsSchema = z.object({
     .optional()
 });
 
-const rateLimitSchema = z.object({
+export const themeRateLimitSchema = z.object({
   enabled: z.boolean().optional(),
   max: z.number().int().positive().optional(),
   duration: z.number().int().positive().optional(),
   ban: z.number().int().nonnegative().optional()
 });
-const endpointRateLimitSchema = z.object({
-  palette: rateLimitSchema.optional(),
-  fonts: rateLimitSchema.optional()
+export const themeEndpointRateLimitSchema = z.object({
+  palette: themeRateLimitSchema.optional(),
+  fonts: themeRateLimitSchema.optional()
 });
 
-const themeDefaultsSchema = z
+export const themeDefaultsSchema = z
   .object({
     font: z.string().trim().min(1).max(100).optional(),
     radius: z.number().finite().nonnegative().optional()
@@ -51,7 +51,7 @@ const themeOptionsShape = {
   secondary: themePaletteSchema.optional(),
   neutral: themePaletteSchema.optional(),
   googleFonts: googleFontsOptionsSchema.optional(),
-  rateLimit: endpointRateLimitSchema.optional(),
+  rateLimit: themeEndpointRateLimitSchema.optional(),
   defaults: themeDefaultsSchema.optional()
 };
 
@@ -62,7 +62,7 @@ export const themeOptionsSchema = z
       z.boolean(),
       themePaletteSchema,
       googleFontsOptionsSchema,
-      endpointRateLimitSchema,
+      themeEndpointRateLimitSchema,
       themeDefaultsSchema
     ])
   )
@@ -101,3 +101,12 @@ export const themeOptionsSchema = z
       }
     }
   });
+
+export type ThemeShade = (typeof THEME_SHADES)[number];
+export type ThemePalette = z.infer<typeof palette>;
+export type ThemeColorGroups = Record<string, Record<string, ThemePalette>>;
+export type ThemeFontOption = { label: string; value: string };
+export type ThemeGoogleFontsOptions = z.infer<typeof googleFontsOptionsSchema>;
+export type ThemeCustomizerRateLimit = z.infer<typeof themeRateLimitSchema>;
+export type ThemeCustomizerDefaults = z.infer<typeof themeDefaultsSchema>;
+export type ThemeCustomizerOptions = z.input<typeof themeOptionsSchema>;

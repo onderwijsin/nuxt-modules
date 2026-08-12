@@ -1,4 +1,4 @@
-import type { DynamicRedirectRule, ResolvedRedirect } from "../../types/redirect";
+import type { DynamicRedirectRule, ResolvedRedirect } from "../types/redirect";
 
 import { inject, parse } from "regexparam";
 

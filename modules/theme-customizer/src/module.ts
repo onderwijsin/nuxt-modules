@@ -24,7 +24,7 @@ import {
 } from "@onderwijsin/nuxt-module-utils/build";
 import { fromEntries, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { version } from "../package.json";
-import { themeOptionsSchema } from "./config/options.schema";
+import { themeOptionsSchema, type ThemeCustomizerOptions } from "./config/options.schema";
 import {
   configuredAppColors,
   configuredGroups,
@@ -32,18 +32,14 @@ import {
   configuredUiColors,
   generateThemeCss
 } from "./config/theme";
-import type { ThemeCustomizerOptions } from "./types";
-
-export { THEME_SHADES } from "./types";
+export { THEME_SHADES } from "./runtime/app/utils/theme";
 export type {
   ThemeCustomizerDefaults,
-  ThemeFontOption,
   ThemeGoogleFontsOptions,
-  ThemePalette,
-  ThemeShade
-} from "./types";
-/** Maps a theme color group to its named palettes. */
-export type { ThemeColorGroups, ThemeCustomizerOptions } from "./types";
+  ThemePalette
+} from "./config/options.schema";
+export type { ThemeColorGroups, ThemeCustomizerOptions } from "./config/options.schema";
+export type { ThemeFontOption, ThemeShade } from "./runtime/app/types";
 
 const MODULE_KEY = "themeCustomizer";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

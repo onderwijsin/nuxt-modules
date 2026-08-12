@@ -1,4 +1,4 @@
-import type { RedirectSource } from "../types/redirect";
+import type { RedirectSource } from "./types/redirect";
 
 /**
  * Defines a consumer redirect source with an explicit, typed default export.
@@ -13,4 +13,4 @@ export function defineRedirectSource(source: RedirectSource): RedirectSource {
   return source;
 }
 
-export type { Redirect, RedirectSource } from "../types/redirect";
+export type { Redirect, RedirectSource } from "./types/redirect";

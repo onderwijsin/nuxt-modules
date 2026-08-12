@@ -1,4 +1,4 @@
-import type { Redirect } from "../../../types/redirect";
+import type { Redirect } from "../../types/redirect";
 
 import {
   addRouteMiddleware,

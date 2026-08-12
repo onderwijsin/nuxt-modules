@@ -3,7 +3,7 @@ import type {
   Redirect,
   RedirectIndex,
   ResolvedRedirect
-} from "../../../types/redirect";
+} from "../../types/redirect";
 
 import { useRuntimeConfig, useStorage } from "nitropack/runtime";
 import type { Storage } from "unstorage";

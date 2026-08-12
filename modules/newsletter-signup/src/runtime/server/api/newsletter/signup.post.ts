@@ -5,7 +5,7 @@ import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
 import { FIELD_NAMES } from "../../../shared";
 import type { NewsletterSignupInput } from "../../../shared";
-import type { NewsletterFieldConfig } from "../../../../types/options";
+import type { NewsletterFieldConfig } from "../../../../config/options.schema";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../../types/errors";
 import { subscribeToLoops } from "../../providers/loops";
 import { subscribeToMailchimp } from "../../providers/mailchimp";

@@ -5,7 +5,7 @@ import type {
   ThemeCustomizerDefaults,
   ThemeCustomizerOptions,
   ThemePalette
-} from "../types";
+} from "./options.schema";
 export { builtInDefaultTokens } from "../runtime/app/utils/theme";
 
 const BUILT_IN_UI_COLORS = new Set([

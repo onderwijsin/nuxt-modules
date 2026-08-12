@@ -10,4 +10,5 @@ export const deviceOptionsSchema = z.object({
   defaultUserAgent: z.string().min(1).default(DEFAULT_DEVICE_USER_AGENT)
 });
 
-export type DeviceOptionsSchema = typeof deviceOptionsSchema;
+export type ModuleOptions = z.input<typeof deviceOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof deviceOptionsSchema>;

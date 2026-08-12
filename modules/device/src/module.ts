@@ -18,7 +18,7 @@ import {
 
 import { version } from "../package.json";
 import { DEFAULT_DEVICE_USER_AGENT, deviceOptionsSchema } from "./config/options.schema";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "device";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

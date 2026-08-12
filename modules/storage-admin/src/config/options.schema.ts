@@ -42,4 +42,5 @@ export const storageAdminOptionsSchema = z.strictObject({
   maxListedKeys: z.number().int().positive().max(100_000).default(10_000)
 });
 
-export type StorageAdminOptionsSchema = typeof storageAdminOptionsSchema;
+export type ModuleOptions = z.input<typeof storageAdminOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof storageAdminOptionsSchema>;

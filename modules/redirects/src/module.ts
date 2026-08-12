@@ -24,7 +24,7 @@ import { defu } from "defu";
 import { version } from "../package.json";
 import { redirectsOptionsSchema } from "./config/options.schema";
 import { discoverRedirectSources, generateRedirectsSourceRegistry } from "./config/sources";
-import type { ModuleOptions } from "./types/options";
+import type { ModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "redirects";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);

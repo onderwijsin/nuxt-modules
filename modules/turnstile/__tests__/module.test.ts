@@ -45,7 +45,10 @@ vi.mock("defu", () => ({
 vi.mock("zod", () => ({
   z: {
     boolean: () => ({ default: () => ({}) }),
-    string: () => ({ min: () => ({}) }),
+    string: () => {
+      const schema = { default: () => schema, min: () => schema };
+      return schema;
+    },
     object: () => ({
       safeParse: (value: unknown) => ({ success: true, data: value })
     })

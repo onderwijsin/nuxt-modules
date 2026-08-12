@@ -15,6 +15,8 @@ Generate a rich `app.webmanifest` with zero configuration for Nuxt 4 application
 - Adds `<link rel="manifest">` at Nuxt's configured `app.baseURL` (for example,
   `/portal/app.webmanifest`).
 - Explicit `manifest.icons` bypasses automatic icon generation.
+- Manifest metadata and collection entries are validated against the supported W3C shapes during
+  setup.
 - Automatically registers `@nuxt/image`, `nuxt-site-config`, and `nuxt-schema-org` as module
   dependencies while enabled.
 

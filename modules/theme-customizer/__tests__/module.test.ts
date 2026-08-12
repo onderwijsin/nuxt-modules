@@ -19,7 +19,7 @@ vi.mock("@nuxt/kit", () => kit);
 vi.mock("node:fs", () => ({ readFileSync: vi.fn(() => "@theme static {}") }));
 
 import themeCustomizerModule from "../src/module";
-import type { ThemePalette } from "../src/types";
+import type { ThemePalette } from "../src/config/options.schema";
 
 const moduleDefinition = themeCustomizerModule as unknown as {
   meta: Record<string, unknown>;

@@ -2,8 +2,8 @@ import type { Nuxt } from "@nuxt/schema";
 import defu from "defu";
 import { hasKey, isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
-import type { WebManifest, WebManifestShortcut } from "../types/manifest";
-import type { ModuleOptions } from "../types/options";
+import { webManifestSchema } from "../config/options.schema";
+import type { ModuleOptions, WebManifest, WebManifestShortcut } from "../config/options.schema";
 import { generatePwaIcons } from "./generate-icons";
 
 /** Resolved icon source configuration used by the manifest generator. */
@@ -159,15 +159,17 @@ export function generateWebManifest(
         }
   );
 
-  return defu({ ...manifest, icons: manifestIcons, shortcuts }, manifestFromIdentity, {
-    name: site?.name,
-    description: site?.description,
-    start_url: appUrl
-      ? normalizedBaseURL === "/"
-        ? `${appUrl.replace(/\/$/u, "")}?source=pwa`
-        : new URL("?source=pwa", scopedAppUrl).toString()
-      : `${scopedAppUrl}?source=pwa`,
-    scope: scopedAppUrl,
-    lang: nuxt.options.app.head?.htmlAttrs?.lang ?? site?.currentLocale ?? site?.defaultLocale
-  }) as WebManifest;
+  return webManifestSchema.parse(
+    defu({ ...manifest, icons: manifestIcons, shortcuts }, manifestFromIdentity, {
+      name: site?.name,
+      description: site?.description,
+      start_url: appUrl
+        ? normalizedBaseURL === "/"
+          ? `${appUrl.replace(/\/$/u, "")}?source=pwa`
+          : new URL("?source=pwa", scopedAppUrl).toString()
+        : `${scopedAppUrl}?source=pwa`,
+      scope: scopedAppUrl,
+      lang: nuxt.options.app.head?.htmlAttrs?.lang ?? site?.currentLocale ?? site?.defaultLocale
+    })
+  );
 }

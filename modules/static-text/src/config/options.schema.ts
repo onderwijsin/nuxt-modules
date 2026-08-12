@@ -19,3 +19,6 @@ export const staticTextOptionsSchema = z.object({
   enabled,
   content: z.string().refine(isRelativeContentPath, { error: relativeContentPathError }).optional()
 });
+
+export type ModuleOptions = z.input<typeof staticTextOptionsSchema>;
+export type ResolvedModuleOptions = z.output<typeof staticTextOptionsSchema>;
