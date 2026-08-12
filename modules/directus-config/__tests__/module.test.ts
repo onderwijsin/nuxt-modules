@@ -87,6 +87,7 @@ describe("directus-config module setup", () => {
     expect(addTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "directus-config.mjs", write: true })
     );
+    expect(addTemplate.mock.calls[0]?.[0].getContents()).toBe("export default {};\n");
     expect(addServerTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "#directus-config-server" })
     );

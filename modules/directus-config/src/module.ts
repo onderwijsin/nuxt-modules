@@ -60,12 +60,13 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.configFile !== false && !configFile) {
       log.info(`No Directus config source found at ${options.configFile}.`);
     }
-    setResolvedDirectusConfig(nuxt, await loadDirectusConfigSource(configFile));
+    const resolvedConfig = await loadDirectusConfigSource(configFile);
+    setResolvedDirectusConfig(nuxt, resolvedConfig);
 
     const clientConfig = addTemplate({
       filename: "directus-config.mjs",
       write: true,
-      getContents: () => generateDirectusRuntimeConfigSource(configFile)
+      getContents: () => generateDirectusRuntimeConfigSource(resolvedConfig)
     });
 
     addServerTemplate({

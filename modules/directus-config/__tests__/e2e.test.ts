@@ -1,11 +1,27 @@
 import { $fetch, setup } from "@nuxt/test-utils/e2e";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 await setup({
   rootDir: fileURLToPath(new URL("./fixtures/aliases", import.meta.url)),
   server: true
 });
+
+function readFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    return entry.isDirectory() ? readFiles(path) : [readFileSync(path, "utf8")];
+  });
+}
+
+const clientBundle = readFiles(
+  fileURLToPath(new URL("./fixtures/aliases/.output/public/_nuxt", import.meta.url))
+).join("\n");
+
+expect(clientBundle).not.toContain("server-only-static-token");
+expect(clientBundle).not.toContain("server-only-introspection-token");
 
 describe("directus-config virtual aliases", () => {
   it("exposes only the sanitized configuration through the client-safe alias", async () => {

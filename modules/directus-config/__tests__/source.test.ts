@@ -11,6 +11,7 @@ import {
   generateDirectusRuntimeConfigSource,
   resolveDirectusConfigFile
 } from "../src/config/source";
+import { directusConfigSchema } from "../src/schema";
 
 const directories: string[] = [];
 
@@ -77,10 +78,17 @@ describe("Directus config source discovery", () => {
     );
   });
 
-  it("generates a validated virtual source", () => {
-    expect(generateDirectusRuntimeConfigSource("/project/directus.config.ts")).toContain(
-      "directusPublicConfigSchema.parse(directusConfigSchema.parse(config))"
+  it("generates a client-safe virtual source from the resolved config", () => {
+    const source = generateDirectusRuntimeConfigSource(
+      directusConfigSchema.parse({
+        instance: { baseUrl: "https://cms.example.test", staticToken: "server-only-token" },
+        client: { commands: ["readItems"] }
+      })
     );
+
+    expect(source).toContain('"client":{"proxy":{"path":"/_directus/proxy"}');
+    expect(source).not.toContain("server-only-token");
+    expect(source).not.toContain("directus.config.ts");
     expect(generateDirectusRuntimeConfigSource()).toBe("export default {};\n");
     expect(generateDirectusServerConfigSource("/project/directus.config.ts")).toContain(
       "validateDirectusConfig(config)"
@@ -90,7 +98,7 @@ describe("Directus config source discovery", () => {
 
   it("generates a Nitro declaration for the server-only config module", () => {
     expect(generateDirectusServerConfigDeclarationSource()).toContain(
-      "import type { ResolvedDirectusConfig }"
+      'import type { ResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema"'
     );
     expect(generateDirectusServerConfigDeclarationSource()).toContain("ResolvedDirectusConfig");
   });

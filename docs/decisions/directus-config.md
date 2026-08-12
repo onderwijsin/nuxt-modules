@@ -31,8 +31,9 @@ export default defineDirectusConfig({
 ```
 
 `instance.baseUrl` is optional. Modules which need an instance validate that requirement when they
-compose their own direct and shared options. The collection schema is intentionally not wired into
-the shared config yet; it remains a future concern for the sitemap and prerender modules.
+compose their own direct and shared options. Collection configuration is part of the shared config
+and is consumed by the sitemap and prerender modules. Collection mappers and fetchers are executable
+and therefore remain server-only.
 
 During its setup, the config module validates the complete source and stores it in the internal,
 non-enumerable `nuxt.options._directus` slot. `_directus` is intentionally the shared namespace: the
