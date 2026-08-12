@@ -25,15 +25,18 @@
   "exports": {
     ".": {
       "types": "./dist/types.d.mts",
-      "import": "./dist/module.mjs"
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
     },
     "./config": {
       "types": "./dist/config/index.d.mts",
-      "import": "./dist/config/index.mjs"
+      "import": "./dist/config/index.mjs",
+      "default": "./dist/config/index.mjs"
     },
     "./schema": {
       "types": "./dist/schema/index.d.mts",
-      "import": "./dist/schema/index.mjs"
+      "import": "./dist/schema/index.mjs",
+      "default": "./dist/schema/index.mjs"
     }
   },
   "publishConfig": {
