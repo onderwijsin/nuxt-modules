@@ -27,7 +27,15 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: "^4.0.0"
     }
   },
-  defaults: { enabled: true, applyInlineStyles: true },
+  defaults: {
+    enabled: true,
+    applyInlineStyles: true,
+    evaluate: {
+      onMissingVariable: false,
+      onInvalidCondition: false,
+      onInvalidComparison: false
+    }
+  },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.loopsRenderer, {
       "@nuxt/ui": { version: ">=4.0.0" }
@@ -44,11 +52,9 @@ export default defineNuxtModule<ModuleOptions>({
 
     const validatedOptions = loopsRendererOptionsSchema.parse(options);
     nuxt.options.appConfig.loopsRenderer = {
-      applyInlineStyles: validatedOptions.applyInlineStyles
-    };
-    Object.assign(nuxt.options.appConfig.loopsRenderer as object, {
+      applyInlineStyles: validatedOptions.applyInlineStyles,
       evaluate: validatedOptions.evaluate
-    });
+    };
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
