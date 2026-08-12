@@ -7,7 +7,7 @@
     <p data-sanity="draft-form">Draft: {{ draft.state.value }}</p>
     <p data-sanity="turnstile">Turnstile: {{ turnstile.isEnabled ? "enabled" : "disabled" }}</p>
     <p data-sanity="directus">
-      Directus: {{ runtimeConfig.public.directus?.proxy?.path ?? "disabled" }}
+      Directus: {{ runtimeConfig.public.directusClient?.proxy?.path ?? "disabled" }}
     </p>
     <NuxtLink to="/redirect-sanity" data-sanity="redirect-client-link">Client redirect</NuxtLink>
     <LoopsRenderer :data="loopsAst" :variables="loopsVariables" />

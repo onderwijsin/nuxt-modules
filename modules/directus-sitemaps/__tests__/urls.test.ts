@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 const useDirectusServer = vi.fn();
-vi.mock("@onderwijsin/nuxt-directus/runtime/server", () => ({ useDirectusServer }));
+vi.mock("@onderwijsin/nuxt-directus-client/runtime/server", () => ({ useDirectusServer }));
 
 const { buildSitemapUrls, fetchItemsFromCollection, mapDirectusItem, toSitemapUrl } =
   await import("../src/runtime/server/utils/sitemap-urls");

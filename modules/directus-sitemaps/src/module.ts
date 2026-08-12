@@ -46,7 +46,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
-      "@onderwijsin/nuxt-directus": { version: ">=0.2.0" },
+      "@onderwijsin/nuxt-directus-client": { version: ">=0.2.0" },
       "@nuxtjs/sitemap": { version: ">=8.0.0" }
     }),
   setup(rawOptions, nuxt) {

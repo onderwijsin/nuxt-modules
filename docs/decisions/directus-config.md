@@ -51,7 +51,7 @@ For the shared config to be available during consumer setup, the config module m
 consumers in the Nuxt `modules` array:
 
 ```ts
-modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus"];
+modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus-client"];
 ```
 
 The runtime aliases expose separate trust boundaries. `#directus-config` is a sanitized,

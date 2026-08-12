@@ -1,5 +1,5 @@
 ---
-"@onderwijsin/nuxt-directus": patch
+"@onderwijsin/nuxt-directus-client": patch
 "@onderwijsin/nuxt-directus-config": patch
 ---
 

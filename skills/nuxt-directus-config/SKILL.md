@@ -18,7 +18,7 @@ pnpm add @onderwijsin/nuxt-directus-config
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus"]
+  modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus-client"]
 });
 ```
 

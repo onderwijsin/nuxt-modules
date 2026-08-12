@@ -16,7 +16,7 @@ import {
   toEntries
 } from "@onderwijsin/nuxt-module-utils/shared";
 
-import { useDirectusServer } from "@onderwijsin/nuxt-directus/runtime/server";
+import { useDirectusServer } from "@onderwijsin/nuxt-directus-client/runtime/server";
 
 type GenericDirectusSchema = Record<string, Array<Record<string, unknown>>>;
 type GenericDirectusQuery = Query<GenericDirectusSchema, GenericDirectusSchema[string][number]>;

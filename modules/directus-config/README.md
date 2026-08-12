@@ -17,7 +17,7 @@ Register it before modules that consume the configuration:
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus"]
+  modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus-client"]
 });
 ```
 

@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   extends: ["playground-layer"],
   modules: [
     "@onderwijsin/nuxt-directus-config",
-    "@onderwijsin/nuxt-directus",
+    "@onderwijsin/nuxt-directus-client",
     "@onderwijsin/nuxt-directus-sitemaps",
     "@nuxtjs/sitemap"
   ],

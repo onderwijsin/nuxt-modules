@@ -1,6 +1,6 @@
 # Directus configuration reference
 
-Use this reference for configuration changes involving `@onderwijsin/nuxt-directus`,
+Use this reference for configuration changes involving `@onderwijsin/nuxt-directus-client`,
 `@onderwijsin/nuxt-directus-config`, or `@onderwijsin/nuxt-directus-sitemaps`. The source of truth
 is the published schema entrypoint at `@onderwijsin/nuxt-directus-config/schema`.
 

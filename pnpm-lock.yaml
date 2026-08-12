@@ -350,7 +350,7 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/playground-layer
 
-  modules/directus:
+  modules/directus-client:
     dependencies:
       '@directus/sdk':
         specifier: 'catalog:'
@@ -475,9 +475,9 @@ importers:
       '@nuxtjs/sitemap':
         specifier: 'catalog:'
         version: 8.3.0(5015543d57158e3ab4658de5473aced2)
-      '@onderwijsin/nuxt-directus':
+      '@onderwijsin/nuxt-directus-client':
         specifier: workspace:^
-        version: link:../directus
+        version: link:../directus-client
       '@onderwijsin/nuxt-directus-config':
         specifier: workspace:^
         version: link:../directus-config
@@ -518,9 +518,9 @@ importers:
       '@nuxtjs/sitemap':
         specifier: 'catalog:'
         version: 8.3.0(5015543d57158e3ab4658de5473aced2)
-      '@onderwijsin/nuxt-directus':
+      '@onderwijsin/nuxt-directus-client':
         specifier: workspace:*
-        version: link:../../directus
+        version: link:../../directus-client
       '@onderwijsin/nuxt-directus-config':
         specifier: workspace:*
         version: link:../../directus-config
@@ -538,9 +538,9 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  modules/directus/playground:
+  modules/directus-client/playground:
     dependencies:
-      '@onderwijsin/nuxt-directus':
+      '@onderwijsin/nuxt-directus-client':
         specifier: workspace:*
         version: link:..
       '@onderwijsin/nuxt-directus-config':

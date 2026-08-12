@@ -1,5 +1,5 @@
 import directusConfigModule from "../../../../directus-config/src/module";
-import directusModule from "../../../../directus/src/module";
+import directusModule from "../../../../directus-client/src/module";
 import directusSitemapsModule from "../../../src/module";
 import { fileURLToPath } from "node:url";
 

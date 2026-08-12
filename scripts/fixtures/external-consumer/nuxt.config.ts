@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     "@onderwijsin/nuxt-cache",
     "@onderwijsin/nuxt-device",
     "@onderwijsin/nuxt-directus-config",
-    "@onderwijsin/nuxt-directus",
+    "@onderwijsin/nuxt-directus-client",
     "@onderwijsin/nuxt-directus-sitemaps",
     "@nuxtjs/sitemap",
     "@onderwijsin/nuxt-healthcheck",
@@ -29,7 +29,7 @@ export default defineNuxtConfig({
   device: {
     enabled: true
   },
-  directus: {
+  directusClient: {
     enabled: !directusDisabled
   },
   directusSitemaps: {

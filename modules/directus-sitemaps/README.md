@@ -8,14 +8,14 @@ Directus schema, slug field, or SEO structure.
 
 | Package                             | Why it is needed                                                                 |
 | ----------------------------------- | -------------------------------------------------------------------------------- |
-| `@onderwijsin/nuxt-directus`        | Provides the server-side Directus client used by the default collection fetcher. |
+| `@onderwijsin/nuxt-directus-client` | Provides the server-side Directus client used by the default collection fetcher. |
 | `@nuxtjs/sitemap`                   | Renders the registered dynamic source as sitemap XML.                            |
 | `@onderwijsin/nuxt-directus-config` | Optional; enables executable shared mappers and fetchers.                        |
 
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
+pnpm add @onderwijsin/nuxt-directus-client @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
 ```
 
 Install `@onderwijsin/nuxt-directus-config` too when you need shared executable mappers or custom
@@ -32,7 +32,7 @@ Register the shared config module before its consumers:
 export default defineNuxtConfig({
   modules: [
     "@onderwijsin/nuxt-directus-config",
-    "@onderwijsin/nuxt-directus",
+    "@onderwijsin/nuxt-directus-client",
     "@onderwijsin/nuxt-directus-sitemaps",
     "@nuxtjs/sitemap"
   ]
@@ -216,5 +216,5 @@ This package is a Nuxt module and does not expose runtime composables or client 
 it through `directusSitemaps`, `directus.config.ts`, and the sitemap source endpoint described
 above.
 
-Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus` 0.2+, and `@nuxtjs/sitemap` 8+. It uses
-Nitro-compatible server APIs and supports Node and edge-style Nitro deployments.
+Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus-client` 0.3+, and `@nuxtjs/sitemap` 8+. It
+uses Nitro-compatible server APIs and supports Node and edge-style Nitro deployments.

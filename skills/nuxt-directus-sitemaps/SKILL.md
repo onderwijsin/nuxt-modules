@@ -14,7 +14,7 @@ or named sitemaps.
 ## Install and register
 
 ```sh
-pnpm add @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
+pnpm add @onderwijsin/nuxt-directus-client @nuxtjs/sitemap @onderwijsin/nuxt-directus-sitemaps
 ```
 
 ```ts
@@ -22,7 +22,7 @@ pnpm add @onderwijsin/nuxt-directus @nuxtjs/sitemap @onderwijsin/nuxt-directus-s
 export default defineNuxtConfig({
   modules: [
     "@onderwijsin/nuxt-directus-config",
-    "@onderwijsin/nuxt-directus",
+    "@onderwijsin/nuxt-directus-client",
     "@onderwijsin/nuxt-directus-sitemaps",
     "@nuxtjs/sitemap"
   ]
@@ -148,5 +148,5 @@ runtime-config values. Configure it with `directusSitemaps` and `directus.config
 Do not place Directus credentials in sitemap configuration. The Directus client module owns
 credentials, and collection functions remain in the server-only shared Directus config source.
 
-Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus` 0.2+, and `@nuxtjs/sitemap` 8+. Nitro
-server runtime support includes Node and edge-style deployments.
+Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus-client` 0.3+, and `@nuxtjs/sitemap` 8+.
+Nitro server runtime support includes Node and edge-style deployments.
