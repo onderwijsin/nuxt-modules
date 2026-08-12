@@ -18,7 +18,13 @@ function readFiles(directory: string): string[] {
 
 describe("directus-config virtual aliases", () => {
   it("does not expose server-only configuration in the client bundle", () => {
-    const outputDir = useTestContext().nuxt?.options.nitro.output.dir;
+    const nuxt = useTestContext().nuxt;
+    if (!nuxt) throw new Error("Nuxt test context is unavailable");
+
+    const nitroOutput = nuxt.options.nitro.output;
+    if (!nitroOutput) throw new Error("Nuxt Nitro output configuration is unavailable");
+
+    const outputDir = nitroOutput.dir;
     if (!outputDir) throw new Error("Nuxt test output directory is unavailable");
 
     const clientBundle = readFiles(join(outputDir, "public/_nuxt")).join("\n");
