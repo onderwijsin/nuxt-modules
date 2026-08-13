@@ -141,6 +141,9 @@ jobs:
     needs: detect_changes
     if: needs.detect_changes.outputs.scope == 'full'
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      code-quality: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install Proton Pass CLI
