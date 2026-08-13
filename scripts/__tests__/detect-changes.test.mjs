@@ -42,7 +42,7 @@ describe("CI policy", () => {
   it("defines complete phase sets for every scope", () => {
     expect(selectPhases("light")).toEqual(new Set(["format", "lint"]));
     expect(selectPhases("focused")).toEqual(
-      new Set(["format", "lint", "prepare", "typecheck", "test"])
+      new Set(["format", "lint", "prepare", "typecheck", "test", "external_consumer"])
     );
     expect(selectPhases("full")).toContain("external_consumer");
   });
@@ -284,10 +284,22 @@ describe("detector command integration", () => {
       const summaryText = readFileSync(summary, "utf8");
 
       expect(stdout).toContain("CI validation scope: FOCUSED");
-      expect(stdout).toContain("Enabled phases: format, lint, prepare, typecheck, test");
+      expect(stdout).toContain(
+        "Enabled phases: format, lint, prepare, typecheck, test, external_consumer"
+      );
       expect(outputs).toContain("scope=focused");
-      expect(outputs).toContain('phases=["format","lint","prepare","typecheck","test"]');
+      expect(outputs).toContain(
+        'phases=["format","lint","prepare","typecheck","test","external_consumer"]'
+      );
+      expect(outputs).toContain("phase_format=true");
+      expect(outputs).toContain("phase_lint=true");
       expect(outputs).toContain("phase_prepare=true");
+      expect(outputs).toContain("phase_typecheck=true");
+      expect(outputs).toContain("phase_test=true");
+      expect(outputs).toContain("phase_build=false");
+      expect(outputs).toContain("phase_validate_packages=false");
+      expect(outputs).toContain("phase_pack=false");
+      expect(outputs).toContain("phase_external_consumer=true");
       expect(outputs).toContain("force_external_consumer_check=true");
       expect(outputs).toContain("packages=@onderwijsin/nuxt-directus-sitemaps");
       expect(outputs).toContain("prepare_packages=");

@@ -147,12 +147,15 @@ recursive `typecheck` script also includes playgrounds. Package validation check
 metadata and confirms that private workspace dependencies do not leak into runtime output.
 
 Pull request CI is change-aware to reduce repeated resource consumption. Ordinary package changes
-run focused preparation, typechecking, and tests for the changed package closure. Root tooling,
-dependency, workflow, script, shared-package, and ambiguous changes run the complete validation
-suite. Repository metadata, documentation, skills, local agent configuration, generated artifacts,
-and other explicitly ignored paths do not select the full package build. Merge queue validation and
-manually dispatched CI always run the complete suite, including packed artifacts and the external
-consumer. Change detection fails closed when it cannot classify a path safely.
+use the `focused` execution strategy: they prepare, typecheck, and test the changed package closure.
+Documentation and explicitly ignored changes use the `light` strategy, which runs only repository
+formatting and lint checks. Root tooling, dependency, workflow, script, shared-package, and
+ambiguous changes run the complete validation suite through the `full` strategy. The selected
+strategy controls package setup and closure; the policy's emitted phases control which individual
+checks execute. Repository metadata, skills, local agent configuration, generated artifacts, and
+other explicitly ignored paths do not select the full package build. Merge-group diffs use the same
+classification, while manual dispatch is intentionally full. Change detection fails closed when it
+cannot classify a path safely.
 
 ## Generated output
 

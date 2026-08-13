@@ -216,7 +216,11 @@ export function classifyChanges(changed, packages, eventName = process.env.GITHU
  * @returns {Set<string>} Enabled validation phase names.
  */
 export function selectPhases(scope) {
-  return new Set(ciPolicy.phaseSets[scope] ?? ciPolicy.phaseSets.full);
+  const phases = new Set(ciPolicy.phaseSets[scope] ?? ciPolicy.phaseSets.full);
+  if (scope !== "light" && ciPolicy.forceExternalConsumerCheck) {
+    phases.add("external_consumer");
+  }
+  return phases;
 }
 
 /**
