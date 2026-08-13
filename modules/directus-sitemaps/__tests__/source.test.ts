@@ -14,13 +14,13 @@ describe("Directus sitemap server config source", () => {
 
   it("keeps static entries available without the optional config module", () => {
     expect(generateDirectusSitemapsConfigSource([], [{ loc: "/about" }], false)).toBe(
-      'export default { collections: [], static: [{"loc":"/about"}] };\n'
+      'export default { collections: [], static: [{"loc":"/about"}], queryLimit: 100, failureMode: "best-effort" };\n'
     );
   });
 
   it("emits an empty static list when no static entries are configured", () => {
     expect(generateDirectusSitemapsConfigSource([], [], false)).toBe(
-      "export default { collections: [], static: [] };\n"
+      'export default { collections: [], static: [], queryLimit: 100, failureMode: "best-effort" };\n'
     );
   });
 

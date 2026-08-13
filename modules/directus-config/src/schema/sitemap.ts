@@ -35,7 +35,9 @@ const directusSitemapsSchemaDefaults = {
   sitemapsPathPrefix: "/__sitemap__/",
   enablePrettyUrls: true,
   cache: directusSitemapsCacheSchemaDefaults,
-  prerenderSitemaps: false
+  prerenderSitemaps: false,
+  queryLimit: 100,
+  failureMode: "best-effort" as const
 };
 
 /**
@@ -51,7 +53,11 @@ export const directusSitemapsSchema = z
       .default(directusSitemapsSchemaDefaults.sitemapsPathPrefix),
     enablePrettyUrls: z.boolean().default(directusSitemapsSchemaDefaults.enablePrettyUrls),
     cache: directusSitemapsCacheSchema,
-    prerenderSitemaps: z.boolean().default(directusSitemapsSchemaDefaults.prerenderSitemaps)
+    prerenderSitemaps: z.boolean().default(directusSitemapsSchemaDefaults.prerenderSitemaps),
+    queryLimit: z.number().int().positive().default(directusSitemapsSchemaDefaults.queryLimit),
+    failureMode: z
+      .enum(["best-effort", "hard-failure"])
+      .default(directusSitemapsSchemaDefaults.failureMode)
   })
   .sensitive();
 

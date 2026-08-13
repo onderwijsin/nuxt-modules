@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
   }
   return buildSitemapUrls(event, config.collections, config.static, {
     filterByCollection: query.data.collection,
-    excludeStaticUrls: !query.data.includeStatic
+    excludeStaticUrls: !query.data.includeStatic,
+    queryLimit: config.queryLimit,
+    failureMode: config.failureMode
   });
 });

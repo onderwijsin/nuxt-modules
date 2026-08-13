@@ -170,6 +170,8 @@ Configure delivery independently of collection selection under `sitemaps`:
 | `enablePrettyUrls`   | `true`                                       | Redirects `/sitemap` to the sitemap XML or sitemap index.                           |
 | `cache`              | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Nitro cache policy for the source endpoint, or `false`.                             |
 | `prerenderSitemaps`  | `false`                                      | Prerenders the source endpoint and sitemap XML, including named sitemap routes.     |
+| `queryLimit`         | `100`                                        | Maximum number of records requested per built-in Directus page.                     |
+| `failureMode`        | `"best-effort"`                              | Omits a collection after a failed page, or aborts generation with `"hard-failure"`. |
 
 `directusSitemaps` accepts `collections` and the delivery settings directly, plus `enabled`:
 
@@ -208,7 +210,10 @@ the module does not cache Directus data itself. With `prerenderSitemaps: true`, 
 reachable during the build.
 
 Collections run independently. A failed collection fetch or invalid mapper result is logged and
-omitted, while successful collections and static URLs remain in the response.
+omitted by default, while successful collections and static URLs remain in the response. Set
+`failureMode` to `"hard-failure"` to propagate collection-fetch failures. Built-in Directus fetches
+use bounded offset pagination with `queryLimit`; custom fetchers receive their existing context
+unchanged and remain responsible for pagination.
 
 ## Public API and compatibility
 

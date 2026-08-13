@@ -120,6 +120,8 @@ in the shared config source.
 | `directusSitemaps.cache.staleMaxAge`              | non-negative integer                          | No       | Stale response lifetime in seconds; defaults to `0`.                                  |
 | `directusSitemaps.cache.swr`                      | `boolean`                                     | No       | Enables stale-while-revalidate; defaults to `true`.                                   |
 | `directusSitemaps.prerenderSitemaps`              | `boolean`                                     | No       | Defaults to `false`; prerenders the source and sitemap XML routes.                    |
+| `directusSitemaps.queryLimit`                     | positive integer                              | No       | Defaults to `100`; maximum records requested per built-in Directus page.              |
+| `directusSitemaps.failureMode`                    | `"best-effort" \| "hard-failure"`             | No       | Defaults to `"best-effort"`; controls failures after a paginated fetch exhausts.      |
 
 ## Endpoint and runtime behavior
 
@@ -131,8 +133,10 @@ parameters:
 | `collection`    | non-empty string | No       | Limits dynamic URLs to one configured collection. |
 | `includeStatic` | boolean string   | No       | Includes static entries; defaults to `true`.      |
 
-Invalid query values return `400`. Each collection is independent: a failed fetch or invalid mapper
-entry is logged and omitted, while successful collections and static entries remain available.
+Invalid query values return `400`. Each collection is independent by default: a failed fetch or
+invalid mapper entry is logged and omitted, while successful collections and static entries remain
+available. `failureMode: "hard-failure"` propagates collection-fetch failures. Built-in Directus
+fetches are paginated with `queryLimit`; custom fetchers are unchanged and own their pagination.
 
 `cache` never caches Directus responses; revalidation fetches Directus again. With
 `prerenderSitemaps: true`, Directus must be available during the build. The module prerenders the
