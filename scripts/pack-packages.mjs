@@ -23,22 +23,33 @@ const requestedNames = new Set(
 mkdirSync(outputDirectory, { recursive: true });
 
 /**
- * Returns public package manifests in workspace package directories.
+ * Returns workspace package manifests, including private playground packages.
  *
- * @returns {{directory: string, manifest: {name: string, private?: boolean, version?: string}}[]} Public package entries.
+ * Private packages are discovered so callers may pass one complete workspace
+ * preparation closure; only public packages are packed below.
+ *
+ * @returns {{directory: string, manifest: {name: string, private?: boolean, version?: string}}[]} Workspace package entries.
  */
 function discoverPackages() {
-  return ["packages", "modules"].flatMap((packageRoot) =>
-    readdirSync(join(root, packageRoot), { withFileTypes: true })
+  return ["packages", "modules"].flatMap((packageRoot) => {
+    const packageDirectories = readdirSync(join(root, packageRoot), { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
-      .map((entry) => {
-        const directory = join(root, packageRoot, entry.name);
-        const packageFile = join(directory, "package.json");
-        if (!existsSync(packageFile)) return null;
-        return { directory, manifest: JSON.parse(readFileSync(packageFile, "utf8")) };
-      })
-      .filter(Boolean)
-  );
+      .map((entry) => join(root, packageRoot, entry.name));
+    return packageDirectories.flatMap((directory) => {
+      const packageFile = join(directory, "package.json");
+      const entries = [];
+      if (existsSync(packageFile))
+        entries.push({ directory, manifest: JSON.parse(readFileSync(packageFile, "utf8")) });
+
+      const playgroundFile = join(directory, "playground", "package.json");
+      if (existsSync(playgroundFile))
+        entries.push({
+          directory: join(directory, "playground"),
+          manifest: JSON.parse(readFileSync(playgroundFile, "utf8"))
+        });
+      return entries;
+    });
+  });
 }
 
 const allPackages = discoverPackages();
