@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- d4460bc: Add shared sitemap options for bounded Directus query pages and collection fetch failure handling.
+- 300d504: Add server-only Directus session sealing secrets, previous-key rotation settings, and the playground
+  secret-masking option to shared configuration.
+
 ## 0.2.0
 
 ### Minor Changes

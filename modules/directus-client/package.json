@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-directus-client",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Server-safe Directus REST integration for Nuxt applications.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

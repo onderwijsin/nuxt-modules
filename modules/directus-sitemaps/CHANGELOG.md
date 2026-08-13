@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- d4460bc: Add configurable bounded pagination and failure handling for built-in Directus collection fetches.
+
+### Patch Changes
+
+- Updated dependencies [d4460bc]
+- Updated dependencies [300d504]
+- Updated dependencies [300d504]
+- Updated dependencies [300d504]
+- Updated dependencies [c8350e1]
+  - @onderwijsin/nuxt-directus-config@0.3.0
+  - @onderwijsin/nuxt-directus-client@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes
