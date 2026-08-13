@@ -1,6 +1,15 @@
-import { deleteCookie, getCookie, setCookie, type H3Event } from "h3";
+import {
+  deleteCookie,
+  getCookie,
+  sealSession,
+  setCookie,
+  unsealSession,
+  useSession,
+  type H3Event,
+  type SessionConfig
+} from "h3";
 import { useRuntimeConfig } from "#imports";
-import { attemptSync, isNonBlankString, isString } from "@onderwijsin/nuxt-module-utils";
+import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-utils";
 import { z } from "zod";
 
 /** Token-free user data persisted with a Directus session. */
@@ -19,14 +28,13 @@ export interface DirectusSession {
   readonly snapshot: DirectusSessionSnapshot;
 }
 
-/**
- * Maximum encoded cookie value length.
- *
- * This leaves headroom below the usual 4096-byte browser cookie limit for the cookie name,
- * attributes, and future serialization overhead. Sessions fail closed when they exceed it rather
- * than being truncated.
- */
+/** Maximum sealed cookie value length accepted by the Directus session boundary. */
 export const DIRECTUS_SESSION_COOKIE_LIMIT = 3800;
+
+// The payload version is authenticated inside H3's seal; the prefix versions the outer cookie
+// envelope so legacy or future formats can be rejected or routed before decryption.
+const DIRECTUS_SESSION_VERSION = 1;
+const DIRECTUS_SESSION_DATA_PREFIX = "boop1:";
 
 const directusSessionSnapshotSchema = z.object({
   userId: z.string().min(1),
@@ -42,76 +50,21 @@ const directusSessionSchema = z.object({
   snapshot: directusSessionSnapshotSchema
 });
 
-/**
- * Encodes UTF-8 text as an unpadded base64url value.
- *
- * @param value - Text to encode.
- * @returns The base64url representation.
- */
-function base64UrlEncode(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCodePoint(byte);
-  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+const sealedDirectusSessionSchema = z.object({
+  directus: directusSessionSchema,
+  formatVersion: z.literal(DIRECTUS_SESSION_VERSION),
+  matchedSecretSlot: z.string().min(1)
+});
+
+type SealedDirectusSession = z.infer<typeof sealedDirectusSessionSchema>;
+
+interface ResolvedDirectusSession {
+  readonly session: DirectusSession;
+  readonly matchedSecretSlot: string;
 }
 
 /**
- * Decodes a base64url value as UTF-8 text.
- *
- * @param value - Encoded value to decode.
- * @returns Decoded text or undefined for malformed input.
- */
-function base64UrlDecode(value: string): string | undefined {
-  const padded = value
-    .replaceAll("-", "+")
-    .replaceAll("_", "/")
-    .padEnd(Math.ceil(value.length / 4) * 4, "=");
-  const result = attemptSync(() => {
-    const binary = atob(padded);
-    return new TextDecoder().decode(
-      Uint8Array.from(binary, (character) => character.codePointAt(0) ?? 0)
-    );
-  });
-  return result.error === null && result.data !== null ? result.data : undefined;
-}
-
-/**
- * Serializes a session into a bounded, URL-safe cookie value.
- *
- * @param session - Server-only session payload.
- * @returns The encoded cookie value.
- */
-export function serializeDirectusSession(session: DirectusSession): string {
-  const value = base64UrlEncode(JSON.stringify(session));
-  if (value.length > DIRECTUS_SESSION_COOKIE_LIMIT) {
-    throw new Error("Directus session exceeds the cookie size limit");
-  }
-  return value;
-}
-
-/**
- * Parses and validates a session cookie without throwing on malformed user input.
- *
- * @param value - Raw cookie value.
- * @returns A validated session or undefined.
- */
-export function deserializeDirectusSession(value: string | undefined): DirectusSession | undefined {
-  if (
-    !isString(value) ||
-    !isNonBlankString(value) ||
-    value.length > DIRECTUS_SESSION_COOKIE_LIMIT
-  ) {
-    return undefined;
-  }
-  const decoded = base64UrlDecode(value);
-  if (!decoded) return undefined;
-  const parsed = attemptSync(() => directusSessionSchema.parse(JSON.parse(decoded)));
-  if (parsed.error !== null || parsed.data === null) return undefined;
-  return parsed.data;
-}
-
-/**
- * Builds the configured secure cookie attributes.
+ * Returns the configured cookie serialization options.
  *
  * @param event - Incoming request event.
  * @returns Cookie serialization options.
@@ -125,34 +78,134 @@ function cookieOptions(event: H3Event) {
     path: options.cookie.path,
     maxAge: options.cookie.maxAge,
     ...(options.cookie.domain ? { domain: options.cookie.domain } : {})
+  } as const;
+}
+
+/**
+ * Builds the H3 session configuration used by the Directus cookie wrapper.
+ *
+ * The session header is disabled because Directus authentication is intentionally cookie-only.
+ * Cookie writes are performed by this module so the existing size guard and cookie policy remain
+ * observable and consistent.
+ *
+ * @param event - Incoming request event.
+ * @param secret - H3 sealing secret.
+ * @returns H3 session configuration.
+ */
+function sessionConfig(event: H3Event, secret: string): SessionConfig {
+  const auth = useRuntimeConfig(event).directusClient.auth;
+  return {
+    name: auth.cookie.name,
+    password: secret,
+    maxAge: auth.cookie.maxAge,
+    cookie: false,
+    sessionHeader: false
   };
 }
 
 /**
- * Reads the current session from the configured httpOnly cookie.
+ * Returns active and previous session secrets in verification order.
  *
  * @param event - Incoming request event.
- * @returns The validated session or undefined.
+ * @returns Configured session secrets.
  */
-export function getDirectusSession(event: H3Event): DirectusSession | undefined {
-  const config = useRuntimeConfig(event);
-  return deserializeDirectusSession(getCookie(event, config.directusClient.auth.cookie.name));
+function sessionSecrets(event: H3Event): readonly string[] {
+  const auth = useRuntimeConfig(event).directusClient.auth;
+  return auth.sessionSecret ? [auth.sessionSecret, ...(auth.previousSessionSecrets ?? [])] : [];
 }
 
 /**
- * Replaces the complete session atomically from the request's perspective.
+ * Reads and verifies a sealed Directus session with active and previous keys.
+ *
+ * @param event - Incoming request event.
+ * @param sealedValue - Raw sealed cookie value.
+ * @returns The verified session and the key that opened it, or undefined.
+ */
+async function unsealDirectusSession(
+  event: H3Event,
+  sealedValue: string
+): Promise<ResolvedDirectusSession | undefined> {
+  for (const [index, secret] of sessionSecrets(event).entries()) {
+    const result = await attempt(async () => {
+      const unsealed = await unsealSession(event, sessionConfig(event, secret), sealedValue);
+      const parsed = sealedDirectusSessionSchema.parse(unsealed.data);
+      return {
+        session: parsed.directus,
+        matchedSecretSlot: index === 0 ? "active" : `previous-${index}`
+      };
+    });
+    if (result.error === null && result.data !== null) return result.data;
+  }
+  return undefined;
+}
+
+/**
+ * Seals a Directus session with the active secret and writes its versioned cookie.
  *
  * @param event - Incoming request event.
  * @param session - Server-only session payload.
  */
-export function setDirectusSession(event: H3Event, session: DirectusSession): void {
+export async function setDirectusSession(event: H3Event, session: DirectusSession): Promise<void> {
+  const [secret] = sessionSecrets(event);
+  if (!secret) throw new Error("Directus session secret is not configured");
+
+  const config = sessionConfig(event, secret);
+  const manager = await useSession<SealedDirectusSession>(event, config);
+  await manager.update({
+    directus: session,
+    formatVersion: DIRECTUS_SESSION_VERSION,
+    matchedSecretSlot: "active"
+  });
+  const sealed = await sealSession(event, config);
+  const cookieValue = DIRECTUS_SESSION_DATA_PREFIX + sealed;
+  if (cookieValue.length > DIRECTUS_SESSION_COOKIE_LIMIT) {
+    throw new Error("Directus session exceeds the cookie size limit");
+  }
+  const auth = useRuntimeConfig(event).directusClient.auth;
+  setCookie(event, auth.cookie.name, cookieValue, cookieOptions(event));
+}
+
+/**
+ * Reads the current session from the configured sealed httpOnly cookie.
+ *
+ * Invalid cookies are ignored and cleared. Legacy unsigned cookies are never parsed as trusted
+ * session data.
+ *
+ * @param event - Incoming request event.
+ * @returns The validated session or undefined.
+ */
+export async function getDirectusSessionDetails(
+  event: H3Event
+): Promise<ResolvedDirectusSession | undefined> {
   const config = useRuntimeConfig(event);
-  setCookie(
+  const value = getCookie(event, config.directusClient.auth.cookie.name);
+  if (!isString(value) || !isNonBlankString(value)) return undefined;
+  if (!value.startsWith(DIRECTUS_SESSION_DATA_PREFIX)) {
+    deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
+    return undefined;
+  }
+
+  const resolved = await unsealDirectusSession(
     event,
-    config.directusClient.auth.cookie.name,
-    serializeDirectusSession(session),
-    cookieOptions(event)
+    value.slice(DIRECTUS_SESSION_DATA_PREFIX.length)
   );
+  if (resolved) {
+    if (resolved.matchedSecretSlot !== "active") await setDirectusSession(event, resolved.session);
+    return resolved;
+  }
+
+  deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
+  return undefined;
+}
+
+/**
+ * Reads the current session from the configured sealed httpOnly cookie.
+ *
+ * @param event - Incoming request event.
+ * @returns The validated session or undefined.
+ */
+export async function getDirectusSession(event: H3Event): Promise<DirectusSession | undefined> {
+  return (await getDirectusSessionDetails(event))?.session;
 }
 
 /**

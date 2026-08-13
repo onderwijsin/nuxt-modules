@@ -1,0 +1,73 @@
+# Directus session and authentication audit brief
+
+## Goal
+
+Assess whether the Directus client session and authentication implementation is suitable for
+production release, with particular attention to confidentiality, integrity, lifecycle behaviour,
+failure handling, and migration safety.
+
+## Reason for the audit
+
+The module now stores Directus access and refresh tokens in H3-sealed, httpOnly cookies. It also
+supports an explicit cookie envelope prefix (`boop1:`), authenticated payload versioning, staged
+session-secret rotation, and server-side authentication helpers. These changes introduce security-
+and compatibility-sensitive behaviour that should receive an independent review before release.
+
+## Scope
+
+Review the complete session implementation and its integration points, including:
+
+- session creation, reading, refresh, logout, clearing, expiry, and invalidation;
+- H3 sealing and unsealing usage, cookie attributes, cookie/header boundaries, and size limits;
+- payload validation, `boop1:` envelope handling, payload format versioning, and legacy-cookie
+  behaviour;
+- active and previous session-secret rotation, resealing, configuration ordering, and operational
+  migration procedures;
+- secret handling across module setup, runtime config, SSR, logs, errors, playground routes, and
+  client-visible state;
+- authentication handlers, Directus credential selection, proxy behaviour, CSRF protections,
+  refresh safety, and error handling where they affect session security;
+- Node and Cloudflare Workers compatibility where relevant;
+- tests, documentation, release notes, and any evidence needed to support production readiness.
+
+The playground is intentionally developer-only and includes diagnostic routes that can render
+sensitive configuration. Assess whether those routes are adequately isolated from production use
+and whether their configuration makes that boundary clear. The current Varlock integration supports
+disabling leak prevention per sensitive config item, but does not expose a route-specific exclusion
+through the Vite plugin; assess whether that is an acceptable local-playground trade-off.
+
+## Potential risk areas
+
+These are areas for examination, not presumed findings:
+
+- accidental token or secret disclosure through cookies, SSR payloads, runtime configuration,
+  serialized errors, logs, diagnostics, generated artifacts, or browser state;
+- incorrect assumptions about H3 cookie/session semantics or cryptographic guarantees;
+- accepting malformed, legacy, expired, tampered, or schema-invalid session data;
+- rotation failures caused by key precedence, secret replacement, concurrent deployments, or
+  incomplete resealing;
+- refresh, logout, and upstream Directus failure paths leaving usable local credentials behind;
+- cookie security defaults and deployment behaviour behind proxies, across domains, or over local
+  HTTP development environments;
+- replay, fixation, CSRF, session-confusion, and authorization-boundary issues;
+- oversized cookies, partial writes, response mutation, and runtime-specific behaviour;
+- tests that pass nominal flows while missing negative, concurrency, migration, or deployment cases.
+
+## Review approach and evidence
+
+Use the implementation, tests, generated output, package documentation, decision records, and
+playground configuration as evidence. Reproduce relevant behaviours where practical and distinguish
+confirmed findings from assumptions or recommendations. For each finding, describe the affected
+boundary, severity, conditions required, evidence, and a concrete remediation or acceptance
+rationale.
+
+## Deliverable
+
+Provide a concise report containing:
+
+1. an overall production-readiness assessment;
+2. findings ordered by severity, including evidence and affected files or behaviours;
+3. test and coverage gaps relevant to the scope;
+4. migration and operational considerations for session-secret rotation;
+5. documentation or release-contract issues;
+6. residual risks and recommended follow-up work.

@@ -3,7 +3,6 @@ declare module "nuxt/schema" {
     directusClient: {
       baseUrl: string;
       staticToken?: string;
-      typegen: { introspectionToken?: string };
       auth: {
         enabled: boolean;
         turnstile: {
@@ -19,6 +18,9 @@ declare module "nuxt/schema" {
           domain?: string;
         };
         refreshSafetyWindow: number;
+        sessionSecret: string;
+        previousSessionSecrets: string[];
+        maskSecretsInPlayground: boolean;
         passwordResetUrl?: string;
       };
     };
@@ -38,6 +40,7 @@ declare module "nuxt/schema" {
           enabled: boolean;
           actions: { login: string; passwordRequest: string };
         };
+        maskSecretsInPlayground: boolean;
       };
     };
   }

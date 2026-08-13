@@ -39,6 +39,7 @@ const DIRECTUS_TURNSTILE_ACTIONS = {
   login: "directus-login",
   passwordRequest: "directus-password-request"
 };
+const DEVELOPMENT_SESSION_SECRET = "nuxt-directus-development-session-secret-32-chars";
 
 /** Registers the server-safe Directus module foundation and its validated proxy boundary. */
 export default defineNuxtModule<ModuleOptions>({
@@ -81,11 +82,14 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
-    const options = validateModuleOptions(
-      defu(rawOptions, sharedConfig),
-      directusClientOptionsSchema,
-      log
-    );
+    const input = defu(rawOptions, sharedConfig);
+    const validationOptions =
+      input.client?.auth?.enabled &&
+      !input.client.auth.sessionSecret &&
+      (nuxt.options.dev || nuxt.options._prepare || process.env.CI === "true")
+        ? defu({ client: { auth: { sessionSecret: DEVELOPMENT_SESSION_SECRET } } }, input)
+        : input;
+    const options = validateModuleOptions(validationOptions, directusClientOptionsSchema, log);
 
     const baseUrl = options.instance.baseUrl ?? "";
     const resolver = createResolver(import.meta.url);
@@ -144,27 +148,29 @@ export default defineNuxtModule<ModuleOptions>({
     const commands = parseDirectusCommands(options.client.commands);
     for (const name of commands) addImports({ name, as: name, from: "@directus/sdk" });
 
-    nuxt.options.runtimeConfig.directusClient = defu(
-      {
-        baseUrl,
-        staticToken: options.instance.staticToken,
-        typegen: { introspectionToken: options.client.typegen.introspectionToken },
-        auth: {
-          ...options.client.auth,
-          turnstile: {
-            ...options.client.auth.turnstile,
-            actions: DIRECTUS_TURNSTILE_ACTIONS
+    Object.assign(nuxt.options.runtimeConfig, {
+      directusClient: defu(
+        {
+          baseUrl,
+          ...(options.instance.staticToken ? { staticToken: options.instance.staticToken } : {}),
+          auth: {
+            ...options.client.auth,
+            turnstile: {
+              ...options.client.auth.turnstile,
+              actions: DIRECTUS_TURNSTILE_ACTIONS
+            }
           }
-        }
-      },
-      nuxt.options.runtimeConfig.directusClient
-    );
+        },
+        nuxt.options.runtimeConfig.directusClient
+      )
+    });
     nuxt.options.runtimeConfig.public.directusClient = defu(
       {
         proxy: { path: options.client.proxy.path },
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,
+          maskSecretsInPlayground: options.client.auth.maskSecretsInPlayground,
           turnstile: {
             enabled: options.client.auth.turnstile.enabled,
             actions: DIRECTUS_TURNSTILE_ACTIONS

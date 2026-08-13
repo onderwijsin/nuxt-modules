@@ -90,7 +90,9 @@ const directusAuthSchemaDefaults = {
   enabled: false,
   turnstile: { enabled: false },
   cookie: directusCookieSchemaDefaults,
-  refreshSafetyWindow: 30_000
+  refreshSafetyWindow: 30_000,
+  previousSessionSecrets: [] as string[],
+  maskSecretsInPlayground: true
 } as const;
 
 /**
@@ -109,6 +111,11 @@ const directusAuthSchema = z
       .nonnegative()
       .default(directusAuthSchemaDefaults.refreshSafetyWindow)
       .sensitive(),
+    sessionSecret: z.string().min(32).optional().sensitive(),
+    previousSessionSecrets: z.array(z.string().min(32)).default([]).sensitive(),
+    maskSecretsInPlayground: z
+      .boolean()
+      .default(directusAuthSchemaDefaults.maskSecretsInPlayground),
     passwordResetUrl: z.url().optional().sensitive()
   })
   .default(directusAuthSchemaDefaults);

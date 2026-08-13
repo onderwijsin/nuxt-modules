@@ -143,7 +143,7 @@ export async function createDirectusSession(
     expiresAt: Date.now() + (tokens.expires ?? 900_000),
     snapshot: await fetchDirectusCurrentUser(event, tokens.access_token)
   };
-  setDirectusSession(event, session);
+  await setDirectusSession(event, session);
   return session;
 }
 
@@ -162,7 +162,7 @@ async function waitForRefreshFlight(
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const flight = await storage.getItem<RefreshFlight>(key);
     if (flight?.status === "completed") {
-      setDirectusSession(event, flight.session);
+      await setDirectusSession(event, flight.session);
       return flight.session;
     }
     if (flight?.status === "failed") return undefined;
@@ -184,7 +184,7 @@ async function waitForRefreshFlight(
 export async function ensureFreshDirectusSession(
   event: H3Event
 ): Promise<DirectusSession | undefined> {
-  const current = getDirectusSession(event);
+  const current = await getDirectusSession(event);
   if (!current) return undefined;
   const safetyWindow = useRuntimeConfig(event).directusClient.auth.refreshSafetyWindow;
   if (current.expiresAt > Date.now() + safetyWindow) return current;
@@ -193,7 +193,7 @@ export async function ensureFreshDirectusSession(
   const key = "flight:" + hash(current.refreshToken);
   const existing = await storage.getItem<RefreshFlight>(key);
   if (existing?.status === "completed") {
-    setDirectusSession(event, existing.session);
+    await setDirectusSession(event, existing.session);
     return existing.session;
   }
   if (existing?.status === "failed") {
@@ -212,7 +212,7 @@ export async function ensureFreshDirectusSession(
   );
   const claim = await storage.getItem<RefreshFlight>(key);
   if (claim?.status === "completed") {
-    setDirectusSession(event, claim.session);
+    await setDirectusSession(event, claim.session);
     return claim.session;
   }
   if (claim?.status === "pending" && claim.owner !== owner) {
@@ -232,7 +232,7 @@ export async function ensureFreshDirectusSession(
       snapshot: await fetchDirectusCurrentUser(event, tokens.access_token)
     };
     await storage.setItem(key, { status: "completed", session }, { ttl: REFRESH_RESULT_TTL });
-    setDirectusSession(event, session);
+    await setDirectusSession(event, session);
     return session;
   });
   if (result.error !== null || result.data === null) {
@@ -249,7 +249,7 @@ export async function ensureFreshDirectusSession(
  * @param event - Incoming request event.
  */
 export async function destroyDirectusSession(event: H3Event): Promise<void> {
-  const session = getDirectusSession(event);
+  const session = await getDirectusSession(event);
   const result = await attempt(async () => {
     if (session) {
       await ofetch(getDirectusEndpoint(event, "auth/logout"), {
@@ -269,6 +269,8 @@ export async function destroyDirectusSession(event: H3Event): Promise<void> {
  * @param event - Incoming request event.
  * @returns The safe snapshot or null.
  */
-export function readDirectusSessionSnapshot(event: H3Event): DirectusSessionSnapshot | null {
-  return getDirectusSession(event)?.snapshot ?? null;
+export async function readDirectusSessionSnapshot(
+  event: H3Event
+): Promise<DirectusSessionSnapshot | null> {
+  return (await getDirectusSession(event))?.snapshot ?? null;
 }
