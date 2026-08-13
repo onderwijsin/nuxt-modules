@@ -100,7 +100,9 @@ export default defineNuxtModule<ModuleOptions>({
           options.static ?? [],
           hasKey(nuxt.options, "_directus") &&
             isRecord(nuxt.options._directus) &&
-            hasKey(nuxt.options._directus, "collections")
+            hasKey(nuxt.options._directus, "collections"),
+          options.queryLimit,
+          options.failureMode
         )
     });
 

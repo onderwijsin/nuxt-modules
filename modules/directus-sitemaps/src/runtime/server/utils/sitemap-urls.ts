@@ -7,6 +7,7 @@ import {
   type SitemapUrl
 } from "@onderwijsin/nuxt-directus-config/schema";
 import {
+  attempt,
   isArray,
   isFunction,
   isRecord,
@@ -29,11 +30,15 @@ type GenericDirectusQuery = Query<GenericDirectusSchema, GenericDirectusSchema[s
  *
  * @param event Current request event, when available.
  * @param config Portable collection configuration.
+ * @param queryLimit Maximum number of records requested per built-in Directus page.
+ * @param failureMode Behavior when a collection page cannot be fetched.
  * @returns An array of unknown items
  */
 export async function fetchItemsFromCollection(
   event: H3Event | undefined,
-  config: DirectusCollectionConfig
+  config: DirectusCollectionConfig,
+  queryLimit = 100,
+  failureMode: "best-effort" | "hard-failure" = "best-effort"
 ): Promise<unknown[]> {
   if (config.sitemap === false) return [];
 
@@ -50,15 +55,36 @@ export async function fetchItemsFromCollection(
     return isArray(records) ? records : [];
   }
 
-  const records = await useDirectusServer(
-    readItems<GenericDirectusSchema, string, GenericDirectusQuery>(context.collection, {
-      fields: context.fields,
-      filter: context.filter,
-      limit: -1
-    }),
-    event
-  );
-  return isArray(records) ? records : [];
+  const records: unknown[] = [];
+  let offset = 0;
+
+  while (true) {
+    const pageResult = await attempt(() =>
+      useDirectusServer(
+        readItems<GenericDirectusSchema, string, GenericDirectusQuery>(context.collection, {
+          fields: context.fields,
+          filter: context.filter,
+          limit: queryLimit,
+          offset
+        }),
+        event
+      )
+    );
+    if (pageResult.error !== null) {
+      if (failureMode === "hard-failure") throw pageResult.error;
+      console.error(
+        `Unable to fetch Directus sitemap collection page for "${context.collection}" at offset ${offset}.`,
+        pageResult.error
+      );
+      return [];
+    }
+
+    const page = pageResult.data;
+    const pageRecords = isArray(page) ? page : [];
+    records.push(...pageRecords);
+    if (pageRecords.length < queryLimit) return records;
+    offset += queryLimit;
+  }
 }
 
 /**
@@ -133,9 +159,16 @@ export async function buildSitemapUrls(
   options: {
     filterByCollection?: string;
     excludeStaticUrls?: boolean;
+    queryLimit?: number;
+    failureMode?: "best-effort" | "hard-failure";
   } = {}
 ): Promise<SitemapUrl[]> {
-  const { filterByCollection, excludeStaticUrls } = options;
+  const {
+    filterByCollection,
+    excludeStaticUrls,
+    queryLimit = 100,
+    failureMode = "best-effort"
+  } = options;
 
   const selectedCollections = collections.filter(
     (entry): entry is EnabledCollectionConfig =>
@@ -144,22 +177,36 @@ export async function buildSitemapUrls(
 
   const results = await Promise.allSettled(
     selectedCollections.map(async (collectionConfig) => {
-      const records = await fetchItemsFromCollection(event, collectionConfig);
+      const records = await fetchItemsFromCollection(
+        event,
+        collectionConfig,
+        queryLimit,
+        failureMode
+      );
       const { sitemap } = collectionConfig;
-      const mappedRecords = records.flatMap((record) => {
-        if (!isDefined(record) || record === null) return [];
+      const mappingResult = await attempt(() => {
+        const mappedRecords = records.flatMap((record) => {
+          if (!isDefined(record) || record === null) return [];
 
-        const entry = isFunction(sitemap.mapper)
-          ? sitemap.mapper(record)
-          : sitemap.fieldmap
-            ? mapDirectusItem(record, sitemap.fieldmap)
-            : record;
+          const entry = isFunction(sitemap.mapper)
+            ? sitemap.mapper(record)
+            : sitemap.fieldmap
+              ? mapDirectusItem(record, sitemap.fieldmap)
+              : record;
 
-        return [toSitemapUrl(entry, sitemap._sitemap)].filter(
-          (value): value is SitemapUrl => value !== null
-        );
+          const sitemapUrl = toSitemapUrl(entry, sitemap._sitemap);
+          return sitemapUrl ? [sitemapUrl] : [];
+        });
+        return mappedRecords.filter((record): record is SitemapUrl => record !== null);
       });
-      return mappedRecords.filter((record): record is SitemapUrl => record !== null);
+      if (mappingResult.error !== null || mappingResult.data === null) {
+        console.error(
+          `Unable to map Directus sitemap URLs for "${collectionConfig.collection}".`,
+          mappingResult.error
+        );
+        return [];
+      }
+      return mappingResult.data;
     })
   );
 
@@ -169,6 +216,7 @@ export async function buildSitemapUrls(
       `Unable to build Directus sitemap URLs for "${selectedCollections[index]?.collection}".`,
       result.reason
     );
+    if (failureMode === "hard-failure") throw result.reason;
     return [];
   });
 

@@ -148,6 +148,8 @@ selected:
 | `enablePrettyUrls`   | `true`                                       | Enables pretty sitemap URL routes.                                                          |
 | `cache`              | `{ maxAge: 300, staleMaxAge: 0, swr: true }` | Endpoint cache options in seconds, or `false` to disable caching.                           |
 | `prerenderSitemaps`  | `false`                                      | Prerenders sitemap routes as static output.                                                 |
+| `queryLimit`         | `100`                                        | Maximum number of records requested per built-in Directus page.                             |
+| `failureMode`        | `"best-effort"`                              | `"best-effort"` omits a collection after a failed page; `"hard-failure"` aborts generation. |
 
 Sitemap settings are sensitive because they may include static URLs and delivery policy; they are
 available only to consuming server-side modules.

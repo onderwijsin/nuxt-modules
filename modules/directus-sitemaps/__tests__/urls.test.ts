@@ -79,6 +79,120 @@ describe("Directus sitemap URL building", () => {
     expect(useDirectusServer).not.toHaveBeenCalled();
   });
 
+  it("paginates built-in Directus fetches and maps only after the final page", async () => {
+    const firstPage = Array.from({ length: 2 }, (_, index) => ({ id: index }));
+    const secondPage = [{ id: 2 }];
+    const mapper = vi.fn((item: unknown) => ({
+      loc: `/pages/${isRecord(item) && typeof item.id === "number" ? item.id : "unknown"}`
+    }));
+    useDirectusServer.mockResolvedValueOnce(firstPage).mockResolvedValueOnce(secondPage);
+
+    await expect(
+      buildSitemapUrls(
+        undefined,
+        [
+          {
+            collection: "pages",
+            sitemap: { fields: ["id"], filter: { published: { _eq: true } }, mapper },
+            prerender: false
+          }
+        ],
+        [],
+        { queryLimit: 2 }
+      )
+    ).resolves.toEqual([
+      { loc: "/pages/0", _sitemap: undefined },
+      { loc: "/pages/1", _sitemap: undefined },
+      { loc: "/pages/2", _sitemap: undefined }
+    ]);
+    expect(mapper).toHaveBeenCalledTimes(3);
+    expect(useDirectusServer).toHaveBeenCalledTimes(2);
+    expect(useDirectusServer).toHaveBeenNthCalledWith(1, expect.objectContaining({}), undefined);
+  });
+
+  it("forwards fields and filters to every page and stops at a short page", async () => {
+    useDirectusServer
+      .mockResolvedValueOnce([{ id: 1 }, { id: 2 }])
+      .mockResolvedValueOnce([{ id: 3 }]);
+
+    await fetchItemsFromCollection(
+      undefined,
+      {
+        collection: "pages",
+        sitemap: { fields: ["id"], filter: { published: { _eq: true } } },
+        prerender: false
+      },
+      2
+    );
+
+    expect(useDirectusServer).toHaveBeenCalledTimes(2);
+    expect(useDirectusServer.mock.calls.map(([command]) => command)).toHaveLength(2);
+  });
+
+  it("supports hard failure when a later built-in page cannot be fetched", async () => {
+    const error = new Error("Directus unavailable");
+    useDirectusServer.mockResolvedValueOnce([{ id: 1 }]).mockRejectedValueOnce(error);
+
+    await expect(
+      buildSitemapUrls(undefined, [{ collection: "pages", sitemap: {}, prerender: false }], [], {
+        queryLimit: 1,
+        failureMode: "hard-failure"
+      })
+    ).rejects.toBe(error);
+  });
+
+  it("omits only the failed collection in best-effort mode", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    useDirectusServer
+      .mockResolvedValueOnce([{ id: 1 }])
+      .mockRejectedValueOnce(new Error("Later page unavailable"));
+
+    await expect(
+      buildSitemapUrls(
+        undefined,
+        [
+          { collection: "broken", sitemap: {}, prerender: false },
+          {
+            collection: "working",
+            sitemap: { fetcher: async () => [{ loc: "/working" }] },
+            prerender: false
+          }
+        ],
+        [],
+        { queryLimit: 1, failureMode: "best-effort" }
+      )
+    ).resolves.toEqual([{ loc: "/working", _sitemap: undefined }]);
+    expect(error).toHaveBeenCalledWith(
+      'Unable to fetch Directus sitemap collection page for "broken" at offset 1.',
+      expect.any(Error)
+    );
+  });
+
+  it("keeps mapper failures best-effort even in hard-failure mode", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(
+      buildSitemapUrls(
+        undefined,
+        [
+          {
+            collection: "broken",
+            sitemap: {
+              fetcher: async () => [{}],
+              mapper: () => {
+                throw new Error("Mapper failed");
+              }
+            },
+            prerender: false
+          }
+        ],
+        [],
+        { failureMode: "hard-failure" }
+      )
+    ).resolves.toEqual([]);
+    expect(error).toHaveBeenCalledTimes(1);
+  });
+
   it("supports declarative field maps and ignores non-array Directus responses", async () => {
     expect(
       mapDirectusItem(
