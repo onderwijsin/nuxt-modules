@@ -148,6 +148,12 @@
       "skillPath": "skills/unhead-vue-skilld/SKILL.md",
       "computedHash": "537862d89be39dd766d18e12ddf8a2332654d5bd221adf264ffc0976ce0f21d7"
     },
+    "varlock": {
+      "source": "dmno-dev/varlock",
+      "sourceType": "github",
+      "skillPath": "skills/varlock/SKILL.md",
+      "computedHash": "243e80968182a042d53681116a24a93ad41faf26512d5894b9cbfcb92014ce88"
+    },
     "vite": {
       "source": "antfu/skills",
       "sourceType": "github",

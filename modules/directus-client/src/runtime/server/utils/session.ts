@@ -46,7 +46,7 @@ const directusSessionSnapshotSchema = z.object({
 const directusSessionSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1),
-  expiresAt: z.number(),
+  expiresAt: z.number().int().positive(),
   snapshot: directusSessionSnapshotSchema
 });
 
@@ -140,12 +140,16 @@ async function unsealDirectusSession(
 }
 
 /**
- * Seals a Directus session with the active secret and writes its versioned cookie.
+ * Seals a Directus session without writing it to the response.
  *
  * @param event - Incoming request event.
  * @param session - Server-only session payload.
+ * @returns A bounded, versioned sealed session value.
  */
-export async function setDirectusSession(event: H3Event, session: DirectusSession): Promise<void> {
+export async function sealDirectusSession(
+  event: H3Event,
+  session: DirectusSession
+): Promise<string> {
   const [secret] = sessionSecrets(event);
   if (!secret) throw new Error("Directus session secret is not configured");
 
@@ -161,8 +165,28 @@ export async function setDirectusSession(event: H3Event, session: DirectusSessio
   if (cookieValue.length > DIRECTUS_SESSION_COOKIE_LIMIT) {
     throw new Error("Directus session exceeds the cookie size limit");
   }
+  return cookieValue;
+}
+
+/**
+ * Writes a previously sealed Directus session to its configured cookie.
+ *
+ * @param event - Incoming request event.
+ * @param cookieValue - Versioned sealed session value.
+ */
+export function writeDirectusSessionCookie(event: H3Event, cookieValue: string): void {
   const auth = useRuntimeConfig(event).directusClient.auth;
   setCookie(event, auth.cookie.name, cookieValue, cookieOptions(event));
+}
+
+/**
+ * Seals a Directus session with the active secret and writes its versioned cookie.
+ *
+ * @param event - Incoming request event.
+ * @param session - Server-only session payload.
+ */
+export async function setDirectusSession(event: H3Event, session: DirectusSession): Promise<void> {
+  writeDirectusSessionCookie(event, await sealDirectusSession(event, session));
 }
 
 /**
@@ -172,13 +196,15 @@ export async function setDirectusSession(event: H3Event, session: DirectusSessio
  * session data.
  *
  * @param event - Incoming request event.
+ * @param sealedValue - Optional versioned sealed value supplied by refresh coordination.
  * @returns The validated session or undefined.
  */
 export async function getDirectusSessionDetails(
-  event: H3Event
+  event: H3Event,
+  sealedValue?: string
 ): Promise<ResolvedDirectusSession | undefined> {
   const config = useRuntimeConfig(event);
-  const value = getCookie(event, config.directusClient.auth.cookie.name);
+  const value = sealedValue ?? getCookie(event, config.directusClient.auth.cookie.name);
   if (!isString(value) || !isNonBlankString(value)) return undefined;
   if (!value.startsWith(DIRECTUS_SESSION_DATA_PREFIX)) {
     deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
@@ -190,6 +216,10 @@ export async function getDirectusSessionDetails(
     value.slice(DIRECTUS_SESSION_DATA_PREFIX.length)
   );
   if (resolved) {
+    if (resolved.session.expiresAt <= Date.now()) {
+      deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
+      return undefined;
+    }
     if (resolved.matchedSecretSlot !== "active") await setDirectusSession(event, resolved.session);
     return resolved;
   }

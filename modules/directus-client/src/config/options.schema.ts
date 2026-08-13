@@ -11,7 +11,7 @@ export const directusClientOptionsSchema = directusConfigSchema
   .safeExtend({
     enabled: enabled.default(true),
     instance: directusInstanceSchema.prefault({}),
-    client: directusClientSchema.prefault({})
+    client: directusClientSchema.prefault({ auth: { maskSecretsInPlayground: true } })
   })
   .superRefine((options, context) => {
     // The shared schema is intentionally composable; this client boundary owns the

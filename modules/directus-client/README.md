@@ -293,7 +293,9 @@ Authentication routes are registered under `/_directus/auth/`: `login`, `refresh
 authenticated Directus request when it enters the configured safety window. Concurrent refreshes are
 coalesced through Nitro storage. Cross-instance coordination requires a shared, read-after-write
 consistent Nitro storage driver; the default in-memory driver cannot provide that guarantee, and
-deployment-level refresh races remain possible otherwise.
+deployment-level refresh races remain possible otherwise. Refresh results written to that storage
+are H3-sealed session values rather than plaintext token pairs; the configured Nitro storage backend
+must still be treated as sensitive infrastructure.
 
 The login and password-request routes accept emails up to 1024 characters. Login passwords and
 password-reset passwords may be up to 512 characters, login OTPs up to 6 characters, and
@@ -303,6 +305,10 @@ to Directus.
 Authentication mutations require an `Origin` or `Referer` matching the application origin. Missing
 or cross-origin metadata is rejected with `403`, including when the session cookie uses
 `sameSite: "none"`.
+
+The sealed-session inspection endpoint belongs only to the local playground and returns `404` in
+production builds. Keep the playground out of production deployments and leave secret masking
+enabled unless a local diagnostic explicitly requires otherwise.
 
 ### Turnstile protection
 

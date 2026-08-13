@@ -215,7 +215,9 @@ snapshot identity-only; role, policy, and permission helpers are not part of thi
 The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
 state. Hydration therefore does not require a session request. Server-side refresh coordination uses
 Nitro storage. A shared, read-after-write consistent storage driver is required for coordination
-across processes or Cloudflare isolates; the default in-memory driver is instance-local.
+across processes or Cloudflare isolates; the default in-memory driver is instance-local. Completed
+refresh results are H3-sealed before they are stored, but the configured storage backend remains
+sensitive infrastructure.
 
 When `client.auth.enabled` is `false`, the module does not read, refresh, forward, or serialize
 Directus session cookies. Static, preview, and unauthenticated access continue to work.
@@ -316,6 +318,9 @@ When `client.auth.enabled` is `true`, the module registers:
 All authentication mutations require an `Origin` or `Referer` matching the application origin.
 Missing or cross-origin metadata is rejected with `403`, including when the session cookie uses
 `sameSite: "none"`.
+
+The sealed-session inspection endpoint is available only in the local development playground and
+returns `404` in production builds. Do not deploy the playground as an application environment.
 
 Directus MFA failures are recognized by `useDirectusError(error).isOtpError`.
 

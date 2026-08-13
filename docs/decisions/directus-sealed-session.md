@@ -52,7 +52,8 @@ silently reinterpret untrusted data.
 The complete session contains access and refresh tokens but remains in server runtime code. Only the
 token-free user snapshot enters Nuxt application state. Invalid, expired, tampered, wrong-key, and
 schema-invalid cookies fail closed. Sealed values are bounded by the Directus cookie-size guard and
-are never logged.
+are never logged. Refresh coordination stores H3-sealed session values rather than plaintext token
+pairs, while the configured Nitro storage backend remains sensitive infrastructure.
 
 Directus remains the authorization boundary. The session snapshot is for request credential
 selection and UI state, not application-side permission decisions.

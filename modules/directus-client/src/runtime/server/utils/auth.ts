@@ -10,9 +10,12 @@ import { z } from "zod";
 import {
   clearDirectusSession,
   getDirectusSession,
+  getDirectusSessionDetails,
+  sealDirectusSession,
   setDirectusSession,
   type DirectusSession,
-  type DirectusSessionSnapshot
+  type DirectusSessionSnapshot,
+  writeDirectusSessionCookie
 } from "./session";
 
 const currentUserFields = ["id", "email", "first_name", "last_name"] as const;
@@ -41,7 +44,7 @@ interface PendingRefreshFlight {
 
 interface CompletedRefreshFlight {
   readonly status: "completed";
-  readonly session: DirectusSession;
+  readonly sealedSession: string;
 }
 
 interface FailedRefreshFlight {
@@ -162,13 +165,31 @@ async function waitForRefreshFlight(
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const flight = await storage.getItem<RefreshFlight>(key);
     if (flight?.status === "completed") {
-      await setDirectusSession(event, flight.session);
-      return flight.session;
+      const session = await readSealedRefreshSession(event, flight.sealedSession);
+      if (!session) return undefined;
+      return session;
     }
     if (flight?.status === "failed") return undefined;
     await new Promise<void>((resolve) => setTimeout(resolve, 100));
   }
   return undefined;
+}
+
+/**
+ * Restores a sealed refresh result and writes it to the current response cookie.
+ *
+ * @param event - Incoming request event.
+ * @param sealedSession - H3-sealed, versioned session value from Nitro storage.
+ * @returns The validated session or undefined when the stored value is invalid or expired.
+ */
+async function readSealedRefreshSession(
+  event: H3Event,
+  sealedSession: string
+): Promise<DirectusSession | undefined> {
+  const resolved = await getDirectusSessionDetails(event, sealedSession);
+  if (!resolved) return undefined;
+  if (resolved.matchedSecretSlot === "active") writeDirectusSessionCookie(event, sealedSession);
+  return resolved.session;
 }
 
 /**
@@ -193,8 +214,7 @@ export async function ensureFreshDirectusSession(
   const key = "flight:" + hash(current.refreshToken);
   const existing = await storage.getItem<RefreshFlight>(key);
   if (existing?.status === "completed") {
-    await setDirectusSession(event, existing.session);
-    return existing.session;
+    return readSealedRefreshSession(event, existing.sealedSession);
   }
   if (existing?.status === "failed") {
     clearDirectusSession(event);
@@ -212,8 +232,7 @@ export async function ensureFreshDirectusSession(
   );
   const claim = await storage.getItem<RefreshFlight>(key);
   if (claim?.status === "completed") {
-    await setDirectusSession(event, claim.session);
-    return claim.session;
+    return readSealedRefreshSession(event, claim.sealedSession);
   }
   if (claim?.status === "pending" && claim.owner !== owner) {
     return waitForRefreshFlight(event, key);
@@ -231,8 +250,9 @@ export async function ensureFreshDirectusSession(
       expiresAt: Date.now() + (tokens.expires ?? 900_000),
       snapshot: await fetchDirectusCurrentUser(event, tokens.access_token)
     };
-    await storage.setItem(key, { status: "completed", session }, { ttl: REFRESH_RESULT_TTL });
-    await setDirectusSession(event, session);
+    const sealedSession = await sealDirectusSession(event, session);
+    await storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL });
+    writeDirectusSessionCookie(event, sealedSession);
     return session;
   });
   if (result.error !== null || result.data === null) {

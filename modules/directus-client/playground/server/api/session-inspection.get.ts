@@ -1,4 +1,4 @@
-import { getCookie, defineEventHandler } from "h3";
+import { createError, getCookie, defineEventHandler } from "h3";
 import { useRuntimeConfig } from "#imports";
 
 import { getDirectusSessionDetails } from "../../../src/runtime/server/utils/session";
@@ -9,6 +9,8 @@ function maskSecret(value: string): string {
 }
 
 export default defineEventHandler(async (event) => {
+  if (!import.meta.dev) throw createError({ statusCode: 404, statusMessage: "Not found" });
+
   const config = useRuntimeConfig(event);
   const cookieName = config.directusClient.auth.cookie.name;
   const encrypted = getCookie(event, cookieName);

@@ -96,6 +96,14 @@ describe("Directus sealed session state", () => {
     state.config.directusClient.auth.cookie.maxAge = 2_592_000;
   });
 
+  it("rejects sessions whose Directus token expiry has passed", async () => {
+    const writeEvent = createTestEvent();
+    await setDirectusSession(writeEvent, { ...session, expiresAt: Date.now() - 1 });
+    const cookie = cookieFromEvent(writeEvent);
+
+    await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toBeUndefined();
+  });
+
   it("requires an active session secret to seal", async () => {
     const secret = state.config.directusClient.auth.sessionSecret;
     state.config.directusClient.auth.sessionSecret = "";
