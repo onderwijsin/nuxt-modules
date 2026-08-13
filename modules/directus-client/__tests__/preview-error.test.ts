@@ -98,7 +98,7 @@ describe("Directus error normalization", () => {
   it("recognizes expiry and safely handles malformed or unknown input", () => {
     expect(
       useDirectusError({ errors: [{ message: "expired", extensions: { code: "TOKEN_EXPIRED" } }] })
-    ).toMatchObject({ isDirectusError: true, tokenExpired: true, isTokenExpiredError: true });
+    ).toMatchObject({ isDirectusError: true, isTokenExpiredError: true });
     expect(
       useDirectusError({
         errors: [{ message: "bad token", extensions: { code: "INVALID_TOKEN" } }]
@@ -117,6 +117,77 @@ describe("Directus error normalization", () => {
       isDirectusError: false,
       errors: []
     });
+  });
+
+  it("normalizes local auth validation issues with field-specific codes and flags", () => {
+    const result = useDirectusError({
+      statusCode: 400,
+      data: {
+        issues: [
+          {
+            code: "too_big",
+            maximum: 512,
+            inclusive: true,
+            path: ["password"],
+            message: "Too big: expected string to have <=512 characters"
+          },
+          {
+            code: "invalid_format",
+            format: "email",
+            path: ["email"],
+            message: "Invalid email address"
+          },
+          {
+            code: "too_big",
+            maximum: 6,
+            path: ["otp"],
+            message: "OTP is too long"
+          },
+          {
+            code: "too_big",
+            maximum: 1024,
+            path: ["token"],
+            message: "Reset token is too long"
+          }
+        ]
+      }
+    });
+
+    expect(result).toMatchObject({
+      isDirectusError: false,
+      isNitroError: true,
+      statusCode: 400,
+      isValidationError: true,
+      isInvalidAuthInput: true,
+      isInvalidEmailInput: true,
+      isInvalidPasswordInput: true,
+      isInvalidOtpInput: true,
+      isInvalidPasswordResetTokenInput: true
+    });
+    if (result.isNitroError) {
+      expect(result.errors).toHaveLength(4);
+      expect(result.errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: "INVALID_PASSWORD_INPUT",
+            message: "Too big: expected string to have <=512 characters",
+            extensions: expect.objectContaining({ field: "password", maximum: 512 })
+          }),
+          expect.objectContaining({ code: "INVALID_EMAIL_INPUT" })
+        ])
+      );
+    }
+  });
+
+  it("keeps unrelated and Directus errors distinct from custom errors", () => {
+    expect(useDirectusError(new Error("network"))).toMatchObject({
+      isDirectusError: false,
+      isNitroError: false,
+      errors: []
+    });
+    expect(
+      useDirectusError({ errors: [{ message: "denied", extensions: { code: "FORBIDDEN" } }] })
+    ).toMatchObject({ isDirectusError: true, isNitroError: false });
   });
 
   it("exposes shortcuts for credential, availability, and route errors", () => {

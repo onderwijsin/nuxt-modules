@@ -137,21 +137,21 @@ const requestStatus = computed(() => {
       </div>
     </section>
 
-    <UAlert
-      :color="config.public.playgroundPreviewToken ? 'success' : 'warning'"
-      variant="soft"
-      icon="i-lucide-key-round"
-      :title="
-        config.public.playgroundPreviewToken
-          ? 'Preview token configured'
-          : 'Preview token not configured'
-      "
-      :description="
-        config.public.playgroundPreviewToken
-          ? 'The simulated preview can resolve its request-scoped token.'
-          : 'Set DIRECTUS_STATIC_TOKEN to enable the simulated preview request.'
-      "
-      :actions="[{ label: 'Open preview', to: previewUrl, color: 'neutral', variant: 'outline' }]"
-    />
+    <UCard v-if="error">
+      <template #header>
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-sm text-muted">Error response</p>
+            <h2 class="mt-1 text-xl font-semibold text-highlighted">
+              Check the error returned by Directus Client
+            </h2>
+          </div>
+          <UBadge color="error" variant="subtle">
+            {{ error?.status }}
+          </UBadge>
+        </div>
+      </template>
+      <pre class="overflow-auto rounded-lg bg-muted/30 p-4 text-sm text-muted">{{ error }}</pre>
+    </UCard>
   </UContainer>
 </template>

@@ -158,6 +158,7 @@ useDirectusError(error: unknown): DirectusErrorResult
 Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. A normalized result has:
 
 - `isDirectusError`;
+- `isCustomError` for module-generated validation errors;
 - `errors`, containing safe `message`, `code`, and `extensions` values;
 - optional `statusCode`;
 - `isOtpError`;
@@ -170,7 +171,13 @@ Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. A normalized resul
 - `isServiceUnavailableError`; and
 - `isRouteNotFoundError`.
 
-Unknown errors return the same boolean fields as `false` and an empty `errors` array.
+Local authentication validation failures also expose `isInvalidAuthInput`, `isInvalidEmailInput`,
+`isInvalidPasswordInput`, `isInvalidOtpInput`, and `isInvalidPasswordResetTokenInput`. Their
+`errors` entries use custom codes such as `INVALID_PASSWORD_INPUT` and include safe field, message,
+and constraint details. Directus errors retain their upstream codes; custom codes are not added to
+Directus error envelopes.
+
+Unknown errors return both discriminator flags as `false` and an empty `errors` array.
 
 ### `useDirectusAuth`
 
@@ -294,14 +301,14 @@ Commands not configured for auto-import can be imported directly from `@directus
 
 When `client.auth.enabled` is `true`, the module registers:
 
-| Method | Route                              | Contract                                                             |
-| ------ | ---------------------------------- | -------------------------------------------------------------------- |
-| `POST` | `/_directus/auth/login`            | Validates email/password/optional OTP and returns the safe snapshot. |
-| `POST` | `/_directus/auth/refresh`          | Refreshes the cookie session and returns the safe snapshot.          |
-| `POST` | `/_directus/auth/logout`           | Attempts upstream logout, clears local state, and returns `204`.     |
-| `GET`  | `/_directus/auth/session`          | Returns the persisted safe snapshot without contacting Directus.     |
-| `POST` | `/_directus/auth/password-request` | Proxies the email and configured reset URL.                          |
-| `POST` | `/_directus/auth/password-reset`   | Proxies the reset token and new password.                            |
+| Method | Route                              | Contract                                                                                             |
+| ------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `POST` | `/_directus/auth/login`            | Validates email (max 1024), password (max 512), optional OTP (max 6), and returns the safe snapshot. |
+| `POST` | `/_directus/auth/refresh`          | Refreshes the cookie session and returns the safe snapshot.                                          |
+| `POST` | `/_directus/auth/logout`           | Attempts upstream logout, clears local state, and returns `204`.                                     |
+| `GET`  | `/_directus/auth/session`          | Returns the persisted safe snapshot without contacting Directus.                                     |
+| `POST` | `/_directus/auth/password-request` | Validates email (max 1024), then proxies it with the configured reset URL.                           |
+| `POST` | `/_directus/auth/password-reset`   | Validates the reset token (max 1024) and new password (max 512), then proxies them.                  |
 
 All authentication mutations require an `Origin` or `Referer` matching the application origin.
 Missing or cross-origin metadata is rejected with `403`, including when the session cookie uses

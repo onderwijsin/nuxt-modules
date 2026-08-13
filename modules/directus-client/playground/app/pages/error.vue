@@ -4,6 +4,12 @@ import { attempt } from "@onderwijsin/nuxt-module-utils";
 const toast = useToast();
 
 type DirectusErrorFlag =
+  | "isNitroError"
+  | "isInvalidAuthInput"
+  | "isInvalidEmailInput"
+  | "isInvalidPasswordInput"
+  | "isInvalidOtpInput"
+  | "isInvalidPasswordResetTokenInput"
   | "isOtpError"
   | "isInvalidCredentialError"
   | "isForbiddenError"
@@ -15,6 +21,34 @@ type DirectusErrorFlag =
   | "isRouteNotFoundError";
 
 const scenarios = [
+  {
+    key: "nitroEmail",
+    title: "Invalid email input",
+    description: "A local Nitro validator rejected the email format.",
+    flag: "isInvalidEmailInput",
+    icon: "i-lucide-at-sign"
+  },
+  {
+    key: "nitroPassword",
+    title: "Invalid password input",
+    description: "A local Nitro validator rejected an oversized password.",
+    flag: "isInvalidPasswordInput",
+    icon: "i-lucide-key-round"
+  },
+  {
+    key: "nitroOtp",
+    title: "Invalid OTP input",
+    description: "A local Nitro validator rejected an oversized OTP.",
+    flag: "isInvalidOtpInput",
+    icon: "i-lucide-scan-line"
+  },
+  {
+    key: "nitroResetToken",
+    title: "Invalid reset token input",
+    description: "A local Nitro validator rejected an oversized reset token.",
+    flag: "isInvalidPasswordResetTokenInput",
+    icon: "i-lucide-key-square"
+  },
   {
     key: "otp",
     title: "Invalid one-time password",
@@ -88,6 +122,11 @@ const scenarios = [
 
 const pending = ref<string | null>(null);
 
+/**
+ * Requests a playground error endpoint and turns non-success responses into thrown values.
+ * @param url Error endpoint URL.
+ * @returns A promise that resolves for successful responses.
+ */
 async function requestError(url: string): Promise<void> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -95,6 +134,11 @@ async function requestError(url: string): Promise<void> {
   }
 }
 
+/**
+ * Triggers a selected normalized-error example and reports the matched flag in a toast.
+ * @param key Playground error scenario key.
+ * @returns A promise that resolves after the scenario has been handled.
+ */
 async function triggerError(key: (typeof scenarios)[number]["key"]) {
   pending.value = key;
   const scenario = scenarios.find((entry) => entry.key === key);
@@ -111,7 +155,7 @@ async function triggerError(key: (typeof scenarios)[number]["key"]) {
       const errorMessage =
         firstError?.message ??
         (result.error instanceof Error ? result.error.message : "The request failed.");
-      const matchedFlag = directusError.isDirectusError && directusError[scenario.flag];
+      const matchedFlag = directusError[scenario.flag];
 
       toast.add({
         title: `Caught ${errorType}`,

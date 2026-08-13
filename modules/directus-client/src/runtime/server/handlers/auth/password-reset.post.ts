@@ -7,8 +7,8 @@ import { z } from "zod";
 import { assertDirectusEventSameOrigin } from "../../utils/csrf";
 
 const passwordResetSchema = z.object({
-  token: z.string().min(1),
-  password: z.string().min(1)
+  token: z.string().min(1).max(1024),
+  password: z.string().min(1).max(512)
 });
 
 export default defineEventHandler(async (event) => {

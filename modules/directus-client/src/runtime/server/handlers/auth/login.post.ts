@@ -6,9 +6,9 @@ import { assertDirectusEventSameOrigin } from "../../utils/csrf";
 import { assertDirectusTurnstile } from "../../utils/turnstile";
 
 const loginSchema = z.object({
-  email: z.email(),
-  password: z.string().min(1),
-  otp: z.string().min(1).optional()
+  email: z.email().max(1024),
+  password: z.string().min(1).max(512),
+  otp: z.string().min(1).max(6).optional()
 });
 
 export default defineEventHandler(async (event) => {

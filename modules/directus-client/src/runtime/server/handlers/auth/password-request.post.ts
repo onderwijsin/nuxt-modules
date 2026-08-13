@@ -7,7 +7,7 @@ import { z } from "zod";
 import { assertDirectusEventSameOrigin } from "../../utils/csrf";
 import { assertDirectusTurnstile } from "../../utils/turnstile";
 
-const passwordRequestSchema = z.object({ email: z.email() });
+const passwordRequestSchema = z.object({ email: z.email().max(1024) });
 
 export default defineEventHandler(async (event) => {
   assertDirectusEventSameOrigin(event);
