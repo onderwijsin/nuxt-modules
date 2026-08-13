@@ -11,18 +11,31 @@ concurrency:
 
 permissions:
   contents: read
-  code-quality: write
+  checks: write
 
 env:
   HUSKY: 0
 
 jobs:
+  workflow_lint:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Lint GitHub Actions workflows
+        uses: devops-actions/actionlint@e7ee33fbf5aa8c9f9ee1145137f3e52e25d6a35b # v0.1.3
+
   detect_changes:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
+      scope: ${{ steps.detect.outputs.scope }}
       full: ${{ steps.detect.outputs.full }}
       packages: ${{ steps.detect.outputs.packages }}
+      prepare_packages: ${{ steps.detect.outputs.prepare_packages }}
       test_paths: ${{ steps.detect.outputs.test_paths }}
+      phases: ${{ steps.detect.outputs.phases }}
+      phase_prepare: ${{ steps.detect.outputs.phase_prepare }}
+      phase_external_consumer: ${{ steps.detect.outputs.phase_external_consumer }}
+      force_external_consumer_check: ${{ steps.detect.outputs.force_external_consumer_check }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -30,18 +43,40 @@ jobs:
       - name: Detect validation scope
         id: detect
         env:
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_BASE_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_SHA: ${{ github.sha }}
         run: node scripts/detect-changes.mjs
 
+  light_quality_check:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.scope == 'light'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install root validation tools
+        run: pnpm install --frozen-lockfile --filter @onderwijsin/nuxt-modules --ignore-scripts
+      - name: Run light checks
+        run: |
+          pnpm format:check
+          pnpm lint
+
   focused_quality_check:
     needs: detect_changes
-    if: needs.detect_changes.outputs.full == 'false' && github.event_name == 'pull_request'
+    if: needs.detect_changes.outputs.scope == 'focused'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
       AFFECTED_PACKAGES: ${{ needs.detect_changes.outputs.packages }}
+      PREPARE_PACKAGES: ${{ needs.detect_changes.outputs.prepare_packages }}
       TEST_PATHS: ${{ needs.detect_changes.outputs.test_paths }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -60,11 +95,14 @@ jobs:
         run: pnpm varlock:load
       - run: pnpm build:utils
       - name: Prepare affected packages
+        if: needs.detect_changes.outputs.phase_prepare == 'true'
         shell: bash
         run: |
-          for package in $AFFECTED_PACKAGES; do
-            pnpm --filter "$package"... --if-present run dev:prepare
+          prepare_args=()
+          for package in $PREPARE_PACKAGES; do
+            prepare_args+=(--filter "$package")
           done
+          pnpm "${prepare_args[@]}" --if-present run dev:prepare
       - name: Run focused checks
         shell: bash
         run: |
@@ -79,7 +117,7 @@ jobs:
 
   full_quality_check:
     needs: detect_changes
-    if: needs.detect_changes.outputs.full == 'true'
+    if: needs.detect_changes.outputs.scope == 'full'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
@@ -98,7 +136,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate playground environments
         run: pnpm varlock:load
-      - run: pnpm build:utils
       - run: pnpm dev:prepare
       - name: Run full quality checks
         shell: bash
@@ -107,7 +144,7 @@ jobs:
           pnpm lint
           pnpm typecheck
           pnpm test:coverage
-      - run: pnpm build
+      - run: pnpm build:packages
       - run: pnpm validate:packages
       - name: Pack and validate package artifacts
         run: pnpm pack:packages "$RUNNER_TEMP/packages"
@@ -127,11 +164,25 @@ jobs:
           label: code-coverage/vitest
 
   external_consumer_check:
-    needs: full_quality_check
-    if: needs.full_quality_check.result == 'success'
+    needs: [detect_changes, focused_quality_check, full_quality_check]
+    if: >-
+      always() &&
+      needs.detect_changes.outputs.scope != 'light' &&
+      (
+        ((needs.detect_changes.outputs.phase_external_consumer == 'true' ||
+            needs.detect_changes.outputs.force_external_consumer_check == 'true') &&
+          (needs.focused_quality_check.result == 'success' || needs.full_quality_check.result == 'success')) ||
+        (needs.detect_changes.outputs.force_external_consumer_check != 'true' &&
+          needs.full_quality_check.result == 'success')
+      )
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    env:
+      PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install Proton Pass CLI
+        if: needs.detect_changes.outputs.force_external_consumer_check == 'true'
+        uses: ./.github/actions/install-proton-pass-cli
       - name: Install pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
@@ -139,7 +190,20 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Validate playground environments
+        if: needs.detect_changes.outputs.force_external_consumer_check == 'true'
+        run: pnpm varlock:load
+      - name: Build fresh package artifacts
+        if: needs.detect_changes.outputs.force_external_consumer_check == 'true'
+        run: |
+          pnpm dev:prepare
+          pnpm build:packages
+      - name: Pack fresh package artifacts
+        if: needs.detect_changes.outputs.force_external_consumer_check == 'true'
+        run: pnpm pack:packages "$RUNNER_TEMP/packages"
       - name: Download packed package artifacts
+        if: needs.detect_changes.outputs.force_external_consumer_check != 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: packed-packages-${{ github.sha }}

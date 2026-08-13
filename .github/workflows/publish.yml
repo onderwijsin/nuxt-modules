@@ -53,9 +53,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate playground environments
         run: pnpm varlock:load
-      - run: pnpm build:utils
       - run: pnpm dev:prepare
-      - run: pnpm build
+      - run: pnpm build:packages
       - run: pnpm validate:packages
       - name: Validate packed modules
         run: pnpm pack:packages "$RUNNER_TEMP/packages"

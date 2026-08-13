@@ -1,0 +1,4 @@
+# Blacksmith supplies these custom runner labels for GitHub-hosted CI workers.
+self-hosted-runner:
+  labels:
+    - blacksmith-*-ubuntu-2404

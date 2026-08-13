@@ -3,6 +3,8 @@
 Read this article for changes under `.github/actions/**` or `.github/workflows/**`. Also read the
 [security guide](security.md) for permissions, secrets, and third-party action requirements.
 
+For the complete event-to-validation flow, read [Continuous integration](ci.md).
+
 ## Pin third-party actions
 
 Every third-party action referenced from `.github/workflows/**` must use a full immutable commit

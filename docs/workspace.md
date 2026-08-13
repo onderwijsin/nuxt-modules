@@ -7,6 +7,8 @@ are included in the root recursive validation commands.
 Read this article for dependency, package-manager, generated-output, command, or validation work.
 Agents also use it whenever a routed task requires repository checks.
 
+For the complete event, detection, phase, and job flow, read [Continuous integration](ci.md).
+
 ## Requirements
 
 - Node.js 24 for local development and CI.
@@ -75,12 +77,10 @@ Supporting packages live under `packages/`:
 - `playground-layer` is a private Nuxt layer containing the shared UI shell and styling used only by
   module playgrounds. It has no standalone build or release workflow.
 
-Supporting packages are type-checked recursively. `@onderwijsin/nuxt-module-utils` must be built
-before workspace preparation so consuming modules can resolve its generated output. Prepare every
-module stub and playground Nuxt types before type checking:
+Supporting packages are type-checked recursively. Root `dev:prepare` builds
+`@onderwijsin/nuxt-module-utils` once before preparing module stubs and playground Nuxt types:
 
 ```sh
-pnpm --filter @onderwijsin/nuxt-module-utils build
 pnpm dev:prepare
 pnpm typecheck
 ```
@@ -113,7 +113,6 @@ Run workspace-wide checks from the root:
 ```sh
 pnpm format:check
 pnpm lint
-pnpm build:utils
 pnpm typecheck
 pnpm test
 pnpm build
@@ -126,7 +125,6 @@ Validate packed modules from outside the workspace by building the packages firs
 a temporary artifact directory, and installing those exact archives into a clean Nuxt application:
 
 ```sh
-pnpm build:utils
 pnpm dev:prepare
 pnpm build
 pnpm pack:packages /tmp/nuxt-external-artifacts
@@ -142,10 +140,11 @@ external services. Pull request CI runs this same consumer validation after pack
 produced, and the publish workflow runs it against the exact artifacts immediately before the
 unchanged Changesets publish step.
 
-The root `build` script follows workspace dependency order for `packages/*` and `modules/*`; it does
-not run playground package build scripts. The recursive `typecheck` script also includes
-playgrounds. Package validation checks publishable metadata and confirms that private workspace
-dependencies do not leak into runtime output.
+The root `build` script builds `@onderwijsin/nuxt-module-utils` once, then follows workspace
+dependency order for publishable modules under `modules/*`; it does not run playground package build
+scripts. `build:packages` is the package-only phase used after preparation by CI and publishing. The
+recursive `typecheck` script also includes playgrounds. Package validation checks publishable
+metadata and confirms that private workspace dependencies do not leak into runtime output.
 
 Pull request CI is change-aware to reduce repeated resource consumption. Ordinary package changes
 run focused preparation, typechecking, and tests for the changed package closure. Root tooling,
@@ -187,17 +186,16 @@ Run repository checks from the root:
 ```sh
 pnpm format:check
 pnpm lint
-pnpm build:utils
 pnpm typecheck
 pnpm test
 pnpm build
 pnpm validate:packages
 ```
 
-Apply formatting and lint fixes with `pnpm format` and `pnpm lint:fix`.
-`@onderwijsin/nuxt-module-utils` must be built before workspace preparation so consuming modules
-resolve its generated declarations. Preparation creates module stubs and playground Nuxt types; the
-recursive build performs full production builds.
+Apply formatting and lint fixes with `pnpm format` and `pnpm lint:fix`. Root preparation builds
+`@onderwijsin/nuxt-module-utils` before consuming modules. Preparation creates module stubs and
+playground Nuxt types; `build` performs the shared utility build once and then runs the module-only
+`build:packages` phase for full production builds.
 
 ### Select additional validation by impact
 
