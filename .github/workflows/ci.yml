@@ -134,7 +134,13 @@ jobs:
           done
       - name: Run focused tests
         if: needs.detect_changes.outputs.phase_test == 'true' && env.TEST_PATHS != ''
-        run: pnpm exec vitest run "$TEST_PATHS" --coverage
+        shell: bash
+        run: |
+          test_paths=()
+          for path in $TEST_PATHS; do
+            test_paths+=("$path")
+          done
+          pnpm exec vitest run "${test_paths[@]}" --coverage
 
   full_quality_check:
     needs: detect_changes
