@@ -283,13 +283,9 @@ describe("detector command integration", () => {
       const summaryText = readFileSync(summary, "utf8");
 
       expect(stdout).toContain("CI validation scope: FOCUSED");
-      expect(stdout).toContain(
-        "Enabled phases: format, lint, prepare, typecheck, test"
-      );
+      expect(stdout).toContain("Enabled phases: format, lint, prepare, typecheck, test");
       expect(outputs).toContain("scope=focused");
-      expect(outputs).toContain(
-        'phases=["format","lint","prepare","typecheck","test"]'
-      );
+      expect(outputs).toContain('phases=["format","lint","prepare","typecheck","test"]');
       expect(outputs).toContain("phase_format=true");
       expect(outputs).toContain("phase_lint=true");
       expect(outputs).toContain("phase_prepare=true");
