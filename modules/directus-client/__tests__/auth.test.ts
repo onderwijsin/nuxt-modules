@@ -189,6 +189,7 @@ describe("Directus session refresh coordination", () => {
 
   it("refreshes an expiring session and publishes the completed flight", async () => {
     state.current = expiringSession();
+    state.session.seal.mockResolvedValue("boop1:opaque-ciphertext");
     const fetch = mockFetch(
       jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
       jsonResponse({ data: { id: "user-1", last_name: "User" } })
@@ -207,7 +208,33 @@ describe("Directus session refresh coordination", () => {
       expect.objectContaining({ status: "completed", sealedSession: expect.any(String) }),
       { ttl: 5_000 }
     );
-    expect(state.storage.setItem.mock.calls[0]?.[1]).not.toHaveProperty("session");
+    const stored = state.storage.setItem.mock.calls[1]?.[1];
+    expect(stored).toEqual({ status: "completed", sealedSession: "boop1:opaque-ciphertext" });
+    expect(JSON.stringify(stored)).not.toContain("new-access");
+    expect(JSON.stringify(stored)).not.toContain("new-refresh");
+  });
+
+  it("waits for a completed refresh published by shared storage", async () => {
+    state.current = expiringSession();
+    const key = "flight:" + hash(state.current.refreshToken);
+    state.storage.records.set(key, {
+      status: "pending",
+      owner: "other-instance",
+      startedAt: Date.now()
+    });
+    const fetch = mockFetch(jsonResponse({}));
+    setTimeout(() => {
+      state.storage.records.set(key, {
+        status: "completed",
+        sealedSession: "boop1:stored-refresh"
+      });
+    }, 5);
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      accessToken: "stored-access",
+      refreshToken: "stored-refresh"
+    });
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("clears the session and publishes failure when refresh fails", async () => {

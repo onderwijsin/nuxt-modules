@@ -297,6 +297,16 @@ deployment-level refresh races remain possible otherwise. Refresh results writte
 are H3-sealed session values rather than plaintext token pairs; the configured Nitro storage backend
 must still be treated as sensitive infrastructure.
 
+#### Rotating the session secret
+
+Rotate `client.auth.sessionSecret` in two deployments: first set the new secret as active while
+keeping the old secret in `client.auth.previousSessionSecrets`, then remove the old secret only
+after all old cookies could have expired. Keep the overlap at least as long as
+`client.auth.cookie.maxAge` plus a short deployment window so rolling instances can read and reseal
+existing sessions. Removing a previous secret invalidates cookies still sealed with it. Keep the old
+secret available during the overlap on every instance, and treat the shared Nitro storage mount as
+sensitive while sealed refresh results from the previous deployment can remain within its short TTL.
+
 The login and password-request routes accept emails up to 1024 characters. Login passwords and
 password-reset passwords may be up to 512 characters, login OTPs up to 6 characters, and
 password-reset tokens up to 1024 characters. Oversized values are rejected before they are forwarded

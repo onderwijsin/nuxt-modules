@@ -381,6 +381,13 @@ receives the Directus URL or a server credential.
   `previousSessionSecrets` for staged key rotation. The module disables H3's derived session header
   and accepts authentication only from the configured cookie.
 
+Rotate the session secret in two stages: deploy the new value as `sessionSecret` while retaining the
+old value in `previousSessionSecrets` on every instance, then remove the old value after at least
+the configured cookie `maxAge` plus a short rolling-deployment window. Reads using the old value are
+resealed with the active secret. Removing a previous value invalidates sessions still using it; the
+shared Nitro storage mount may briefly contain sealed refresh results from the old deployment and
+must remain protected during that overlap.
+
 Generate a session secret with:
 
 ```sh

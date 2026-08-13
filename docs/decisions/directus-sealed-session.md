@@ -41,6 +41,12 @@ New sessions are always sealed with the active secret. Reads try the active secr
 configured previous secrets. A session opened with a previous secret is validated and resealed with
 the active secret. Removing a previous secret invalidates sessions still using it.
 
+Operationally, rotate in two stages: deploy the new active secret while retaining the old secret in
+`previousSessionSecrets` on every instance, then remove the old secret after at least the configured
+cookie `maxAge` plus a short rolling-deployment window. Keep the shared Nitro storage mount
+protected during the overlap because sealed refresh results from the previous deployment may remain
+until their short TTL expires.
+
 The cookie value uses the explicit version prefix `boop1:<data>`. The authenticated session data
 also includes format version `1` and key metadata. Legacy unsigned base64url JSON cookies and
 cookies without the `boop1:` prefix are never accepted as trusted data and are cleared. Future
