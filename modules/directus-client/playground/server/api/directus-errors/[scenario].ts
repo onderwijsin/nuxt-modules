@@ -48,12 +48,44 @@ const scenarios = {
   }
 } as const;
 
+const nitroScenarios = {
+  nitroEmail: {
+    code: "invalid_format",
+    path: ["email"],
+    message: "Invalid email address"
+  },
+  nitroPassword: {
+    code: "too_big",
+    maximum: 512,
+    path: ["password"],
+    message: "Too big: expected string to have <=512 characters"
+  },
+  nitroOtp: {
+    code: "too_big",
+    maximum: 6,
+    path: ["otp"],
+    message: "Too big: expected string to have <=6 characters"
+  },
+  nitroResetToken: {
+    code: "too_big",
+    maximum: 1024,
+    path: ["token"],
+    message: "Too big: expected string to have <=1024 characters"
+  }
+} as const;
+
 /** Returns a Directus-shaped failure for playground error handling examples.
  * @param event Nitro request event.
  * @returns A Directus-compatible error response.
  */
 export default defineEventHandler((event) => {
   const scenario = getRouterParam(event, "scenario");
+  const nitroResult = Object.entries(nitroScenarios).find(([key]) => key === scenario)?.[1];
+  if (nitroResult) {
+    setResponseStatus(event, 400);
+    return { issues: [nitroResult] };
+  }
+
   const result = Object.entries(scenarios).find(([key]) => key === scenario)?.[1];
 
   if (!result) {

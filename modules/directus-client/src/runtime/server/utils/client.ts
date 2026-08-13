@@ -31,7 +31,6 @@ export function createServerDirectusClient(
 
       let sessionAccessToken: string | undefined;
       if (config.directusClient.auth.enabled) {
-        console.log("Ensuring fresh Directus session on request");
         const { ensureFreshDirectusSession } = await import("./auth.js");
         const session = nuxtApp
           ? await nuxtApp.runWithContext(() => ensureFreshDirectusSession(event))

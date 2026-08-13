@@ -38,6 +38,8 @@ Some modules have accepted design decisions that further constrain implementatio
 
 - Directus session authentication:
   [Directus session authentication](../decisions/directus-session-auth.md)
+- Directus and Nitro error normalization:
+  [Directus and Nitro error normalization](../decisions/directus-error-normalization.md)
 - Simple rate limiter guarantees: [Simple rate limiter](../decisions/simple-rate-limiter.md)
 - Static-text translation surface:
   [Static text and Vue I18n compatibility](../decisions/static-text-i18n-compatibility.md)

@@ -136,10 +136,15 @@ read preview values from the request event.
 useDirectusError(error: unknown): DirectusErrorResult
 ```
 
-Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. The result has `isDirectusError`, a
-safe `errors` list, an optional `statusCode`, and flags for OTP, invalid credentials, forbidden,
-expired or invalid tokens, validation, rate-limit, service-unavailable, and route-not-found errors.
-Unknown errors return the same flags as `false` with an empty `errors` list.
+Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. The result has `isDirectusError`,
+`isNitroError`, a safe `errors` list, an optional `statusCode`, and flags for OTP, invalid
+credentials, forbidden, expired or invalid tokens, validation, rate-limit, service-unavailable, and
+route-not-found errors. Local authentication validation failures are marked with `isNitroError` and
+expose `isInvalidAuthInput`, `isInvalidEmailInput`, `isInvalidPasswordInput`, `isInvalidOtpInput`,
+and `isInvalidPasswordResetTokenInput`. Their `errors` entries use Nitro codes such as
+`INVALID_PASSWORD_INPUT` and preserve safe validation details including the field, message, and
+maximum length. Unknown errors return both discriminator flags as `false` with an empty `errors`
+list.
 
 ### `useDirectusAuth`
 
@@ -273,6 +278,11 @@ authenticated Directus request when it enters the configured safety window. Conc
 coalesced through Nitro storage. Cross-instance coordination requires a shared, read-after-write
 consistent Nitro storage driver; the default in-memory driver cannot provide that guarantee, and
 deployment-level refresh races remain possible otherwise.
+
+The login and password-request routes accept emails up to 1024 characters. Login passwords and
+password-reset passwords may be up to 512 characters, login OTPs up to 6 characters, and
+password-reset tokens up to 1024 characters. Oversized values are rejected before they are forwarded
+to Directus.
 
 Authentication mutations require an `Origin` or `Referer` matching the application origin. Missing
 or cross-origin metadata is rejected with `403`, including when the session cookie uses
