@@ -11,7 +11,8 @@
     "typecheck": "nuxt typecheck",
     "build": "nuxt build",
     "build:cloudflare": "NITRO_PRESET=cloudflare_module nuxt build",
-    "build:node": "NITRO_PRESET=node-server nuxt build"
+    "build:node": "NITRO_PRESET=node-server nuxt build",
+    "varlock:load": "varlock load --agent"
   },
   "dependencies": {
     "@onderwijsin/nuxt-sentry-config": "workspace:*",
@@ -19,6 +20,9 @@
     "playground-layer": "workspace:*"
   },
   "devDependencies": {
+    "@varlock/proton-pass-plugin": "catalog:",
+    "@varlock/vite-integration": "catalog:",
+    "varlock": "catalog:",
     "wrangler": "catalog:"
   }
 }

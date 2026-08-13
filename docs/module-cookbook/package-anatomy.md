@@ -27,7 +27,7 @@ modules/<module-name>/
 ├── playground/                        # manual development and integration app
 │   ├── app/                           # pages, components, assets, and app shell (optional)
 │   ├── server/                        # playground-only routes and handlers (optional)
-│   ├── .env.example                   # required variables without secrets (optional)
+│   ├── .env.schema                    # validated environment contract (optional)
 │   ├── nuxt.config.ts
 │   ├── package.json
 │   └── tsconfig.json

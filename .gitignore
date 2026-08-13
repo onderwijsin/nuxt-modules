@@ -66,6 +66,7 @@ nuxt-build.cpuprofile
 # ===================================
 .env
 .env.*
+**/env.d.ts
 !.env.schema
 !.env.example
 !.env.development

@@ -1,3 +1,5 @@
+import { varlockVitePlugin } from "@varlock/vite-integration";
+import { ENV } from "varlock/env";
 import { name as packageName } from "../package.json";
 import type { ModuleOptions, NewsletterProvider } from "../src/config/options.schema";
 
@@ -13,21 +15,14 @@ function selectProvider(provider: NewsletterProvider): NewsletterProvider {
 
 const SELECTED_PROVIDER = selectProvider("loops");
 
-// The fallback values are mainly there for CI (otherwise module options validation fails)
-const loopsListId = process.env.LOOPS_LIST_ID ?? "loops-list-id";
-const loopsApiKey = process.env.LOOPS_API_KEY ?? "loops-api-key";
-const mailchimpListId = process.env.MAILCHIMP_AUDIENCE_ID ?? "mailchimp-audience-id";
-const mailchimpApiKey = process.env.MAILCHIMP_API_KEY ?? "mailchimp-api-key";
-const mailchimpServer = process.env.MAILCHIMP_SERVER ?? "mailchimp-server";
-
 const loopsConfig = {
   provider: "loops",
-  apiKey: loopsApiKey,
+  apiKey: ENV.LOOPS_API_KEY,
   lists: {
-    default: loopsListId,
+    default: ENV.LOOPS_LIST_ID,
     options: [
-      { label: "Nieuwsbrief algemeen", id: loopsListId },
-      { label: "Nieuwsbrief met updates", id: loopsListId }
+      { label: "Nieuwsbrief algemeen", id: ENV.LOOPS_LIST_ID },
+      { label: "Nieuwsbrief met updates", id: ENV.LOOPS_LIST_ID }
     ]
   },
   fields: {
@@ -39,20 +34,20 @@ const loopsConfig = {
 
 const mailchimpConfig = {
   provider: "mailchimp",
-  apiKey: mailchimpApiKey,
-  server: mailchimpServer,
+  apiKey: ENV.MAILCHIMP_API_KEY,
+  server: ENV.MAILCHIMP_SERVER,
   lists: {
-    default: mailchimpListId,
+    default: ENV.MAILCHIMP_AUDIENCE_ID ?? "",
     options: [
       {
         label: "Nieuwsbrief algemeen",
-        id: mailchimpListId,
-        server: mailchimpServer
+        id: ENV.MAILCHIMP_AUDIENCE_ID ?? "",
+        server: ENV.MAILCHIMP_SERVER
       },
       {
         label: "Nieuwsbrief met updates",
-        id: mailchimpListId,
-        server: mailchimpServer
+        id: ENV.MAILCHIMP_AUDIENCE_ID ?? "",
+        server: ENV.MAILCHIMP_SERVER
       }
     ]
   },
@@ -65,6 +60,9 @@ const mailchimpConfig = {
 
 export default defineNuxtConfig({
   extends: ["playground-layer"],
+  vite: {
+    plugins: [varlockVitePlugin({ ssrInjectMode: "auto-load" })]
+  },
   modules: ["@onderwijsin/nuxt-newsletter-signup"],
   appConfig: { packageName },
   newsletterSignup: {
