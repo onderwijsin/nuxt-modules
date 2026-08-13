@@ -20,8 +20,10 @@ article describes the contributor-facing package workflow it selects.
 For a new module, create `modules/<module-name>` with `src/module.ts`, tests, README, changelog,
 package metadata, and an isolated `playground/`. The playground must depend on the local module with
 `workspace:*` and register the module by its public package name. The existing workspace globs
-discover both packages automatically. Also update the external consumer fixture with safe dummy
-configuration and a local sanity assertion for every new publishable module.
+discover both packages automatically. Also add a matching layer under
+`integration/external-consumer/fixture/consumer-layers/<module-name>/` with safe dummy
+configuration, an API sanity endpoint, and a page that renders that endpoint's result. Updating a
+module's consumer-visible behavior requires updating that layer and its assertions as well.
 
 For a runtime utility, use `packages/module-utils` patterns and decide whether it belongs in the
 published `@onderwijsin/nuxt-module-utils` package, side-effect-free, and named-export-only. For
@@ -58,9 +60,11 @@ workflows, shared packages, or unclassified paths fail closed into full validati
 Merge queue and manually dispatched CI always run the full suite: formatting, linting, recursive
 typechecking, coverage tests, all package builds, package metadata validation, packed-artifact
 validation, and the clean external consumer check. The external consumer installs the exact packed
-artifacts produced by the full validation job. Before review, inspect packed output when relevant
-and confirm it contains only the intended `dist` entrypoints, declarations, documentation, and
-licence. Do not commit `.nuxt`, `.output`, `dist`, coverage, or `.tgz` output.
+artifacts produced by the applicable validation job. Before review, inspect packed output when
+relevant and confirm it contains only the intended `dist` entrypoints, declarations, documentation,
+and licence. Do not commit `.nuxt`, `.output`, `dist`, coverage, or `.tgz` output. The full consumer
+module list is discovered from `modules/`, but discovery does not create a layer: a new module
+without a fixture layer will make the full consumer fail until its layer is added.
 
 ## Changesets
 

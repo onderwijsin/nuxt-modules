@@ -133,13 +133,16 @@ pnpm validate:external-consumer --packages-dir=/tmp/nuxt-external-artifacts
 
 The consumer is created under the system temporary directory, resolves a lockfile for the exact
 public package tarballs, then installs from that lockfile with `--frozen-lockfile`. It runs
-`nuxt prepare` and `nuxt build`, starts the Nitro server, and checks both the rendered root page,
-healthcheck routes, generated assets, protected local routes, and selected public runtime APIs.
-Generated pnpm overrides force internal package dependencies to use the matching local tarballs
-instead of a registry copy. The fixture uses dummy service credentials and does not call external
-services. Pull request CI runs this same consumer validation after package artifacts are produced,
-and the publish workflow runs it against the exact artifacts immediately before the unchanged
-Changesets publish step.
+`nuxt prepare` and `nuxt build`, starts the Nitro server, and checks the active layer API sanity
+endpoints and rendered pages, generated assets, protected local routes, and selected public runtime
+APIs. Focused runs activate only layers backed by the focused artifact set; full runs activate every
+module directory discovered under `modules/`. Generated pnpm overrides force internal package
+dependencies to use the matching local tarballs instead of a registry copy, and the runner rejects
+an incomplete internal dependency closure before installation. The fixture uses dummy service
+credentials and does not call external services. Every module layer must keep its credentials and
+assertions local. Pull request CI runs this same consumer validation after package artifacts are
+produced, and the publish workflow runs it against the exact artifacts immediately before the
+unchanged Changesets publish step.
 
 The root `build` script builds `@onderwijsin/nuxt-module-utils` once, then follows workspace
 dependency order for publishable modules under `modules/*`; it does not run playground package build

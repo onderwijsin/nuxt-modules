@@ -54,6 +54,14 @@ trusted diff event, a path is unknown, or a repository-wide path is touched. Doc
 explicitly ignored paths are light only when no package-affecting path is present alongside them.
 Lockfile changes remain full by policy.
 
+Integration changes use one deliberate exception. Changes under
+`integration/external-consumer/fixture/consumer-layers/<module-name>/` are classified as focused
+changes for the matching `@onderwijsin/nuxt-<module-name>` package, because the focused external
+consumer activates exactly those layers. Changes to the shared runner, layer registry, profile
+logic, root fixture, or consumer contract tests remain full-validation triggers because they can
+change behavior for the entire consumer matrix. Markdown-only integration documentation remains
+light through the documentation-only rule.
+
 This conservative boundary is intentional: local or otherwise ambiguous repository files also remain
 full-validation triggers. More precise local-file classification and importer-aware lockfile
 classification are follow-up work, not assumptions embedded in the current contract.
@@ -81,7 +89,7 @@ skipped. Job setup remains only where it is needed to run another enabled phase.
 | Scope     | Execution strategy                                     | Default phases                                                                             |
 | --------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
 | `light`   | Repository checks; no package setup or package closure | format, lint                                                                               |
-| `focused` | Affected package closure and its preparation inputs    | format, lint, prepare, typecheck, test                                                     |
+| `focused` | Affected package closure and its preparation inputs    | format, lint, prepare, typecheck, test, pack, external consumer                            |
 | `full`    | Repository-wide and release-facing validation          | format, lint, prepare, typecheck, test, build, package validation, pack, external consumer |
 
 The detector also emits the selected validation and preparation package lists. The validation list
@@ -105,7 +113,8 @@ artifacts, run type checks, or run tests.
 
 `focused_quality_check` installs the workspace, loads Varlock playground environments, builds
 `module-utils` once, prepares the automatically derived package dependency closure in one pnpm
-invocation, then runs formatting, linting, affected type checks, and selected tests.
+invocation, then runs formatting, linting, affected type checks, selected tests, and packs the
+public packages in that same closure for the focused consumer.
 
 ### Full validation
 
@@ -115,10 +124,19 @@ packed artifacts for the normal external-consumer path.
 
 ### External consumer safety validation
 
-For full-scope validation, `external_consumer_check` downloads the packed artifacts from
-`full_quality_check` and validates those exact archives in a clean application. It does not install
-Proton Pass or run Varlock: those are preparation concerns, while the consumer job only needs the
-packed artifacts.
+For focused and full validation, `external_consumer_check` downloads the packed artifacts from the
+successful quality job and validates those exact archives in a clean application. The consumer uses
+`integration/external-consumer/` as a layered fixture: focused runs activate only layers represented
+by the artifact manifest, while full runs activate the complete fixture and assertions. It does not
+install Proton Pass or run Varlock: those are preparation concerns, while the consumer job only
+needs the packed artifacts. Before installation, it verifies that every packed internal workspace
+dependency is present in the artifact set, so a missing closure cannot silently resolve from npm.
+
+The full module list is discovered from the directories under `modules/`. Discovery only identifies
+which package names belong in the complete profile; each module still needs a corresponding fixture
+layer with module options, an API sanity endpoint, and a rendered sanity page. Consequently, adding
+or changing a module's consumer-visible behavior includes updating
+`integration/external-consumer/fixture/consumer-layers/<module-name>/`.
 
 ## Build ownership
 
