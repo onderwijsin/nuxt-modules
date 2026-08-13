@@ -4,6 +4,7 @@ import { $fetch } from "ofetch";
 import { defineStore } from "pinia";
 import { computed, shallowRef } from "vue";
 import { useRuntimeConfig } from "#app";
+import { piniaPluginPersistedstate } from "#imports";
 
 import { toRedirectOrigin, toRedirectPath } from "../../server/utils/path";
 import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../utils/dynamic";
@@ -60,6 +61,7 @@ export const useRedirectsStore = defineStore(
   },
   {
     persist: {
+      storage: piniaPluginPersistedstate.localStorage(),
       pick: ["records", "lastFetched"]
     }
   }
