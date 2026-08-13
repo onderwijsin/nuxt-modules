@@ -25,8 +25,6 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
       github.event.pull_request.head.ref == 'changeset-release/main')
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    env:
-      PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
     outputs:
       releases: ${{ steps.changesets.outputs.publishedPackages }}
     steps:
@@ -52,8 +50,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Validate playground environments
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         run: pnpm varlock:load
       - run: pnpm dev:prepare
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
       - run: pnpm build:packages
       - run: pnpm validate:packages
       - name: Validate packed modules

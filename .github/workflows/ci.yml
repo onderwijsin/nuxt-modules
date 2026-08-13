@@ -84,7 +84,6 @@ jobs:
     if: needs.detect_changes.outputs.scope == 'focused'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
-      PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
       AFFECTED_PACKAGES: ${{ needs.detect_changes.outputs.packages }}
       PREPARE_PACKAGES: ${{ needs.detect_changes.outputs.prepare_packages }}
       TEST_PATHS: ${{ needs.detect_changes.outputs.test_paths }}
@@ -103,11 +102,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate playground environments
         if: needs.detect_changes.outputs.phase_prepare == 'true'
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         run: pnpm varlock:load
       - run: pnpm build:utils
         if: needs.detect_changes.outputs.phase_prepare == 'true'
       - name: Prepare affected packages
         if: needs.detect_changes.outputs.phase_prepare == 'true'
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         shell: bash
         run: |
           prepare_args=()
@@ -123,6 +126,8 @@ jobs:
           if [[ "${{ needs.detect_changes.outputs.phase_lint }}" == "true" ]]; then pnpm lint; fi
       - name: Run focused type checks
         if: needs.detect_changes.outputs.phase_typecheck == 'true'
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         shell: bash
         run: |
           for package in $AFFECTED_PACKAGES; do
@@ -136,8 +141,6 @@ jobs:
     needs: detect_changes
     if: needs.detect_changes.outputs.scope == 'full'
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    env:
-      PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install Proton Pass CLI
@@ -153,9 +156,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate playground environments
         if: needs.detect_changes.outputs.phase_prepare == 'true'
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         run: pnpm varlock:load
       - run: pnpm dev:prepare
         if: needs.detect_changes.outputs.phase_prepare == 'true'
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
       - name: Run full formatting check
         if: needs.detect_changes.outputs.phase_format == 'true'
         run: pnpm format:check
@@ -164,6 +171,8 @@ jobs:
         run: pnpm lint
       - name: Run full typecheck
         if: needs.detect_changes.outputs.phase_typecheck == 'true'
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         run: pnpm typecheck
       - name: Run full tests
         if: needs.detect_changes.outputs.phase_test == 'true'

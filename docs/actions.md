@@ -21,6 +21,15 @@ workflows such as `./.github/workflows/<workflow-name>.yml` are exempt from SHA 
 updating a third-party action, deliberately resolve the desired upstream release or tag to its new
 full commit SHA and retain the corresponding version comment.
 
+### Proton Pass installer exception
+
+The local `.github/actions/install-proton-pass-cli` action is an explicit exception to the
+repository's immutable-reference rule for external CI installation. It invokes Proton's maintained
+installer URL rather than a GitHub Action or a repository-pinned installer artifact. This exception
+is accepted for the current CI setup and means that the Proton Pass CLI installer is not
+reproducible from a reviewed repository diff. It is not a precedent for new remote installers; any
+change to this exception requires a security review and updated documentation.
+
 Custom GitHub Actions live in `.github/actions/<action-name>`. Keep each action self-contained and
 prefer plain Node.js with built-in modules when the action does not need external dependencies.
 
