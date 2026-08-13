@@ -28,15 +28,37 @@ describe("Directus module options", () => {
 
   it("defaults authentication Turnstile protection to disabled", () => {
     expect(
-      directusClientOptionsSchema.parse({ client: { auth: { enabled: true } } })
+      directusClientOptionsSchema.parse({ client: { auth: { enabled: false } } })
     ).toMatchObject({
-      client: { auth: { enabled: true, turnstile: { enabled: false } } }
+      client: { auth: { enabled: false, turnstile: { enabled: false } } }
     });
     expect(
       directusClientOptionsSchema.parse({ client: { auth: { turnstile: { enabled: true } } } })
     ).toMatchObject({
       client: { auth: { turnstile: { enabled: true } } }
     });
+  });
+
+  it("defaults playground masking on and validates sealing secrets", () => {
+    expect(directusClientOptionsSchema.parse({}).client.auth.maskSecretsInPlayground).toBe(true);
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { auth: { sessionSecret: "too-short", previousSessionSecrets: [] } }
+      })
+    ).toThrow();
+    expect(
+      directusClientOptionsSchema.parse({
+        client: {
+          auth: {
+            sessionSecret: "a-valid-directus-session-secret-32-chars",
+            previousSessionSecrets: ["another-valid-directus-session-secret-32-chars"]
+          }
+        }
+      }).client.auth.previousSessionSecrets
+    ).toHaveLength(1);
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { auth: { enabled: true } } })
+    ).toThrow(/sessionSecret is required/);
   });
 
   it("defaults every type-generation augmentation to enabled", () => {

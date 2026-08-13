@@ -9,6 +9,8 @@ export default defineDirectusConfig({
   client: {
     auth: {
       enabled: true,
+      sessionSecret:
+        ENV.DIRECTUS_SESSION_SECRET || "nuxt-directus-development-session-secret-32-chars",
       turnstile: { enabled: true },
       cookie: {
         secure: ENV.DIRECTUS_AUTH_COOKIE_SECURE

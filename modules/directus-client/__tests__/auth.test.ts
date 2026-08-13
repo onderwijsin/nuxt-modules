@@ -19,7 +19,10 @@ const state = vi.hoisted(() => ({
   },
   session: {
     clear: vi.fn(),
-    set: vi.fn()
+    set: vi.fn(),
+    seal: vi.fn(),
+    readDetails: vi.fn(),
+    writeCookie: vi.fn()
   }
 }));
 
@@ -34,7 +37,10 @@ vi.mock("nitropack/runtime", () => ({
 vi.mock("../src/runtime/server/utils/session", () => ({
   clearDirectusSession: state.session.clear,
   getDirectusSession: vi.fn(() => state.current),
-  setDirectusSession: state.session.set
+  getDirectusSessionDetails: state.session.readDetails,
+  sealDirectusSession: state.session.seal,
+  setDirectusSession: state.session.set,
+  writeDirectusSessionCookie: state.session.writeCookie
 }));
 
 const {
@@ -80,6 +86,22 @@ beforeEach(() => {
   });
   state.session.clear.mockReset();
   state.session.set.mockReset();
+  state.session.seal.mockImplementation(
+    async (_event: unknown, session: DirectusSession) => `boop1:${session.refreshToken}`
+  );
+  state.session.readDetails.mockImplementation(async (_event: unknown, sealed: string) => {
+    const refreshToken = sealed.slice("boop1:".length);
+    return {
+      session: {
+        accessToken: refreshToken === "stored-refresh" ? "stored-access" : "new-access",
+        refreshToken,
+        expiresAt: Date.now() + 60_000,
+        snapshot: { userId: "user-1" }
+      },
+      matchedSecretSlot: "active"
+    };
+  });
+  state.session.writeCookie.mockReset();
 });
 
 afterEach(() => {
@@ -167,6 +189,7 @@ describe("Directus session refresh coordination", () => {
 
   it("refreshes an expiring session and publishes the completed flight", async () => {
     state.current = expiringSession();
+    state.session.seal.mockResolvedValue("boop1:opaque-ciphertext");
     const fetch = mockFetch(
       jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
       jsonResponse({ data: { id: "user-1", last_name: "User" } })
@@ -182,9 +205,36 @@ describe("Directus session refresh coordination", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(state.storage.setItem).toHaveBeenCalledWith(
       expect.stringContaining("flight:"),
-      expect.objectContaining({ status: "completed", session }),
+      expect.objectContaining({ status: "completed", sealedSession: expect.any(String) }),
       { ttl: 5_000 }
     );
+    const stored = state.storage.setItem.mock.calls[1]?.[1];
+    expect(stored).toEqual({ status: "completed", sealedSession: "boop1:opaque-ciphertext" });
+    expect(JSON.stringify(stored)).not.toContain("new-access");
+    expect(JSON.stringify(stored)).not.toContain("new-refresh");
+  });
+
+  it("waits for a completed refresh published by shared storage", async () => {
+    state.current = expiringSession();
+    const key = "flight:" + hash(state.current.refreshToken);
+    state.storage.records.set(key, {
+      status: "pending",
+      owner: "other-instance",
+      startedAt: Date.now()
+    });
+    const fetch = mockFetch(jsonResponse({}));
+    setTimeout(() => {
+      state.storage.records.set(key, {
+        status: "completed",
+        sealedSession: "boop1:stored-refresh"
+      });
+    }, 5);
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      accessToken: "stored-access",
+      refreshToken: "stored-refresh"
+    });
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("clears the session and publishes failure when refresh fails", async () => {
@@ -206,13 +256,20 @@ describe("Directus session refresh coordination", () => {
     };
     state.storage.records.set("flight:" + hash(state.current.refreshToken), {
       status: "completed",
-      session: completed
+      sealedSession: "boop1:stored-refresh"
     });
     const fetch = mockFetch(jsonResponse({}));
 
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBe(completed);
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      accessToken: completed.accessToken,
+      refreshToken: completed.refreshToken,
+      snapshot: completed.snapshot
+    });
     expect(fetch).not.toHaveBeenCalled();
-    expect(state.session.set).toHaveBeenCalledWith(expect.anything(), completed);
+    expect(state.session.writeCookie).toHaveBeenCalledWith(
+      expect.anything(),
+      "boop1:stored-refresh"
+    );
   });
 
   it("stops immediately when storage reports a failed refresh flight", async () => {

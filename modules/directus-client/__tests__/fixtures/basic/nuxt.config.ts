@@ -17,6 +17,7 @@ export default defineNuxtConfig({
       commands: ["readItems"],
       auth: {
         enabled: true,
+        sessionSecret: "fixture-directus-session-secret-32-chars",
         turnstile: { enabled: true },
         cookie: { secure: false },
         passwordResetUrl: "https://app.example.test/reset-password"

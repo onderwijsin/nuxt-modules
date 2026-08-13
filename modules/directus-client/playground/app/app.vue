@@ -84,6 +84,13 @@ async function logout(): Promise<void> {
           color="neutral"
           variant="ghost"
         />
+        <UButton
+          to="/session-inspection"
+          icon="i-lucide-key-round"
+          label="Sealed session"
+          color="neutral"
+          variant="ghost"
+        />
       </div>
     </template>
 

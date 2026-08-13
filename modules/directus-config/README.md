@@ -35,7 +35,10 @@ export default defineDirectusConfig({
   },
   client: {
     commands: ["readItem", "readItems"],
-    auth: { enabled: true }
+    auth: {
+      enabled: true,
+      sessionSecret: process.env.DIRECTUS_SESSION_SECRET
+    }
   },
   collections: [
     {
@@ -62,6 +65,14 @@ export default defineDirectusConfig({
 The source is executable TypeScript. Use it for server-only values and functions; Nuxt config is
 serialised and is not suitable for those values.
 
+For authentication, cookies, sealing, and secret rotation details, see the
+[`@onderwijsin/nuxt-directus-client` Authentication documentation](../directus-client/README.md#authentication).
+Generate a session secret with:
+
+```sh
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```
+
 ### `instance`
 
 | Option        | Required | Description                                                              |
@@ -75,29 +86,32 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 
 `client` contains Directus client module settings. Its nested schemas provide defaults.
 
-| Option                       | Default                             | Description                                                                                     |
-| ---------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `proxy.path`                 | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`. |
-| `commands`                   | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                      |
-| `preview.enabled`            | `true`                              | Enables preview query parsing.                                                                  |
-| `preview.versioning`         | `true`                              | Enables Content Version preview lookup.                                                         |
-| `preview.queryKeys`          | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                  |
-| `auth.enabled`               | `false`                             | Enables cookie-backed authentication.                                                           |
-| `auth.turnstile.enabled`     | `false`                             | Enables Turnstile protection for authentication requests.                                       |
-| `auth.cookie`                | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`. |
-| `auth.refreshSafetyWindow`   | `30000`                             | Milliseconds before expiry when a session is refreshed.                                         |
-| `auth.passwordResetUrl`      | —                                   | URL sent to Directus for password-reset requests.                                               |
-| `typegen.enabled`            | `true`                              | Enables generated `#directus` schema declarations.                                              |
-| `typegen.introspectionToken` | —                                   | Server-only schema-introspection token.                                                         |
-| `typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                     |
-| `typegen.augmentations`      | All `true`                          | Generated-source transforms.                                                                    |
-| `typegen.rules`              | `{}`                                | Collection and field type-expression overrides.                                                 |
-| `typegen.transform`          | —                                   | Final executable transform: `(source, context) => string`.                                      |
+| Option                         | Default                             | Description                                                                                       |
+| ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `proxy.path`                   | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.   |
+| `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
+| `preview.enabled`              | `true`                              | Enables preview query parsing.                                                                    |
+| `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |
+| `preview.queryKeys`            | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                    |
+| `auth.enabled`                 | `false`                             | Enables cookie-backed authentication.                                                             |
+| `auth.turnstile.enabled`       | `false`                             | Enables Turnstile protection for authentication requests.                                         |
+| `auth.cookie`                  | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.   |
+| `auth.refreshSafetyWindow`     | `30000`                             | Milliseconds before expiry when a session is refreshed.                                           |
+| `auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters. |
+| `auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                            |
+| `auth.maskSecretsInPlayground` | `true`                              | Masks access and refresh tokens in the local session inspection playground.                       |
+| `auth.passwordResetUrl`        | —                                   | URL sent to Directus for password-reset requests.                                                 |
+| `typegen.enabled`              | `true`                              | Enables generated `#directus` schema declarations.                                                |
+| `typegen.introspectionToken`   | —                                   | Server-only schema-introspection token.                                                           |
+| `typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
+| `typegen.augmentations`        | All `true`                          | Generated-source transforms.                                                                      |
+| `typegen.rules`                | `{}`                                | Collection and field type-expression overrides.                                                   |
+| `typegen.transform`            | —                                   | Final executable transform: `(source, context) => string`.                                        |
 
 The default cookie is
 `{ name: "directus_session", secure: true, sameSite: "lax", path: "/", maxAge: 2592000 }`.
-`commands`, authentication cookie settings, refresh timing, password-reset URL, and type-generation
-settings are sensitive and excluded from the client-safe configuration.
+`commands`, authentication cookie settings, refresh timing, session sealing secrets, password-reset
+URL, and type-generation settings are sensitive and excluded from the client-safe configuration.
 
 The supported command names are exported as `supportedDirectusCommands` from
 `@onderwijsin/nuxt-directus-config/schema`.
