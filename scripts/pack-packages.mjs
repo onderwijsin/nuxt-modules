@@ -7,7 +7,19 @@ import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 
 const root = resolve(import.meta.dirname, "..");
-const outputDirectory = resolve(process.argv[2] ?? join(root, ".artifacts", "packages"));
+const outputDirectory = resolve(
+  process.argv.find(
+    (argument) =>
+      !argument.startsWith("--") && argument !== process.argv[0] && argument !== process.argv[1]
+  ) ?? join(root, ".artifacts", "packages")
+);
+const requestedNames = new Set(
+  process.argv
+    .find((argument) => argument.startsWith("--packages="))
+    ?.slice("--packages=".length)
+    .split(/\s+/u)
+    .filter(Boolean) ?? []
+);
 mkdirSync(outputDirectory, { recursive: true });
 
 /**
@@ -25,11 +37,21 @@ function discoverPackages() {
         if (!existsSync(packageFile)) return null;
         return { directory, manifest: JSON.parse(readFileSync(packageFile, "utf8")) };
       })
-      .filter((entry) => entry && entry.manifest.private !== true)
+      .filter(Boolean)
   );
 }
 
-const packages = discoverPackages();
+const allPackages = discoverPackages();
+if (requestedNames.size) {
+  const knownNames = new Set(allPackages.map(({ manifest }) => manifest.name));
+  const missing = [...requestedNames].filter((name) => !knownNames.has(name));
+  if (missing.length)
+    throw new Error(`Cannot pack unknown workspace packages: ${missing.join(", ")}`);
+}
+const packages = allPackages.filter(
+  ({ manifest }) =>
+    manifest.private !== true && (!requestedNames.size || requestedNames.has(manifest.name))
+);
 const artifacts = [];
 
 for (const { directory, manifest } of packages) {

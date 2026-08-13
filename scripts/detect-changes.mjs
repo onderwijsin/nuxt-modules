@@ -154,8 +154,12 @@ export function classifyChanges(changed, packages, eventName = process.env.GITHU
   const packageByDirectory = packages
     .map((entry) => ({ ...entry, path: relative(root, entry.directory) }))
     .sort((a, b) => b.path.length - a.path.length);
+  const packageByName = new Map(packageByDirectory.map((entry) => [entry.manifest.name, entry]));
   const direct = new Set();
   const fullPathPatterns = ciPolicy.fullPathPatterns.map((pattern) => new RegExp(pattern, "u"));
+  const focusedPackagePatterns = ciPolicy.focusedPackagePatterns.map(
+    ({ pattern, packagePrefix }) => ({ regex: new RegExp(pattern, "u"), packagePrefix })
+  );
 
   // Merge queues and manual runs do not provide a pull-request diff, so they always run fully.
   const hasTrustworthyDiff = ciPolicy.diffEvents.includes(eventName);
@@ -173,6 +177,25 @@ export function classifyChanges(changed, packages, eventName = process.env.GITHU
   }
 
   for (const file of relevantChanged) {
+    const focusedPackage = focusedPackagePatterns
+      .map(({ regex, packagePrefix }) => {
+        const match = regex.exec(file);
+        return match ? `${packagePrefix}${match[1]}` : null;
+      })
+      .find(Boolean);
+    if (focusedPackage) {
+      if (!packageByName.has(focusedPackage)) {
+        return {
+          scope: "full",
+          full: true,
+          reason: `Focused integration path has no matching package: ${file}.`,
+          direct
+        };
+      }
+      direct.add(focusedPackage);
+      continue;
+    }
+
     // Root tooling and unrecognized paths can affect every package, so fail closed.
     if (fullPathPatterns.some((pattern) => pattern.test(file))) {
       return {

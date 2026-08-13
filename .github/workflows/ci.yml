@@ -141,6 +141,17 @@ jobs:
             test_paths+=("$path")
           done
           pnpm exec vitest run "${test_paths[@]}" --coverage
+      - name: Pack focused package artifacts
+        if: needs.detect_changes.outputs.phase_pack == 'true'
+        run: pnpm pack:packages "$RUNNER_TEMP/packages" --packages="$PREPARE_PACKAGES"
+      - name: Upload focused package artifacts
+        if: needs.detect_changes.outputs.phase_pack == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: packed-packages-${{ github.sha }}
+          path: ${{ runner.temp }}/packages
+          if-no-files-found: error
+          retention-days: 1
 
   full_quality_check:
     needs: detect_changes

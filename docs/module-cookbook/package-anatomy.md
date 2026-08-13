@@ -82,8 +82,16 @@ retain private workspace imports. Publish a CSS `style` export when the module e
 Tailwind classes; see [module entrypoint](module-entrypoint.md#runtime-css).
 
 Every publishable module must also be represented in the external consumer fixture at
-`scripts/fixtures/external-consumer`. When adding a module, register it there with safe dummy
-configuration and add at least one local sanity assertion for its public behavior or exports. Keep
+`integration/external-consumer/fixture/consumer-layers/<module-name>`. The layer is part of the
+module's consumer contract and must contain:
+
+- `nuxt.config.ts` with safe dummy module options;
+- a layer-owned API sanity endpoint under `server/api/sanity/<module-name>.get.ts`; and
+- a layer-owned page under `app/pages/sanity/<module-name>.vue` that calls the endpoint and renders
+  `<p :data-sanity="layerName">{{ data }}</p>`.
+
+The runner discovers module names from `modules/`, but it cannot infer safe options or behavior
+checks. Therefore adding or updating a module requires adding or updating its layer too. Keep
 service credentials synthetic and ensure the assertion cannot call an external service. Run
 `pnpm pack:packages` followed by `pnpm validate:external-consumer` to verify the packed module in a
 clean application.

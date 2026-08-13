@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed design. This document describes the first implementation without registry fallbacks.
+Implemented design. This document records the first implementation without registry fallbacks.
 
 ## Objective
 
@@ -126,15 +126,15 @@ package's final `dist` output. It must not substitute stubs for production artif
 
 Refactor the current monolithic fixture into a base application plus local Nuxt layers.
 
-Suggested structure:
+Implemented structure:
 
 ```text
-scripts/fixtures/external-consumer/
-├── base/
+integration/external-consumer/
+├── fixture/
 │   ├── app/
-│   ├── assets/
-│   └── base configuration
-├── layers/
+│   ├── server/
+│   ├── nuxt.config.ts
+│   └── consumer-layers/
 │   ├── cache/
 │   │   ├── nuxt.config.ts
 │   │   ├── app/
@@ -155,7 +155,7 @@ scripts/fixtures/external-consumer/
 │   ├── turnstile/
 │   ├── ui-form-extensions/
 │   └── webmanifest/
-└── generated consumer configuration
+└── run.mjs
 ```
 
 Each layer owns the consumer behavior specific to one package:
@@ -171,33 +171,28 @@ Each layer owns the consumer behavior specific to one package:
 The base application should contain only shared Nuxt setup and shared presentation. It must not
 assume that every repository module exists.
 
-The external-consumer script should copy the base fixture and layer sources into the temporary
-consumer, then generate the top-level configuration with only the selected layers in `extends`.
+The runner copies the checked-in fixture unchanged into the temporary consumer. The checked-in
+`fixture/nuxt.config.ts` reads the generated `consumer-profile.json` and conditionally extends only
+the selected directories under `consumer-layers/`. The directory is intentionally not named
+`layers/`, because Nuxt auto-discovers every directory with that name before the conditional config
+can filter it.
 
-The exact generated configuration format can be either:
-
-- a generated `nuxt.config.ts` with a static `extends` array; or
-- a checked-in base config that reads a generated profile file.
-
-The generated form is preferable because Nuxt sees an ordinary, inspectable layer configuration and
-no runtime environment parsing is required during Nuxt preparation.
+The runner generates only unavoidable consumer metadata: the package manifest, pnpm overrides, and
+the selected profile file. Fixture behavior and file ownership remain visible in version control.
 
 ## Layer selection
 
 Layer selection must be based on package names, not on whether a tarball happens to be present by
 accident.
 
-Introduce a checked-in layer registry containing, for each consumer layer:
+Discover public module identifiers from the directories under `modules/`. Layer directories are
+derived from those identifiers with `getLayerName(module)`, which removes the `@onderwijsin/nuxt-`
+prefix. This keeps package identity and layer identity aligned without a second hardcoded module
+list.
 
-- the public package name;
-- the layer directory;
-- the Nuxt module name to register;
-- whether the layer is available in focused mode;
-- any required workspace package names;
-- the assertion identifier(s).
-
-For the first version, the registry should be explicit and validated. Do not infer module names from
-arbitrary filenames.
+Discovery does not infer layer configuration or assertions. A new module therefore still requires a
+checked-in `consumer-layers/<module-name>/` directory; full validation fails if the discovered
+module does not have one.
 
 Selection rules:
 
@@ -235,15 +230,15 @@ fixture module entry merely to hide that contract issue.
 ## Conditional assertions
 
 The current external-consumer script contains global assertions that assume all modules exist.
-Replace that structure with layer-owned assertion descriptors.
+Replace that structure with layer-owned API and page sanity checks.
 
 Each layer should expose or register a small set of checks. The external-consumer runner should
 execute checks based on the active profile.
 
 Preferred pattern:
 
-- each layer contributes one or more deterministic sanity endpoints or response markers;
-- the runner knows the expected endpoint and assertion identifier from the layer registry;
+- each layer contributes a deterministic API endpoint and page;
+- the page calls the endpoint and renders `<p :data-sanity="layerName">{{ data }}</p>`;
 - the runner executes only checks for active layers;
 - shared base checks always run.
 
@@ -260,8 +255,11 @@ Examples:
 Avoid importing every module's runtime API from one shared endpoint. Static imports of absent
 packages would make a focused consumer fail before conditional checks can run.
 
-The root page should likewise use layer-provided markers rather than requiring all markers
-unconditionally.
+The runner exposes both `runFocusedAssertions()` and `runFullAssertions()`. Focused assertions run
+for every profile, including full mode, and validate the active profile, every active layer's API,
+and every active layer's rendered page. Full assertions run only afterward and add non-overlapping
+release guardrails such as healthcheck, sitemap, storage, redirect, theme, and webmanifest behavior.
+There is no aggregate `full-sanity` layer.
 
 ## Generated package manifest
 

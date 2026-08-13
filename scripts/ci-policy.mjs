@@ -6,7 +6,7 @@
  */
 export const ciPolicy = Object.freeze({
   /** Increment when the detector/workflow contract changes incompatibly. */
-  version: 2,
+  version: 3,
   /** Events whose payload provides a trustworthy base-to-head repository diff. */
   diffEvents: ["pull_request", "merge_group"],
   /** Repository directories whose contents cannot affect package validation. */
@@ -39,15 +39,23 @@ export const ciPolicy = Object.freeze({
   fullPathPatterns: [
     "^\\.github/",
     "^scripts/",
+    "^integration/",
     "^(?:package\\.json|pnpm-lock\\.yaml|pnpm-workspace\\.yaml)$",
     "^(?:tsconfig|vitest\\.config|nuxt\\.config|oxlint|oxfmt)[^.]*\\."
+  ],
+  /** Integration paths that can be validated against one affected module package. */
+  focusedPackagePatterns: [
+    {
+      pattern: "^integration/external-consumer/fixture/consumer-layers/([^/]+)(?:/|$)",
+      packagePrefix: "@onderwijsin/nuxt-"
+    }
   ],
   /** Validation phases enabled for each overall scope. */
   phaseSets: {
     /** Documentation and ignored changes still verify repository formatting and lint. */
     light: ["format", "lint"],
     /** Package changes verify preparation, types, and tests without publishing artifacts. */
-    focused: ["format", "lint", "prepare", "typecheck", "test"],
+    focused: ["format", "lint", "prepare", "typecheck", "test", "pack", "external_consumer"],
     /** Full and fail-closed changes exercise every release-facing validation phase. */
     full: [
       "format",
