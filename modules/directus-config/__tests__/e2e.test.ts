@@ -42,7 +42,7 @@ describe("directus-config virtual aliases", () => {
           versioning: true,
           queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
         },
-        auth: { enabled: true, turnstile: { enabled: true } }
+        auth: { enabled: true, turnstile: { enabled: true }, maskSecretsInPlayground: true }
       }
     });
   });

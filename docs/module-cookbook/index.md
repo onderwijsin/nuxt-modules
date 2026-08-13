@@ -38,6 +38,7 @@ Some modules have accepted design decisions that further constrain implementatio
 
 - Directus session authentication:
   [Directus session authentication](../decisions/directus-session-auth.md)
+- Directus sealed sessions: [Directus sealed session](../decisions/directus-sealed-session.md)
 - Directus and Nitro error normalization:
   [Directus and Nitro error normalization](../decisions/directus-error-normalization.md)
 - Simple rate limiter guarantees: [Simple rate limiter](../decisions/simple-rate-limiter.md)

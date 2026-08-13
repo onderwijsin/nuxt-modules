@@ -184,7 +184,8 @@ export default defineNuxtConfig({
 `serverMiddleware`, `store`, and `routeMiddleware` are independent. When `routeMiddleware` is true
 and `store` is false, every client navigation uses the cached single-path endpoint instead of
 loading the complete index. Enabling `store` installs `@pinia/nuxt` and
-`pinia-plugin-persistedstate/nuxt` as module dependencies.
+`pinia-plugin-persistedstate/nuxt` as module dependencies. The client store persists its redirect
+index and last-fetch timestamp in browser `localStorage`, not cookies.
 
 ## Configuration
 

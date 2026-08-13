@@ -65,32 +65,35 @@ in `runtimeConfig.public` or browser code.
 
 All options are configured under `directusClient`.
 
-| Option                              | Default                             | Contract                                                                                          |
-| ----------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `enabled`                           | `true`                              | Enables the module.                                                                               |
-| `instance.baseUrl`                  | —                                   | Optional Directus URL. Required before requests can run.                                          |
-| `instance.staticToken`              | —                                   | Optional server-only static credential.                                                           |
-| `client.proxy.path`                 | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected. |
-| `client.commands`                   | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                 |
-| `client.preview.enabled`            | `true`                              | Enables preview query parsing and request-scoped preview credentials.                             |
-| `client.preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                                 |
-| `client.preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                   |
-| `client.auth.enabled`               | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.         |
-| `client.auth.turnstile.enabled`     | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                        |
-| `client.auth.cookie.name`           | `directus_session`                  | Session cookie name.                                                                              |
-| `client.auth.cookie.secure`         | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                    |
-| `client.auth.cookie.sameSite`       | `lax`                               | Cookie `SameSite` policy.                                                                         |
-| `client.auth.cookie.path`           | `/`                                 | Cookie path.                                                                                      |
-| `client.auth.cookie.maxAge`         | `2592000`                           | Cookie lifetime in seconds.                                                                       |
-| `client.auth.cookie.domain`         | —                                   | Optional cookie domain.                                                                           |
-| `client.auth.refreshSafetyWindow`   | `30000`                             | Refreshes a session this many milliseconds before expiry.                                         |
-| `client.auth.passwordResetUrl`      | —                                   | Required for password-request support; sent as Directus `reset_url`.                              |
-| `client.typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                       |
-| `client.typegen.introspectionToken` | —                                   | Server-only Directus schema introspection token.                                                  |
-| `client.typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
-| `client.typegen.augmentations`      | all `true`                          | Optional generated-output transforms.                                                             |
-| `client.typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                                     |
-| `client.typegen.transform`          | —                                   | Final build-time source transform.                                                                |
+| Option                                | Default                             | Contract                                                                                              |
+| ------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `enabled`                             | `true`                              | Enables the module.                                                                                   |
+| `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                              |
+| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                               |
+| `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected.     |
+| `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                     |
+| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                 |
+| `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                     |
+| `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                       |
+| `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.             |
+| `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                            |
+| `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                  |
+| `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                        |
+| `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                             |
+| `client.auth.cookie.path`             | `/`                                 | Cookie path.                                                                                          |
+| `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                           |
+| `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                               |
+| `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                             |
+| `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters. |
+| `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                             |
+| `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                  |
+| `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent as Directus `reset_url`.                                  |
+| `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                           |
+| `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                      |
+| `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                           |
+| `client.typegen.augmentations`        | all `true`                          | Optional generated-output transforms.                                                                 |
+| `client.typegen.rules`                | `{}`                                | Generated field type overrides keyed by collection and field.                                         |
+| `client.typegen.transform`            | —                                   | Final build-time source transform.                                                                    |
 
 The module validates option values during Nuxt configuration. `instance.baseUrl` is optional, but
 requests cannot run without it; the module skips setup during `nuxt prepare` and CI when it is
@@ -212,7 +215,9 @@ snapshot identity-only; role, policy, and permission helpers are not part of thi
 The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
 state. Hydration therefore does not require a session request. Server-side refresh coordination uses
 Nitro storage. A shared, read-after-write consistent storage driver is required for coordination
-across processes or Cloudflare isolates; the default in-memory driver is instance-local.
+across processes or Cloudflare isolates; the default in-memory driver is instance-local. Completed
+refresh results are H3-sealed before they are stored, but the configured storage backend remains
+sensitive infrastructure.
 
 When `client.auth.enabled` is `false`, the module does not read, refresh, forward, or serialize
 Directus session cookies. Static, preview, and unauthenticated access continue to work.
@@ -314,6 +319,9 @@ All authentication mutations require an `Origin` or `Referer` matching the appli
 Missing or cross-origin metadata is rejected with `403`, including when the session cookie uses
 `sameSite: "none"`.
 
+The sealed-session inspection endpoint is available only in the local development playground and
+returns `404` in production builds. Do not deploy the playground as an application environment.
+
 Directus MFA failures are recognized by `useDirectusError(error).isOtpError`.
 
 ## Generated schema types
@@ -368,8 +376,23 @@ receives the Directus URL or a server credential.
 - Session cookies are `httpOnly`, `SameSite=Lax`, secure by default, bounded below the usual cookie
   size limit, and intentionally contain the server token pair plus a compact safe snapshot.
 - Directus remains the final authorization boundary.
-- The first release uses a plain, bounded, unsigned and unencrypted cookie; sealing and shared
-  storage are future hardening options rather than current guarantees.
+- Sessions use a bounded H3-sealed cookie. Configure a cryptographically random server-only
+  `client.auth.sessionSecret` of at least 32 characters. Existing unsigned cookies are rejected; use
+  `previousSessionSecrets` for staged key rotation. The module disables H3's derived session header
+  and accepts authentication only from the configured cookie.
+
+Rotate the session secret in two stages: deploy the new value as `sessionSecret` while retaining the
+old value in `previousSessionSecrets` on every instance, then remove the old value after at least
+the configured cookie `maxAge` plus a short rolling-deployment window. Reads using the old value are
+resealed with the active secret. Removing a previous value invalidates sessions still using it; the
+shared Nitro storage mount may briefly contain sealed refresh results from the old deployment and
+must remain protected during that overlap.
+
+Generate a session secret with:
+
+```sh
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```
 
 The proxy is not a general-purpose proxy, CORS bypass, session-token API, or authorization layer. It
 can only target the configured Directus URL; authorization still happens in Directus.

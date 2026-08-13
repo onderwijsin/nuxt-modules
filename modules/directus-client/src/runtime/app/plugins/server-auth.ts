@@ -15,12 +15,12 @@ const { getDirectusSession } = await import("../../server/utils/session.js");
  * @param nuxtApp Current Nuxt application instance.
  * @returns The injected request-scoped client.
  */
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(async (nuxtApp) => {
   const event = useRequestEvent();
 
   // Load session into state in server plugin - this keeps the auth composable free of server runtime code
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
-  session.value = event ? (getDirectusSession(event)?.snapshot ?? null) : null;
+  session.value = event ? ((await getDirectusSession(event))?.snapshot ?? null) : null;
 
   return {
     provide: { directus: createServerDirectusClient(event, nuxtApp) }

@@ -54,6 +54,9 @@ export default defineDirectusConfig({
         maxAge: 2592000
       },
       refreshSafetyWindow: 30000,
+      sessionSecret: process.env.DIRECTUS_SESSION_SECRET,
+      previousSessionSecrets: process.env.DIRECTUS_PREVIOUS_SESSION_SECRETS?.split(",") ?? [],
+      maskSecretsInPlayground: true,
       passwordResetUrl: "https://app.example.com/reset-password"
     },
     typegen: {
@@ -95,6 +98,14 @@ export default defineDirectusConfig({
 ```
 
 ## Complete option reference
+
+For authentication, cookies, sealing, and secret rotation details, read the
+[`@onderwijsin/nuxt-directus-client` Authentication documentation](../../modules/directus-client/README.md#authentication).
+Generate a session secret with:
+
+```sh
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```
 
 For the complete configuration tables, collection/sitemap contracts, and sitemap-entry schemas, read
 [references/configuration/options.md](references/configuration/options.md) before changing shared

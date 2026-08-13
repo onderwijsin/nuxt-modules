@@ -23,27 +23,27 @@ from configuration or public API through runtime behavior, emitted output, tests
 
 ## 2. Route the task to its sources of truth
 
-| Task or affected surface                                                     | Required guidance                                                                                                           |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Any repository change                                                        | This article and the affected package, source, tests, documentation, and decisions                                          |
-| Module or package contribution workflow                                      | [`contributing.md`](contributing.md)                                                                                        |
-| Workspace, dependencies, scripts, installs, generated output, or validation  | [`workspace.md`](workspace.md)                                                                                              |
-| Any publishable or local Nuxt module work                                    | Use `authoring-nuxt-modules`; start with the [module cookbook index](module-cookbook/index.md)                              |
-| New publishable module or package-structure change                           | [Package anatomy](module-cookbook/package-anatomy.md)                                                                       |
-| Migrating an application-local module                                        | [Migration checklist](module-cookbook/migrating-local-modules.md)                                                           |
-| Module setup, options, runtime registration/config, templates, types, or CSS | [Module entrypoint](module-cookbook/module-entrypoint.md) and [patterns](module-cookbook/patterns-and-conventions.md)       |
-| `packages/module-utils` or one of its consumers                              | [Module utilities](module-cookbook/module-utils.md), plus [guards](module-cookbook/guards.md) when narrowing runtime values |
-| `packages/test-utils` or shared test infrastructure                          | [Test utilities](module-cookbook/test-utils.md)                                                                             |
-| Tests, fixtures, coverage, or test strategy                                  | [`testing.md`](testing.md) and [module testing](module-cookbook/testing.md)                                                 |
-| Module playground                                                            | [Playgrounds](module-cookbook/playground.md)                                                                                |
-| Public module API or consumer-visible behavior                               | [Documentation and consumer skills](module-cookbook/documentation-and-skills.md)                                            |
-| Package/release behavior or Changesets                                       | [`publishing.md`](publishing.md)                                                                                            |
-| GitHub workflows or local Actions                                            | [`actions.md`](actions.md) and [`security.md`](security.md)                                                                 |
-| Dependencies, security findings, permissions, secrets, or vulnerability work | [`security.md`](security.md)                                                                                                |
-| Substantial module, production-readiness, or release audit                   | Use `auditing-nuxt-modules` and its routed references                                                                       |
-| Directus session authentication                                              | [`decisions/directus-session-auth.md`](decisions/directus-session-auth.md)                                                  |
-| Simple rate limiter guarantees                                               | [`decisions/simple-rate-limiter.md`](decisions/simple-rate-limiter.md)                                                      |
-| Static-text translation compatibility                                        | [`decisions/static-text-i18n-compatibility.md`](decisions/static-text-i18n-compatibility.md)                                |
+| Task or affected surface                                                     | Required guidance                                                                                                                                             |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any repository change                                                        | This article and the affected package, source, tests, documentation, and decisions                                                                            |
+| Module or package contribution workflow                                      | [`contributing.md`](contributing.md)                                                                                                                          |
+| Workspace, dependencies, scripts, installs, generated output, or validation  | [`workspace.md`](workspace.md)                                                                                                                                |
+| Any publishable or local Nuxt module work                                    | Use `authoring-nuxt-modules`; start with the [module cookbook index](module-cookbook/index.md)                                                                |
+| New publishable module or package-structure change                           | [Package anatomy](module-cookbook/package-anatomy.md)                                                                                                         |
+| Migrating an application-local module                                        | [Migration checklist](module-cookbook/migrating-local-modules.md)                                                                                             |
+| Module setup, options, runtime registration/config, templates, types, or CSS | [Module entrypoint](module-cookbook/module-entrypoint.md) and [patterns](module-cookbook/patterns-and-conventions.md)                                         |
+| `packages/module-utils` or one of its consumers                              | [Module utilities](module-cookbook/module-utils.md), plus [guards](module-cookbook/guards.md) when narrowing runtime values                                   |
+| `packages/test-utils` or shared test infrastructure                          | [Test utilities](module-cookbook/test-utils.md)                                                                                                               |
+| Tests, fixtures, coverage, or test strategy                                  | [`testing.md`](testing.md) and [module testing](module-cookbook/testing.md)                                                                                   |
+| Module playground                                                            | [Playgrounds](module-cookbook/playground.md)                                                                                                                  |
+| Public module API or consumer-visible behavior                               | [Documentation and consumer skills](module-cookbook/documentation-and-skills.md)                                                                              |
+| Package/release behavior or Changesets                                       | [`publishing.md`](publishing.md)                                                                                                                              |
+| GitHub workflows or local Actions                                            | [`actions.md`](actions.md) and [`security.md`](security.md)                                                                                                   |
+| Dependencies, security findings, permissions, secrets, or vulnerability work | [`security.md`](security.md)                                                                                                                                  |
+| Substantial module, production-readiness, or release audit                   | Use `auditing-nuxt-modules` and its routed references                                                                                                         |
+| Directus session authentication or sealed sessions                           | [`decisions/directus-session-auth.md`](decisions/directus-session-auth.md) and [`decisions/directus-sealed-session.md`](decisions/directus-sealed-session.md) |
+| Simple rate limiter guarantees                                               | [`decisions/simple-rate-limiter.md`](decisions/simple-rate-limiter.md)                                                                                        |
+| Static-text translation compatibility                                        | [`decisions/static-text-i18n-compatibility.md`](decisions/static-text-i18n-compatibility.md)                                                                  |
 
 Read each selected article completely before making its decision. Then inspect nearby code because
 the cookbook records required and recurring patterns but cannot enumerate every valid local

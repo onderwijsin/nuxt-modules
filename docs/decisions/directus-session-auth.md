@@ -4,7 +4,7 @@ Read this decision before changing Directus login, refresh, logout, session cook
 snapshots, storage coordination, or the `useDirectusAuth()` facade. The constraints below are an API
 and security decision, not an incidental implementation pattern.
 
-The Directus module uses a plain, bounded, httpOnly cookie as its first session implementation. The
+The Directus module uses a bounded, httpOnly, H3-sealed cookie as its session implementation. The
 cookie contains the access token, rotating refresh token, expiry, and a token-free snapshot derived
 from the current-user endpoint. Application code receives only that snapshot through
 useDirectusAuth(); browser JavaScript never receives either token.
@@ -23,7 +23,7 @@ rotating refresh-token policy remains authoritative.
 
 The first snapshot intentionally contains only the user identity fields needed by the playground and
 auth facade. Role, policy, and permission helpers are not exposed by this release. The cookie is
-bounded below normal browser cookie limits; serialization fails rather than truncating state. It is
-intentionally not encrypted or signed in this first release. Directus permissions remain the
-authorization boundary, while encryption/signing or a different session storage model are future
-hardening options requiring a separate threat-model decision.
+bounded below normal browser cookie limits; sealing fails rather than truncating state. The sealing,
+key rotation, migration, and H3 integration contract is defined separately in
+[`directus-sealed-session.md`](directus-sealed-session.md). Directus permissions remain the
+authorization boundary.

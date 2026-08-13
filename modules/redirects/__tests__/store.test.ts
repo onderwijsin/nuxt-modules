@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 
-const { $fetch } = vi.hoisted(() => ({ $fetch: vi.fn() }));
+const { $fetch, localStorage } = vi.hoisted(() => ({
+  $fetch: vi.fn(),
+  localStorage: vi.fn(() => undefined)
+}));
 
 vi.mock("#app", () => ({
   useRuntimeConfig: () => ({
     public: { redirects: { storeRefreshInterval: 60, dynamicMatching: true } }
   })
+}));
+
+vi.mock("#imports", () => ({
+  piniaPluginPersistedstate: { localStorage }
 }));
 
 vi.mock("ofetch", () => ({ $fetch }));
@@ -17,6 +24,10 @@ describe("redirects store", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     $fetch.mockReset();
+  });
+
+  it("configures persistence with browser localStorage", () => {
+    expect(localStorage).toHaveBeenCalledOnce();
   });
 
   it("stores the manifest object and resolves exact-query redirects before path fallbacks", async () => {
