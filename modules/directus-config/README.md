@@ -70,7 +70,7 @@ For authentication, cookies, sealing, and secret rotation details, see the
 Generate a session secret with:
 
 ```sh
-node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+openssl rand -base64 32
 ```
 
 ### `instance`
