@@ -1,26 +1,29 @@
+import { varlockVitePlugin } from "@varlock/vite-integration";
+import { ENV } from "varlock/env";
 import { name as packageName } from "../package.json";
-
-const sentryEnabled = Boolean(process.env.SENTRY_DSN);
 
 export default defineNuxtConfig({
   extends: ["playground-layer"],
+  vite: {
+    plugins: [varlockVitePlugin({ ssrInjectMode: "auto-load" })]
+  },
   modules: ["@sentry/nuxt/module", "@onderwijsin/nuxt-sentry-config"],
   appConfig: { packageName },
   runtimeConfig: {
     app: { buildId: String(Date.now()) }
   },
-  sentry: sentryEnabled
+  sentry: ENV.SENTRY_DSN
     ? {
-        org: process.env.SENTRY_ORG,
-        project: process.env.SENTRY_PROJECT,
-        authToken: process.env.SENTRY_AUTH_TOKEN,
+        org: ENV.SENTRY_ORG,
+        project: ENV.SENTRY_PROJECT,
+        authToken: ENV.SENTRY_AUTH_TOKEN,
         sourcemaps: {
-          disable: process.env.SENTRY_UPLOAD_SOURCE_MAPS !== "true"
+          disable: !ENV.SENTRY_UPLOAD_SOURCE_MAPS
         }
       }
     : false,
   sentryConfig: {
-    dsn: process.env.SENTRY_DSN,
+    dsn: ENV.SENTRY_DSN,
     configFile: "sentry.config.ts"
   }
 });

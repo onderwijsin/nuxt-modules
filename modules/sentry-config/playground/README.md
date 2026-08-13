@@ -1,11 +1,11 @@
 # Sentry config playground
 
 This playground tests the module against the real Cloudbase Sentry project. It can perform real
-source-map uploads when `SENTRY_UPLOAD_SOURCE_MAPS=true` and the Sentry environment variables in
-`.env.example` are populated.
+source-map uploads when `SENTRY_UPLOAD_SOURCE_MAPS=true` and the Sentry environment variables in the
+playground's `.env.schema` resolve successfully through Proton Pass.
 
-Keep credentials in the local, ignored `.env` file. Do not commit credentials or reuse a production
-auth token for local experimentation.
+Authenticate `pass-cli` before development. Do not commit credentials or reuse a production auth
+token for local experimentation.
 
 ## Diagnostic tools
 

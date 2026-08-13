@@ -9,6 +9,9 @@ allowBuilds:
   workerd: true
 
 catalog:
+  varlock: 1.16.1
+  "@varlock/proton-pass-plugin": 2.0.0
+  "@varlock/vite-integration": 1.4.0
   "@nuxt/image": 2.0.0
   "@changesets/cli": 2.31.1
   "@changesets/changelog-git": 0.2.1
