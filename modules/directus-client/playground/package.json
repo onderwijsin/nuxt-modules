@@ -9,12 +9,18 @@
   "scripts": {
     "dev": "nuxt dev",
     "typecheck": "nuxt typecheck",
-    "build": "nuxt build"
+    "build": "nuxt build",
+    "varlock:load": "varlock load --agent"
   },
   "dependencies": {
     "@onderwijsin/nuxt-directus-client": "workspace:*",
     "@onderwijsin/nuxt-directus-config": "workspace:*",
     "nuxt": "catalog:",
     "playground-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "@varlock/proton-pass-plugin": "catalog:",
+    "@varlock/vite-integration": "catalog:",
+    "varlock": "catalog:"
   }
 }

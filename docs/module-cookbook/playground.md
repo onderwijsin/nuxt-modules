@@ -19,7 +19,7 @@ playground/
 │   └── app.vue                        # shell customization (optional)
 ├── public/                            # static assets used by the playground (optional)
 ├── server/                            # playground-only API routes and handlers (optional)
-├── .env.example                       # required variables without secrets (optional)
+├── .env.schema                        # validated environment contract (optional)
 ├── nuxt.config.ts
 ├── package.json
 └── tsconfig.json
@@ -59,6 +59,39 @@ Use the established scripts:
   "build": "nuxt build"
 }
 ```
+
+For playgrounds that use Varlock, add the Varlock Vite integration in `nuxt.config.ts` and keep the
+normal Nuxt commands. The Vite plugin loads and validates the nearest `.env.schema`; do not wrap
+`nuxt dev`, `nuxt typecheck`, or `nuxt build` with `varlock run`:
+
+```ts
+import { varlockVitePlugin } from "@varlock/vite-integration";
+
+export default defineNuxtConfig({
+  vite: {
+    plugins: [varlockVitePlugin({ ssrInjectMode: "auto-load" })]
+  }
+});
+```
+
+Read validated environment values from the strictly typed `ENV` export rather than `process.env`:
+
+```ts
+import { ENV } from "varlock/env";
+
+const apiKey = ENV.EXAMPLE_API_KEY;
+```
+
+Declare the schema and generated types in the playground root. `env.d.ts` is generated whenever
+Varlock loads and must remain ignored:
+
+```text
+.env.schema
+env.d.ts  # generated; do not commit
+```
+
+Keep a development-only `varlock:load` script for explicitly validating or generating types, but the
+regular Nuxt scripts should remain `nuxt dev`, `nuxt typecheck`, and `nuxt build`.
 
 Run `pnpm dev:prepare` from the repository root before the first type check or build. It creates
 development module stubs, builds packages needed by dependent modules, and generates Nuxt types.

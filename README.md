@@ -36,6 +36,8 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
   tested; Nuxt 3 is not guaranteed.
 - pnpm 11.13.1 through Corepack.
 - gitleaks v8.x
+- An authenticated Proton Pass CLI session (`pass-cli`) for playground development. See the
+  [environment management guide](docs/environment.md).
 
 Run `corepack enable` once to activate the pinned pnpm version, then install the workspace
 dependencies:
@@ -73,6 +75,11 @@ pnpm dev:utils
 pnpm --filter "<package>" dev
 # pnpm --filter @onderwijsin/nuxt-loops-renderer dev
 ```
+
+Playgrounds that use external services load their environment through Varlock and Proton Pass. Run
+`pass-cli login` once before working on them, then use the playground's normal `dev` command. The
+workspace also provides `pnpm varlock:load` to validate and load all configured playground schemas.
+See [Environment management](docs/environment.md) for Proton Pass setup and CI details.
 
 To build the shared utility and module packages (playground build scripts are not part of the root
 `build` filter):
@@ -141,6 +148,7 @@ This project contains supporting workspace packages with different publication p
 - [`docs/testing.md`](docs/testing.md) — Vitest implementation and patterns.
 - [`docs/publishing.md`](docs/publishing.md) — release checks and publishing.
 - [`docs/actions.md`](docs/actions.md) — Guidelines for writing custom actions.
+- [`docs/environment.md`](docs/environment.md) — Varlock and Proton Pass environment management.
 
 ## 🚢 Publishing
 
