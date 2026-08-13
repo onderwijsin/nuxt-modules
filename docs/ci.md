@@ -45,10 +45,18 @@ The detector:
    dependency field in every discovered manifest; and
 6. emits machine-readable outputs plus a human-readable log and Actions job summary.
 
+The machine-readable detector result is JSON-shaped and is exposed through individual GitHub Actions
+outputs for job conditions. The human-readable summary is the observability and debugging surface;
+it should explain the selected scope, reason, package closure, test paths, and phases.
+
 The classifier fails closed when there is no trustworthy diff, the diff is empty, an event is not a
 trusted diff event, a path is unknown, or a repository-wide path is touched. Documentation and
 explicitly ignored paths are light only when no package-affecting path is present alongside them.
 Lockfile changes remain full by policy.
+
+This conservative boundary is intentional: local or otherwise ambiguous repository files also remain
+full-validation triggers. More precise local-file classification and importer-aware lockfile
+classification are follow-up work, not assumptions embedded in the current contract.
 
 ## Scopes and phases
 
