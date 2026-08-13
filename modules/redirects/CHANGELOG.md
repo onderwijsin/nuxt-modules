@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- 6a005f8: Persist the client redirect store in browser localStorage instead of cookies.
+
 ## 0.2.1
 
 ### Patch Changes

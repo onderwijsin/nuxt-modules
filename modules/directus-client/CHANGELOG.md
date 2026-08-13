@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 300d504: Seal Directus authentication session cookies with H3 authenticated encryption, add active/previous
+  session-secret rotation, and add a local sealed-session playground inspection page.
+
+### Patch Changes
+
+- 300d504: Harden Directus sessions by enforcing payload expiry, masking playground diagnostics by default,
+  isolating the inspection route to development, and sealing refresh results stored in Nitro storage.
+- c8350e1: Bound Directus authentication request fields and expose structured, field-specific errors for local validation failures before forwarding values upstream.
+- Updated dependencies [d4460bc]
+- Updated dependencies [300d504]
+  - @onderwijsin/nuxt-directus-config@0.3.0
+
 ## 0.3.0
 
 ### Minor Changes
