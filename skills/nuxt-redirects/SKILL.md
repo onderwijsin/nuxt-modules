@@ -133,8 +133,9 @@ export { default } from "@onderwijsin/nuxt-redirects/runtime/refresh-task";
 
 When `store` is enabled, import `useRedirectsStore` from
 `@onderwijsin/nuxt-redirects/runtime/store`. It exposes persisted `records`, `refresh()`, and
-`find(origin)`. The store persists a record keyed by normalized origin and derives a `Map` from its
-entries for direct lookup.
+`find(origin)`. The store persists its normalized-origin record index and last-fetch timestamp in
+browser `localStorage` and derives a `Map` from the index for direct lookup; it does not use
+cookies.
 
 ### HTTP API
 
