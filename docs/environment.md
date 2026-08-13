@@ -71,6 +71,9 @@ the explicit `pnpm varlock:load` command and by Nuxt preparation/typecheck comma
 playground's Vite configuration and can load Varlock through `varlockVitePlugin`. It is not passed
 to package tests, package builds, package validation, or the external consumer.
 
+See [module playgrounds](module-cookbook/playground.md#varlock-backed-playgrounds) for the
+underlying Vite loading behavior and the command boundary this CI scope follows.
+
 The action installs the CLI in `$HOME/.local/bin`, adds that directory to `GITHUB_PATH`, and only
 prints the CLI version. Resolved secrets must not be echoed or uploaded in artifacts.
 

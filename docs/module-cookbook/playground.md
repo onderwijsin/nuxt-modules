@@ -60,6 +60,8 @@ Use the established scripts:
 }
 ```
 
+## Varlock-backed playgrounds
+
 For playgrounds that use Varlock, add the Varlock Vite integration in `nuxt.config.ts` and keep the
 normal Nuxt commands. The Vite plugin loads and validates the nearest `.env.schema`; do not wrap
 `nuxt dev`, `nuxt typecheck`, or `nuxt build` with `varlock run`:
@@ -73,6 +75,14 @@ export default defineNuxtConfig({
   }
 });
 ```
+
+The integration loads Varlock while the Vite configuration is evaluated, not only when an explicit
+Varlock CLI command runs. With `ssrInjectMode: "auto-load"`, it also injects `varlock/auto-load`
+into generated server code. Consequently, commands that evaluate a playground configuration can need
+the Proton Pass credential: `nuxt prepare` during `dev:prepare`, playground typechecks, and
+playground builds. Package-only tests, module builds, package validation, packing, and the external
+consumer do not need that credential unless they are changed to evaluate a Varlock-backed playground
+configuration.
 
 Read validated environment values from the strictly typed `ENV` export rather than `process.env`:
 
