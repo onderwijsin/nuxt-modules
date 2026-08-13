@@ -216,11 +216,7 @@ export function classifyChanges(changed, packages, eventName = process.env.GITHU
  * @returns {Set<string>} Enabled validation phase names.
  */
 export function selectPhases(scope) {
-  const phases = new Set(ciPolicy.phaseSets[scope] ?? ciPolicy.phaseSets.full);
-  if (scope !== "light" && ciPolicy.forceExternalConsumerCheck) {
-    phases.add("external_consumer");
-  }
-  return phases;
+  return new Set(ciPolicy.phaseSets[scope] ?? ciPolicy.phaseSets.full);
 }
 
 /**
@@ -440,7 +436,6 @@ function main() {
 
   writeGithubOutput("scope", classification.scope);
   writeGithubOutput("full", classification.full);
-  writeGithubOutput("force_external_consumer_check", ciPolicy.forceExternalConsumerCheck);
   writeGithubOutput("reason", classification.reason);
   writeGithubOutput("packages", selected.join(" "));
   writeGithubOutput("prepare_packages", prepare.join(" "));

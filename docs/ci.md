@@ -78,10 +78,6 @@ the corresponding validation steps; the phase set is therefore executable config
 label in the detector log. If a phase is removed from a policy set, its associated steps are
 skipped. Job setup remains only where it is needed to run another enabled phase.
 
-The temporary `force_external_consumer_check` setting is an explicit policy transformation: when
-enabled, the detector adds `external_consumer` to every non-light effective phase set and emits that
-fact in `phases` and `phase_external_consumer`. It is not a hidden workflow exception.
-
 | Scope     | Execution strategy                                     | Default phases                                                                             |
 | --------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
 | `light`   | Repository checks; no package setup or package closure | format, lint                                                                               |
@@ -98,7 +94,7 @@ CI configuration.
 ### Detection
 
 `detect_changes` checks out full history, runs the detector, and publishes scope, phases, package
-lists, test paths, and the temporary external-consumer safety flag.
+lists, and test paths.
 
 ### Light validation
 
@@ -119,16 +115,10 @@ packed artifacts for the normal external-consumer path.
 
 ### External consumer safety validation
 
-During this CI overhaul, `force_external_consumer_check` is enabled. For every non-light successful
-validation, `external_consumer_check` builds and packs fresh artifacts inside the consumer job and
-validates those exact archives in a clean application. It does not install Proton Pass or run
-Varlock: those are preparation concerns, while the consumer job only needs package build tooling and
-the packed artifacts. This intentionally duplicates some work while build orchestration is changing
-so broken packages cannot pass solely because a previous artifact was reused.
-
-When the temporary flag is disabled, the full validation job's uploaded packed artifacts are
-downloaded and checked by the consumer job as the normal optimized path. The flag must only be
-disabled after the overhaul's full regression and timing evidence has been reviewed.
+For full-scope validation, `external_consumer_check` downloads the packed artifacts from
+`full_quality_check` and validates those exact archives in a clean application. It does not install
+Proton Pass or run Varlock: those are preparation concerns, while the consumer job only needs the
+packed artifacts.
 
 ## Build ownership
 

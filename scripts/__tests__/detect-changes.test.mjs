@@ -31,7 +31,6 @@ function names(entries) {
 describe("CI policy", () => {
   it("declares a versioned, conservative policy contract", () => {
     expect(ciPolicy.version).toBeGreaterThan(0);
-    expect(ciPolicy.forceExternalConsumerCheck).toBe(true);
     expect(ciPolicy.diffEvents).toEqual(["pull_request", "merge_group"]);
     expect(ciPolicy.ignoredDirectories).toContain("docs");
     expect(ciPolicy.ignoredGithubPaths).toContain(".github/actions");
@@ -42,7 +41,7 @@ describe("CI policy", () => {
   it("defines complete phase sets for every scope", () => {
     expect(selectPhases("light")).toEqual(new Set(["format", "lint"]));
     expect(selectPhases("focused")).toEqual(
-      new Set(["format", "lint", "prepare", "typecheck", "test", "external_consumer"])
+      new Set(["format", "lint", "prepare", "typecheck", "test"])
     );
     expect(selectPhases("full")).toContain("external_consumer");
   });
@@ -285,11 +284,11 @@ describe("detector command integration", () => {
 
       expect(stdout).toContain("CI validation scope: FOCUSED");
       expect(stdout).toContain(
-        "Enabled phases: format, lint, prepare, typecheck, test, external_consumer"
+        "Enabled phases: format, lint, prepare, typecheck, test"
       );
       expect(outputs).toContain("scope=focused");
       expect(outputs).toContain(
-        'phases=["format","lint","prepare","typecheck","test","external_consumer"]'
+        'phases=["format","lint","prepare","typecheck","test"]'
       );
       expect(outputs).toContain("phase_format=true");
       expect(outputs).toContain("phase_lint=true");
@@ -299,8 +298,7 @@ describe("detector command integration", () => {
       expect(outputs).toContain("phase_build=false");
       expect(outputs).toContain("phase_validate_packages=false");
       expect(outputs).toContain("phase_pack=false");
-      expect(outputs).toContain("phase_external_consumer=true");
-      expect(outputs).toContain("force_external_consumer_check=true");
+      expect(outputs).toContain("phase_external_consumer=false");
       expect(outputs).toContain("packages=@onderwijsin/nuxt-directus-sitemaps");
       expect(outputs).toContain("prepare_packages=");
       expect(summaryText).toContain("CI validation scope: focused");

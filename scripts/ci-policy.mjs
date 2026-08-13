@@ -6,9 +6,7 @@
  */
 export const ciPolicy = Object.freeze({
   /** Increment when the detector/workflow contract changes incompatibly. */
-  version: 1,
-  /** Keep the external consumer enabled while build orchestration is being changed. */
-  forceExternalConsumerCheck: true,
+  version: 2,
   /** Events whose payload provides a trustworthy base-to-head repository diff. */
   diffEvents: ["pull_request", "merge_group"],
   /** Repository directories whose contents cannot affect package validation. */

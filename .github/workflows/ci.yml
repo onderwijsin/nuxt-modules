@@ -42,7 +42,6 @@ jobs:
       phase_validate_packages: ${{ steps.detect.outputs.phase_validate_packages }}
       phase_pack: ${{ steps.detect.outputs.phase_pack }}
       phase_external_consumer: ${{ steps.detect.outputs.phase_external_consumer }}
-      force_external_consumer_check: ${{ steps.detect.outputs.force_external_consumer_check }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -223,16 +222,7 @@ jobs:
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
-      - name: Build fresh package artifacts
-        if: needs.detect_changes.outputs.force_external_consumer_check == 'true'
-        run: |
-          pnpm dev:prepare
-          pnpm build:packages
-      - name: Pack fresh package artifacts
-        if: needs.detect_changes.outputs.force_external_consumer_check == 'true'
-        run: pnpm pack:packages "$RUNNER_TEMP/packages"
       - name: Download packed package artifacts
-        if: needs.detect_changes.outputs.force_external_consumer_check != 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: packed-packages-${{ github.sha }}
