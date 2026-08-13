@@ -256,7 +256,7 @@ removed after the migration overlap period. H3's derived session header is disab
 Generate a session secret with:
 
 ```sh
-node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+openssl rand -base64 32
 ```
 
 ### `useDirectusAuth` API
