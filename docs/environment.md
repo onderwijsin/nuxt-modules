@@ -66,11 +66,22 @@ for creating, scoping, renewing, and managing PATs.
 
 CI installs `pass-cli` through the local composite action at
 `.github/actions/install-proton-pass-cli/action.yml`. Jobs that can load a playground environment
-receive `PROTON_PASS_PERSONAL_ACCESS_TOKEN` explicitly, including installation, preparation,
-typechecking, tests, builds, and package validation.
+scope `PROTON_PASS_PERSONAL_ACCESS_TOKEN` only to Varlock-related steps. The token is required by
+the explicit `pnpm varlock:load` command and by Nuxt preparation/typecheck commands that evaluate a
+playground's Vite configuration and can load Varlock through `varlockVitePlugin`. It is not passed
+to package tests, package builds, package validation, or the external consumer.
+
+See [module playgrounds](module-cookbook/playground.md#varlock-backed-playgrounds) for the
+underlying Vite loading behavior and the command boundary this CI scope follows.
 
 The action installs the CLI in `$HOME/.local/bin`, adds that directory to `GITHUB_PATH`, and only
 prints the CLI version. Resolved secrets must not be echoed or uploaded in artifacts.
+
+The installer intentionally remains the documented exception in [custom Actions](actions.md): it
+uses Proton's maintained remote installer rather than a repository-pinned installer artifact. The
+current CI runners exercise the Linux x86_64 path only; Linux arm64 and macOS x86_64/arm64 are not
+currently covered by repository tests or runner jobs. This exception and platform limitation must be
+revisited before broadening runner coverage or relying on the installer for another platform.
 
 Fork pull requests may not receive repository secrets. In that case, environment-dependent checks
 need an actionable failure rather than silently substituting production credentials.

@@ -7,6 +7,9 @@ re-runs.
 Read this article when a task changes a publishable package, Changeset, release workflow, package
 artefact, tag, GitHub Release, or release notification.
 
+For the complete pull-request and merge-queue validation chain, read
+[Continuous integration](ci.md).
+
 ## Local developer workflow
 
 When a change affects a published module, create a Changeset locally before opening the pull
@@ -69,22 +72,22 @@ payload and the bot token is passed through the action's `token` input.
 
 ## Checks performed
 
-Normal pull requests use change-aware validation, while merge-queue validation runs the complete
-suite against the combined changes. The publish workflow independently repeats the checks that
-protect the exact release artefacts immediately before publishing.
+Normal pull requests use change-aware validation, while merge-group validation applies the same
+light, focused, or full strategy to the combined diff. The publish workflow independently repeats
+the checks that protect the exact release artefacts immediately before publishing.
 
-| Stage                  | Check                           | Purpose                                                                                                                                                   |
-| ---------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Every PR               | Changeset status                | Posts the proposed package releases and highlights a missing Changeset without blocking the PR.                                                           |
-| Merge queue            | Changeset status                | The `changeset_status` job is intentionally skipped; GitHub reports skipped required checks as successful.                                                |
-| PR (focused when safe) | Format and lint                 | Always validates repository formatting and lint rules; package changes also run focused preparation, typechecking, and tests for affected dependents.     |
-| Merge queue            | Complete repository validation  | Runs recursive typechecking, coverage tests, all package builds, package metadata, packed artefact, and external consumer checks against the merge group. |
-| Publish                | Utility and Nuxt preparation    | Builds shared utility declarations and generates the Nuxt configuration required by module builds.                                                        |
-| Publish                | Recursive build                 | Rebuilds shared utilities and modules before publishing.                                                                                                  |
-| Publish                | Package metadata                | Confirms the package still meets the publish contract.                                                                                                    |
-| Publish                | Packed artefact and Publint     | Prevents an invalid or incomplete tarball from reaching npm.                                                                                              |
-| Publish                | External Nuxt consumer          | Installs the packed artefacts outside the workspace and validates prepare, build, Nitro startup, and runtime.                                             |
-| Publish                | Changesets publish and releases | Publishes release versions, creates package-specific tags, and creates GitHub Releases.                                                                   |
+| Stage             | Check                           | Purpose                                                                                                                                        |
+| ----------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every PR          | Changeset status                | Posts the proposed package releases and highlights a missing Changeset without blocking the PR.                                                |
+| Merge queue       | Changeset status                | The `changeset_status` job is intentionally skipped; GitHub reports skipped required checks as successful.                                     |
+| PR (change-aware) | Format and lint                 | Always validates repository formatting and lint rules; focused package changes additionally prepare, typecheck, and test the affected closure. |
+| Merge queue       | Classified merge-group strategy | Applies the same strategy and effective phase set to the combined merge-group diff; ambiguous cases fail closed to full validation.            |
+| Publish           | Utility and Nuxt preparation    | Builds shared utility declarations once and generates the Nuxt configuration required by module builds.                                        |
+| Publish           | Recursive build                 | Builds module packages after preparation without rebuilding the shared utility package.                                                        |
+| Publish           | Package metadata                | Confirms the package still meets the publish contract.                                                                                         |
+| Publish           | Packed artefact and Publint     | Prevents an invalid or incomplete tarball from reaching npm.                                                                                   |
+| Publish           | External Nuxt consumer          | Installs the packed artefacts outside the workspace and validates prepare, build, Nitro startup, and runtime.                                  |
+| Publish           | Changesets publish and releases | Publishes release versions, creates package-specific tags, and creates GitHub Releases.                                                        |
 
 ## Commands
 

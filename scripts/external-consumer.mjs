@@ -37,6 +37,20 @@ function run(command, arguments_) {
 }
 
 /**
+ * Resolves the exact packed-artifact dependency graph once, then installs from that lockfile.
+ *
+ * The package archives are generated for each validation run, so the consumer lockfile cannot be
+ * committed independently of the artifact set. Freezing the second install prevents the actual
+ * validation from changing the graph after resolution.
+ *
+ * @returns {void}
+ */
+function installConsumerDependencies() {
+  run("pnpm", ["install", "--lockfile-only", "--ignore-scripts", "--prefer-offline"]);
+  run("pnpm", ["install", "--frozen-lockfile", "--ignore-scripts"]);
+}
+
+/**
  * Creates the consumer package manifest with every packed package as a local dependency.
  *
  * @returns {Record<string, string>} Local file dependencies keyed by package name.
@@ -87,7 +101,7 @@ writeFileSync(
 );
 
 console.log(`Installing packed packages into ${consumerDirectory}`);
-run("pnpm", ["install", "--no-frozen-lockfile"]);
+installConsumerDependencies();
 run("pnpm", ["exec", "nuxt", "prepare"]);
 run("pnpm", ["exec", "nuxt", "build"]);
 

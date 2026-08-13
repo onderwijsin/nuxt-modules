@@ -36,12 +36,10 @@
     "access": "public"
   },
   "scripts": {
-    "prebuild": "pnpm --filter @onderwijsin/nuxt-module-utils build",
     "build": "nuxt-module-build build",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "dev": "pnpm run dev:prepare && nuxt dev playground",
     "dev:build": "nuxt build playground",
-    "predev:prepare": "pnpm --filter @onderwijsin/nuxt-module-utils build",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground"
   },
   "dependencies": {
