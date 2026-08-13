@@ -49,18 +49,22 @@ export function mergeDirectusSitemapCollections(
  * @param collectionOverrides Serializable collection configuration from directusSitemaps.
  * @param staticEntries Validated static sitemap entries.
  * @param useSharedConfig Whether the directus-config module registered a shared config source.
+ * @param queryLimit Maximum number of records requested per built-in Directus page.
+ * @param failureMode Behavior when a collection page cannot be fetched.
  * @returns Source for the generated Nitro virtual module.
  */
 export function generateDirectusSitemapsConfigSource(
   collectionOverrides: DirectusCollectionConfig[],
   staticEntries: SitemapUrl[],
-  useSharedConfig: boolean
+  useSharedConfig: boolean,
+  queryLimit = 100,
+  failureMode: "best-effort" | "hard-failure" = "best-effort"
 ): string {
   const staticSource = JSON.stringify(staticEntries) ?? "[]";
   const overridesSource = JSON.stringify(collectionOverrides) ?? "[]";
 
   if (!useSharedConfig) {
-    return `export default { collections: ${overridesSource}, static: ${staticSource} };\n`;
+    return `export default { collections: ${overridesSource}, static: ${staticSource}, queryLimit: ${queryLimit}, failureMode: ${JSON.stringify(failureMode)} };\n`;
   }
 
   return `import directusConfig from "#directus-config-server";
@@ -83,6 +87,6 @@ for (const override of overrides) {
   }
 }
 
-export default { collections: [...collections.values()], static: ${staticSource} };
+export default { collections: [...collections.values()], static: ${staticSource}, queryLimit: ${queryLimit}, failureMode: ${JSON.stringify(failureMode)} };
 `;
 }

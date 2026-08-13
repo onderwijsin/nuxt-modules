@@ -17,7 +17,9 @@ describe("Directus sitemap configuration", () => {
         sitemapsPathPrefix: "/__sitemap__/",
         enablePrettyUrls: true,
         cache: false,
-        prerenderSitemaps: false
+        prerenderSitemaps: false,
+        queryLimit: 100,
+        failureMode: "best-effort"
       })
     ).toEqual(["content", "static"]);
   });
