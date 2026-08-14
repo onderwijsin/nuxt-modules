@@ -65,7 +65,7 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
-    // TODO this type template { nitro: true, nuxt: true }. Thats not an established pattern,
+    // TODO investigate this type template { nitro: true, nuxt: true }. Thats not an established pattern,
     // and i dont know what it does
     const serverConfigTypes = addTypeTemplate(
       {
@@ -75,13 +75,6 @@ export default defineNuxtModule<ModuleOptions>({
       { nitro: true, nuxt: true }
     );
 
-    /**
-     * Why via tsConfig? Im not saying its wrong though.
-     * We also want this import to only be available in nitro runtime (similar to the full directus config from the directus-config module)
-     *
-     * Ah i now see that dirctus-config follows this patterns as well
-     * the directus module follows a different pattern though
-     */
     nuxt.options.typescript.tsConfig ??= {};
     nuxt.options.typescript.tsConfig.compilerOptions ??= {};
     nuxt.options.typescript.tsConfig.compilerOptions.paths ??= {};
