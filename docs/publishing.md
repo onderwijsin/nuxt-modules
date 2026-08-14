@@ -45,7 +45,10 @@ The official action commits those changes and creates or updates a pull request 
 `Publish new package versions`. It does not publish packages. The pull request is labeled
 `automated` and `no-changeset`, because it contains generated release changes rather than a new
 contributor Changeset. It can therefore be reviewed and receive normal pull request CI without
-requiring another Changeset.
+requiring another Changeset. It enters the normal merge queue, whose repository-wide
+`max_entries_to_merge: 1` policy is intentional: it ensures this release pull request is merged as
+the sole pull request in its merge group. Do not increase that value without first replacing this
+release-isolation guarantee; GitHub has no supported per-release-PR solo setting.
 
 ### 2. Publish the release
 
@@ -82,6 +85,7 @@ the checks that protect the exact release artefacts immediately before publishin
 | Merge queue       | Changeset status                | The `changeset_status` job is intentionally skipped; GitHub reports skipped required checks as successful.                                     |
 | PR (change-aware) | Format and lint                 | Always validates repository formatting and lint rules; focused package changes additionally prepare, typecheck, and test the affected closure. |
 | Merge queue       | Classified merge-group strategy | Applies the same strategy and effective phase set to the combined merge-group diff; ambiguous cases fail closed to full validation.            |
+| Main protection   | Singleton merge groups          | Keeps `max_entries_to_merge: 1`, the only native guarantee that release pull requests are not merged with unrelated pull requests.             |
 | Publish           | Utility and Nuxt preparation    | Builds shared utility declarations once and generates the Nuxt configuration required by module builds.                                        |
 | Publish           | Recursive build                 | Builds module packages after preparation without rebuilding the shared utility package.                                                        |
 | Publish           | Package metadata                | Confirms the package still meets the publish contract.                                                                                         |

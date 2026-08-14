@@ -18,6 +18,13 @@ Merge groups are not skipped. They validate the combined commit that the queue m
 merge-group base SHA is unavailable or its diff cannot be read, detection fails closed to full
 validation.
 
+The `Protect main` ruleset must keep `max_entries_to_merge: 1` as a repository-wide policy. This is
+intentional release safety, not merely a conservative throughput setting: the Changesets release
+pull request must never be merged in the same group as an unrelated pull request. GitHub does not
+provide a supported per-pull-request setting to mark one queue entry as solo, so changing this value
+removes the only native guarantee that release merges remain isolated. Any change requires an
+explicit replacement policy and corresponding documentation update.
+
 All third-party Actions are pinned to immutable commit SHAs. The local Proton Pass action is used by
 jobs that load Varlock-backed playground environments. CI sets `HUSKY=0` and uses Node 24 with the
 pinned pnpm version.
