@@ -20,7 +20,13 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import { isArray, isNonBlankString, hasKey, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  isArray,
+  isNonBlankString,
+  hasKey,
+  isRecord,
+  keys
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
 import { generateDirectusSitemapsConfigSource } from "./config/source";
@@ -42,11 +48,24 @@ export default defineNuxtModule<ModuleOptions>({
     enabled: true,
     collections: []
   },
-  moduleDependencies: (nuxt): ModuleDependencies =>
-    moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
+  moduleDependencies: (nuxt): ModuleDependencies => {
+    const dependencies = moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
       "@onderwijsin/nuxt-directus-client": { version: ">=0.4.0" },
       "@nuxtjs/sitemap": { version: ">=8.0.0" }
-    }),
+    });
+
+    if (
+      keys(dependencies).length > 0 &&
+      nuxt.options.modules.some((module) => module === "@onderwijsin/nuxt-directus-config")
+    ) {
+      return {
+        ...dependencies,
+        "@onderwijsin/nuxt-directus-config": { version: ">=0.3.0" }
+      };
+    }
+
+    return dependencies;
+  },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);

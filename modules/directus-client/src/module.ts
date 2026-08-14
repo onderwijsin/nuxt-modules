@@ -58,6 +58,13 @@ export default defineNuxtModule<ModuleOptions>({
     const directusConfigModuleRegistered = nuxt.options.modules.some(
       (module) => module === "@onderwijsin/nuxt-directus-config"
     );
+
+    const dependencies: ModuleDependencies = {};
+
+    if (directusConfigModuleRegistered) {
+      dependencies["@onderwijsin/nuxt-directus-config"] = { version: ">=0.3.0" };
+    }
+
     const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
     const configFile: string | false =
       directusConfigModuleRegistered &&
@@ -71,9 +78,12 @@ export default defineNuxtModule<ModuleOptions>({
         ? await getResolvedDirectusConfigFromSource(nuxt.options.rootDir, configFile)
         : undefined);
     const directusClientOptions = defu(nuxt.options.directusClient, sharedConfig);
-    return directusClientOptions?.client?.auth?.turnstile?.enabled
-      ? { "@onderwijsin/nuxt-turnstile": { version: ">=0.2.5" } }
-      : {};
+
+    if (directusClientOptions?.client?.auth?.turnstile?.enabled) {
+      dependencies["@onderwijsin/nuxt-turnstile"] = { version: ">=0.2.5" };
+    }
+
+    return dependencies;
   },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));

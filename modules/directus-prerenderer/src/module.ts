@@ -1,4 +1,5 @@
 import { defineNuxtModule, useLogger } from "@nuxt/kit";
+import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import {
   getResolvedDirectusConfig,
@@ -31,6 +32,18 @@ export default defineNuxtModule<ModuleOptions>({
     enabled: true,
     instance: {},
     collections: []
+  },
+  moduleDependencies: (nuxt): ModuleDependencies => {
+    if (
+      nuxt.options.directusPrerenderer === false ||
+      nuxt.options.directusPrerenderer?.enabled === false
+    ) {
+      return {};
+    }
+
+    return nuxt.options.modules.some((module) => module === "@onderwijsin/nuxt-directus-config")
+      ? { "@onderwijsin/nuxt-directus-config": { version: ">=0.3.0" } }
+      : {};
   },
   async setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));

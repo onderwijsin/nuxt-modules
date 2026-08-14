@@ -28,6 +28,7 @@ function createNuxt() {
   return {
     options: {
       directusPrerenderer: {},
+      modules: [],
       _prepare: false
     },
     hook: addHook
@@ -91,5 +92,71 @@ describe("directus-prerenderer module", () => {
     await setup({}, nuxt);
 
     expect(addHook).not.toHaveBeenCalled();
+  });
+
+  it("uses shared scalar defaults while preserving explicit module options", async () => {
+    getResolvedDirectusConfig.mockReturnValue({
+      prerenderer: {
+        includeStaticSitemapUrls: true,
+        queryLimit: 25,
+        failureMode: "hard-failure"
+      },
+      collections: []
+    });
+
+    const module = (await import("../src/module")).default;
+    const setup = Reflect.get(module, "setup");
+    if (typeof setup !== "function") throw new TypeError("Module setup is unavailable.");
+
+    const nuxt = createNuxt();
+    await setup(
+      { queryLimit: 10, failureMode: "best-effort", includeStaticSitemapUrls: false },
+      nuxt
+    );
+
+    const prerenderHook = addHook.mock.calls.find(([name]) => name === "prerender:routes")?.[1];
+    if (typeof prerenderHook !== "function") throw new TypeError("Prerender hook is unavailable.");
+
+    await prerenderHook({ routes: new Set<string>() });
+
+    expect(buildPrerenderRoutes).toHaveBeenCalledWith(
+      nuxt,
+      [],
+      expect.objectContaining({
+        includeStaticSitemapUrls: false,
+        queryLimit: 10,
+        failureMode: "best-effort"
+      })
+    );
+  });
+
+  it("declares the shared config dependency only when registered and enabled", async () => {
+    const module = (await import("../src/module")).default;
+    const moduleDependencies = Reflect.get(module, "moduleDependencies");
+    if (typeof moduleDependencies !== "function") {
+      throw new TypeError("Module dependencies are unavailable.");
+    }
+
+    expect(
+      moduleDependencies({
+        options: {
+          directusPrerenderer: { enabled: true },
+          modules: ["@onderwijsin/nuxt-directus-config"]
+        }
+      })
+    ).toEqual({ "@onderwijsin/nuxt-directus-config": { version: ">=0.3.0" } });
+    expect(
+      moduleDependencies({
+        options: { directusPrerenderer: { enabled: true }, modules: [] }
+      })
+    ).toEqual({});
+    expect(
+      moduleDependencies({
+        options: {
+          directusPrerenderer: { enabled: false },
+          modules: ["@onderwijsin/nuxt-directus-config"]
+        }
+      })
+    ).toEqual({});
   });
 });

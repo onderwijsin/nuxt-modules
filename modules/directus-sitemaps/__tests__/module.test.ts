@@ -206,10 +206,31 @@ describe("directus-sitemaps module", () => {
       throw new TypeError("Module dependencies are unavailable.");
     }
 
-    expect(moduleDependencies({ options: { directusSitemaps: { enabled: true } } })).toEqual({
+    expect(
+      moduleDependencies({ options: { directusSitemaps: { enabled: true }, modules: [] } })
+    ).toEqual({
       "@onderwijsin/nuxt-directus-client": { version: ">=0.4.0" },
       "@nuxtjs/sitemap": { version: ">=8.0.0" }
     });
-    expect(moduleDependencies({ options: { directusSitemaps: { enabled: false } } })).toEqual({});
+    expect(
+      moduleDependencies({
+        options: {
+          directusSitemaps: { enabled: true },
+          modules: ["@onderwijsin/nuxt-directus-config"]
+        }
+      })
+    ).toEqual({
+      "@onderwijsin/nuxt-directus-client": { version: ">=0.4.0" },
+      "@nuxtjs/sitemap": { version: ">=8.0.0" },
+      "@onderwijsin/nuxt-directus-config": { version: ">=0.3.0" }
+    });
+    expect(
+      moduleDependencies({
+        options: {
+          directusSitemaps: { enabled: false },
+          modules: ["@onderwijsin/nuxt-directus-config"]
+        }
+      })
+    ).toEqual({});
   });
 });
