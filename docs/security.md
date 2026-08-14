@@ -57,5 +57,7 @@ third-party actions must be pinned to full immutable commit SHAs, retaining the 
 release or tag in an inline comment. Avoid adding broad write permissions unrelated to the job's
 purpose.
 
+## Reporting
+
 Report suspected vulnerabilities through the repository's configured GitHub security reporting
 channel rather than opening a public issue with sensitive details.
