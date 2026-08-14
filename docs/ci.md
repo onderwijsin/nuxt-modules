@@ -112,10 +112,11 @@ skipped. Job setup remains only where it is needed to run another enabled phase.
 | `focused` | Affected package closure and its preparation inputs    | format, lint, prepare, typecheck, test, pack, external consumer                            |
 | `full`    | Repository-wide and release-facing validation          | format, lint, prepare, typecheck, test, build, package validation, pack, external consumer |
 
-The detector also emits the selected validation and preparation package lists. The validation list
-contains directly changed packages and transitive dependents. The preparation list additionally
-contains transitive workspace dependencies, so adding a new workspace dependency requires no manual
-CI configuration.
+The detector also emits the selected validation, artifact, and preparation package lists. The
+validation list contains directly changed packages and transitive dependents. The artifact list is
+the public subset that produces build and pack outputs. The preparation list additionally contains
+transitive workspace dependencies, so adding a new workspace dependency requires no manual CI
+configuration.
 
 ## Jobs
 
@@ -133,8 +134,9 @@ artifacts, run type checks, or run tests.
 
 `focused_quality_check` installs the workspace, loads Varlock playground environments, builds
 `module-utils` once, prepares the automatically derived package dependency closure in one pnpm
-invocation, then runs formatting, linting, affected type checks, selected tests, and packs the
-public packages in that same closure for the focused consumer.
+invocation, then runs formatting, linting, affected type checks, and selected tests. It builds and
+packs only the public artifact packages in the selected closure. Private-only changes, such as
+changes to `test-utils`, therefore do not trigger unrelated module builds or package artifacts.
 
 ### Full validation
 

@@ -393,11 +393,22 @@ export function getTestPaths(selected, packageByName) {
  * @param {Set<string>} result.direct Directly affected packages.
  * @param {Set<string>} result.dependent Dependents added by the graph.
  * @param {string[]} result.selected Final package selection.
+ * @param {string[]} result.artifactPackages Public packages that produce release artifacts.
  * @param {string[]} result.testPaths Final test path selection.
  * @param {Set<string>} result.phases Enabled validation phases.
  * @returns {void}
  */
-function logResults({ scope, reason, changed, direct, dependent, selected, testPaths, phases }) {
+function logResults({
+  scope,
+  reason,
+  changed,
+  direct,
+  dependent,
+  selected,
+  artifactPackages,
+  testPaths,
+  phases
+}) {
   const icon = scope === "full" ? "🛡️" : scope === "light" ? "🪶" : "🎯";
   const source = changed === null ? "unavailable" : `${changed.length} file(s)`;
 
@@ -414,6 +425,7 @@ function logResults({ scope, reason, changed, direct, dependent, selected, testP
   console.log("\n🎯 Directly affected packages\n" + formatList([...direct].sort()));
   console.log("\n🔗 Dependent packages added\n" + formatList([...dependent].sort()));
   console.log("\n📦 Validation packages\n" + formatList(selected));
+  console.log("\n📦 Artifact packages\n" + formatList(artifactPackages));
   console.log("\n🧪 Test paths\n" + formatList(testPaths));
   console.log("═".repeat(56));
 }
@@ -428,18 +440,30 @@ function logResults({ scope, reason, changed, direct, dependent, selected, testP
  * @param {Set<string>} result.direct Directly affected packages.
  * @param {Set<string>} result.dependent Dependents added by the graph.
  * @param {string[]} result.selected Final package selection.
+ * @param {string[]} result.artifactPackages Public packages that produce release artifacts.
  * @param {string[]} result.testPaths Final test path selection.
  * @param {Set<string>} result.phases Enabled validation phases.
  * @returns {void}
  */
-function writeSummary({ scope, reason, changed, direct, dependent, selected, testPaths, phases }) {
+function writeSummary({
+  scope,
+  reason,
+  changed,
+  direct,
+  dependent,
+  selected,
+  artifactPackages,
+  testPaths,
+  phases
+}) {
   if (!summaryFile) return;
 
   appendFileSync(
     summaryFile,
     `### CI validation scope: ${scope}\n\n` +
-      `| Result | Value |\n| --- | --- |\n| Scope | ${scope} |\n| Reason | ${reason} |\n| Changed files | ${changed?.length ?? "unavailable"} |\n| Direct packages | ${direct.size} |\n| Dependent packages | ${dependent.size} |\n| Selected packages | ${selected.length} |\n| Test paths | ${testPaths.length} |\n| Phases | ${[...phases].join(", ")} |\n\n` +
+      `| Result | Value |\n| --- | --- |\n| Scope | ${scope} |\n| Reason | ${reason} |\n| Changed files | ${changed?.length ?? "unavailable"} |\n| Direct packages | ${direct.size} |\n| Dependent packages | ${dependent.size} |\n| Selected packages | ${selected.length} |\n| Artifact packages | ${artifactPackages.length} |\n| Test paths | ${testPaths.length} |\n| Phases | ${[...phases].join(", ")} |\n\n` +
       `#### 📦 Validation packages\n\n${formatList(selected)}\n\n` +
+      `#### 📦 Artifact packages\n\n${formatList(artifactPackages)}\n\n` +
       `#### 🧪 Test paths\n\n${formatList(testPaths)}\n`
   );
 }
@@ -463,6 +487,9 @@ function main() {
   const selected = classification.full
     ? discovered.map((entry) => entry.manifest.name)
     : [...selectedPackages].sort();
+  const artifactPackages = selected.filter(
+    (name) => packageByName.get(name)?.manifest.private !== true
+  );
   const preparationPackages = new Set(selected);
   if (!classification.full) addDependencies(preparationPackages, buildDependencyGraph(discovered));
   const prepare = [...preparationPackages].sort();
@@ -476,6 +503,7 @@ function main() {
     direct: classification.direct,
     dependent,
     selected,
+    artifactPackages,
     prepare,
     phases,
     testPaths
@@ -486,6 +514,7 @@ function main() {
   writeGithubOutput("yolo", yolo);
   writeGithubOutput("reason", classification.reason);
   writeGithubOutput("packages", selected.join(" "));
+  writeGithubOutput("artifact_packages", artifactPackages.join(" "));
   writeGithubOutput("prepare_packages", prepare.join(" "));
   writeGithubOutput("phases", JSON.stringify([...phases]));
   for (const phase of [

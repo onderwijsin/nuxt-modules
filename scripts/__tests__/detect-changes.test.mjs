@@ -363,8 +363,30 @@ describe("detector command integration", () => {
       expect(outputs).toContain("phase_pack=true");
       expect(outputs).toContain("phase_external_consumer=true");
       expect(outputs).toContain("packages=@onderwijsin/nuxt-directus-sitemaps");
+      expect(outputs).toContain("artifact_packages=@onderwijsin/nuxt-directus-sitemaps");
       expect(outputs).toContain("prepare_packages=");
       expect(summaryText).toContain("CI validation scope: focused");
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("leaves artifact packages empty for private-only changes", () => {
+    const directory = mkdtempSync(resolve(tmpdir(), "detect-private-changes-"));
+    const output = resolve(directory, "output");
+
+    try {
+      execFileSync("node", ["scripts/detect-changes.mjs"], {
+        cwd: root,
+        env: {
+          ...process.env,
+          CHANGED_FILES: "packages/test-utils/src/index.ts",
+          GITHUB_EVENT_NAME: "pull_request",
+          GITHUB_OUTPUT: output
+        }
+      });
+
+      expect(readFileSync(output, "utf8")).toContain("artifact_packages=\n");
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
