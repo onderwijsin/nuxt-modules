@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  generateDirectusSitemapsConfigSource,
-  mergeDirectusSitemapCollections
-} from "../src/config/source";
+import type { DirectusCollectionConfig } from "@onderwijsin/nuxt-directus-config/schema";
+import { applyOverridesToCollectionConfig } from "@onderwijsin/nuxt-directus-config/config";
+
+import { generateDirectusSitemapsConfigSource } from "../src/config/source";
 
 describe("Directus sitemap server config source", () => {
   it("loads executable collection configuration from the server-only shared alias", () => {
@@ -26,24 +26,17 @@ describe("Directus sitemap server config source", () => {
 
   it("merges collection overrides by name and preserves executable shared behavior", () => {
     const mapper = () => ({ loc: "/articles" });
-    expect(
-      mergeDirectusSitemapCollections(
-        [
-          {
-            collection: "articles",
-            sitemap: { mapper, fields: ["slug"], _sitemap: "content" },
-            prerender: false
-          }
-        ],
-        [
-          {
-            collection: "articles",
-            sitemap: { fields: ["permalink"] },
-            prerender: false
-          }
-        ]
-      )
-    ).toEqual([
+    const collections: DirectusCollectionConfig[] = [
+      {
+        collection: "articles",
+        sitemap: { mapper, fields: ["slug"], _sitemap: "content" },
+        prerender: false
+      }
+    ];
+    const overrides: DirectusCollectionConfig[] = [
+      { collection: "articles", sitemap: { fields: ["permalink"] }, prerender: false }
+    ];
+    expect(applyOverridesToCollectionConfig(collections, overrides, "sitemap")).toEqual([
       {
         collection: "articles",
         sitemap: { mapper, fields: ["permalink"], _sitemap: "content" },
@@ -53,11 +46,14 @@ describe("Directus sitemap server config source", () => {
   });
 
   it("lets a false sitemap override disable an existing collection", () => {
-    expect(
-      mergeDirectusSitemapCollections(
-        [{ collection: "articles", sitemap: { _sitemap: "content" }, prerender: false }],
-        [{ collection: "articles", sitemap: false, prerender: false }]
-      )
-    ).toEqual([{ collection: "articles", sitemap: false, prerender: false }]);
+    const collections: DirectusCollectionConfig[] = [
+      { collection: "articles", sitemap: { _sitemap: "content" }, prerender: false }
+    ];
+    const overrides: DirectusCollectionConfig[] = [
+      { collection: "articles", sitemap: false, prerender: false }
+    ];
+    expect(applyOverridesToCollectionConfig(collections, overrides, "sitemap")).toEqual([
+      { collection: "articles", sitemap: false, prerender: false }
+    ]);
   });
 });

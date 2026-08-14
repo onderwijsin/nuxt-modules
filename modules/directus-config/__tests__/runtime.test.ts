@@ -32,6 +32,14 @@ describe("Directus config helpers", () => {
     expect(validateDirectusConfig({})).toEqual({ collections: [] });
   });
 
+  it("accepts shared prerenderer options", () => {
+    expect(validateDirectusConfig({ prerenderer: { queryLimit: 25 } }).prerenderer).toEqual({
+      includeStaticSitemapUrls: false,
+      queryLimit: 25,
+      failureMode: "best-effort"
+    });
+  });
+
   it("drops unknown values from the public projection", () => {
     expect(directusPublicConfigSchema.parse({ unknown: true })).toEqual({});
   });

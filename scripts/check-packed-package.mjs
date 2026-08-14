@@ -42,9 +42,12 @@ const packageEntry = spawnSync("tar", ["-xOzf", archive, `package/${entrypoint}`
 });
 if (
   packageEntry.status !== 0 ||
-  /from\s+["']test-utils(?:\/[^"']*)?["']/.test(packageEntry.stdout)
+  /from\s+["']test-utils(?:\/[^"']*)?["']/.test(packageEntry.stdout) ||
+  /createJiti\(import\.meta\.url/u.test(packageEntry.stdout)
 ) {
-  console.error("Packed package is missing its entrypoint or leaks a private workspace import.");
+  console.error(
+    "Packed package is missing its entrypoint, contains an unbuilt Nuxt module stub, or leaks a private workspace import."
+  );
   process.exit(1);
 }
 console.log(`Packed package is self-contained: ${archive}`);

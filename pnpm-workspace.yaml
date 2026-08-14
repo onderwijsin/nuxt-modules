@@ -30,6 +30,7 @@ catalog:
   "@nuxt/kit": 4.5.2
   "@nuxt/schema": 4.5.2
   "@nuxt/ui": 4.10.0
+  "@tanstack/vue-table": 8.21.3
   "@sentry/nuxt": 10.69.0
   "@directus/sdk": 24.0.0
   jiti: 2.7.0

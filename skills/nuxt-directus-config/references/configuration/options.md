@@ -1,14 +1,16 @@
 # Directus configuration reference
 
 Use this reference for configuration changes involving `@onderwijsin/nuxt-directus-client`,
-`@onderwijsin/nuxt-directus-config`, or `@onderwijsin/nuxt-directus-sitemaps`. The source of truth
-is the published schema entrypoint at `@onderwijsin/nuxt-directus-config/schema`.
+`@onderwijsin/nuxt-directus-config`, `@onderwijsin/nuxt-directus-sitemaps`, or
+`@onderwijsin/nuxt-directus-prerenderer`. The source of truth is the published schema entrypoint at
+`@onderwijsin/nuxt-directus-config/schema`.
 
 ## Contents
 
 - [`directus` options](#directus-options)
 - [Shared `collections` options](#shared-collections-options)
 - [Shared `sitemaps` options](#shared-sitemaps-options)
+- [Shared `prerenderer` options](#shared-prerenderer-options)
 - [Sitemap entry schema](#sitemap-entry-schema)
   - [`SitemapUrl`](#sitemapurl)
   - [Nested entry schemas](#nested-entry-schemas)
@@ -47,17 +49,22 @@ is the published schema entrypoint at `@onderwijsin/nuxt-directus-config/schema`
 `collections` is an array. Each item requires `collection`, `sitemap`, and `prerender`. Collection
 configuration is executable and server-only.
 
-| Option             | Required/default | Contract                                                                                  |
-| ------------------ | ---------------- | ----------------------------------------------------------------------------------------- |
-| `collection`       | Required         | Directus collection name.                                                                 |
-| `sitemap`          | Required         | `false` excludes the collection; an object enables sitemap generation.                    |
-| `sitemap._sitemap` | Optional         | Named `@nuxtjs/sitemap` destination.                                                      |
-| `sitemap.fields`   | Optional         | Directus fields; the default fetcher uses `['*']` when absent.                            |
-| `sitemap.filter`   | Optional         | Directus filter; the default fetcher uses `{}` when absent.                               |
-| `sitemap.fieldmap` | Optional         | Declarative map from sitemap properties to Directus record properties; `loc` is required. |
-| `sitemap.fetcher`  | Optional         | Async replacement fetcher receiving `{ collection, fields, filter }`.                     |
-| `sitemap.mapper`   | Optional         | Executable mapper for one fetched item, or `null`/`undefined` to omit it.                 |
-| `prerender`        | Required         | `false` or the reserved empty object for future prerender behavior.                       |
+| Option               | Required/default | Contract                                                                                  |
+| -------------------- | ---------------- | ----------------------------------------------------------------------------------------- |
+| `collection`         | Required         | Directus collection name.                                                                 |
+| `sitemap`            | Required         | `false` excludes the collection; an object enables sitemap generation.                    |
+| `sitemap._sitemap`   | Optional         | Named `@nuxtjs/sitemap` destination.                                                      |
+| `sitemap.fields`     | Optional         | Directus fields; the default fetcher uses `['*']` when absent.                            |
+| `sitemap.filter`     | Optional         | Directus filter; the default fetcher uses `{}` when absent.                               |
+| `sitemap.fieldmap`   | Optional         | Declarative map from sitemap properties to Directus record properties; `loc` is required. |
+| `sitemap.fetcher`    | Optional         | Async replacement fetcher receiving `{ collection, fields, filter }`.                     |
+| `sitemap.mapper`     | Optional         | Executable mapper for one fetched item, or `null`/`undefined` to omit it.                 |
+| `prerender`          | Required         | `false` or prerender configuration for `@onderwijsin/nuxt-directus-prerenderer`.          |
+| `prerender.fields`   | Optional         | Directus fields passed to the default build-time fetcher.                                 |
+| `prerender.filter`   | Optional         | Directus filter passed to the default build-time fetcher.                                 |
+| `prerender.fieldmap` | Optional         | `{ route: string }` mapping a fetched field to a complete route path.                     |
+| `prerender.fetcher`  | Optional         | Async replacement fetcher receiving `{ collection, fields, filter }`.                     |
+| `prerender.mapper`   | Optional         | Executable mapper returning one route, multiple routes, or `null`/`undefined`.            |
 
 ## Shared `sitemaps` options
 
@@ -72,6 +79,18 @@ configuration is executable and server-only.
 
 The `@onderwijsin/nuxt-directus-sitemaps` module accepts these options directly under
 `directusSitemaps`; direct options override shared values.
+
+## Shared `prerenderer` options
+
+| Option                     | Default         | Contract                                                        |
+| -------------------------- | --------------- | --------------------------------------------------------------- |
+| `includeStaticSitemapUrls` | `false`         | Adds static sitemap URLs to the build-time prerender route set. |
+| `queryLimit`               | `100`           | Maximum records requested per built-in Directus page.           |
+| `failureMode`              | `"best-effort"` | Omits failed collections or aborts with `"hard-failure"`.       |
+
+The `@onderwijsin/nuxt-directus-prerenderer` module accepts these options directly under
+`directusPrerenderer`; direct options override shared values. Its `instance` option falls back to
+the top-level shared `instance` credentials.
 
 ## Sitemap entry schema
 

@@ -23,9 +23,10 @@ receive it transitively when they install a module.
 
 Use the narrowest subpath for the code you are writing:
 
-- `@onderwijsin/nuxt-module-utils/shared` contains framework-neutral runtime helpers.
+- `@onderwijsin/nuxt-module-utils/shared` contains framework-neutral runtime helpers, including the
+  typed Directus REST client factory.
 - `@onderwijsin/nuxt-module-utils/build` contains Node-only module setup, option validation, and
-  build-time file discovery helpers.
+  build-time file discovery helpers, including the shared Directus setup cache.
 - `@onderwijsin/nuxt-module-utils/server` contains H3-dependent request-token and
   administrator-authentication helpers.
 - `@onderwijsin/nuxt-module-utils` is a compatibility alias for the shared exports.
@@ -41,6 +42,12 @@ runtime registrations when disabled.
 
 This package is primarily a dependency for module authors and published module runtime code. It is
 not intended to be an application-level Nuxt module or a package that consumers install directly.
+
+Directus modules can use `useDirectusSetupCache` and `withDirectusSetupCache` from the `build`
+subpath to share successful build-time setup results for one Nuxt instance. Handler identities are
+process-local strings and are only suitable for the current build. The cache is not runtime state,
+is not written to Nuxt configuration, coalesces concurrent operations, removes failed operations,
+and is cleared after Nuxt finishes module setup (with instance close as a fallback).
 
 ## API reference
 

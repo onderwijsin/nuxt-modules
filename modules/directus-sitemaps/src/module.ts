@@ -11,6 +11,7 @@ import type { ModuleOptions as NuxtSitemapModuleOptions } from "@nuxtjs/sitemap"
 import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
+import { applyOverridesToCollectionConfig } from "@onderwijsin/nuxt-directus-config/config";
 import {
   moduleDependenciesWhenEnabled,
   moduleSetup,
@@ -19,13 +20,16 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
-import { isArray, isNonBlankString, hasKey, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  isArray,
+  isNonBlankString,
+  hasKey,
+  isRecord,
+  keys
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
-import {
-  generateDirectusSitemapsConfigSource,
-  mergeDirectusSitemapCollections
-} from "./config/source";
+import { generateDirectusSitemapsConfigSource } from "./config/source";
 import type { ModuleOptions } from "./config/options.schema";
 import {
   resolveSitemapNamespaces,
@@ -44,11 +48,24 @@ export default defineNuxtModule<ModuleOptions>({
     enabled: true,
     collections: []
   },
-  moduleDependencies: (nuxt): ModuleDependencies =>
-    moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
-      "@onderwijsin/nuxt-directus-client": { version: ">=0.2.0" },
+  moduleDependencies: (nuxt): ModuleDependencies => {
+    const dependencies = moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
+      "@onderwijsin/nuxt-directus-client": { version: ">=0.4.0" },
       "@nuxtjs/sitemap": { version: ">=8.0.0" }
-    }),
+    });
+
+    if (
+      keys(dependencies).length > 0 &&
+      nuxt.options.modules.some((module) => module === "@onderwijsin/nuxt-directus-config")
+    ) {
+      return {
+        ...dependencies,
+        "@onderwijsin/nuxt-directus-config": { version: ">=0.3.0" }
+      };
+    }
+
+    return dependencies;
+  },
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
@@ -67,7 +84,7 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
 
-    // TODO this type template { nitro: true, nuxt: true }. Thats not an established pattern,
+    // TODO investigate this type template { nitro: true, nuxt: true }. Thats not an established pattern,
     // and i dont know what it does
     const serverConfigTypes = addTypeTemplate(
       {
@@ -77,13 +94,6 @@ export default defineNuxtModule<ModuleOptions>({
       { nitro: true, nuxt: true }
     );
 
-    /**
-     * Why via tsConfig? Im not saying its wrong though.
-     * We also want this import to only be available in nitro runtime (similar to the full directus config from the directus-config module)
-     *
-     * Ah i now see that dirctus-config follows this patterns as well
-     * the directus module follows a different pattern though
-     */
     nuxt.options.typescript.tsConfig ??= {};
     nuxt.options.typescript.tsConfig.compilerOptions ??= {};
     nuxt.options.typescript.tsConfig.compilerOptions.paths ??= {};
@@ -112,9 +122,10 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.sitemap ??= {} as NuxtSitemapModuleOptions;
 
     // Merge serializable sitemap collection overrides into executable shared configuration.
-    const effectiveCollections = mergeDirectusSitemapCollections(
+    const effectiveCollections = applyOverridesToCollectionConfig(
       sharedConfig?.collections ?? [],
-      options.collections
+      options.collections,
+      "sitemap"
     );
 
     // Get an array of unique sitemap names. If empty, all entries should be placed in the default index sitemap

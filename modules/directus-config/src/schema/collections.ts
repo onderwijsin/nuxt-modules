@@ -1,4 +1,4 @@
-import { isFunction, fromEntries, keys } from "@onderwijsin/nuxt-module-utils/shared";
+import { fromEntries, isFunction, keys } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
 // Registers the shared Zod sensitivity method used below.
 import "./sensitive";
@@ -33,9 +33,24 @@ export type DirectusCollectionFetchContext = z.output<typeof directusCollectionF
 export type DirectusCollectionFetcher<Item = unknown> = (
   context: DirectusCollectionFetchContext
 ) => Promise<Item[]>;
-export type DirectusCollectionMapper<Item = unknown> = (
+
+export type DirectusCollectionSitemapMapper<Item = unknown> = (
   item: Item
 ) => MappedDirectusSitemapEntry | null | undefined;
+
+/** Maps one fetched Directus item to one or more prerender routes. */
+export type DirectusCollectionPrerenderMapper<Item = unknown> = (
+  item: Item
+) => string | string[] | null | undefined;
+
+type AnyFunction = (...args: never[]) => unknown;
+
+/**
+ * Creates a Zod schema that validates a value is a function.
+ * @returns A Zod schema typed as the requested function type.
+ */
+const functionSchema = <T extends AnyFunction>() =>
+  z.custom<T>((value) => isFunction(value), "must be a function");
 
 const {
   loc: _,
@@ -51,26 +66,31 @@ export const directusSitemapFieldMapSchema = z.object({
 
 export type DirectusSitemapFieldMap = z.infer<typeof directusSitemapFieldMapSchema>;
 
+const commonCollectionConfigSchema = <Mapper extends AnyFunction>() => ({
+  fields: fields.optional(),
+  filter: filter.optional(),
+  mapper: functionSchema<Mapper>().optional(),
+  fetcher: functionSchema<DirectusCollectionFetcher>().optional()
+});
+
 /** Sitemap behavior for one Directus collection. */
 export const directusCollectionSitemapSchema = z.strictObject({
   _sitemap: z.string().trim().min(1).optional(),
-  fields: fields.optional(),
-  filter: filter.optional(),
   fieldmap: directusSitemapFieldMapSchema.optional(),
-  mapper: z
-    .custom<DirectusCollectionMapper>((value) => isFunction(value), "must be a function")
-    .optional(),
-  fetcher: z
-    .custom<DirectusCollectionFetcher>((value) => isFunction(value), "must be a function")
-    .optional()
+  ...commonCollectionConfigSchema<DirectusCollectionSitemapMapper>()
+});
+
+/** Build-time prerender behavior for one Directus collection. */
+export const directusCollectionPrerenderSchema = z.strictObject({
+  fieldmap: z.strictObject({ route: z.string().trim().min(1) }).optional(),
+  ...commonCollectionConfigSchema<DirectusCollectionPrerenderMapper>()
 });
 
 /** Portable executable Directus collection configuration. */
 export const directusCollectionConfigSchema = z.strictObject({
   collection,
   sitemap: z.union([z.literal(false), directusCollectionSitemapSchema]),
-  // For future feature
-  prerender: z.union([z.literal(false), z.strictObject({})])
+  prerender: z.union([z.literal(false), directusCollectionPrerenderSchema])
 });
 
 export type DirectusCollectionConfig = z.output<typeof directusCollectionConfigSchema>;

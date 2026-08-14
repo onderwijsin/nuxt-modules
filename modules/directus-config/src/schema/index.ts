@@ -3,6 +3,7 @@ export * from "./commands";
 export * from "./client";
 export * from "./collections";
 export * from "./sitemap";
+export * from "./prerenderer";
 export * from "./typegen";
 export * from "./config";
 export * from "./sitemap-entry";

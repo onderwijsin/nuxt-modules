@@ -1,0 +1,24 @@
+{
+  "name": "directus-prerenderer-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-directus-config": "workspace:*",
+    "@onderwijsin/nuxt-directus-prerenderer": "workspace:*",
+    "playground-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "@nuxt/ui": "catalog:",
+    "@tanstack/vue-table": "catalog:",
+    "nuxt": "catalog:",
+    "ofetch": "catalog:",
+    "typescript": "catalog:",
+    "ufo": "catalog:",
+    "vue": "catalog:"
+  }
+}
