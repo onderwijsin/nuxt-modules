@@ -144,6 +144,9 @@ jobs:
             test_paths+=("$path")
           done
           pnpm exec vitest run "${test_paths[@]}" --coverage
+      - name: Build focused package artifacts
+        if: needs.detect_changes.outputs.phase_pack == 'true'
+        run: pnpm build:packages
       - name: Pack focused package artifacts
         if: needs.detect_changes.outputs.phase_pack == 'true'
         run: pnpm pack:packages "$RUNNER_TEMP/packages" --packages="$PREPARE_PACKAGES"
