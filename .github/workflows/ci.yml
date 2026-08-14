@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   merge_group:
   workflow_dispatch:
 
@@ -29,6 +30,7 @@ jobs:
     outputs:
       scope: ${{ steps.detect.outputs.scope }}
       full: ${{ steps.detect.outputs.full }}
+      yolo: ${{ steps.detect.outputs.yolo }}
       packages: ${{ steps.detect.outputs.packages }}
       prepare_packages: ${{ steps.detect.outputs.prepare_packages }}
       test_paths: ${{ steps.detect.outputs.test_paths }}
@@ -52,6 +54,7 @@ jobs:
           GITHUB_BASE_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_SHA: ${{ github.sha }}
+          CI_YOLO: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'YOLO') && 'true' || 'false' }}
         run: node scripts/detect-changes.mjs
 
   light_quality_check:

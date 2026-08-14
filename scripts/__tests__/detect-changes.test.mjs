@@ -160,6 +160,41 @@ describe("change classification", () => {
     expect(result.reason).toContain("Full validation required");
   });
 
+  it("bypasses full-triggering paths and preserves focused package classification", () => {
+    const packages = [workspacePackage("modules/example", "@test/example")];
+
+    const result = classifyChanges(
+      ["modules/example/src/module.ts", "pnpm-lock.yaml"],
+      packages,
+      "pull_request",
+      true
+    );
+
+    expect(result).toMatchObject({
+      scope: "focused",
+      full: false,
+      reason: "YOLO bypassed full-triggering paths; remaining paths were classified."
+    });
+    expect(result.direct).toEqual(new Set(["@test/example"]));
+  });
+
+  it("falls back to light when YOLO bypasses the only full-triggering path", () => {
+    const result = classifyChanges(["pnpm-lock.yaml"], [], "pull_request", true);
+
+    expect(result).toMatchObject({
+      scope: "light",
+      full: false,
+      reason: "YOLO bypassed full-triggering paths; remaining paths were classified."
+    });
+  });
+
+  it("does not bypass full validation for merge groups", () => {
+    const result = classifyChanges(["pnpm-lock.yaml"], [], "merge_group", true);
+
+    expect(result.scope).toBe("full");
+    expect(result.full).toBe(true);
+  });
+
   it("fails closed for unknown paths, empty diffs, missing diffs, and unsupported events", () => {
     for (const result of [
       classifyChanges(["unknown/file.txt"], [], "pull_request"),

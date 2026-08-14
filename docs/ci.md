@@ -10,7 +10,9 @@ chain matters.
 
 `.github/workflows/ci.yml` runs for:
 
-- `pull_request`, where the changed-file diff is based on the pull request base;
+- `pull_request`, where the changed-file diff is based on the pull request base. The workflow also
+  reruns when a pull request receives a label, so maintainer-controlled policy labels can take
+  effect immediately;
 - `merge_group`, where the diff is based on the merge group's synthetic commit parent; and
 - `workflow_dispatch`, which intentionally runs the full safety path.
 
@@ -59,7 +61,15 @@ it should explain the selected scope, reason, package closure, test paths, and p
 The classifier fails closed when there is no trustworthy diff, the diff is empty, an event is not a
 trusted diff event, a path is unknown, or a repository-wide path is touched. Documentation and
 explicitly ignored paths are light only when no package-affecting path is present alongside them.
-Lockfile changes remain full by policy.
+Lockfile changes remain full by policy during normal validation.
+
+Maintainers may add the exact `YOLO` label to a pull request to bypass full-triggering paths for
+that pull request. The label is persistent state: it remains effective on subsequent pushes while it
+remains attached. Detection then removes only the paths that caused the full classification and runs
+the normal classifier on the remaining paths. A new module accompanied by a lockfile change
+therefore remains focused; a lockfile-only change falls back to light. Unknown or otherwise
+unclassifiable remaining paths still fail closed to full. YOLO applies only to pull-request events;
+merge groups and manual runs always retain full validation.
 
 Integration changes use one deliberate exception. Changes under
 `integration/external-consumer/fixture/consumer-layers/<module-name>/` are classified as focused
