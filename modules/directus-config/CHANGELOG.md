@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 979e8f3: Add shared Directus collection configuration for build-time prerender routes.
+
+### Patch Changes
+
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+  - @onderwijsin/nuxt-module-utils@0.5.0
+
 ## 0.3.0
 
 ### Minor Changes

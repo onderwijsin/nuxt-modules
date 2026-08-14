@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.7
+
+### Patch Changes
+
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+  - @onderwijsin/nuxt-module-utils@0.5.0
+
 ## 1.0.6
 
 ### Patch Changes

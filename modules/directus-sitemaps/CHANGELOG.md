@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- 979e8f3: Initialize shared Directus configuration before dependent modules when the config module is registered.
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+- Updated dependencies [979e8f3]
+  - @onderwijsin/nuxt-directus-config@0.4.0
+  - @onderwijsin/nuxt-module-utils@0.5.0
+  - @onderwijsin/nuxt-directus-client@0.4.1
+
 ## 0.3.0
 
 ### Minor Changes
