@@ -279,6 +279,17 @@ export async function main() {
     const serverEntryPath = join(consumerDirectory, ".output", "server", "index.mjs");
     if (!existsSync(serverEntryPath))
       throw new Error(`Nitro Node entrypoint was not emitted: ${serverEntryPath}`);
+    const syntheticPrerenderedPage = join(
+      consumerDirectory,
+      ".output",
+      "public",
+      "this-is-a-prerendered-route",
+      "index.html"
+    );
+    if (!existsSync(syntheticPrerenderedPage))
+      throw new Error(
+        `Synthetic Directus prerender route was not emitted: ${syntheticPrerenderedPage}`
+      );
     const port = 31_000 + Math.floor(Math.random() * 1_000);
     const server = spawn("node", [".output/server/index.mjs"], {
       cwd: consumerDirectory,

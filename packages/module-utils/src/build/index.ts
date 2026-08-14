@@ -1,5 +1,10 @@
 export { discoverSourceFiles } from "./files";
 export {
+  getDirectusSetupHandlerId,
+  useDirectusSetupCache,
+  withDirectusSetupCache
+} from "./directus-cache";
+export {
   isPrepareMode,
   moduleDependenciesWhenEnabled,
   moduleSetup,

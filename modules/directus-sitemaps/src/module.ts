@@ -11,6 +11,7 @@ import type { ModuleOptions as NuxtSitemapModuleOptions } from "@nuxtjs/sitemap"
 import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
+import { applyOverridesToCollectionConfig } from "@onderwijsin/nuxt-directus-config/config";
 import {
   moduleDependenciesWhenEnabled,
   moduleSetup,
@@ -22,10 +23,7 @@ import {
 import { isArray, isNonBlankString, hasKey, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { directusSitemapsOptionsSchema } from "./config/options.schema";
-import {
-  generateDirectusSitemapsConfigSource,
-  mergeDirectusSitemapCollections
-} from "./config/source";
+import { generateDirectusSitemapsConfigSource } from "./config/source";
 import type { ModuleOptions } from "./config/options.schema";
 import {
   resolveSitemapNamespaces,
@@ -46,7 +44,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.directusSitemaps, {
-      "@onderwijsin/nuxt-directus-client": { version: ">=0.2.0" },
+      "@onderwijsin/nuxt-directus-client": { version: ">=0.4.0" },
       "@nuxtjs/sitemap": { version: ">=8.0.0" }
     }),
   setup(rawOptions, nuxt) {
@@ -112,9 +110,10 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.sitemap ??= {} as NuxtSitemapModuleOptions;
 
     // Merge serializable sitemap collection overrides into executable shared configuration.
-    const effectiveCollections = mergeDirectusSitemapCollections(
+    const effectiveCollections = applyOverridesToCollectionConfig(
       sharedConfig?.collections ?? [],
-      options.collections
+      options.collections,
+      "sitemap"
     );
 
     // Get an array of unique sitemap names. If empty, all entries should be placed in the default index sitemap

@@ -1,43 +1,7 @@
 import type {
   DirectusCollectionConfig,
-  ResolvedDirectusCollectionOptions,
   SitemapUrl
 } from "@onderwijsin/nuxt-directus-config/schema";
-
-/**
- * Merges serializable sitemap collection overrides into executable shared configuration.
- *
- * @param collections Executable collections from shared Directus configuration.
- * @param overrides Serializable direct sitemap module collections.
- * @returns Merged collection configuration.
- */
-export function mergeDirectusSitemapCollections(
-  collections: ResolvedDirectusCollectionOptions,
-  overrides: DirectusCollectionConfig[]
-): ResolvedDirectusCollectionOptions {
-  const merged = new Map(collections.map((collection) => [collection.collection, collection]));
-
-  for (const override of overrides) {
-    const existing = merged.get(override.collection);
-    if (!existing) {
-      merged.set(override.collection, override);
-      continue;
-    }
-
-    if (override.sitemap === false || existing.sitemap === false) {
-      merged.set(override.collection, { ...existing, ...override });
-      continue;
-    }
-
-    merged.set(override.collection, {
-      ...existing,
-      ...override,
-      sitemap: { ...existing.sitemap, ...override.sitemap }
-    });
-  }
-
-  return [...merged.values()];
-}
 
 /**
  * Generates the Nitro-only configuration module consumed by sitemap handlers.
@@ -72,16 +36,15 @@ export function generateDirectusSitemapsConfigSource(
 const overrides = ${overridesSource};
 const collections = new Map((directusConfig.collections ?? []).map((collection) => [collection.collection, collection]));
 
-for (const override of overrides) {
+  for (const override of overrides) {
   const existing = collections.get(override.collection);
   if (!existing) {
     collections.set(override.collection, override);
   } else if (override.sitemap === false || existing.sitemap === false) {
-    collections.set(override.collection, { ...existing, ...override });
+    collections.set(override.collection, { ...existing, sitemap: override.sitemap });
   } else {
     collections.set(override.collection, {
       ...existing,
-      ...override,
       sitemap: { ...existing.sitemap, ...override.sitemap }
     });
   }

@@ -2,12 +2,15 @@ import type { H3Event } from "h3";
 import type { NuxtApp } from "nuxt/app";
 import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
+import type { Schema } from "#directus";
+import {
+  createDirectusRestClient,
+  type DirectusRestClient
+} from "@onderwijsin/nuxt-module-utils/shared";
 
 import { resolveDirectusRequestContext } from "./credentials";
-import { createDirectusRestClient, type DirectusRestClient } from "../../utils/client";
-
 /** The typed REST client used by application server code. */
-export type DirectusSchemaClient = DirectusRestClient;
+export type DirectusSchemaClient = DirectusRestClient<Schema>;
 
 /**
  * Creates a new Directus REST client for one server request.
@@ -51,7 +54,7 @@ export function createServerDirectusClient(
     }
   });
 
-  return createDirectusRestClient({
+  return createDirectusRestClient<Schema>({
     baseUrl: config.directusClient.baseUrl,
     fetch: serverFetch
   });

@@ -207,7 +207,7 @@ describe("directus-sitemaps module", () => {
     }
 
     expect(moduleDependencies({ options: { directusSitemaps: { enabled: true } } })).toEqual({
-      "@onderwijsin/nuxt-directus-client": { version: ">=0.2.0" },
+      "@onderwijsin/nuxt-directus-client": { version: ">=0.4.0" },
       "@nuxtjs/sitemap": { version: ">=8.0.0" }
     });
     expect(moduleDependencies({ options: { directusSitemaps: { enabled: false } } })).toEqual({});

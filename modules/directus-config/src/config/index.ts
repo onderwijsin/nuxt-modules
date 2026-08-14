@@ -3,6 +3,7 @@ import type { DirectusConfig, ResolvedDirectusConfig } from "../schema";
 
 export type { DirectusConfig, ResolvedDirectusConfig } from "../schema";
 export { getResolvedDirectusConfigFromSource } from "./source";
+export { applyOverridesToCollectionConfig } from "./override";
 
 // type NoUnknownKeys<Value, Shape> = Value & Record<Exclude<keyof Value, keyof Shape>, never>;
 

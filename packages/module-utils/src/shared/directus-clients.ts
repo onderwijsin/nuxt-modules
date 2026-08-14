@@ -6,7 +6,6 @@ import {
   type FetchInterface,
   type RestClient
 } from "@directus/sdk";
-import type { Schema } from "#directus";
 
 /** Options for constructing a module-owned Directus REST client. */
 export interface DirectusRestClientOptions {
@@ -15,14 +14,18 @@ export interface DirectusRestClientOptions {
   readonly accessToken?: string;
 }
 
-/** The typed REST client shared by browser-proxy and server-direct callers. */
-export type DirectusRestClient = DirectusClient<Schema> & RestClient<Schema>;
+/** A typed Directus client configured with the REST transport. */
+export type DirectusRestClient<Schema> = DirectusClient<Schema> & RestClient<Schema>;
 
-/** Creates a REST-only Directus client and attaches one already-resolved credential.
+/**
+ * Creates a REST-only Directus client and attaches one already-resolved credential.
+ *
  * @param options Client URL, fetch implementation, and optional access token.
  * @returns A typed REST client.
  */
-export function createDirectusRestClient(options: DirectusRestClientOptions): DirectusRestClient {
+export function createDirectusRestClient<Schema>(
+  options: DirectusRestClientOptions
+): DirectusRestClient<Schema> {
   let client = createDirectus<Schema>(options.baseUrl, {
     ...(options.fetch ? { globals: { fetch: options.fetch } } : {})
   }).with(rest());

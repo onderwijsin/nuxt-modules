@@ -152,5 +152,5 @@ runtime-config values. Configure it with `directusSitemaps` and `directus.config
 Do not place Directus credentials in sitemap configuration. The Directus client module owns
 credentials, and collection functions remain in the server-only shared Directus config source.
 
-Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus-client` 0.3+, and `@nuxtjs/sitemap` 8+.
+Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus-client` 0.4+, and `@nuxtjs/sitemap` 8+.
 Nitro server runtime support includes Node and edge-style deployments.

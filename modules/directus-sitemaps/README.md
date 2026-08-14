@@ -221,5 +221,5 @@ This package is a Nuxt module and does not expose runtime composables or client 
 it through `directusSitemaps`, `directus.config.ts`, and the sitemap source endpoint described
 above.
 
-Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus-client` 0.3+, and `@nuxtjs/sitemap` 8+. It
+Requires Nuxt 4, Node.js 22+, `@onderwijsin/nuxt-directus-client` 0.4+, and `@nuxtjs/sitemap` 8+. It
 uses Nitro-compatible server APIs and supports Node and edge-style Nitro deployments.

@@ -60,6 +60,7 @@
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
+    "@directus/sdk": "catalog:",
     "@nuxt/schema": "catalog:",
     "consola": "catalog:",
     "h3": "catalog:",

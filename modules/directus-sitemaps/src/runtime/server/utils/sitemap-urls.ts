@@ -175,6 +175,8 @@ export async function buildSitemapUrls(
       entry.sitemap !== false && (!filterByCollection || entry.collection === filterByCollection)
   );
 
+  // Fetch and map each selected collection concurrently; collection-level failures are handled
+  // after all promises settle so best-effort mode can retain successful collections.
   const results = await Promise.allSettled(
     selectedCollections.map(async (collectionConfig) => {
       const records = await fetchItemsFromCollection(
@@ -210,6 +212,8 @@ export async function buildSitemapUrls(
     })
   );
 
+  // Flatten successful collection results and apply hard-failure behavior to rejected fetches or
+  // mapping operations without discarding unrelated successful collections.
   const processedResults = results.flatMap((result, index) => {
     if (result.status === "fulfilled") return result.value;
     console.error(

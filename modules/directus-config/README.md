@@ -58,6 +58,11 @@ export default defineDirectusConfig({
     enablePrettyUrls: true,
     cache: { maxAge: 300, staleMaxAge: 0, swr: true },
     prerenderSitemaps: false
+  },
+  prerenderer: {
+    includeStaticSitemapUrls: false,
+    queryLimit: 100,
+    failureMode: "best-effort"
   }
 });
 ```
@@ -119,8 +124,7 @@ The supported command names are exported as `supportedDirectusCommands` from
 ### `collections`
 
 `collections` is a shared list of executable collection behaviour. It is intentionally portable: the
-sitemap module uses its `sitemap` configuration, and a future prerender module can use its
-`prerender` configuration.
+sitemap and prerender modules use their respective configuration blocks.
 
 Each collection entry has these options:
 
@@ -134,7 +138,7 @@ Each collection entry has these options:
 | `sitemap.fieldmap` | Optional declarative map from sitemap properties to Directus record properties; `loc` is required.            |
 | `sitemap.fetcher`  | Optional async custom fetcher. It receives `{ collection, fields, filter }`; its result is mapped afterwards. |
 | `sitemap.mapper`   | Optional executable mapper called for every fetched item. Return one sitemap entry, `null`, or `undefined`.   |
-| `prerender`        | `false` or a reserved object for future prerender behaviour.                                                  |
+| `prerender`        | `false` or prerender configuration for `@onderwijsin/nuxt-directus-prerenderer`.                              |
 
 Runtime mapping prefers a custom fetcher, then an executable mapper, then a fieldmap, and finally
 the record itself. A sitemap mapper returns a sitemap entry with required `loc` and optional
@@ -145,6 +149,11 @@ metadata fields. The entry may also include `noIndex: true` to omit it. `priorit
 The complete sitemap-entry schema is maintained in
 [`src/schema/sitemap-entry.ts`](src/schema/sitemap-entry.ts). Import its exports from
 `@onderwijsin/nuxt-directus-config/schema` instead of recreating the shape.
+
+Prerender configuration supports `fields`, `filter`, a `fieldmap` with required `route`, an
+executable `mapper` returning one or more route paths, and an executable `fetcher`. Use the mapper
+for composite routes such as `${item.parent.path}/${item.slug}`. The prerender module only adds
+content routes; sitemap XML prerendering remains controlled by `sitemaps.prerenderSitemaps`.
 
 Collection configuration, including mappers and fetchers, is sensitive and never sent to client
 code.
@@ -167,6 +176,17 @@ selected:
 
 Sitemap settings are sensitive because they may include static URLs and delivery policy; they are
 available only to consuming server-side modules.
+
+### `prerenderer`
+
+`prerenderer` contains module-wide build-time route discovery settings. Direct options under
+`directusPrerenderer` take precedence over these shared values.
+
+| Option                     | Default         | Description                                               |
+| -------------------------- | --------------- | --------------------------------------------------------- |
+| `includeStaticSitemapUrls` | `false`         | Adds static sitemap URLs to the Nuxt prerender route set. |
+| `queryLimit`               | `100`           | Maximum records requested per built-in Directus page.     |
+| `failureMode`              | `"best-effort"` | Omits failed collections or aborts with `"hard-failure"`. |
 
 ## Virtual modules
 
@@ -205,6 +225,8 @@ A missing default file is valid and resolves to an empty shared configuration.
 - `validateDirectusConfig(config)` — validates unknown input and returns `ResolvedDirectusConfig`.
 - `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a consumer source
   during Nuxt module dependency discovery.
+- `applyOverridesToCollectionConfig(collections, overrides, property)` — merges module-specific
+  collection overrides while preserving unrelated collection behavior.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.
 
 `@onderwijsin/nuxt-directus-config/schema` exports the source-of-truth Zod schemas, their inferred
