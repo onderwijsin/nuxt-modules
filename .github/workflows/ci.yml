@@ -45,6 +45,7 @@ jobs:
       full: ${{ steps.detect.outputs.full }}
       yolo: ${{ steps.detect.outputs.yolo }}
       packages: ${{ steps.detect.outputs.packages }}
+      artifact_packages: ${{ steps.detect.outputs.artifact_packages }}
       prepare_packages: ${{ steps.detect.outputs.prepare_packages }}
       test_paths: ${{ steps.detect.outputs.test_paths }}
       phases: ${{ steps.detect.outputs.phases }}
@@ -100,6 +101,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       AFFECTED_PACKAGES: ${{ needs.detect_changes.outputs.packages }}
+      ARTIFACT_PACKAGES: ${{ needs.detect_changes.outputs.artifact_packages }}
       PREPARE_PACKAGES: ${{ needs.detect_changes.outputs.prepare_packages }}
       TEST_PATHS: ${{ needs.detect_changes.outputs.test_paths }}
     steps:
@@ -158,13 +160,17 @@ jobs:
           done
           pnpm exec vitest run "${test_paths[@]}" --coverage
       - name: Build focused package artifacts
-        if: needs.detect_changes.outputs.phase_pack == 'true'
-        run: pnpm build:packages
+        if: needs.detect_changes.outputs.phase_pack == 'true' && needs.detect_changes.outputs.artifact_packages != ''
+        shell: bash
+        run: |
+          for package in $ARTIFACT_PACKAGES; do
+            pnpm --filter "$package" --if-present run build
+          done
       - name: Pack focused package artifacts
-        if: needs.detect_changes.outputs.phase_pack == 'true'
-        run: pnpm pack:packages "$RUNNER_TEMP/packages" --packages="$PREPARE_PACKAGES"
+        if: needs.detect_changes.outputs.phase_pack == 'true' && needs.detect_changes.outputs.artifact_packages != ''
+        run: pnpm pack:packages "$RUNNER_TEMP/packages" --packages="$ARTIFACT_PACKAGES"
       - name: Upload focused package artifacts
-        if: needs.detect_changes.outputs.phase_pack == 'true'
+        if: needs.detect_changes.outputs.phase_pack == 'true' && needs.detect_changes.outputs.artifact_packages != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: packed-packages-${{ github.sha }}
@@ -245,6 +251,7 @@ jobs:
       needs.detect_changes.outputs.scope != 'light' &&
       (
         needs.detect_changes.outputs.phase_external_consumer == 'true' &&
+        needs.detect_changes.outputs.artifact_packages != '' &&
         (needs.focused_quality_check.result == 'success' || needs.full_quality_check.result == 'success')
       )
     runs-on: blacksmith-4vcpu-ubuntu-2404
