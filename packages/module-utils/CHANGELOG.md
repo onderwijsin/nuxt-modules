@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- 979e8f3: Share the typed Directus REST client factory across Directus modules and isolate best-effort
+  prerender failures to the collection page that failed.
+- 979e8f3: Add a shared Nuxt-scoped cache for Directus module setup operations.
+
+### Patch Changes
+
+- 979e8f3: Make module utility subpath exports resolvable by Nuxt's CommonJS-compatible module loader.
+
 ## 0.4.0
 
 ### Minor Changes
