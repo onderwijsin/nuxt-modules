@@ -2,7 +2,6 @@ name: Changeset status
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
   merge_group:
 
 permissions: {}

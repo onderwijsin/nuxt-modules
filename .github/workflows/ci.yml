@@ -2,12 +2,25 @@ name: CI
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
   merge_group:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      base_sha:
+        required: false
+        type: string
+      head_sha:
+        required: false
+        type: string
+      pull_request_number:
+        required: false
+        type: number
+      yolo:
+        required: false
+        type: boolean
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ inputs.pull_request_number || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -51,10 +64,10 @@ jobs:
       - name: Detect validation scope
         id: detect
         env:
-          GITHUB_BASE_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_SHA: ${{ github.sha }}
-          CI_YOLO: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'YOLO') && 'true' || 'false' }}
+          GITHUB_BASE_SHA: ${{ github.event_name == 'workflow_call' && inputs.base_sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
+          GITHUB_EVENT_NAME: ${{ github.event_name == 'workflow_call' && 'pull_request' || github.event_name }}
+          GITHUB_SHA: ${{ github.event_name == 'workflow_call' && inputs.head_sha || github.sha }}
+          CI_YOLO: ${{ github.event_name == 'workflow_call' && inputs.yolo && 'true' || github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'YOLO') && 'true' || 'false' }}
         run: node scripts/detect-changes.mjs
 
   light_quality_check:
