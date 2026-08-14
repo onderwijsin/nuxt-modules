@@ -6,7 +6,7 @@
  */
 export const ciPolicy = Object.freeze({
   /** Increment when the detector/workflow contract changes incompatibly. */
-  version: 3,
+  version: 4,
   /** Events whose payload provides a trustworthy base-to-head repository diff. */
   diffEvents: ["pull_request", "merge_group"],
   /** Repository directories whose contents cannot affect package validation. */

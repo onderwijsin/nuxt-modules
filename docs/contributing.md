@@ -57,6 +57,12 @@ run formatting and linting, while package changes run preparation, typechecking,
 changed packages and their dependents. Changes to root configuration, dependencies, scripts,
 workflows, shared packages, or unclassified paths fail closed into full validation.
 
+For an isolated pull request whose changed paths include a known full-validation trigger, a
+maintainer may attach the exact `YOLO` label. CI then ignores only those full-triggering paths and
+applies its ordinary light or focused classification to the remaining paths. The label remains
+active for subsequent pushes until removed. Merge-group and manually dispatched runs always use full
+validation, and unknown remaining paths still fail closed.
+
 Merge queue and manually dispatched CI always run the full suite: formatting, linting, recursive
 typechecking, coverage tests, all package builds, package metadata validation, packed-artifact
 validation, and the clean external consumer check. The external consumer installs the exact packed

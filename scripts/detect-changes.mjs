@@ -148,9 +148,15 @@ function isIgnoredForFullValidation(file) {
  * @param {string[] | null} changed Changed repository-relative paths.
  * @param {WorkspacePackage[]} packages Discovered workspace packages.
  * @param {string} [eventName] GitHub event name used for classification.
+ * @param {boolean} [bypassFullValidation] Ignore full-triggering paths for a YOLO-labelled PR.
  * @returns {ChangeClassification} Initial validation classification.
  */
-export function classifyChanges(changed, packages, eventName = process.env.GITHUB_EVENT_NAME) {
+export function classifyChanges(
+  changed,
+  packages,
+  eventName = process.env.GITHUB_EVENT_NAME,
+  bypassFullValidation = false
+) {
   const packageByDirectory = packages
     .map((entry) => ({ ...entry, path: relative(root, entry.directory) }))
     .sort((a, b) => b.path.length - a.path.length);
@@ -163,16 +169,33 @@ export function classifyChanges(changed, packages, eventName = process.env.GITHU
 
   // Merge queues and manual runs do not provide a pull-request diff, so they always run fully.
   const hasTrustworthyDiff = ciPolicy.diffEvents.includes(eventName);
+  const yolo = bypassFullValidation && eventName === "pull_request";
   const full = changed === null || changed.length === 0 || !hasTrustworthyDiff;
   let reason = full
     ? "No trustworthy event diff is available."
     : "Changed package paths were classified.";
 
-  const relevantChanged = (changed ?? []).filter((file) => !isIgnoredForFullValidation(file));
+  const classifiedChanged = (changed ?? []).filter((file) => !isIgnoredForFullValidation(file));
+  const relevantChanged = classifiedChanged.filter(
+    (file) => !yolo || !fullPathPatterns.some((pattern) => pattern.test(file))
+  );
+  const bypassedFullPaths = yolo && !full && relevantChanged.length !== classifiedChanged.length;
 
-  if (full || relevantChanged.length === 0 || isDocumentationOnly(relevantChanged)) {
-    if (!full && relevantChanged.length === 0) reason = "Ignored paths only.";
-    else if (!full) reason = "Documentation-only change.";
+  if (bypassedFullPaths) {
+    reason = "YOLO bypassed full-triggering paths; remaining paths were classified.";
+  }
+
+  if ((!yolo && full) || relevantChanged.length === 0 || isDocumentationOnly(relevantChanged)) {
+    if (yolo && full) {
+      return {
+        scope: "full",
+        full: true,
+        reason: "YOLO could not bypass validation because no trustworthy event diff is available.",
+        direct
+      };
+    }
+    if (!full && relevantChanged.length === 0 && !bypassedFullPaths) reason = "Ignored paths only.";
+    else if (!full && !bypassedFullPaths) reason = "Documentation-only change.";
     return { scope: full ? "full" : "light", full, reason, direct };
   }
 
@@ -197,7 +220,7 @@ export function classifyChanges(changed, packages, eventName = process.env.GITHU
     }
 
     // Root tooling and unrecognized paths can affect every package, so fail closed.
-    if (fullPathPatterns.some((pattern) => pattern.test(file))) {
+    if (!yolo && fullPathPatterns.some((pattern) => pattern.test(file))) {
       return {
         scope: "full",
         full: true,
@@ -430,7 +453,8 @@ function main() {
   const discovered = discoverPackages();
   const packageByName = new Map(discovered.map((entry) => [entry.manifest.name, entry]));
   const changed = getChangedFiles();
-  const classification = classifyChanges(changed, discovered);
+  const yolo = process.env.CI_YOLO === "true" && process.env.GITHUB_EVENT_NAME === "pull_request";
+  const classification = classifyChanges(changed, discovered, process.env.GITHUB_EVENT_NAME, yolo);
   const direct = new Set(classification.direct);
   const selectedPackages = new Set(direct);
   const dependent = classification.full
@@ -459,6 +483,7 @@ function main() {
 
   writeGithubOutput("scope", classification.scope);
   writeGithubOutput("full", classification.full);
+  writeGithubOutput("yolo", yolo);
   writeGithubOutput("reason", classification.reason);
   writeGithubOutput("packages", selected.join(" "));
   writeGithubOutput("prepare_packages", prepare.join(" "));
