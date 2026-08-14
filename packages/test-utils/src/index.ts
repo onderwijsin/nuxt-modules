@@ -3,6 +3,9 @@ import { Socket } from "node:net";
 import { fileURLToPath } from "node:url";
 import { createEvent, type H3Event } from "h3";
 import { setup, type TestOptions } from "@nuxt/test-utils/e2e";
+import { cleanupStaleNuxtTestBuilds } from "./cleanup";
+
+export { cleanupStaleNuxtTestBuilds } from "./cleanup";
 
 /**
  * Creates a minimal H3 event for testing server handlers.
@@ -30,15 +33,18 @@ export function resolveFixture(metaUrl: string | URL, fixture = "basic"): string
  * @param options Additional Nuxt Test Utils options.
  * @returns A promise that resolves after the fixture starts.
  */
-export function setupFixture(
+export async function setupFixture(
   metaUrl: string | URL,
   fixture = "basic",
   options?: Partial<Omit<TestOptions, "rootDir">>
 ) {
+  const rootDir = resolveFixture(metaUrl, fixture);
   const nuxtConfig = options?.nuxtConfig;
   const nitroConfig = Reflect.get(nuxtConfig ?? {}, "nitro") ?? {};
   const nitroExternals = Reflect.get(nitroConfig, "externals") ?? {};
   const inline = Reflect.get(nitroExternals, "inline") ?? [];
+
+  await cleanupStaleNuxtTestBuilds(rootDir);
 
   return setup({
     ...options,
@@ -54,6 +60,6 @@ export function setupFixture(
         })
       })
     }),
-    rootDir: resolveFixture(metaUrl, fixture)
+    rootDir
   });
 }

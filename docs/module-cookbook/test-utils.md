@@ -39,6 +39,12 @@ Pass the fixture directory name and any supported Nuxt Test Utils options when n
 await setupFixture(import.meta.url, "production", { dev: false });
 ```
 
+`setupFixture` performs a best-effort startup cleanup of abandoned Nuxt Test Utils build directories
+older than 24 hours under the selected fixture's `.nuxt/test/` directory. Fresh builds are preserved
+for the active run, while stale builds from interrupted or crashed test runs are removed. The
+cleanup is intentionally limited to Nuxt Test Utils' six-character build directory names and does
+not make test failure depend on cleanup succeeding.
+
 Use `createTestEvent` for pure server-handler tests that need an H3 event but do not need a running
 Nuxt application:
 
