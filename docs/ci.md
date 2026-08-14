@@ -11,10 +11,13 @@ chain matters.
 `.github/workflows/ci.yml` runs for:
 
 - `pull_request`, where the changed-file diff is based on the pull request base. The workflow also
-  reruns when a pull request receives a label, so maintainer-controlled policy labels can take
-  effect immediately;
+  runs for revision-changing and relevant lifecycle events;
 - `merge_group`, where the diff is based on the merge group's synthetic commit parent; and
 - `workflow_dispatch`, which intentionally runs the full safety path.
+
+`.github/workflows/ci-yolo.yml` handles the policy-label exception separately. It invokes the same
+reusable CI workflow only when the `YOLO` label is applied. Unrelated labels therefore cannot create
+a competing run or cancel an in-progress validation run.
 
 Merge groups are not skipped. They validate the combined commit that the queue may merge. If the
 merge-group base SHA is unavailable or its diff cannot be read, detection fails closed to full
