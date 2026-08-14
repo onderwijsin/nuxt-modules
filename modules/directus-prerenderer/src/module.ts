@@ -30,10 +30,7 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     enabled: true,
     instance: {},
-    collections: [],
-    includeStaticSitemapUrls: false,
-    queryLimit: 100,
-    failureMode: "best-effort"
+    collections: []
   },
   async setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
