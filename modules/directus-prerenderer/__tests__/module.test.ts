@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const addHook = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn() };
-const { getResolvedDirectusConfig } = vi.hoisted(() => ({ getResolvedDirectusConfig: vi.fn() }));
+const { buildPrerenderRoutes, getResolvedDirectusConfig } = vi.hoisted(() => ({
+  buildPrerenderRoutes: vi.fn(),
+  getResolvedDirectusConfig: vi.fn()
+}));
 
 vi.mock("@nuxt/kit", () => ({
   defineNuxtModule: (definition: unknown) => definition,
@@ -13,6 +16,13 @@ vi.mock("@onderwijsin/nuxt-directus-config/schema", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@onderwijsin/nuxt-directus-config/schema")>()),
   getResolvedDirectusConfig
 }));
+
+vi.mock("@onderwijsin/nuxt-module-utils/build", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@onderwijsin/nuxt-module-utils/build")>()),
+  withDirectusSetupCache: vi.fn(async (_nuxt, _identity, handler) => handler())
+}));
+
+vi.mock("../src/utils/routes", () => ({ buildPrerenderRoutes }));
 
 function createNuxt() {
   return {
@@ -26,7 +36,6 @@ function createNuxt() {
 
 describe("directus-prerenderer module", () => {
   beforeEach(() => {
-    vi.resetModules();
     addHook.mockReset();
     getResolvedDirectusConfig.mockReset();
     getResolvedDirectusConfig.mockReturnValue({
@@ -41,6 +50,7 @@ describe("directus-prerenderer module", () => {
         }
       ]
     });
+    buildPrerenderRoutes.mockResolvedValue(["/pages/home"]);
     Object.values(logger).forEach((mock) => mock.mockReset());
   });
 
@@ -65,7 +75,7 @@ describe("directus-prerenderer module", () => {
     if (typeof prerenderHook !== "function") throw new TypeError("Prerender hook is unavailable.");
 
     const routes = new Set(["/already-present"]);
-    prerenderHook({ routes });
+    await prerenderHook({ routes });
 
     expect([...routes]).toEqual(["/already-present", "/pages/home"]);
     expect(logger.success).toHaveBeenCalledWith("✨ Added 1 Directus prerender route.");

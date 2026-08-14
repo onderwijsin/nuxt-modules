@@ -17,6 +17,11 @@ The module-owned build-time client reads `directusPrerenderer.instance`, falling
 `instance` in `directus.config.ts`. It cannot use `useDirectusServer` because Nuxt module setup has
 no Nitro request event or runtime server context.
 
+Serializable collection overrides belong in `directusPrerenderer.collections`. Executable `mapper`
+and `fetcher` functions belong in `directus.config.ts`. A custom fetcher receives
+`{ collection, fields, filter }`, returns an array, and is responsible for its own pagination.
+Module options override matching shared `directus.config.ts` `prerenderer` defaults.
+
 ```ts
 export default defineDirectusConfig({
   collections: [

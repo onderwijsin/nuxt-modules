@@ -43,13 +43,14 @@ export type DirectusCollectionPrerenderMapper<Item = unknown> = (
   item: Item
 ) => string | string[] | null | undefined;
 
+type AnyFunction = (...args: never[]) => unknown;
+
 /**
- * Custom collection fetcher
+ * Creates a Zod schema that validates a value is a function.
+ * @returns A Zod schema typed as the requested function type.
  */
-const fetcher = z.custom<DirectusCollectionFetcher>(
-  (value) => isFunction(value),
-  "must be a function"
-);
+const functionSchema = <T extends AnyFunction>() =>
+  z.custom<T>((value) => isFunction(value), "must be a function");
 
 const {
   loc: _,
@@ -65,27 +66,24 @@ export const directusSitemapFieldMapSchema = z.object({
 
 export type DirectusSitemapFieldMap = z.infer<typeof directusSitemapFieldMapSchema>;
 
+const commonCollectionConfigSchema = <Mapper extends AnyFunction>() => ({
+  fields: fields.optional(),
+  filter: filter.optional(),
+  mapper: functionSchema<Mapper>().optional(),
+  fetcher: functionSchema<DirectusCollectionFetcher>().optional()
+});
+
 /** Sitemap behavior for one Directus collection. */
 export const directusCollectionSitemapSchema = z.strictObject({
   _sitemap: z.string().trim().min(1).optional(),
-  fields: fields.optional(),
-  filter: filter.optional(),
   fieldmap: directusSitemapFieldMapSchema.optional(),
-  mapper: z
-    .custom<DirectusCollectionSitemapMapper>((value) => isFunction(value), "must be a function")
-    .optional(),
-  fetcher: fetcher.optional()
+  ...commonCollectionConfigSchema<DirectusCollectionSitemapMapper>()
 });
 
 /** Build-time prerender behavior for one Directus collection. */
 export const directusCollectionPrerenderSchema = z.strictObject({
-  fields: fields.optional(),
-  filter: filter.optional(),
   fieldmap: z.strictObject({ route: z.string().trim().min(1) }).optional(),
-  mapper: z
-    .custom<DirectusCollectionPrerenderMapper>((value) => isFunction(value), "must be a function")
-    .optional(),
-  fetcher: fetcher.optional()
+  ...commonCollectionConfigSchema<DirectusCollectionPrerenderMapper>()
 });
 
 /** Portable executable Directus collection configuration. */

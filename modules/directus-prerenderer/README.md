@@ -73,13 +73,17 @@ Invalid mapped values are omitted.
 Module-local collection overrides may define `fields`, `filter`, and `fieldmap`; executable `mapper`
 and `fetcher` functions must remain in `directus.config.ts`.
 
+The shared `directus.config.ts` `prerenderer` options provide defaults for the module. Explicit
+`directusPrerenderer` Nuxt module options take precedence over those shared defaults.
+
 The default fetcher uses `directusPrerenderer.instance` (falling back to the shared `instance` in
 `directus.config.ts`) and paginates with `queryLimit`. Custom fetchers receive
-`{ collection, fields, filter }` and own their pagination. The module creates a build-time Directus
-SDK client because `useDirectusServer` requires a Nitro request event and runtime server context;
-neither is available while Nuxt setup discovers prerender routes. Successful setup fetches are
-shared between Directus build-time modules through the module-utils setup cache. Sitemap source
-fetching is runtime behavior and is not cached by this module.
+`{ collection, fields, filter }`, return an array of items or route strings, and own their
+pagination. The module creates a build-time Directus SDK client because `useDirectusServer` requires
+a Nitro request event and runtime server context; neither is available while Nuxt setup discovers
+prerender routes. Successful setup fetches are shared between Directus build-time modules through
+the module-utils setup cache. Sitemap source fetching is runtime behavior and is not cached by this
+module.
 
 Sitemap XML prerendering remains controlled by `directusSitemaps.prerenderSitemaps`; this module
 only adds content routes.
