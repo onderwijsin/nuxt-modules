@@ -91,6 +91,8 @@ jobs:
       - name: Run light formatting check
         if: needs.detect_changes.outputs.phase_format == 'true'
         run: pnpm format:check
+      - name: Validate module documentation
+        run: pnpm validate:docs
       - name: Run light lint
         if: needs.detect_changes.outputs.phase_lint == 'true'
         run: pnpm lint
@@ -141,6 +143,8 @@ jobs:
         run: |
           if [[ "${{ needs.detect_changes.outputs.phase_format }}" == "true" ]]; then pnpm format:check; fi
           if [[ "${{ needs.detect_changes.outputs.phase_lint }}" == "true" ]]; then pnpm lint; fi
+      - name: Validate module documentation
+        run: pnpm validate:docs
       - name: Run focused type checks
         if: needs.detect_changes.outputs.phase_typecheck == 'true'
         env:
@@ -210,6 +214,8 @@ jobs:
       - name: Run full formatting check
         if: needs.detect_changes.outputs.phase_format == 'true'
         run: pnpm format:check
+      - name: Validate module documentation
+        run: pnpm validate:docs
       - name: Run full lint
         if: needs.detect_changes.outputs.phase_lint == 'true'
         run: pnpm lint

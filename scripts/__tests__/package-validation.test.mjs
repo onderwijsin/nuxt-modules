@@ -1,0 +1,23 @@
+import { describe, expect, it } from "vitest";
+import {
+  containsPackageImport,
+  discoverPrivateWorkspacePackages,
+  discoverWorkspacePackages
+} from "../package-validation.mjs";
+
+describe("package validation discovery", () => {
+  it("discovers every private workspace package instead of relying on a hardcoded name", () => {
+    const packages = discoverWorkspacePackages();
+    const privatePackages = discoverPrivateWorkspacePackages();
+
+    expect(packages.some(({ manifest }) => manifest.name === "playground-layer")).toBe(true);
+    expect(privatePackages).toContain("playground-layer");
+    expect(privatePackages).toContain("test-utils");
+  });
+
+  it("detects package-root and subpath imports", () => {
+    expect(containsPackageImport('import "playground-layer";', "playground-layer")).toBe(true);
+    expect(containsPackageImport('from "test-utils/src"', "test-utils")).toBe(true);
+    expect(containsPackageImport('from "test-utils-extra"', "test-utils")).toBe(false);
+  });
+});

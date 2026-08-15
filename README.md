@@ -7,25 +7,26 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 
 ## 📦 What's in the box?
 
-| Package                                                                          | Description                                                                                    |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)                 | Type-safe static text tokens with a Vue I18n-like `$t` API.                                    |
-| [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md)   | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
-| [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)           | Nuxt module for rendering Loops parsed LMX email content.                                      |
-| [`@onderwijsin/nuxt-theme-customizer`](modules/theme-customizer/README.md)       | Runtime theme picker and custom color editor for Nuxt UI.                                      |
-| [`@onderwijsin/nuxt-device`](modules/device/README.md)                           | SSR-aware device, browser, operating-system, and crawler detection.                            |
-| [`@onderwijsin/nuxt-webmanifest`](modules/webmanifest/README.md)                 | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
-| [`@onderwijsin/nuxt-healthcheck`](modules/healthcheck/README.md)                 | Configurable system health endpoints with built-in and custom server-side checks.              |
-| [`@onderwijsin/nuxt-turnstile`](modules/turnstile/README.md)                     | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
-| [`@onderwijsin/nuxt-newsletter-signup`](modules/newsletter-signup/README.md)     | Provider-independent newsletter signup with Loops and Mailchimp adapters.                      |
-| [`@onderwijsin/nuxt-simple-rate-limiter`](modules/simple-rate-limiter/README.md) | Path-scoped, per-IP server-side rate limiting for Nuxt endpoints.                              |
-| [`@onderwijsin/nuxt-storage-admin`](modules/storage-admin/README.md)             | Admin-protected CRUD endpoints for Nitro storage mounts.                                       |
-| [`@onderwijsin/nuxt-cache`](modules/cache/README.md)                             | Cache metadata indexing and protected base-scoped invalidation for Nitro storage.              |
-| [`@onderwijsin/nuxt-redirects`](modules/redirects/README.md)                     | Provider-agnostic dynamic redirects backed by a Nitro storage index.                           |
-| [`@onderwijsin/nuxt-directus-client`](modules/directus-client/README.md)         | Server-safe Directus REST integration for Nuxt applications.                                   |
-| [`@onderwijsin/nuxt-sentry-config`](modules/sentry-config/README.md)             | Runtime-portable Sentry server configuration for Node and Cloudflare Nitro deployments.        |
-| [`@onderwijsin/nuxt-directus-config`](modules/directus-config/README.md)         | Centralized, executable and type safe configuration for Directus modules.                      |
-| [`@onderwijsin/nuxt-directus-sitemaps`](modules/directus-sitemaps/README.md)     | Automagically generated sitemaps from Directus collections with `@nuxtjs/sitemap`.             |
+| Package                                                                            | Description                                                                                    |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)                   | Type-safe static text tokens with a Vue I18n-like `$t` API.                                    |
+| [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md)     | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
+| [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)             | Nuxt module for rendering Loops parsed LMX email content.                                      |
+| [`@onderwijsin/nuxt-theme-customizer`](modules/theme-customizer/README.md)         | Runtime theme picker and custom color editor for Nuxt UI.                                      |
+| [`@onderwijsin/nuxt-device`](modules/device/README.md)                             | SSR-aware device, browser, operating-system, and crawler detection.                            |
+| [`@onderwijsin/nuxt-webmanifest`](modules/webmanifest/README.md)                   | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |
+| [`@onderwijsin/nuxt-healthcheck`](modules/healthcheck/README.md)                   | Configurable system health endpoints with built-in and custom server-side checks.              |
+| [`@onderwijsin/nuxt-turnstile`](modules/turnstile/README.md)                       | Cloudflare Turnstile integration with client helpers and action-aware server validation.       |
+| [`@onderwijsin/nuxt-newsletter-signup`](modules/newsletter-signup/README.md)       | Provider-independent newsletter signup with Loops and Mailchimp adapters.                      |
+| [`@onderwijsin/nuxt-simple-rate-limiter`](modules/simple-rate-limiter/README.md)   | Path-scoped, per-IP server-side rate limiting for Nuxt endpoints.                              |
+| [`@onderwijsin/nuxt-storage-admin`](modules/storage-admin/README.md)               | Admin-protected CRUD endpoints for Nitro storage mounts.                                       |
+| [`@onderwijsin/nuxt-cache`](modules/cache/README.md)                               | Cache metadata indexing and protected base-scoped invalidation for Nitro storage.              |
+| [`@onderwijsin/nuxt-redirects`](modules/redirects/README.md)                       | Provider-agnostic dynamic redirects backed by a Nitro storage index.                           |
+| [`@onderwijsin/nuxt-directus-client`](modules/directus-client/README.md)           | Server-safe Directus REST integration for Nuxt applications.                                   |
+| [`@onderwijsin/nuxt-sentry-config`](modules/sentry-config/README.md)               | Runtime-portable Sentry server configuration for Node and Cloudflare Nitro deployments.        |
+| [`@onderwijsin/nuxt-directus-config`](modules/directus-config/README.md)           | Centralized, executable and type safe configuration for Directus modules.                      |
+| [`@onderwijsin/nuxt-directus-sitemaps`](modules/directus-sitemaps/README.md)       | Automagically generated sitemaps from Directus collections with `@nuxtjs/sitemap`.             |
+| [`@onderwijsin/nuxt-directus-prerenderer`](modules/directus-prerenderer/README.md) | Prerender Nuxt routes from Directus collection data.                                           |
 
 ## 🧱 Requirements
 
@@ -101,6 +102,7 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm validate:packages
+pnpm validate:docs
 ```
 
 For read-only checks, use `pnpm format:check` and `pnpm lint`. CI additionally packs each

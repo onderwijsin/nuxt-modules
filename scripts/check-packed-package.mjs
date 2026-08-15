@@ -2,8 +2,11 @@
  * @fileoverview Verifies that a packed package contains only intended files and no private imports.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { containsPackageImport, discoverPrivateWorkspacePackages } from "./package-validation.mjs";
 
 const archive = process.argv[2];
 if (!archive || !existsSync(archive)) {
@@ -32,22 +35,36 @@ for (const entry of listing.stdout.trim().split("\n").filter(Boolean)) {
   }
 }
 
-const packageJsonOutput = spawnSync("tar", ["-xOzf", archive, "package/package.json"], {
+const extractedDirectory = mkdtempSync(join(tmpdir(), "nuxt-package-check-"));
+const extraction = spawnSync("tar", ["-xzf", archive, "-C", extractedDirectory], {
   encoding: "utf8"
 });
-const packageJson = packageJsonOutput.status === 0 ? JSON.parse(packageJsonOutput.stdout) : null;
+if (extraction.status !== 0) {
+  console.error(extraction.stderr);
+  rmSync(extractedDirectory, { recursive: true, force: true });
+  process.exit(extraction.status ?? 1);
+}
+const packageJson = JSON.parse(
+  readFileSync(join(extractedDirectory, "package/package.json"), "utf8")
+);
 const entrypoint = packageJson?.main?.replace(/^\.\//u, "") ?? "dist/module.mjs";
-const packageEntry = spawnSync("tar", ["-xOzf", archive, `package/${entrypoint}`], {
-  encoding: "utf8"
-});
-if (
-  packageEntry.status !== 0 ||
-  /from\s+["']test-utils(?:\/[^"']*)?["']/.test(packageEntry.stdout) ||
-  /createJiti\(import\.meta\.url/u.test(packageEntry.stdout)
-) {
+const privatePackages = discoverPrivateWorkspacePackages();
+const outputEntries = listing.stdout
+  .trim()
+  .split("\n")
+  .filter((entry) => /\.(?:[cm]?js|[cm]?ts)$/u.test(entry));
+const output = outputEntries
+  .map((entry) => readFileSync(join(extractedDirectory, entry), "utf8"))
+  .find((source) =>
+    [...privatePackages].some((privatePackage) => containsPackageImport(source, privatePackage))
+  );
+const packageEntryPath = join(extractedDirectory, "package", entrypoint);
+const packageEntry = existsSync(packageEntryPath) ? readFileSync(packageEntryPath, "utf8") : null;
+if (output || packageEntry === null || /createJiti\(import\.meta\.url/u.test(packageEntry)) {
   console.error(
     "Packed package is missing its entrypoint, contains an unbuilt Nuxt module stub, or leaks a private workspace import."
   );
   process.exit(1);
 }
+rmSync(extractedDirectory, { recursive: true, force: true });
 console.log(`Packed package is self-contained: ${archive}`);

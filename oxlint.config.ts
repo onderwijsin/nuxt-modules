@@ -3,7 +3,7 @@ import { defineConfig } from "oxlint";
 export default defineConfig({
   plugins: ["jsdoc", "typescript", "vue"],
   categories: {
-    correctness: "warn"
+    correctness: "error"
   },
   rules: {
     "jsdoc/check-tag-names": ["error", { definedTags: ["fileoverview"] }],
