@@ -85,14 +85,18 @@ describe("newsletter signup module setup", () => {
   it("registers the local runtime and default endpoint", async () => {
     const module = (await import("../src/module")).default;
     const nuxt = createNuxt();
+    nuxt.options.runtimeConfig.newsletterSignup = { consumerValue: "preserved" };
+    nuxt.options.runtimeConfig.public.newsletterSignup = { consumerValue: "preserved" };
 
     await setupModule(module, { enabled: true }, nuxt);
 
-    expect(nuxt.options.runtimeConfig.newsletterSignup).toEqual({
+    expect(nuxt.options.runtimeConfig.newsletterSignup).toMatchObject({
+      consumerValue: "preserved",
       enabled: true,
       endpoint: { enabled: true, url: "/api/newsletter/signup" }
     });
-    expect(nuxt.options.runtimeConfig.public.newsletterSignup).toEqual({
+    expect(nuxt.options.runtimeConfig.public.newsletterSignup).toMatchObject({
+      consumerValue: "preserved",
       endpoint: { url: "/api/newsletter/signup" }
     });
     expect(addServerScanDir).toHaveBeenCalledTimes(1);

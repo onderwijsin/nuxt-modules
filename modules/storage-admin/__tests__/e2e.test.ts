@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { $fetch, fetch } from "@nuxt/test-utils/e2e";
-import { setupFixture } from "../../../packages/test-utils/src";
+import { $fetch, fetch, setupFixture } from "../../../packages/test-utils/src";
 
 const adminHeaders = { "x-admin-token": "fixture-admin-token" };
 

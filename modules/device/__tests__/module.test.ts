@@ -54,7 +54,7 @@ describe("device module setup contract", () => {
     };
     const nuxt: any = {
       options: {
-        runtimeConfig: { public: {} },
+        runtimeConfig: { public: { device: { consumerValue: "preserved" } } },
         build: { transpile: [] as string[] }
       }
     };
@@ -62,6 +62,7 @@ describe("device module setup contract", () => {
     deviceModule.setup({ enabled: true }, nuxt);
 
     expect(nuxt.options.runtimeConfig.public.device).toEqual({
+      consumerValue: "preserved",
       enabled: true,
       defaultUserAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36"

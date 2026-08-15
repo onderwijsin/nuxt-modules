@@ -209,4 +209,4 @@ export default defineNuxtConfig({
 
 ## Compatibility
 
-Developed against Nuxt 4.5.x and Node.js 24. The package requires Node.js 22 or newer.
+Developed against Nuxt 4.5.x and Node.js 24. The package requires Node.js 24 or newer.

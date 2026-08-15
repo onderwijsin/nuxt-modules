@@ -31,7 +31,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 ## 🧱 Requirements
 
 - Node.js 24 for local development and CI.
-- Node.js 22 or newer for published modules.
+- Node.js 24 or newer for published modules. Node.js 22 may work but is untested and unsupported.
 - The workspace is developed and tested against Nuxt 4.5.x. Other Nuxt 4 versions permitted by
   individual package metadata may work, but versions outside the CI matrix are not continuously
   tested; Nuxt 3 is not guaranteed.
@@ -146,6 +146,7 @@ This project contains supporting workspace packages with different publication p
 - [`docs/contributing.md`](docs/contributing.md) — contributor workflow.
 - [`docs/security.md`](docs/security.md) — Dependabot, CodeQL, and GitHub Actions security
   expectations.
+- [`SECURITY.md`](SECURITY.md) — public vulnerability reporting and supported-version policy.
 - [`docs/workspace.md`](docs/workspace.md) — workspace, tools, and commands.
 - [`docs/testing.md`](docs/testing.md) — Vitest implementation and patterns.
 - [`docs/publishing.md`](docs/publishing.md) — release checks and publishing.

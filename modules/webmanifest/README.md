@@ -70,6 +70,6 @@ application's `app.baseURL`, so subpath deployments remain inside the applicatio
 
 ## Compatibility
 
-Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=24 and may
 work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
 matrix are not continuously tested. Nuxt 3 is not guaranteed.

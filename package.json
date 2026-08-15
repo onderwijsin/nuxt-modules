@@ -60,7 +60,7 @@
     "vue-tsc": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "packageManager": "pnpm@11.13.1"
 }

@@ -107,11 +107,11 @@ export default defineNuxtModule<ModuleOptions>({
         )
     });
     addServerPlugin(registry.dst);
-    nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules["/api/_redirects/**"] = {
-      ...nuxt.options.routeRules["/api/_redirects/**"],
-      prerender: false
-    };
+    nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
+    nuxt.options.routeRules["/api/_redirects/**"] = defu(
+      { prerender: false },
+      nuxt.options.routeRules["/api/_redirects/**"]
+    );
     end();
   }
 });

@@ -8,7 +8,7 @@ const extendPages = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn(), error: vi.fn() };
 
 interface TestRuntimeConfig {
-  public: { sentry?: { dsn?: string; runtime: string } };
+  public: { sentry?: { dsn?: string; runtime: string; consumerValue?: string } };
 }
 
 function createRuntimeConfig(): TestRuntimeConfig {
@@ -62,7 +62,10 @@ describe("sentry-config module setup", () => {
   it("registers the Cloudflare Nitro plugin", async () => {
     const module = (await import("../src/module")).default;
     const nitroOptions: Record<string, unknown> = { preset: "cloudflare_module" };
-    const runtimeConfig = createRuntimeConfig();
+    const runtimeConfig = {
+      ...createRuntimeConfig(),
+      public: { sentry: { consumerValue: "preserved", runtime: "consumer" } }
+    };
     const nuxt = {
       hook: vi.fn(),
       options: {
@@ -84,6 +87,7 @@ describe("sentry-config module setup", () => {
     expect(addServerPlugin).toHaveBeenCalledWith("./runtime/server/plugins/cloudflare");
     expect(nitroOptions.cloudflare).toEqual({ nodeCompat: true });
     expect(runtimeConfig.public.sentry).toEqual({
+      consumerValue: "preserved",
       dsn: undefined,
       runtime: "cloudflare_module",
       testTools: { endpoint: "/api/_sentry/trigger-error" }

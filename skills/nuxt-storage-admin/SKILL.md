@@ -56,6 +56,9 @@ This stylesheet imports Tailwind CSS and Nuxt UI, and sources the storage browse
 
 ## Configuration reference
 
+When the module is enabled, its runtime-config namespace is composed with existing application and
+layer values so unrelated `runtimeConfig.storageAdmin` keys are preserved.
+
 | Option                      | Default             | Contract                                                                                            |
 | --------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
 | `enabled`                   | `false`             | Enables the module routes.                                                                          |
@@ -225,9 +228,9 @@ intended.
 
 ## Operations and troubleshooting
 
-The module requires Nuxt 4 and Node.js 22 or later. It reserves `/api/_storage/**` while enabled and
-reserves `ui.path` (default `/_storage`) in development; do not use those paths for application
-routes.
+The module requires Nuxt 4 and Node.js 24 or later. Node.js 22 may work but is untested and
+unsupported. It reserves `/api/_storage/**` while enabled and reserves `ui.path` (default
+`/_storage`) in development; do not use those paths for application routes.
 
 Unstorage does not provide portable paginated or cancellable `getKeys()`. The module refuses root
 listings, enumerates only configured prefixes, and applies `maxListedKeys` only after the driver has

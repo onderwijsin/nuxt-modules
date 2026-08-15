@@ -41,11 +41,14 @@ describe("simple rate limiter module", () => {
   it("auto-imports both rate limit helpers in Nitro server handlers", async () => {
     const module = (await import("../src/module")).default;
     const setup = Reflect.get(module, "setup");
+    const nuxt = {
+      options: {
+        runtimeConfig: { simpleRateLimiter: { consumerValue: "preserved" } },
+        build: { transpile: [] as string[] }
+      }
+    };
 
-    await Reflect.apply(setup, module, [
-      {},
-      { options: { runtimeConfig: {}, build: { transpile: [] } } }
-    ]);
+    await Reflect.apply(setup, module, [{}, nuxt]);
 
     expect(addServerImports).toHaveBeenCalledWith({
       name: "enforceRateLimit",
@@ -59,6 +62,9 @@ describe("simple rate limiter module", () => {
     expect(addTypeTemplate).toHaveBeenCalledWith({
       filename: "types/simple-rate-limiter-config.d.ts",
       src: "./runtime/types/config.d.ts"
+    });
+    expect(nuxt.options.runtimeConfig.simpleRateLimiter).toMatchObject({
+      consumerValue: "preserved"
     });
   });
 

@@ -27,7 +27,7 @@ export default defineNuxtConfig({
 ```
 
 The composable is auto-imported. The module registers `@nuxt/ui` as a Nuxt module dependency, but
-the application still needs the normal Nuxt UI/Tailwind setup. It targets Nuxt 4 and Node.js 22+.
+the application still needs the normal Nuxt UI/Tailwind setup. It targets Nuxt 4 and Node.js 24+.
 
 ## The draft-form model
 

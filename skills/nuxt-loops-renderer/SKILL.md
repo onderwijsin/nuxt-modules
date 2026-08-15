@@ -47,7 +47,7 @@ In the consuming application's main CSS file, import the module stylesheet:
 @import "@onderwijsin/nuxt-loops-renderer";
 ```
 
-The module targets Nuxt 4 and Node.js 22+. `LoopsRenderer` is auto-imported after registration.
+The module targets Nuxt 4 and Node.js 24+. `LoopsRenderer` is auto-imported after registration.
 
 ## Core workflow
 

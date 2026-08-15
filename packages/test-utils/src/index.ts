@@ -6,6 +6,7 @@ import { setup, type TestOptions } from "@nuxt/test-utils/e2e";
 import { cleanupStaleNuxtTestBuilds } from "./cleanup";
 
 export { cleanupStaleNuxtTestBuilds } from "./cleanup";
+export { $fetch, fetch, setup, useTestContext, url } from "@nuxt/test-utils/e2e";
 
 /**
  * Creates a minimal H3 event for testing server handlers.

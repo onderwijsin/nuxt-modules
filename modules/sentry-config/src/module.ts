@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import type { ModuleDependencies } from "@nuxt/schema";
+import { defu } from "defu";
 
 import {
   addServerHandler,
@@ -113,12 +114,14 @@ export default defineNuxtModule<ModuleOptions>({
     const configFile = resolveSentryConfigFile(nuxt.options.rootDir, options.configFile);
 
     const testTools = resolveTestTools(options.testTools);
-    nuxt.options.runtimeConfig.public.sentry = {
-      ...nuxt.options.runtimeConfig.public.sentry,
-      dsn: options.dsn ?? nuxt.options.runtimeConfig.public.sentry?.dsn,
-      runtime,
-      ...(testTools.endpoint === false ? {} : { testTools: { endpoint: testTools.endpoint } })
-    };
+    nuxt.options.runtimeConfig.public.sentry = defu(
+      {
+        dsn: options.dsn ?? nuxt.options.runtimeConfig.public.sentry?.dsn,
+        runtime,
+        ...(testTools.endpoint === false ? {} : { testTools: { endpoint: testTools.endpoint } })
+      },
+      nuxt.options.runtimeConfig.public.sentry
+    );
 
     const runtimeDir = resolver.resolve("./runtime");
     if (testTools.endpoint !== false) {
@@ -142,10 +145,10 @@ export default defineNuxtModule<ModuleOptions>({
       transpileRuntime(nuxt, runtimeDir);
 
     if (runtime === "cloudflare_module") {
-      nuxt.options.nitro.cloudflare ??= {};
+      nuxt.options.nitro.cloudflare = defu(nuxt.options.nitro.cloudflare, {});
       nuxt.options.nitro.cloudflare.nodeCompat ??= true;
       nuxt.hook("nitro:config", (config) => {
-        config.cloudflare ??= {};
+        config.cloudflare = defu(config.cloudflare, {});
         config.cloudflare.nodeCompat ??= true;
       });
       addServerTemplate({

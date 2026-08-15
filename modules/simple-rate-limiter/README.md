@@ -166,7 +166,7 @@ also consider infrastructure-level controls such as a CDN, WAF, API gateway, or 
 ## Compatibility
 
 - Nuxt 4
-- Node.js 22 or newer
+- Node.js 24 or newer; Node.js 22 may work but is untested and unsupported
 - Node and Cloudflare Workers-compatible server runtime
 
 Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are

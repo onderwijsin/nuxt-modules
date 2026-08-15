@@ -1,8 +1,8 @@
-import { $fetch, setup, useTestContext } from "@nuxt/test-utils/e2e";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { $fetch, setup, useTestContext } from "../../../packages/test-utils/src";
 
 await setup({
   rootDir: fileURLToPath(new URL("./fixtures/aliases", import.meta.url)),

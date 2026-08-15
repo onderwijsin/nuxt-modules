@@ -55,7 +55,7 @@ modules/<module-name>/
 
 Tests belong to the package they exercise. Use the public naming convention
 `@onderwijsin/nuxt-<module-name>`. Published packages need repository metadata, an author, a README,
-changelog, Node.js `>=22`, and exports for the generated module and declarations. Put consumer
+changelog, Node.js `>=24`, and exports for the generated module and declarations. Put consumer
 runtime dependencies in `dependencies`, tooling in `devDependencies`, and use `workspace:*` for
 private workspace dependencies.
 

@@ -426,4 +426,5 @@ automatically; the application decides how to react to iframe updates.
 - Authentication `POST` routes apply the same origin validation before reading input or changing a
   session.
 - Directus permissions remain the final authorization boundary.
-- Supported environments are Nuxt 4 and Node.js 22 or newer.
+- Supported environments are Nuxt 4 and Node.js 24 or newer. Node.js 22 may work but is untested and
+  unsupported.

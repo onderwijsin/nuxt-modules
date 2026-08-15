@@ -161,4 +161,4 @@ import directusConfig from "#directus-config-server";
 Never import `#directus-config-server` from browser code. Do not write a parallel sanitizer:
 `.sensitive()` annotations on the schemas drive the safe `#directus-config` projection.
 
-Requires Nuxt 4 and Node.js 22 or newer.
+Requires Nuxt 4 and Node.js 24 or newer. Node.js 22 may work but is untested and unsupported.

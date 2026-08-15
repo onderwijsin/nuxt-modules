@@ -4,7 +4,7 @@
 It also provides a protected, cache-base-scoped invalidation endpoint. It is CMS-agnostic: mapping a
 content event to a cache base and public route remains the consuming application's responsibility.
 
-Requires Nuxt 4 and Node.js 22 or later.
+Requires Nuxt 4 and Node.js 24 or later. Node.js 22 may work but is untested and unsupported.
 
 ## Installation
 
@@ -207,6 +207,6 @@ active (or pass `getRequestPath` when creating the driver outside a request).
 
 ## Compatibility
 
-Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=24 and may
 work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
 matrix are not continuously tested. Nuxt 3 is not guaranteed.

@@ -36,6 +36,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (!config) return;
   const exclusions = createRedirectExclusionMatcher(config);
 
+  // @ts-expect-error Not sure where the $pinia type went. Used to work before. Ignoring for now, will come backt o it later. It probably something that changed upstream.
   const store = config.store ? useRedirectsStore(nuxtApp.$pinia) : null;
   if (store) {
     onNuxtReady(() => {

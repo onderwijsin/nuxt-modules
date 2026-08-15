@@ -53,6 +53,7 @@
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "defu": "catalog:",
     "jiti": "catalog:",
     "zod": "catalog:"
   },
@@ -64,6 +65,6 @@
     "unbuild": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

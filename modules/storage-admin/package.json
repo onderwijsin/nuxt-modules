@@ -38,6 +38,7 @@
     "@nuxt/schema": "catalog:",
     "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
+    "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
     "ofetch": "catalog:",
@@ -53,6 +54,6 @@
     "unbuild": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

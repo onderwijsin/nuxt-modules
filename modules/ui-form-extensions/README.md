@@ -46,7 +46,7 @@ Tailwind CSS setup.
 ## Compatibility
 
 - Nuxt 4
-- Node.js 22 or newer
+- Node.js 24 or newer; Node.js 22 may work but is untested and unsupported
 
 Developed and tested against Node.js 24 and Nuxt 4.5.x. Versions outside the current CI matrix are
 not continuously tested. Nuxt 3 is not guaranteed.

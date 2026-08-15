@@ -4,6 +4,10 @@ Vitest is the repository test runner. Tests are intentionally package-owned: eac
 exercise the package whose behavior it verifies, while the root Vitest configuration discovers and
 runs the complete workspace suite.
 
+Compatibility coverage follows the repository's
+[compatibility testing policy](decisions/compatibility-testing.md): the suite runs on Node 24
+against the pinned Nuxt dependency graph rather than a version matrix.
+
 Read this article when adding, changing, relocating, or evaluating tests, fixtures, mocks, coverage,
 or shared test infrastructure. Module authors should also read the focused
 [module testing router](module-cookbook/testing.md).
@@ -130,9 +134,17 @@ modules/<module-name>/__tests__/
 ```
 
 The module fixtures in this repository are intentionally minimal Nuxt apps. Configure the module
-from its source entrypoint in `fixtures/<name>/nuxt.config.ts`, then call `setup` and `$fetch` from
-`@nuxt/test-utils/e2e` in the owning module's `e2e.test.ts`. This follows Nuxt's fixture-based E2E
-workflow and keeps each test isolated from playground-only configuration.
+from its source entrypoint in `fixtures/<name>/nuxt.config.ts`, then call `setupFixture` and the
+re-exported request helpers from `packages/test-utils` in the owning module's `e2e.test.ts`. This
+follows Nuxt's fixture-based E2E workflow and keeps each test isolated from playground-only
+configuration.
+
+Nuxt Test Utils stores its active fixture context in module-local state. pnpm can resolve different
+peer-instantiated copies of `@nuxt/test-utils` for the private helper package and a module package;
+mixing `setupFixture` from `packages/test-utils` with `$fetch`, `fetch`, `url`, `setup`, or
+`useTestContext` imported directly from `@nuxt/test-utils/e2e` then makes setup and requests use
+different contexts. Always use the re-exports from `packages/test-utils` so all helpers share one
+module instance.
 
 Do not place module tests in the root test directory or in a shared package. Shared helpers belong
 in `packages/test-utils`; tests for those helpers belong in `packages/test-utils/__tests__/`. Test

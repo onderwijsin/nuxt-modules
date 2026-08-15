@@ -77,12 +77,11 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt.options.nitro ?? {}
     );
     addServerScanDir(resolver.resolve(runtimeDir, "server"));
-    nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules["/api/_cache/**"] = {
-      ...nuxt.options.routeRules["/api/_cache/**"],
-      cache: false,
-      prerender: false
-    };
+    nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
+    nuxt.options.routeRules["/api/_cache/**"] = defu(
+      { cache: false, prerender: false },
+      nuxt.options.routeRules["/api/_cache/**"]
+    );
 
     end();
   }

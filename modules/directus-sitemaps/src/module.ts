@@ -94,9 +94,15 @@ export default defineNuxtModule<ModuleOptions>({
       { nitro: true, nuxt: true }
     );
 
-    nuxt.options.typescript.tsConfig ??= {};
-    nuxt.options.typescript.tsConfig.compilerOptions ??= {};
-    nuxt.options.typescript.tsConfig.compilerOptions.paths ??= {};
+    nuxt.options.typescript.tsConfig = defu(nuxt.options.typescript.tsConfig, {});
+    nuxt.options.typescript.tsConfig.compilerOptions = defu(
+      nuxt.options.typescript.tsConfig.compilerOptions,
+      {}
+    );
+    nuxt.options.typescript.tsConfig.compilerOptions.paths = defu(
+      nuxt.options.typescript.tsConfig.compilerOptions.paths,
+      {}
+    );
     nuxt.options.typescript.tsConfig.compilerOptions.paths["#directus-sitemaps-config"] = [
       serverConfigTypes.dst
     ];
@@ -169,7 +175,7 @@ export default defineNuxtModule<ModuleOptions>({
         handler: resolver.resolve(runtimeDir, "server/routes/pretty-url.get")
       });
     }
-    nuxt.options.routeRules ??= {};
+    nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
     nuxt.options.routeRules[options.apiEndpoint] = defu(
       {
         cache: options.cache,

@@ -13,6 +13,9 @@ API keys to the browser.
 
 ## Configuration
 
+The module composes its runtime-config namespaces with existing application and layer values,
+preserving unrelated keys and keeping provider secrets server-only.
+
 For a locally registered handler, the consumer must provide `provider`, `apiKey`, and either
 `lists.default` or `lists.options`. The API key is used only by the server runtime and is never
 exposed to the client. Remote-endpoint mode does not need provider credentials in this application.

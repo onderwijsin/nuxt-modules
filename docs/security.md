@@ -1,5 +1,8 @@
 # Repository security
 
+This is maintainer-facing hardening guidance. Consumers and security researchers should use the
+[public security policy](../SECURITY.md) for supported versions and vulnerability reporting.
+
 GitHub security features provide an additional layer of protection for this repository. They
 complement the local validation and CI checks described in [Workspace and tooling](workspace.md).
 Read this article when work affects dependencies, lockfiles, workflows, permissions, secrets,

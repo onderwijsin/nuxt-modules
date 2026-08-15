@@ -37,7 +37,7 @@ for (const { directory, manifest: packageJson } of discoverWorkspacePackages(roo
   }
   if (packageJson.publishConfig?.access !== "public")
     failures.push(`${name}: publishConfig.access must be public`);
-  if (packageJson.engines?.node !== ">=22") failures.push(`${name}: engines.node must be >=22`);
+  if (packageJson.engines?.node !== ">=24") failures.push(`${name}: engines.node must be >=24`);
   if (!packageJson.author || typeof packageJson.author !== "object" || !packageJson.author.name)
     failures.push(`${name}: author metadata is required`);
   if (!packageJson.repository?.url || !packageJson.repository?.directory)

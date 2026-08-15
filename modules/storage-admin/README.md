@@ -4,7 +4,7 @@
 allowed** Nitro storage mounts. It is intended for operational tooling, debugging, and controlled
 maintenance—not as a general application data API.
 
-Requires Nuxt 4 and Node.js 22 or later.
+Requires Nuxt 4 and Node.js 24 or later. Node.js 22 may work but is untested and unsupported.
 
 The module is disabled by default. It never exposes every `useStorage()` mount implicitly.
 
@@ -288,6 +288,6 @@ represented as `path: null`.
 
 ## Compatibility
 
-Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=24 and may
 work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
 matrix are not continuously tested. Nuxt 3 is not guaranteed.

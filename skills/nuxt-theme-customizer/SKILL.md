@@ -150,4 +150,6 @@ The palette endpoint is cached for 24 hours, validates ColorFYI responses, and t
 requests after five seconds. Palette requests are limited to 30 per minute and font requests to 60
 per minute by default. Configure `themeCustomizer.rateLimit.palette` and
 `themeCustomizer.rateLimit.fonts` independently, or set `enabled: false` when equivalent
-infrastructure protection is already active.
+infrastructure protection is already active. The module preserves unrelated existing
+`runtimeConfig.public.themeCustomizer` values while applying its configured groups, fonts, rate
+limits, and defaults.

@@ -399,4 +399,5 @@ can only target the configured Directus URL; authorization still happens in Dire
 
 ## Compatibility
 
-Supported environments are Nuxt 4 and Node.js 22 or newer.
+Supported environments are Nuxt 4 and Node.js 24 or newer. Node.js 22 may work but is untested and
+unsupported.

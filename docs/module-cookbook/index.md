@@ -44,6 +44,7 @@ Some modules have accepted design decisions that further constrain implementatio
 - Simple rate limiter guarantees: [Simple rate limiter](../decisions/simple-rate-limiter.md)
 - Static-text translation surface:
   [Static text and Vue I18n compatibility](../decisions/static-text-i18n-compatibility.md)
+- Compatibility testing policy: [Compatibility testing](../decisions/compatibility-testing.md)
 
 Read the applicable decision record before changing that feature. Preserve it unless the user
 explicitly asks to revisit the decision and the resulting compatibility impact.

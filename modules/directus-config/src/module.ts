@@ -5,6 +5,7 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
+import { defu } from "defu";
 import {
   moduleSetup,
   resolveLoggerScope,
@@ -46,9 +47,15 @@ export default defineNuxtModule<ModuleOptions>({
 
     // We need to make the #directus-config-server available in the whole nuxt context (not just server)
     // See https://nuxt.com/docs/4.x/guide/modules/recipes-advanced#type-checking-server-routes-in-app-context
-    nuxt.options.typescript.tsConfig ??= {};
-    nuxt.options.typescript.tsConfig.compilerOptions ??= {};
-    nuxt.options.typescript.tsConfig.compilerOptions.paths ??= {};
+    nuxt.options.typescript.tsConfig = defu(nuxt.options.typescript.tsConfig, {});
+    nuxt.options.typescript.tsConfig.compilerOptions = defu(
+      nuxt.options.typescript.tsConfig.compilerOptions,
+      {}
+    );
+    nuxt.options.typescript.tsConfig.compilerOptions.paths = defu(
+      nuxt.options.typescript.tsConfig.compilerOptions.paths,
+      {}
+    );
     nuxt.options.typescript.tsConfig.compilerOptions.paths["#directus-config-server"] = [
       serverConfigTypes.dst
     ];
@@ -74,7 +81,7 @@ export default defineNuxtModule<ModuleOptions>({
       getContents: () => generateDirectusServerConfigSource(configFile)
     });
 
-    nuxt.options.alias ??= {};
+    nuxt.options.alias = defu(nuxt.options.alias, {});
     nuxt.options.alias["#directus-config"] = clientConfig.dst;
 
     end();

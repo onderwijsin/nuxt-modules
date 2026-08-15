@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { ModuleDependencies } from "@nuxt/schema";
+import { defu } from "defu";
 
 import {
   addComponentsDir,
@@ -117,7 +118,7 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
 
     nuxt.options.css.push(generatedTheme.dst);
     const nuxtOptions = nuxt.options;
-    nuxtOptions.ui ??= {};
+    nuxtOptions.ui = defu(nuxtOptions.ui, {});
 
     if (!nuxtOptions.ui) {
       // if ui is set to false (eg consumer disabled the module), throw error
@@ -126,16 +127,23 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
       );
     }
 
-    nuxtOptions.ui.theme ??= {};
+    nuxtOptions.ui.theme = defu(nuxtOptions.ui.theme, {});
     nuxtOptions.ui.theme.colors = configuredUiColors(groups, nuxtOptions.ui.theme.colors);
 
-    nuxt.options.runtimeConfig.public.themeCustomizer = {
+    const existingThemeCustomizer = nuxt.options.runtimeConfig.public.themeCustomizer ?? {};
+    const configuredThemeCustomizer = {
       groups: configuredRuntimeGroups(groups),
       googleFonts: {
         families: options.googleFonts?.families ?? []
       },
       rateLimit: {
-        palette: { enabled: true, max: 30, duration: 60, ban: 300, ...options.rateLimit?.palette },
+        palette: {
+          enabled: true,
+          max: 30,
+          duration: 60,
+          ban: 300,
+          ...options.rateLimit?.palette
+        },
         fonts: { enabled: true, max: 60, duration: 60, ban: 300, ...options.rateLimit?.fonts }
       },
       defaults: {
@@ -143,6 +151,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
         font: defaults.font ?? options.googleFonts?.families?.[0] ?? "Public Sans"
       }
     };
+    nuxt.options.runtimeConfig.public.themeCustomizer = defu(
+      configuredThemeCustomizer,
+      existingThemeCustomizer
+    );
     if (options.googleFonts?.apiKey) {
       nuxt.options.runtimeConfig.themeCustomizerGoogleFontsApiKey = options.googleFonts.apiKey;
     }
@@ -154,11 +166,13 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
         typeof value === "string" ? [[key, value] as const] : []
       )
     );
-    Object.assign(appConfigUi, {
-      colors: configuredAppColors(groups, existingColors, defaults),
-      ...(defaults.radius !== undefined ? { radius: defaults.radius } : {})
-    });
-    Object.assign(appConfig, { ui: appConfigUi });
+    appConfig.ui = defu(
+      {
+        colors: configuredAppColors(groups, existingColors, defaults),
+        ...(defaults.radius !== undefined ? { radius: defaults.radius } : {})
+      },
+      appConfigUi
+    );
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app/components"),
       pathPrefix: false,

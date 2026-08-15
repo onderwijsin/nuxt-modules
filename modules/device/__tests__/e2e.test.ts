@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { $fetch } from "@nuxt/test-utils/e2e";
-import { setupFixture } from "../../../packages/test-utils/src";
+import { $fetch, setupFixture } from "../../../packages/test-utils/src";
 
 const iphoneUserAgent =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 Safari/605.1.15";
