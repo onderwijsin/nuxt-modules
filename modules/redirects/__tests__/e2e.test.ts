@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { $fetch, url } from "@nuxt/test-utils/e2e";
-import { setupFixture } from "../../../packages/test-utils/src";
+import { $fetch, setupFixture, url } from "../../../packages/test-utils/src";
 
 describe("redirects module", async () => {
   await setupFixture(import.meta.url);

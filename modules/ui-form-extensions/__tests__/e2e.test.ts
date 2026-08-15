@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { $fetch } from "@nuxt/test-utils/e2e";
-import { setupFixture } from "../../../packages/test-utils/src";
+import { $fetch, setupFixture } from "../../../packages/test-utils/src";
 
 describe("ui form extensions module", async () => {
   await setupFixture(import.meta.url);

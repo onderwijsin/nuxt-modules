@@ -1,7 +1,6 @@
 import { createServer } from "node:http";
 import { afterAll, describe, expect, it } from "vitest";
-import { $fetch, fetch, url } from "@nuxt/test-utils/e2e";
-import { setupFixture } from "../../../packages/test-utils/src";
+import { $fetch, fetch, setupFixture, url } from "../../../packages/test-utils/src";
 
 describe("Directus client and server composables", async () => {
   const upstream = createServer((request, response) => {

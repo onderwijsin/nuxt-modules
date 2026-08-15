@@ -3,8 +3,7 @@ import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { $fetch, fetch } from "@nuxt/test-utils/e2e";
-import { resolveFixture, setupFixture } from "../../../packages/test-utils/src";
+import { $fetch, fetch, resolveFixture, setupFixture } from "../../../packages/test-utils/src";
 import { packPackage } from "./helpers/pack-package";
 
 const ARTICLE_PATH = "/kennisbank/artikelen/example-slug";

@@ -20,14 +20,18 @@ runtime code.
 | `createTestEvent` | `createTestEvent(): H3Event`                                                                                             | Creates a minimal H3 event with request and response objects for server-handler tests.                 |
 | `resolveFixture`  | `resolveFixture(metaUrl: string \| URL, fixture?: string): string`                                                       | Resolves `./fixtures/<fixture>` relative to a test file; the fixture defaults to `basic`.              |
 | `setupFixture`    | `setupFixture(metaUrl: string \| URL, fixture?: string, options?: Partial<Omit<TestOptions, "rootDir">>): Promise<void>` | Starts `@nuxt/test-utils` with a fixture-relative `rootDir`, while preserving additional test options. |
+| `$fetch`          | Nuxt Test Utils `$fetch`                                                                                                 | Sends requests to the fixture using the same test context as `setupFixture`.                           |
+| `fetch`           | Nuxt Test Utils `fetch`                                                                                                  | Sends requests to the fixture when response status and headers are needed.                             |
+| `url`             | Nuxt Test Utils `url(path)`                                                                                              | Resolves a fixture-relative URL using the active test context.                                         |
+| `setup`           | Nuxt Test Utils `setup(options)`                                                                                         | Registers a custom Nuxt Test Utils fixture setup.                                                      |
+| `useTestContext`  | Nuxt Test Utils `useTestContext()`                                                                                       | Reads the active Nuxt Test Utils context for advanced integration assertions.                          |
 
 ## Examples
 
 Use `setupFixture` in an E2E test instead of repeating URL conversion and `setup` boilerplate:
 
 ```ts
-import { $fetch } from "@nuxt/test-utils/e2e";
-import { setupFixture } from "test-utils";
+import { $fetch, setupFixture } from "test-utils";
 
 describe("example module", async () => {
   await setupFixture(import.meta.url);
@@ -43,6 +47,12 @@ Pass the fixture directory name and any supported Nuxt Test Utils options when n
 ```ts
 await setupFixture(import.meta.url, "production", { dev: false });
 ```
+
+Import Nuxt Test Utils request and context helpers from `test-utils`, not directly from
+`@nuxt/test-utils/e2e`. The shared package owns `setupFixture` and re-exports these helpers so they
+all resolve through one `@nuxt/test-utils` module instance. Nuxt Test Utils stores its active
+context in module-local state; resolving `setup` and `$fetch` from different peer-instantiated
+copies causes `$fetch` to report `No context is available` even though fixture setup ran.
 
 `setupFixture` performs a best-effort startup cleanup of abandoned Nuxt Test Utils build directories
 older than 24 hours under the selected fixture's `.nuxt/test/` directory. Fresh builds are preserved
