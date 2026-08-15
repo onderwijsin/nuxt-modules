@@ -8,6 +8,10 @@ Read this article when adding, changing, relocating, or evaluating tests, fixtur
 or shared test infrastructure. Module authors should also read the focused
 [module testing router](module-cookbook/testing.md).
 
+Agents writing or reviewing tests must also use the maintainer
+[`nuxt-test-utils` skill](../.agents/skills/nuxt-test-utils/SKILL.md), which routes these docs and
+enforces the shared test-helper patterns.
+
 ## Test utilities
 
 `test-utils` is the private workspace package for helpers shared by tests. It is test-only and must
