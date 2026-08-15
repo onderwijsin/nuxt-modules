@@ -138,14 +138,17 @@ export default defineNuxtModule<ModuleOptions>({
         throw result.error;
       }
     });
-    nuxt.options.alias ??= {};
+    nuxt.options.alias = defu(nuxt.options.alias, {});
     nuxt.options.alias["#directus"] = resolver.resolve(
       nuxt.options.buildDir,
       "types/directus-schema.d.ts"
     );
-    const nodeTsConfig = (nuxt.options.typescript.nodeTsConfig ??= {});
-    nodeTsConfig.compilerOptions ??= {};
-    nodeTsConfig.compilerOptions.paths ??= {};
+    const nodeTsConfig = (nuxt.options.typescript.nodeTsConfig = defu(
+      nuxt.options.typescript.nodeTsConfig,
+      {}
+    ));
+    nodeTsConfig.compilerOptions = defu(nodeTsConfig.compilerOptions, {});
+    nodeTsConfig.compilerOptions.paths = defu(nodeTsConfig.compilerOptions.paths, {});
     nodeTsConfig.compilerOptions.paths["#directus"] = ["./types/directus-schema"];
 
     if (!isEnabled()) return;
@@ -158,6 +161,7 @@ export default defineNuxtModule<ModuleOptions>({
     const commands = parseDirectusCommands(options.client.commands);
     for (const name of commands) addImports({ name, as: name, from: "@directus/sdk" });
 
+    // Keep the root RuntimeConfig object identity required by Nuxt; merge the owned namespace with defu.
     Object.assign(nuxt.options.runtimeConfig, {
       directusClient: defu(
         {
@@ -234,12 +238,14 @@ export default defineNuxtModule<ModuleOptions>({
       route: `${options.client.proxy.path}/**`,
       handler: resolver.resolve(runtimeDir, "server/handlers/proxy")
     });
-    nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules[`${options.client.proxy.path}/**`] = {
-      ...nuxt.options.routeRules[`${options.client.proxy.path}/**`],
-      cache: false,
-      prerender: false
-    };
+    nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
+    nuxt.options.routeRules[`${options.client.proxy.path}/**`] = defu(
+      {
+        cache: false,
+        prerender: false
+      },
+      nuxt.options.routeRules[`${options.client.proxy.path}/**`]
+    );
 
     end();
   }

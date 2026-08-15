@@ -65,7 +65,14 @@ describe("turnstile module setup", () => {
   it("registers dependencies, config, runtime imports, and types", async () => {
     const mod = (await import("../src/module")).default as any;
     const nuxt: any = {
-      options: { turnstile: {}, runtimeConfig: { public: {} }, build: { transpile: [] } }
+      options: {
+        turnstile: {},
+        runtimeConfig: {
+          turnstile: { consumerValue: "preserved" },
+          public: { turnstile: { consumerValue: "preserved" } }
+        },
+        build: { transpile: [] }
+      }
     };
     mod.setup(
       { enabled: true, siteKey: "site-key", secretKey: "secret-key", adminToken: "admin-key" },
@@ -73,11 +80,15 @@ describe("turnstile module setup", () => {
     );
     expect(nuxt.options.turnstile).toEqual({ siteKey: "site-key" });
     expect(nuxt.options.runtimeConfig.turnstile).toEqual({
+      consumerValue: "preserved",
       secretKey: "secret-key",
       adminToken: "admin-key",
       adminHeaderName: "x-admin-token"
     });
-    expect(nuxt.options.runtimeConfig.public.turnstile).toEqual({ siteKey: "site-key" });
+    expect(nuxt.options.runtimeConfig.public.turnstile).toEqual({
+      consumerValue: "preserved",
+      siteKey: "site-key"
+    });
     expect(addImportsDir).toHaveBeenCalledWith("./runtime/app/composables");
     expect(addServerScanDir).toHaveBeenCalledWith("./runtime/server");
     expect(addTypeTemplate).toHaveBeenCalledWith(

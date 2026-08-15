@@ -60,7 +60,7 @@ Android headers override those two flags when supplied. On the client, the brows
 
 ## Compatibility and boundaries
 
-- Requires Node.js 22 or newer and Nuxt 4.
+- Requires Node.js 24 or newer and Nuxt 4. Node.js 22 may work but is untested and unsupported.
 - `useDevice` is the public runtime API; internal regexes and generated templates are not public
   imports.
 - Detection is heuristic. Treat flags as presentation hints, not as an authorization or security
@@ -73,6 +73,6 @@ pnpm --filter device-playground dev
 pnpm --filter device-playground typecheck
 ```
 
-Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=22 and may
+Developed and tested against Node.js 24 and Nuxt 4.5.x. The package declares Node.js >=24 and may
 work with other Nuxt versions permitted by its package metadata, but versions outside the current CI
 matrix are not continuously tested. Nuxt 3 is not guaranteed.

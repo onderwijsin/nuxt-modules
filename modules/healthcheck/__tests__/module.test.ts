@@ -54,7 +54,7 @@ describe("healthcheck module setup", () => {
       options: {
         srcDir: "/project/app",
         serverDir: "/project/server",
-        runtimeConfig: {},
+        runtimeConfig: { healthcheck: { consumerValue: "preserved" } },
         build: { transpile: [] },
         routeRules: {}
       }
@@ -66,6 +66,7 @@ describe("healthcheck module setup", () => {
     );
 
     expect(nuxt.options.runtimeConfig.healthcheck).toEqual({
+      consumerValue: "preserved",
       enabled: true,
       timeoutMs: 5000,
       cache: { enabled: true },

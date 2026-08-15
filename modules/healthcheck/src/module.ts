@@ -92,12 +92,11 @@ export default defineNuxtModule<ModuleOptions>({
       handler: healthHandler.dst
     });
 
-    nuxt.options.routeRules = nuxt.options.routeRules ?? {};
-    nuxt.options.routeRules["/api/system/**"] = {
-      ...(nuxt.options.routeRules["/api/system/**"] || {}),
-      cache: false,
-      prerender: false
-    };
+    nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
+    nuxt.options.routeRules["/api/system/**"] = defu(
+      { cache: false, prerender: false },
+      nuxt.options.routeRules["/api/system/**"]
+    );
 
     if (components.length || existsSync(componentDirectory)) {
       log.info(

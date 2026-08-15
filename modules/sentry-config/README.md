@@ -253,4 +253,5 @@ to retain the upstream Nitro upload plugin.
 ## Compatibility
 
 Developed and tested against Nuxt 4.5.x, Nitro 2.13.x, and Sentry 10.69.x. The package requires
-Node.js 22 or newer for builds and Node deployments.
+Node.js 24 or newer for builds and Node deployments. Node.js 22 may work but is untested and
+unsupported.

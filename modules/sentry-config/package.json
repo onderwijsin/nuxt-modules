@@ -49,6 +49,7 @@
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
     "@sentry/nuxt": "catalog:",
+    "defu": "catalog:",
     "nitropack": "catalog:",
     "zod": "catalog:"
   },
@@ -59,7 +60,7 @@
     "unbuild": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "varlock": {
     "loadPath": "./playground"

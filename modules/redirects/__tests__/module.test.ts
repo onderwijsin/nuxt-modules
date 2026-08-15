@@ -58,7 +58,10 @@ function createNuxt() {
     options: {
       rootDir: "/project",
       serverDir: "/project/server",
-      runtimeConfig: { public: {} },
+      runtimeConfig: {
+        redirects: { consumerValue: "preserved" },
+        public: { redirects: { consumerValue: "preserved" } }
+      },
       build: { transpile: [] as string[] },
       routeRules: {}
     }
@@ -96,9 +99,11 @@ describe("redirects module setup", () => {
     setupModule(module, { storageMount: "redisRedirects" }, nuxt);
 
     expect(Reflect.get(nuxt.options.runtimeConfig, "redirects")).toMatchObject({
+      consumerValue: "preserved",
       storageMount: "redisRedirects"
     });
     expect(Reflect.get(nuxt.options.runtimeConfig.public, "redirects")).toMatchObject({
+      consumerValue: "preserved",
       store: true,
       routeMiddleware: true
     });

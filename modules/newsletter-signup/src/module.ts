@@ -1,4 +1,5 @@
 import type { ModuleDependencies } from "@nuxt/schema";
+import { defu } from "defu";
 import {
   addImports,
   addServerScanDir,
@@ -57,12 +58,16 @@ export default defineNuxtModule<ModuleOptions>({
     validateNewsletterSignupOptions(rawOptions, log);
     const options = validateModuleOptions(rawOptions, newsletterSignupOptionsSchema, log);
 
-    nuxt.options.runtimeConfig.newsletterSignup = options;
+    nuxt.options.runtimeConfig.newsletterSignup = defu(
+      options,
+      nuxt.options.runtimeConfig.newsletterSignup
+    );
     const endpointUrl =
       options.endpoint?.enabled === false ? options.endpoint.url : DEFAULTS.endpoint.url;
-    const publicNewsletterSignup = nuxt.options.runtimeConfig.public.newsletterSignup ?? {
+    const existingPublicNewsletterSignup = nuxt.options.runtimeConfig.public.newsletterSignup;
+    const publicNewsletterSignup = defu(existingPublicNewsletterSignup, {
       endpoint: { url: endpointUrl }
-    };
+    });
     if (options.lists && !publicNewsletterSignup.lists) {
       publicNewsletterSignup.lists = {
         default: options.lists.default,

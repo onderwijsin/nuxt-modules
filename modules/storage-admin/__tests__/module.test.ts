@@ -54,7 +54,12 @@ describe("storage-admin module setup", () => {
   it("registers its server runtime and protected route rules", async () => {
     const module = (await import("../src/module")).default as any;
     const nuxt: any = {
-      options: { dev: true, runtimeConfig: {}, build: { transpile: [] }, routeRules: {} }
+      options: {
+        dev: true,
+        runtimeConfig: { storageAdmin: { consumerValue: "preserved" } },
+        build: { transpile: [] },
+        routeRules: {}
+      }
     };
 
     module.setup(
@@ -65,7 +70,10 @@ describe("storage-admin module setup", () => {
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(addServerScanDir).toHaveBeenCalledWith("./runtime/server");
     expect(extendPages).toHaveBeenCalledTimes(1);
-    expect(nuxt.options.runtimeConfig.storageAdmin).toMatchObject({ enabled: true });
+    expect(nuxt.options.runtimeConfig.storageAdmin).toMatchObject({
+      consumerValue: "preserved",
+      enabled: true
+    });
     expect(nuxt.options.routeRules["/api/_storage/**"]).toEqual({
       cache: false,
       prerender: false

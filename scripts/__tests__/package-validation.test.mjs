@@ -20,4 +20,12 @@ describe("package validation discovery", () => {
     expect(containsPackageImport('from "test-utils/src"', "test-utils")).toBe(true);
     expect(containsPackageImport('from "test-utils-extra"', "test-utils")).toBe(false);
   });
+
+  it("requires the supported Node.js 24 engine floor for published packages", () => {
+    const publishedPackages = discoverWorkspacePackages().filter(
+      ({ manifest }) => manifest.private !== true
+    );
+
+    expect(publishedPackages.every(({ manifest }) => manifest.engines?.node === ">=24")).toBe(true);
+  });
 });

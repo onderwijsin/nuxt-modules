@@ -73,7 +73,7 @@ export default defineNuxtModule<ModuleOptions>({
       ]
     });
 
-    nuxt.options.app.head ??= {};
+    nuxt.options.app.head = defu(nuxt.options.app.head, {});
     nuxt.options.app.head.link ??= [];
     const configuredBaseURL = nuxt.options.app.baseURL;
     const baseURL = isString(configuredBaseURL) ? configuredBaseURL : "/";

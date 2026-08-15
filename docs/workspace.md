@@ -12,7 +12,7 @@ For the complete event, detection, phase, and job flow, read [Continuous integra
 ## Requirements
 
 - Node.js 24 for local development and CI.
-- Node.js 22 or newer for published modules.
+- Node.js 24 or newer for published modules. Node.js 22 may work but is untested and unsupported.
 - pnpm `11.13.1`, activated once with `corepack enable`.
 - Gitleaks `^8` for local secret detection and commit hooks.
 
@@ -48,6 +48,15 @@ Every dependency addition or version change must reference a workspace catalog e
 catalog version must be an exact pin rather than a range. In user-facing documentation, use
 `pnpm ...` unless Corepack itself is relevant; agents invoke the pinned version as
 `corepack pnpm ...`.
+
+### Dependency release-age protection
+
+Third-party dependency versions must be at least one day old before pnpm selects them. The workspace
+enables this cooldown explicitly and strictly as a supply-chain risk reduction measure. Internal
+`@onderwijsin/*` packages are excluded so workspace and release workflows can consume newly
+published internal packages immediately. For a legitimate emergency, use a narrowly scoped temporary
+exception for the affected dependency and remove it after adoption; do not disable the policy
+globally.
 
 ## Workspace discovery
 

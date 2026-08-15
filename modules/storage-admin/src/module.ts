@@ -6,6 +6,7 @@ import {
   extendPages,
   useLogger
 } from "@nuxt/kit";
+import { defu } from "defu";
 import type { ModuleDependencies } from "@nuxt/schema";
 import {
   moduleDependenciesWhenEnabled,
@@ -66,19 +67,22 @@ export default defineNuxtModule<ModuleOptions>({
     const options = validateModuleOptions(rawOptions, storageAdminOptionsSchema, log);
     if (!isEnabled()) return;
 
-    nuxt.options.runtimeConfig.storageAdmin = {
-      enabled: options.enabled,
-      adminToken: options.adminToken,
-      adminHeaderName: options.adminHeaderName,
-      devAuthBypass: options.devAuthBypass,
-      internalKeyPrefixes: options.internalKeyPrefixes,
-      internalKeySuffixes: options.internalKeySuffixes,
-      mounts: options.mounts,
-      ui: options.ui,
-      defaultLimit: options.defaultLimit,
-      maxLimit: options.maxLimit,
-      maxListedKeys: options.maxListedKeys
-    };
+    nuxt.options.runtimeConfig.storageAdmin = defu(
+      {
+        enabled: options.enabled,
+        adminToken: options.adminToken,
+        adminHeaderName: options.adminHeaderName,
+        devAuthBypass: options.devAuthBypass,
+        internalKeyPrefixes: options.internalKeyPrefixes,
+        internalKeySuffixes: options.internalKeySuffixes,
+        mounts: options.mounts,
+        ui: options.ui,
+        defaultLimit: options.defaultLimit,
+        maxLimit: options.maxLimit,
+        maxListedKeys: options.maxListedKeys
+      },
+      nuxt.options.runtimeConfig.storageAdmin
+    );
     if (nuxt.options.dev && options.devAuthBypass) {
       log.warn(
         "Development authentication bypass is enabled. Storage administration is unauthenticated."
@@ -98,18 +102,16 @@ export default defineNuxtModule<ModuleOptions>({
       });
     }
 
-    nuxt.options.routeRules ??= {};
-    nuxt.options.routeRules["/api/_storage/**"] = {
-      ...nuxt.options.routeRules["/api/_storage/**"],
-      cache: false,
-      prerender: false
-    };
+    nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
+    nuxt.options.routeRules["/api/_storage/**"] = defu(
+      { cache: false, prerender: false },
+      nuxt.options.routeRules["/api/_storage/**"]
+    );
     if (nuxt.options.dev && options.ui.enabled) {
-      nuxt.options.routeRules[options.ui.path] = {
-        ...nuxt.options.routeRules[options.ui.path],
-        cache: false,
-        prerender: false
-      };
+      nuxt.options.routeRules[options.ui.path] = defu(
+        { cache: false, prerender: false },
+        nuxt.options.routeRules[options.ui.path]
+      );
     }
 
     end();

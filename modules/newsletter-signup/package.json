@@ -63,7 +63,7 @@
     "unbuild": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "varlock": {
     "loadPath": "./playground"

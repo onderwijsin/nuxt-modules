@@ -34,6 +34,11 @@ All third-party Actions are pinned to immutable commit SHAs. The local Proton Pa
 jobs that load Varlock-backed playground environments. CI sets `HUSKY=0` and uses Node 24 with the
 pinned pnpm version.
 
+The deliberate absence of Node, Nuxt, and deployment-runtime compatibility matrices is documented in
+the [compatibility testing policy](decisions/compatibility-testing.md). CI validates the pinned Nuxt
+dependency graph and primary Node/Nitro consumer path; broader declared compatibility is not
+continuously exercised across every version or deployment target.
+
 ## Workflow linting
 
 Every CI run also starts an independent `workflow_lint` job. It runs actionlint against all GitHub

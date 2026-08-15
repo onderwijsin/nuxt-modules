@@ -236,4 +236,4 @@ do not maintain a separate client-side sanitizer.
 
 ## Compatibility
 
-Requires Nuxt 4 and Node.js 22 or newer.
+Requires Nuxt 4 and Node.js 24 or newer. Node.js 22 may work but is untested and unsupported.

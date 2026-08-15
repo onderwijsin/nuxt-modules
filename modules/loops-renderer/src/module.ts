@@ -1,4 +1,5 @@
 import { addComponentsDir, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
+import { defu } from "defu";
 import type { ModuleDependencies } from "@nuxt/schema";
 import {
   moduleDependenciesWhenEnabled,
@@ -47,10 +48,13 @@ export default defineNuxtModule<ModuleOptions>({
     }
 
     const validatedOptions = loopsRendererOptionsSchema.parse(options);
-    nuxt.options.appConfig.loopsRenderer = {
-      applyInlineStyles: validatedOptions.applyInlineStyles,
-      evaluate: validatedOptions.evaluate
-    };
+    nuxt.options.appConfig.loopsRenderer = defu(
+      {
+        applyInlineStyles: validatedOptions.applyInlineStyles,
+        evaluate: validatedOptions.evaluate
+      },
+      nuxt.options.appConfig.loopsRenderer
+    );
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");

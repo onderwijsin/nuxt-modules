@@ -73,9 +73,7 @@ export default defineNuxtModule<ModuleOptions>({
       }
     );
 
-    if (!nuxt.options.turnstile) {
-      nuxt.options.turnstile = {};
-    }
+    nuxt.options.turnstile = defu(nuxt.options.turnstile, {});
     nuxt.options.turnstile.siteKey ??= options.siteKey;
 
     transpileRuntime(nuxt, runtimeDir);

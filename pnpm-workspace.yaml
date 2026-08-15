@@ -21,7 +21,7 @@ catalog:
   "@nuxt/test-utils": 4.1.0
   "@vitest/coverage-v8": 4.1.10
   "@vitejs/plugin-vue": 6.0.8
-  "@types/node": 26.1.2
+  "@types/node": 24.13.3
   husky: 9.1.7
   lint-staged: 17.3.0
   nuxt: 4.5.2
@@ -82,5 +82,7 @@ cleanupUnusedCatalogs: true
 overrides:
   zod: 4.4.3
 saveExact: true
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
 minimumReleaseAgeExclude:
   - "@onderwijsin/*"

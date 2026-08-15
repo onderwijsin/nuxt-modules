@@ -50,6 +50,7 @@
     "@pinia/nuxt": "catalog:",
     "@vueuse/core": "catalog:",
     "@vueuse/nuxt": "catalog:",
+    "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
     "ofetch": "catalog:",
@@ -66,6 +67,6 @@
     "unbuild": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

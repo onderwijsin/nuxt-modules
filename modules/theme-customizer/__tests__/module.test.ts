@@ -107,7 +107,9 @@ describe("theme customizer module", () => {
         dev: true,
         appConfig: { ui: { colors: {} } },
         ui: { theme: { colors: [] } },
-        runtimeConfig: { public: { themeCustomizer: { groups: {} } } },
+        runtimeConfig: {
+          public: { themeCustomizer: { groups: { consumer: ["preserved"] } } }
+        },
         css: [],
         build: { transpile: [] }
       }
@@ -149,6 +151,7 @@ describe("theme customizer module", () => {
     );
     expect(nuxt.options.runtimeConfig.public.themeCustomizer).toEqual({
       groups: {
+        consumer: ["preserved"],
         primary: ["ocean"],
         neutral: [],
         accent: ["coral"]
