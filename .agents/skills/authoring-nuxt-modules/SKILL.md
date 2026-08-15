@@ -8,6 +8,9 @@ description: Author and maintain publishable or local Nuxt modules in the onderw
 Use this skill as the procedural entry point. Repository contracts and technical facts live in
 `AGENTS.md` and `docs/`; do not reconstruct them from memory or duplicate them here.
 
+For every module task, also invoke `nuxt-module-utils` to route shared utility usage and apply its
+`attempt`, primitive-guard, and typed-object patterns.
+
 ## Route the work
 
 1. Read [`AGENTS.md`](../../../AGENTS.md) and the

@@ -3,6 +3,11 @@
 Read this article before adding a shared test helper or repeating fixture/H3-event setup across
 packages. Also read the detailed [testing guide](../testing.md).
 
+When writing or reviewing any repository test, use the maintainer skill at
+[`../../.agents/skills/nuxt-test-utils/SKILL.md`](../../.agents/skills/nuxt-test-utils/SKILL.md).
+This article remains the API source of truth; the skill supplies the test-layer and shared-helper
+checklist.
+
 `packages/test-utils` is a private workspace package for behavior shared by package tests. Use it
 when the same setup or test infrastructure is needed by more than one package; keep domain-specific
 fixtures, mocks, and assertions next to the tests that own them. Never import it from published

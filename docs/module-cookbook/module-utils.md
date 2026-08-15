@@ -4,6 +4,11 @@ Read this article before adding a new local module helper, importing a shared ut
 `packages/module-utils`, or reviewing a module that duplicates module-agnostic behavior. Read
 [primitive runtime guards](guards.md) as well when narrowing unknown values.
 
+For module work, also use the maintainer skill at
+[`../../.agents/skills/nuxt-module-utils/SKILL.md`](../../.agents/skills/nuxt-module-utils/SKILL.md).
+It turns this article's utility contracts into a module-task checklist, with focused do/don't
+patterns for `attempt`, shared guards, and typed object helpers.
+
 `packages/module-utils` is the publishable, module-agnostic utility package used by modules in this
 repository. It contains build-time Nuxt module helpers, typed object-entry helpers, Zod option
 validation, retryable operation helpers, primitive runtime guards, and server-only request-token

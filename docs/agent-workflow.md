@@ -28,13 +28,13 @@ from configuration or public API through runtime behavior, emitted output, tests
 | Any repository change                                                        | This article and the affected package, source, tests, documentation, and decisions                                                                            |
 | Module or package contribution workflow                                      | [`contributing.md`](contributing.md)                                                                                                                          |
 | Workspace, dependencies, scripts, installs, generated output, or validation  | [`workspace.md`](workspace.md)                                                                                                                                |
-| Any publishable or local Nuxt module work                                    | Use `authoring-nuxt-modules`; start with the [module cookbook index](module-cookbook/index.md)                                                                |
+| Any publishable or local Nuxt module work                                    | Use `authoring-nuxt-modules` and `nuxt-module-utils`; start with the [module cookbook index](module-cookbook/index.md)                                        |
 | New publishable module or package-structure change                           | [Package anatomy](module-cookbook/package-anatomy.md)                                                                                                         |
 | Migrating an application-local module                                        | [Migration checklist](module-cookbook/migrating-local-modules.md)                                                                                             |
 | Module setup, options, runtime registration/config, templates, types, or CSS | [Module entrypoint](module-cookbook/module-entrypoint.md) and [patterns](module-cookbook/patterns-and-conventions.md)                                         |
-| `packages/module-utils` or one of its consumers                              | [Module utilities](module-cookbook/module-utils.md), plus [guards](module-cookbook/guards.md) when narrowing runtime values                                   |
-| `packages/test-utils` or shared test infrastructure                          | [Test utilities](module-cookbook/test-utils.md)                                                                                                               |
-| Tests, fixtures, coverage, or test strategy                                  | [`testing.md`](testing.md) and [module testing](module-cookbook/testing.md)                                                                                   |
+| `packages/module-utils` or one of its consumers                              | Use `nuxt-module-utils`; read [Module utilities](module-cookbook/module-utils.md), plus [guards](module-cookbook/guards.md) when narrowing runtime values     |
+| `packages/test-utils` or shared test infrastructure                          | Use `nuxt-test-utils`; read [Test utilities](module-cookbook/test-utils.md)                                                                                   |
+| Tests, fixtures, coverage, or test strategy                                  | Use `nuxt-test-utils`; read [`testing.md`](testing.md) and [module testing](module-cookbook/testing.md)                                                       |
 | Module playground                                                            | [Playgrounds](module-cookbook/playground.md)                                                                                                                  |
 | Public module API or consumer-visible behavior                               | [Documentation and consumer skills](module-cookbook/documentation-and-skills.md)                                                                              |
 | Package/release behavior or Changesets                                       | [`publishing.md`](publishing.md)                                                                                                                              |
@@ -104,6 +104,9 @@ Confirm that:
 - every changed file belongs to the task;
 - public changes have matching README, consumer-skill, and Changeset decisions;
 - module-utils changes have synchronized exports, runtime subpaths, tests, and cookbook references;
+- every module task has applied the `nuxt-module-utils` maintainer skill;
+- `packages/module-utils` changes have synchronized `.agents/skills/nuxt-module-utils/SKILL.md`;
+- `packages/test-utils` changes have synchronized `.agents/skills/nuxt-test-utils/SKILL.md`;
 - new dependencies use exact catalog entries and the right dependency section;
 - generated output and unrelated user changes are absent from the diff; and
 - code has applicable JSDoc and no unapproved casts, assertions, stubs, or compatibility breaks.

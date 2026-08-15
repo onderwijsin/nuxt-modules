@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nuxt Module Utils"
+  short_description: "Apply shared utility patterns in Nuxt modules"
+  default_prompt: "Use $nuxt-module-utils when changing a Nuxt module and enforce the repository's shared utility patterns."
