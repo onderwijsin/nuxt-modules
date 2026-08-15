@@ -127,8 +127,9 @@ lists, and test paths.
 
 ### Light validation
 
-`light_quality_check` runs only `format:check` and `lint`. It does not prepare packages, build
-artifacts, run type checks, or run tests.
+`light_quality_check` runs `validate:docs`, `format:check`, and `lint`. It does not prepare
+packages, build artifacts, run type checks, or run tests. The documentation guard checks that every
+public module has a root README package-table entry and a matching installable consumer skill.
 
 ### Focused validation
 

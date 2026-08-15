@@ -27,6 +27,7 @@
     "pack:packages": "node scripts/pack-packages.mjs",
     "validate:external-consumer": "node integration/external-consumer/run.mjs",
     "ci:detect-changes": "node scripts/detect-changes.mjs",
+    "validate:docs": "node scripts/validate-docs.mjs",
     "validate:packages": "node scripts/validate-packages.mjs",
     "changeset": "changeset",
     "changeset:status": "changeset status",

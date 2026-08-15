@@ -4,9 +4,14 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import {
+  containsPackageImport,
+  discoverPrivateWorkspacePackages,
+  discoverWorkspacePackages
+} from "./package-validation.mjs";
 
-const root = resolve(import.meta.dirname, "..");
 const failures = [];
+const root = resolve(import.meta.dirname, "..");
 
 function findOutputFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -16,48 +21,44 @@ function findOutputFiles(directory) {
   });
 }
 
-for (const packageRoot of ["packages", "modules"]) {
-  for (const entry of readdirSync(join(root, packageRoot), { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const directory = join(root, packageRoot, entry.name);
-    const packageFile = join(directory, "package.json");
-    if (!existsSync(packageFile)) continue;
-    const packageJson = JSON.parse(readFileSync(packageFile, "utf8"));
-    if (packageJson.private === true) continue;
-    const name = packageJson.name;
+const privatePackages = discoverPrivateWorkspacePackages(root);
+for (const { directory, manifest: packageJson } of discoverWorkspacePackages(root)) {
+  if (packageJson.private === true) continue;
+  const name = packageJson.name;
 
-    const requiredFiles = [
-      "README.md",
-      "CHANGELOG.md",
-      packageJson.main?.replace(/^\.\//u, ""),
-      packageJson.types?.replace(/^\.\//u, "")
-    ].filter(Boolean);
-    for (const file of requiredFiles) {
-      if (!existsSync(join(directory, file))) failures.push(`${name}: missing ${file}`);
-    }
-    if (packageJson.publishConfig?.access !== "public")
-      failures.push(`${name}: publishConfig.access must be public`);
-    if (packageJson.engines?.node !== ">=22") failures.push(`${name}: engines.node must be >=22`);
-    if (!packageJson.repository?.url || !packageJson.repository?.directory)
-      failures.push(`${name}: complete repository metadata is required`);
+  const requiredFiles = [
+    "README.md",
+    "CHANGELOG.md",
+    packageJson.main?.replace(/^\.\//u, ""),
+    packageJson.types?.replace(/^\.\//u, "")
+  ].filter(Boolean);
+  for (const file of requiredFiles) {
+    if (!existsSync(join(directory, file))) failures.push(`${name}: missing ${file}`);
+  }
+  if (packageJson.publishConfig?.access !== "public")
+    failures.push(`${name}: publishConfig.access must be public`);
+  if (packageJson.engines?.node !== ">=22") failures.push(`${name}: engines.node must be >=22`);
+  if (!packageJson.author || typeof packageJson.author !== "object" || !packageJson.author.name)
+    failures.push(`${name}: author metadata is required`);
+  if (!packageJson.repository?.url || !packageJson.repository?.directory)
+    failures.push(`${name}: complete repository metadata is required`);
 
-    const runtimeDependencies = {
-      ...packageJson.dependencies,
-      ...packageJson.optionalDependencies,
-      ...packageJson.peerDependencies
-    };
-    for (const privatePackage of ["test-utils"]) {
-      if (privatePackage in runtimeDependencies)
-        failures.push(`${name}: private ${privatePackage} must not be a runtime dependency`);
-    }
-    const distDirectory = join(directory, "dist");
-    if (existsSync(distDirectory)) {
-      for (const file of findOutputFiles(distDirectory)) {
-        const output = readFileSync(file, "utf8");
-        for (const privatePackage of ["test-utils"]) {
-          if (new RegExp(`from\\s+["']${privatePackage}(?:/[^"']*)?["']`).test(output))
-            failures.push(`${name}: ${file.slice(directory.length + 1)} leaks ${privatePackage}`);
-        }
+  const runtimeDependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.optionalDependencies,
+    ...packageJson.peerDependencies
+  };
+  for (const privatePackage of privatePackages) {
+    if (privatePackage in runtimeDependencies)
+      failures.push(`${name}: private ${privatePackage} must not be a runtime dependency`);
+  }
+  const distDirectory = join(directory, "dist");
+  if (existsSync(distDirectory)) {
+    for (const file of findOutputFiles(distDirectory)) {
+      const output = readFileSync(file, "utf8");
+      for (const privatePackage of privatePackages) {
+        if (containsPackageImport(output, privatePackage))
+          failures.push(`${name}: ${file.slice(directory.length + 1)} leaks ${privatePackage}`);
       }
     }
   }

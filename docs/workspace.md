@@ -117,6 +117,7 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm validate:packages
+pnpm validate:docs
 ```
 
 ### External consumer validation
@@ -216,3 +217,7 @@ playground Nuxt types; `build` performs the shared utility build once and then r
 Formatting, linting, type checking, and tests remain the completion baseline when applicable. If a
 check cannot run, record the exact command, its result, and the blocker; a narrower successful check
 does not imply that a broader skipped check passed.
+
+`pnpm validate:docs` verifies that every public module is represented in the root README package
+table and has a matching installable consumer skill under `skills/`. CI runs this guard for every
+validation scope.
