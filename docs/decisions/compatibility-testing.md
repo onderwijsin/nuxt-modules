@@ -1,28 +1,44 @@
-# Compatibility testing policy
+# Decision: Define the compatibility testing policy
+
+- **Status:** Accepted
+- **Date:** 2026-08-15
+- **Scope:** Supported Node, Nuxt, and deployment-runtime validation
+
+## Context
+
+The repository must define which runtime and dependency combinations are supported and continuously
+validated. A full matrix across Node, Nuxt, and deployment runtimes would multiply the already
+substantial package and clean-consumer test cost.
 
 ## Decision
 
-The repository supports and continuously validates Node.js 24 as its baseline. It does not run a
-Node-version matrix. Older versions, including Node.js 22, may work but are untested and unsupported
-unless this policy changes.
+The repository supports and continuously validates Node.js 24 as its baseline. It validates against
+the Nuxt version pinned in the catalog and its resolved dependency graph. Public modules may declare
+a broader Nuxt compatibility range when the implementation reasonably supports it, but that
+declaration is an implementation target rather than evidence that every version is continuously
+tested.
 
-The workspace validates against the Nuxt version pinned in its catalog and corresponding resolved
-dependency graph. Public modules may declare a broader Nuxt compatibility range when the
-implementation reasonably supports it, but that declaration is an implementation target rather than
-evidence that every version is continuously tested.
+The clean external consumer validates the primary Node/Nitro path. Modules may include
+runtime-portable or Cloudflare-specific implementations, including `cloudflare_module` support, but
+the repository does not maintain a Node-versus-Cloudflare matrix or a separate Cloudflare consumer
+job for every package. Older Node versions, including Node.js 22, may work but are untested and
+unsupported unless this policy changes.
 
-Modules may include runtime-portable or Cloudflare-specific implementations, including
-`cloudflare_module` support. The clean external consumer validates the primary Node/Nitro path; the
-repository does not maintain a Node-versus-Cloudflare matrix or a separate Cloudflare consumer job
-for every package. Cloudflare compatibility remains part of the implementation contract where
-documented.
+## Alternatives considered
 
-## Rationale
+- A Node-version matrix: rejected because current organizational needs do not justify the compute
+  and maintenance cost.
+- A Nuxt-version matrix: rejected because the workspace pins and validates one dependency graph.
+- A separate Cloudflare consumer job for every package: rejected because Cloudflare compatibility is
+  an implementation contract where documented, not a universal release matrix.
 
-These modules primarily serve Onderwijs in's internal applications, where the supported tooling and
-deployment baseline is known and controlled. The full package and clean-consumer path is already
-relatively expensive. Multiplying it across Node, Nuxt, and deployment-runtime combinations would
-add material compute cost and maintenance work that current organizational needs do not justify.
+## Consequences
 
-This policy can be revisited if external adoption, client requirements, recurring compatibility
+Validation is predictable and affordable, and the supported baseline is explicit. Compatibility bugs
+outside the pinned graph or primary Node/Nitro path may go undetected. Cloudflare-specific code
+still needs to preserve its runtime contract and should receive focused validation when changed.
+
+## Reconsideration criteria
+
+Revisit this decision if external adoption, client requirements, recurring compatibility
 regressions, or deployment needs make matrix testing valuable.

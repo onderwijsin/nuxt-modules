@@ -1,28 +1,41 @@
-# Simple rate limiter
+# Decision: Keep the simple rate limiter best-effort
 
-Read this decision before changing rate-limit storage, scope, proxy handling, guarantees, security
-positioning, or use around sensitive flows. It defines the module's intended protection boundary.
+- **Status:** Accepted
+- **Date:** 2026-08-11
+- **Scope:** Rate-limit guarantees, storage, proxy handling, and security scope
 
-The simple rate limiter is intentionally a small, best-effort abuse-control utility rather than a
-general-purpose application security module. Mature Nuxt security modules already provide broader
-security features, and the controls that must withstand deliberate abuse belong at the
-infrastructure boundary: for example, a CDN, WAF, API gateway, load balancer, or a rate-limit
-service with atomic storage operations.
+## Context
+
+Applications need a small utility to reduce casual abuse, but strict abuse prevention belongs at an
+infrastructure boundary with atomic and distributed coordination. The module must not imply security
+guarantees it cannot provide.
+
+## Decision
 
 The module provides per-IP, path-scoped limits through Nitro storage, with an opt-in global limit.
-This is useful for reducing casual abuse and shaping traffic on low-risk endpoints. Its storage
-updates are non-atomic, so concurrent or distributed requests can exceed a configured limit.
-Deployment topology and client IP handling also affect its behaviour: in-memory storage is local to
-one runtime instance, and forwarded IP headers are trusted only when the application explicitly opts
-in behind a trusted proxy.
+It is a best-effort traffic-shaping utility, not a security boundary. Storage updates are
+non-atomic; in-memory storage is local to one runtime instance, and forwarded IP headers are trusted
+only when an application opts in behind a trusted proxy.
 
-Consequently, the limiter is not a security boundary and must not be the sole protection for
-authentication, password recovery, account enumeration, privileged or costly operations, or any
-other flow requiring strict enforcement. Those flows need infrastructure-level protection or a
-purpose-built, atomically coordinated limiter.
+It must not be the sole protection for authentication, password recovery, account enumeration,
+privileged or costly operations, or any flow requiring strict enforcement. Directus remains the
+authoritative security boundary for its authentication routes.
 
-The Directus module's authentication routes do not change this decision. They are thin Nuxt-side
-wrappers around a Directus instance; Directus remains the service that authenticates requests and
-enforces its own security policy. Rate limiting around those wrappers may reduce incidental abuse,
-but the authoritative security boundary is the Directus deployment and the infrastructure in front
-of it.
+## Alternatives considered
+
+- A general-purpose security limiter: rejected because mature security modules and infrastructure
+  services provide broader, stricter controls.
+- Atomic distributed enforcement in this module: rejected because it would add substantial storage
+  and operational requirements outside this utility's scope.
+- Trusting forwarded IP headers by default: rejected because proxy topology is application-specific.
+
+## Consequences
+
+The module is lightweight and useful for low-risk endpoints, but concurrent or distributed requests
+may exceed configured limits. Consumers must deploy infrastructure-level controls around sensitive
+flows and configure proxy trust deliberately.
+
+## Reconsideration criteria
+
+Revisit this decision if the module gains atomic distributed storage guarantees, or if its public
+scope changes to provide a security-grade limiter.

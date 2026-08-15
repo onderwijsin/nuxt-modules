@@ -1,29 +1,46 @@
-# Directus session authentication
+# Decision: Keep Directus session authentication module-owned
 
-Read this decision before changing Directus login, refresh, logout, session cookies, current-user
-snapshots, storage coordination, or the `useDirectusAuth()` facade. The constraints below are an API
-and security decision, not an incidental implementation pattern.
+- **Status:** Accepted
+- **Date:** 2026-08-13
+- **Scope:** Directus login, refresh, logout, and session facade
 
-The Directus module uses a bounded, httpOnly, H3-sealed cookie as its session implementation. The
-cookie contains the access token, rotating refresh token, expiry, and a token-free snapshot derived
-from the current-user endpoint. Application code receives only that snapshot through
-useDirectusAuth(); browser JavaScript never receives either token.
+## Context
 
-The module deliberately does not use the Directus SDK authentication() composable. That API owns
-mutable client token state and can refresh concurrently, which conflicts with request-scoped Nuxt
-clients and a reactive facade. Login, refresh, logout, and current-user requests are module-owned
-REST operations instead.
+The Directus SDK authentication composable owns mutable client token state and can refresh
+concurrently. That conflicts with request-scoped Nuxt clients and a reactive authentication facade.
 
-Refresh is gated immediately before an authenticated Directus request. Nitro storage coordinates
-concurrent refreshes for the same refresh token, and successful rotation replaces the entire cookie
-after rebuilding the user snapshot. Invalid refreshes clear the local cookie. Cross-instance
-coordination requires a shared, read-after-write consistent Nitro storage driver; with the default
-in-memory driver, horizontally scaled instances or Cloudflare isolates can still race, and Directus'
-rotating refresh-token policy remains authoritative.
+## Decision
 
-The first snapshot intentionally contains only the user identity fields needed by the playground and
-auth facade. Role, policy, and permission helpers are not exposed by this release. The cookie is
-bounded below normal browser cookie limits; sealing fails rather than truncating state. The sealing,
-key rotation, migration, and H3 integration contract is defined separately in
-[`directus-sealed-session.md`](directus-sealed-session.md). Directus permissions remain the
-authorization boundary.
+The Directus module owns login, refresh, logout, and current-user REST operations. It exposes a
+token-free user snapshot through `useDirectusAuth()`; browser JavaScript never receives access or
+refresh tokens.
+
+Refresh runs immediately before an authenticated request. Nitro storage coordinates concurrent
+refreshes for the same refresh token, successful rotation replaces the entire cookie, and invalid
+refreshes clear it. Cross-instance coordination requires shared, read-after-write-consistent
+storage; with the default in-memory driver, horizontally scaled instances or Cloudflare isolates can
+still race, and Directus remains authoritative for rotating refresh-token policy.
+
+The initial snapshot exposes only the identity fields needed by the playground and facade. Roles,
+policies, and permission helpers are intentionally not part of this release. Sealing and rotation
+are defined separately in [directus-sealed-session.md](directus-sealed-session.md).
+
+## Alternatives considered
+
+- The Directus SDK authentication composable: rejected because mutable client token state and
+  concurrent refresh do not fit request-scoped Nuxt clients.
+- Exposing tokens to the browser: rejected because token custody belongs to the server session.
+- Treating the session snapshot as authorization: rejected because Directus remains the
+  authorization boundary.
+
+## Consequences
+
+The facade is reactive and server-controlled, but refresh coordination depends on the configured
+storage topology. Applications must provide shared storage when horizontal consistency matters.
+Permission decisions remain in Directus rather than in client-visible session state.
+
+## Reconsideration criteria
+
+Revisit this decision if the Directus SDK provides request-scoped authentication with safe refresh
+coordination, or if the public facade needs additional identity data without weakening token
+custody.

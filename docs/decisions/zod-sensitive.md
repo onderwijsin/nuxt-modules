@@ -1,46 +1,40 @@
-# Zod sensitivity augmentation
+# Decision: Mark sensitive Zod fields at their owning schema
 
-The Directus configuration schemas use `.sensitive()` to identify values that must be removed from
-the client-safe `#directus-config` projection. The annotation belongs on the schema that owns the
-value, so the public projection remains derived from the complete schema instead of a separate,
-easy-to-drift allowlist.
+- **Status:** Accepted
+- **Date:** 2026-08-12
+- **Scope:** Sensitive-field metadata and public Directus configuration projection
 
-## Why augment Zod
+## Context
 
-Zod does not provide a domain-specific sensitivity marker. We add one to `ZodType.prototype` so the
-marker is available on every Zod schema while preserving the normal schema composition API:
+Directus configuration contains secrets and server-only values that must not enter the client-safe
+`#directus-config` projection. A separate allowlist would drift as schemas evolve, while Zod has no
+domain-specific sensitivity marker.
 
-```ts
-z.string().sensitive();
-```
+## Decision
 
-The method stores `sensitive: true` in Zod metadata and returns the schema with a type-level
-`SensitiveSchema` marker. Runtime projection recursively inspects that metadata, while the type
-definitions exclude sensitive fields from the derived public output.
+The repository augments Zod with a `.sensitive()` method that stores `sensitive: true` in schema
+metadata and returns a type-level `SensitiveSchema` marker. Runtime projection recursively inspects
+that metadata, and type definitions exclude sensitive fields from public output.
 
-The augmentation is installed in `schema/sensitive.ts`:
+The augmentation is installed by the side-effectful `schema/sensitive.ts` module. Every schema file
+that calls `.sensitive()` must explicitly import that module so the runtime method is installed and
+bundlers cannot omit it.
 
-```ts
-declare module "zod" {
-  interface ZodType {
-    sensitive(): SensitiveSchema<this>;
-  }
-}
+## Alternatives considered
 
-z.ZodType.prototype.sensitive = function sensitive() {
-  return this.meta({ ...this.meta(), sensitive: true });
-};
-```
+- A manually maintained sensitive-field allowlist: rejected because it can drift from the owning
+  schema.
+- A separate schema for public configuration: rejected because it duplicates the source contract.
+- Type-only augmentation: rejected because the method must exist at runtime on schemas from the
+  installed Zod package.
 
-This is a deliberate runtime prototype augmentation because the method must exist on schemas created
-by the installed Zod package, not only in TypeScript's declarations. The module is side-effectful:
-importing it installs the method. Therefore every schema file that calls `.sensitive()` must include
-an explicit side-effect import:
+## Consequences
 
-```ts
-// Registers the shared Zod sensitivity method used below.
-import "./sensitive";
-```
+Sensitive ownership stays close to the field definition, and public configuration is derived from
+the complete schema. The runtime prototype augmentation is intentionally side-effectful, so imports
+are required and independent schema consumers must account for that runtime dependency.
 
-Keeping the import next to each use makes the runtime dependency clear and prevents bundlers from
-omitting the augmentation when a schema file is consumed independently.
+## Reconsideration criteria
+
+Revisit this decision if Zod provides an official sensitivity metadata API, or if the public
+projection needs a trust model that cannot be expressed by field-level metadata.
