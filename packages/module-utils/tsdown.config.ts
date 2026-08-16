@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: [
@@ -11,10 +11,12 @@ export default defineConfig({
   ],
   format: ["esm"],
   dts: {
-    resolve: true
+    resolver: "tsc",
+    eager: true
   },
   clean: true,
   sourcemap: true,
-  bundle: true,
-  noExternal: ["scule"]
+  deps: {
+    alwaysBundle: ["scule"]
+  }
 });

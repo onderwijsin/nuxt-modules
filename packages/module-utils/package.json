@@ -23,46 +23,46 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./build": {
-      "types": "./dist/build/index.d.ts",
-      "import": "./dist/build/index.js",
-      "default": "./dist/build/index.js"
+      "types": "./dist/build/index.d.mts",
+      "import": "./dist/build/index.mjs",
+      "default": "./dist/build/index.mjs"
     },
     "./shared": {
-      "types": "./dist/shared/index.d.ts",
-      "import": "./dist/shared/index.js",
-      "default": "./dist/shared/index.js"
+      "types": "./dist/shared/index.d.mts",
+      "import": "./dist/shared/index.mjs",
+      "default": "./dist/shared/index.mjs"
     },
     "./server": {
-      "types": "./dist/server/index.d.ts",
-      "import": "./dist/server/index.js",
-      "default": "./dist/server/index.js"
+      "types": "./dist/server/index.d.mts",
+      "import": "./dist/server/index.mjs",
+      "default": "./dist/server/index.mjs"
     },
     "./app": {
-      "types": "./dist/app/index.d.ts",
-      "import": "./dist/app/index.js",
-      "default": "./dist/app/index.js"
+      "types": "./dist/app/index.d.mts",
+      "import": "./dist/app/index.mjs",
+      "default": "./dist/app/index.mjs"
     },
     "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "default": "./dist/types.js"
+      "types": "./dist/types.d.mts",
+      "import": "./dist/types.mjs",
+      "default": "./dist/types.mjs"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
@@ -74,7 +74,7 @@
   },
   "devDependencies": {
     "scule": "catalog:",
-    "tsup": "catalog:",
+    "tsdown": "catalog:",
     "typescript": "catalog:"
   },
   "engines": {

@@ -80,7 +80,7 @@ edits to root scripts or configuration. Keep playgrounds private and scoped to t
 Supporting packages live under `packages/`:
 
 - `@onderwijsin/nuxt-module-utils` contains reusable, module-agnostic runtime helpers. It is built
-  with tsup and published alongside modules with public npm access.
+  with tsdown and published alongside modules with public npm access.
 - `test-utils` contains shared test fixtures, assertions, and Vitest helpers. It must never be
   imported by published runtime code.
 - `playground-layer` is a private Nuxt layer containing the shared UI shell and styling used only by
@@ -191,7 +191,7 @@ metadata.
 - Oxfmt formats source and documentation; Oxlint performs linting, including JSDoc descriptions.
 - TypeScript and `vue-tsc` type-check packages and Nuxt applications.
 - Vitest runs unit tests; `@nuxt/test-utils` supports Nuxt integration tests.
-- Nuxt 4 and `@nuxt/module-builder` build modules; tsup builds private utilities.
+- Nuxt 4 and `@nuxt/module-builder` build modules; tsdown builds private utilities.
 - Changesets manages releases. Publint and packed-package checks validate npm artefacts.
 - Husky, lint-staged, Commitlint, and Gitleaks `^8` provide local commit quality gates and secret
   detection.

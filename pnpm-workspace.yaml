@@ -57,7 +57,7 @@ catalog:
   simple-icons: 16.28.0
   tailwindcss: 4.3.3
   consola: 3.4.2
-  tsup: 8.5.1
+  tsdown: 0.22.14
   defu: 6.1.7
   h3: 1.15.11
   nitropack: 2.13.4
