@@ -43,6 +43,23 @@ export interface DirectusAuthenticationResult {
 }
 
 /**
+ * Validates and maps a Directus authentication response for session establishment.
+ *
+ * @param response - Untrusted response returned by a Directus authentication endpoint.
+ * @returns The validated authentication result required by the server session layer.
+ */
+export function parseDirectusAuthenticationResponse(
+  response: unknown
+): DirectusAuthenticationResult {
+  const tokens = directusTokenResponseSchema.parse(response).data;
+  return {
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
+    expires: tokens.expires
+  };
+}
+
+/**
  * Decodes a Directus access-token JWT and reads its TFA setup requirement claim.
  *
  * This is informational state only. The token is not cryptographically verified here because
@@ -211,12 +228,7 @@ export async function createDirectusSession(
       mode: "json"
     }
   });
-  const tokens = directusTokenResponseSchema.parse(response).data;
-  return establishDirectusSession(event, {
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-    expires: tokens.expires
-  });
+  return establishDirectusSession(event, parseDirectusAuthenticationResponse(response));
 }
 
 /**
@@ -312,12 +324,10 @@ export async function ensureFreshDirectusSession(
       method: "POST",
       body: { refresh_token: current.refreshToken, mode: "json" }
     });
-    const tokens = directusTokenResponseSchema.parse(response).data;
-    const session = await createDirectusSessionFromAuthentication(event, {
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expires: tokens.expires
-    });
+    const session = await createDirectusSessionFromAuthentication(
+      event,
+      parseDirectusAuthenticationResponse(response)
+    );
     const sealedSession = await sealDirectusSession(event, session);
     await storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL });
     writeDirectusSessionCookie(event, sealedSession);

@@ -167,6 +167,8 @@ All options are configured under `directusClient`:
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                       |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication, authentication routes, and `useDirectusAuth`.                          |
 | `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                            |
+| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.             |
+| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute callback URL sent upstream; required when enabled and server-only.                     |
 | `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                  |
 | `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                        |
 | `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                             |
@@ -300,6 +302,12 @@ deployment-level refresh races remain possible otherwise. Refresh results writte
 are H3-sealed session values rather than plaintext token pairs; the configured Nitro storage backend
 must still be treated as sensitive infrastructure.
 
+When `client.auth.magicLinks.enabled` is true, the module additionally registers
+`POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These
+routes require the Directus magic-links extension. The request route uses the fixed server-side
+callback URL and redemption always requests Directus `mode: "json"`, establishing the normal sealed
+session. The client API for calling these routes is introduced in PR 3.
+
 #### Rotating the session secret
 
 Rotate `client.auth.sessionSecret` in two deployments: first set the new secret as active while
@@ -326,8 +334,8 @@ enabled unless a local diagnostic explicitly requires otherwise.
 ### Turnstile protection
 
 Set `client.auth.turnstile.enabled: true` to register `@onderwijsin/nuxt-turnstile` and require a
-Turnstile token for login and password-reset-email requests. Configure the Turnstile site and secret
-keys through the usual top-level `turnstile` option. Follow the
+Turnstile token for login, password-reset-email, and magic-link request operations. Configure the
+Turnstile site and secret keys through the usual top-level `turnstile` option. Follow the
 [Turnstile module guide](../turnstile/README.md) to configure keys, render the widget, and manage
 the token lifecycle. The Directus module exposes the required widget actions through public runtime
 config, and the optional second argument to each auth method forwards the token in
@@ -344,10 +352,10 @@ const passwordRequestAction = config.public.directusClient.auth.turnstile.action
 ```
 
 Use `config.public.directusClient.auth.turnstile.actions.login` for the login widget and
-`passwordRequest` for the password-reset-request widget. Cloudflare's test credentials return a
-verified test-key response without an action, which the module recognizes only for those
-credentials. Tokens are required only when the option is enabled; reset each widget after its
-submission because Turnstile tokens are single-use.
+`passwordRequest` for the password-reset-request widget and `magicLinkRequest` for the magic-link
+request widget. Cloudflare's test credentials return a verified test-key response without an action,
+which the module recognizes only for those credentials. Tokens are required only when the option is
+enabled; reset each widget after its submission because Turnstile tokens are single-use.
 
 ## Generated types
 

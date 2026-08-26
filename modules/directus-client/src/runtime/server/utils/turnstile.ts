@@ -1,7 +1,7 @@
 import type { H3Event } from "h3";
 import { useRuntimeConfig } from "#imports";
 
-type DirectusTurnstileAction = "login" | "passwordRequest";
+type DirectusTurnstileAction = "login" | "passwordRequest" | "magicLinkRequest";
 
 /**
  * Validates a configured Turnstile token for a Directus authentication operation.

@@ -7,8 +7,9 @@ declare module "nuxt/schema" {
         enabled: boolean;
         turnstile: {
           enabled: boolean;
-          actions: { login: string; passwordRequest: string };
+          actions: { login: string; passwordRequest: string; magicLinkRequest: string };
         };
+        magicLinks: { enabled: boolean; redirectUrl?: string };
         cookie: {
           name: string;
           secure: boolean;
@@ -38,7 +39,7 @@ declare module "nuxt/schema" {
         enabled: boolean;
         turnstile: {
           enabled: boolean;
-          actions: { login: string; passwordRequest: string };
+          actions: { login: string; passwordRequest: string; magicLinkRequest: string };
         };
         maskSecretsInPlayground: boolean;
       };

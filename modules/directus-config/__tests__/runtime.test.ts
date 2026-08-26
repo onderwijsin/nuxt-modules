@@ -40,6 +40,49 @@ describe("Directus config helpers", () => {
     });
   });
 
+  it("validates magic-link authentication requirements and keeps the callback URL private", () => {
+    const config = validateDirectusConfig({
+      client: {
+        auth: {
+          enabled: true,
+          magicLinks: {
+            enabled: true,
+            redirectUrl: "https://app.example.test/auth/magic-link"
+          }
+        }
+      }
+    });
+
+    expect(config.client?.auth.magicLinks).toEqual({
+      enabled: true,
+      redirectUrl: "https://app.example.test/auth/magic-link"
+    });
+    expect(directusPublicConfigSchema.parse(config)).toMatchObject({
+      client: { auth: { magicLinks: { enabled: true } } }
+    });
+    expect(directusPublicConfigSchema.parse(config)).not.toHaveProperty(
+      "client.auth.magicLinks.redirectUrl"
+    );
+    expect(() =>
+      validateDirectusConfig({ client: { auth: { magicLinks: { enabled: true } } } })
+    ).toThrow();
+    expect(() =>
+      validateDirectusConfig({
+        client: { auth: { enabled: true, magicLinks: { enabled: true } } }
+      })
+    ).toThrow();
+    expect(() =>
+      validateDirectusConfig({
+        client: {
+          auth: {
+            enabled: true,
+            magicLinks: { enabled: true, redirectUrl: "/auth/magic-link" }
+          }
+        }
+      })
+    ).toThrow();
+  });
+
   it("drops unknown values from the public projection", () => {
     expect(directusPublicConfigSchema.parse({ unknown: true })).toEqual({});
   });

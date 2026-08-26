@@ -77,6 +77,8 @@ All options are configured under `directusClient`.
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                       |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.             |
 | `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                            |
+| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.             |
+| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute server-only callback URL; required when magic links are enabled.                       |
 | `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                  |
 | `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                        |
 | `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                             |
@@ -227,15 +229,15 @@ Directus session cookies. Static, preview, and unauthenticated access continue t
 ### Turnstile protection
 
 Set `client.auth.turnstile.enabled: true` to register `@onderwijsin/nuxt-turnstile` and protect
-login plus password-reset-email requests. Configure site and secret keys through the top-level
-`turnstile` option. Follow the
+login, password-reset-email, and magic-link request operations. Configure site and secret keys
+through the top-level `turnstile` option. Follow the
 [Turnstile module documentation](https://github.com/onderwijsin/nuxt-modules/tree/main/modules/turnstile)
 to configure keys, render widgets, and manage tokens. Render each widget with the public action key
-at `useRuntimeConfig().public.directusClient.auth.turnstile.actions.login` or `.passwordRequest`,
-then pass the resulting token as `{ turnstileToken }` metadata to `auth.login` or
-`auth.passwordRequest`. Cloudflare's test credentials return a verified test-key response without an
-action, which the module recognizes only for those credentials. Tokens are single-use, so reset the
-widget after each processed submission.
+at `useRuntimeConfig().public.directusClient.auth.turnstile.actions.login`, `.passwordRequest`, or
+`.magicLinkRequest`, then pass the resulting token as `{ turnstileToken }` metadata to `auth.login`
+or `auth.passwordRequest`. Cloudflare's test credentials return a verified test-key response without
+an action, which the module recognizes only for those credentials. Tokens are single-use, so reset
+the widget after each processed submission.
 
 ## Authentication hooks
 
@@ -316,6 +318,12 @@ When `client.auth.enabled` is `true`, the module registers:
 | `GET`  | `/_directus/auth/session`          | Returns the persisted safe snapshot without contacting Directus.                                     |
 | `POST` | `/_directus/auth/password-request` | Validates email (max 1024), then proxies it with the configured reset URL.                           |
 | `POST` | `/_directus/auth/password-reset`   | Validates the reset token (max 1024) and new password (max 512), then proxies them.                  |
+
+When `client.auth.magicLinks.enabled` is true, the module also registers
+`POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. The
+request route uses the configured server-side callback URL and ignores browser-supplied redirects;
+redemption always uses Directus `mode: "json"` and creates the normal sealed session. The client
+facade methods for these routes are introduced in PR 3.
 
 All authentication mutations require an `Origin` or `Referer` matching the application origin.
 Missing or cross-origin metadata is rejected with `403`, including when the session cookie uses

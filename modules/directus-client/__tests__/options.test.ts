@@ -39,6 +39,36 @@ describe("Directus module options", () => {
     });
   });
 
+  it("defaults magic links to disabled and validates their dependencies", () => {
+    expect(directusClientOptionsSchema.parse({}).client.auth.magicLinks).toEqual({
+      enabled: false
+    });
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { auth: { magicLinks: { enabled: true } } }
+      })
+    ).toThrow(/requires client\.auth\.enabled/);
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { auth: { enabled: true, magicLinks: { enabled: true } } }
+      })
+    ).toThrow(/redirectUrl is required/);
+    expect(
+      directusClientOptionsSchema.parse({
+        client: {
+          auth: {
+            enabled: true,
+            sessionSecret: "a-valid-directus-session-secret-32-chars",
+            magicLinks: {
+              enabled: true,
+              redirectUrl: "https://app.example.test/auth/magic-link"
+            }
+          }
+        }
+      }).client.auth.magicLinks
+    ).toEqual({ enabled: true, redirectUrl: "https://app.example.test/auth/magic-link" });
+  });
+
   it("defaults playground masking on and validates sealing secrets", () => {
     expect(directusClientOptionsSchema.parse({}).client.auth.maskSecretsInPlayground).toBe(true);
     expect(() =>
