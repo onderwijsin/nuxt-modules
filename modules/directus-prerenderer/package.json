@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-directus-prerenderer",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Prerender Nuxt routes from Directus collection data.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- de57301: Add optional `client.auth.magicLinks` configuration with a fixed, validated server-only callback
+  URL. Enabling magic links requires authentication to be enabled.
+
+### Patch Changes
+
+- 451c582: Raise the supported and validated Node.js baseline to Node.js 24.
+- Updated dependencies [1e30fbb]
+- Updated dependencies [451c582]
+  - @onderwijsin/nuxt-module-utils@0.5.1
+
 ## 0.4.0
 
 ### Minor Changes

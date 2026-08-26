@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- de57301: Add conditional magic-link request and redemption Nitro routes. Redemption always uses Directus
+  `mode: "json"` and stores the resulting authentication in the existing sealed session. Add a
+  dedicated `magicLinkRequest` Turnstile action.
+- de57301: Add the client authentication facade for Directus magic links, including `requestMagicLink` and
+  `redeemMagicLink`, plus `magicLinksEnabled` and `requiresTfaSetup` state. Invalid local magic-link
+  tokens now normalize to `INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
+- de57301: Refactor authentication session construction so login and refresh share the same validated session
+  path, and expose the server-derived `requiresTfaSetup` flag in the token-free session snapshot.
+
+  This changes nullable identity fields in `DirectusSessionSnapshot` from optional properties to
+  explicit `null` values when Directus does not return them. The TFA flag is informational only;
+  consuming applications remain responsible for TFA setup UX and navigation.
+
+### Patch Changes
+
+- 451c582: Raise the supported and validated Node.js baseline to Node.js 24.
+- Updated dependencies [de57301]
+- Updated dependencies [1e30fbb]
+- Updated dependencies [451c582]
+  - @onderwijsin/nuxt-directus-config@0.5.0
+  - @onderwijsin/nuxt-module-utils@0.5.1
+  - @onderwijsin/nuxt-turnstile@0.2.9
+
 ## 0.4.1
 
 ### Patch Changes

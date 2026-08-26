@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-turnstile",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Nuxt Turnstile integration with client helpers and server-side validation.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

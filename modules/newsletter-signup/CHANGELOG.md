@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.8
+
+### Patch Changes
+
+- 451c582: Preserve existing consumer and layer runtime-config namespace values during module setup.
+- 451c582: Raise the supported and validated Node.js baseline to Node.js 24.
+- Updated dependencies [1e30fbb]
+- Updated dependencies [451c582]
+  - @onderwijsin/nuxt-module-utils@0.5.1
+  - @onderwijsin/nuxt-simple-rate-limiter@0.4.4
+
 ## 1.0.7
 
 ### Patch Changes
