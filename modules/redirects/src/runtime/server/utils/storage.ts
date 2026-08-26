@@ -13,6 +13,7 @@ import { normalizeRedirect } from "./validation";
 import { invalidateRedirectCache, primeRedirectLookupCache } from "./cache";
 import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../utils/dynamic";
 import type { CompiledDynamicRedirect } from "../../utils/dynamic";
+import { isRedirectActive } from "../../utils/eligibility";
 
 const MANIFEST_KEY = "manifest";
 const DYNAMIC_MANIFEST_CHECK_INTERVAL_MS = 10_000;
@@ -97,12 +98,12 @@ export async function findRedirect(origin: string): Promise<ResolvedRedirect | n
   const storage = useRedirectStorage();
   const canonicalOrigin = toRedirectOrigin(origin);
   const exact = await storage.getItem<ResolvedRedirect>(toRedirectStorageKey(canonicalOrigin));
-  if (exact) return exact;
+  if (exact && isRedirectActive(exact)) return exact;
 
   const path = toRedirectPath(canonicalOrigin);
   if (path !== canonicalOrigin) {
     const pathOnly = await storage.getItem<ResolvedRedirect>(toRedirectStorageKey(path));
-    if (pathOnly) return pathOnly;
+    if (pathOnly && isRedirectActive(pathOnly)) return pathOnly;
   }
 
   if (!dynamicMatchingEnabled()) return null;
@@ -147,7 +148,9 @@ export async function refreshRedirectStorage(
           from: redirect.from,
           to: redirect.to,
           statusCode: redirect.statusCode,
-          match: "pattern"
+          match: "pattern",
+          activeFrom: redirect.activeFrom,
+          activeUntil: redirect.activeUntil
         });
         continue;
       }
@@ -212,6 +215,8 @@ export async function upsertRedirect(value: Redirect): Promise<ResolvedRedirect>
       from: redirect.from,
       to: redirect.to,
       statusCode: redirect.statusCode,
+      activeFrom: redirect.activeFrom,
+      activeUntil: redirect.activeUntil,
       match: "pattern" as const
     };
     const index = dynamic.findIndex((rule) => rule.from === redirect.from);

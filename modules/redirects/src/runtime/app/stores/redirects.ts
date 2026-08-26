@@ -8,6 +8,7 @@ import { piniaPluginPersistedstate } from "#imports";
 
 import { toRedirectOrigin, toRedirectPath } from "../../server/utils/path";
 import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../utils/dynamic";
+import { isRedirectActive } from "../../utils/eligibility";
 
 interface RedirectIndexResponse {
   data: RedirectIndex;
@@ -50,9 +51,9 @@ export const useRedirectsStore = defineStore(
     function find(origin: string): ResolvedRedirect | null {
       const canonicalOrigin = toRedirectOrigin(origin);
       const exact = redirects.value.get(canonicalOrigin);
-      if (exact) return exact;
+      if (exact && isRedirectActive(exact)) return exact;
       const pathOnly = redirects.value.get(toRedirectPath(canonicalOrigin));
-      if (pathOnly) return pathOnly;
+      if (pathOnly && isRedirectActive(pathOnly)) return pathOnly;
       if (!useRuntimeConfig().public.redirects?.dynamicMatching) return null;
       return findCompiledDynamicRedirect(compiledDynamic.value, toRedirectPath(canonicalOrigin));
     }

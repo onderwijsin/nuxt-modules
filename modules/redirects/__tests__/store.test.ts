@@ -53,6 +53,30 @@ describe("redirects store", () => {
     expect(store.find("/search?q=current")).toMatchObject({ to: "/all" });
   });
 
+  it("skips inactive persisted records and falls back to active records", async () => {
+    $fetch.mockResolvedValue({
+      data: {
+        "/offers": {
+          from: "/offers",
+          to: "/current-offer",
+          statusCode: 302,
+          activeFrom: 0
+        },
+        "/offers?campaign=old": {
+          from: "/offers?campaign=old",
+          to: "/expired-offer",
+          statusCode: 302,
+          activeUntil: 0
+        }
+      }
+    });
+    const store = useRedirectsStore();
+
+    await store.refresh(true);
+
+    expect(store.find("/offers?campaign=old")).toMatchObject({ to: "/current-offer" });
+  });
+
   it("does not refetch within the configured interval unless forced", async () => {
     $fetch.mockResolvedValue({ data: {} });
     const store = useRedirectsStore();

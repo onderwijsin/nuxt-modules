@@ -69,6 +69,35 @@ describe("redirect storage refresh", () => {
     await expect(findRedirect("/search?q=new")).resolves.toMatchObject({ to: "/all" });
   });
 
+  it("skips inactive exact records so path-only fallback can match", async () => {
+    await refreshRedirectStorage([
+      [
+        { from: "/offers", to: "/current-offer", activeFrom: "2000-01-01T00:00:00.000Z" },
+        {
+          from: "/offers?campaign=old",
+          to: "/expired-offer",
+          activeUntil: "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    ]);
+
+    await expect(findRedirect("/offers?campaign=old")).resolves.toMatchObject({
+      to: "/current-offer"
+    });
+  });
+
+  it("does not resolve future or expired exact records", async () => {
+    await refreshRedirectStorage([
+      [
+        { from: "/future", to: "/not-yet", activeFrom: "2999-01-01T00:00:00.000Z" },
+        { from: "/expired", to: "/no-longer", activeUntil: "2000-01-01T00:00:00.000Z" }
+      ]
+    ]);
+
+    await expect(findRedirect("/future")).resolves.toBeNull();
+    await expect(findRedirect("/expired")).resolves.toBeNull();
+  });
+
   it("removes stale entries while replacing the compact manifest", async () => {
     await refreshRedirectStorage([[{ from: "/old", to: "/before" }]]);
     await refreshRedirectStorage([[{ from: "/new", to: "/after" }]]);

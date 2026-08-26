@@ -78,8 +78,11 @@ Import from `@onderwijsin/nuxt-redirects/runtime`:
 - `upsertRedirect(redirect)` normalizes and writes one record, updating the manifest; returns the
   normalized redirect.
 - `removeRedirect(origin)` normalizes and removes one record, updating the manifest.
-- `Redirect` is
-  `{ from: string; to: string; statusCode?: 301 | 302 | 307 | 308; match?: "exact" | "pattern" }`.
+- `Redirect` supports optional `activeFrom` and `activeUntil` bounds in addition to `from`, `to`,
+  `statusCode`, and `match`.
+- `isRedirectActive(redirect, now)` applies `activeFrom <= now < activeUntil`; missing bounds are
+  unbounded. Bounds are normalized when records enter storage and checked during existing server,
+  dynamic, and Pinia lookups.
 - `ResolvedRedirect` is a `Redirect` with a required `statusCode`; `RedirectIndex` maps normalized
   origins to `ResolvedRedirect` values.
 - `RedirectSource` is `(event?: H3Event) => Redirect[] | Promise<Redirect[]>`.
@@ -151,6 +154,10 @@ because they affect query fallbacks. For webhook-driven updates, prefer a short 
 for fast store convergence and a longer `cache.lookup` TTL for efficient route navigation. Lookup
 keys include the complete normalized origin, including query parameters, so distinct paths and query
 variants cannot share a cached response.
+
+The client does not revalidate cached single-lookup responses before navigation. A response may be
+stale for a short period after its timing window changes; this is an intentional performance
+trade-off.
 
 ## Precedence and query semantics
 

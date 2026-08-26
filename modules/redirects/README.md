@@ -32,7 +32,8 @@ export default defineNuxtConfig({
 ## Source registration
 
 Add one source per external system under `server/redirects/`. A source owns provider-specific
-authentication, pagination, field mapping, and filtering of inactive or time-limited records.
+authentication, pagination, field mapping, and deciding which records to fetch. The module enforces
+`activeFrom` and `activeUntil` timing metadata at existing lookup points.
 
 ```ts
 // server/redirects/cms.ts
@@ -146,7 +147,8 @@ export default defineRedirectSource(() => [
 These rules use the `regexparam` route-pattern syntax. `:name` captures one path segment, `:name?`
 makes a segment optional, and `*` captures a wildcard path. Exact query and path-only redirects are
 always checked before pattern rules. Pattern rules match the pathname only, so incoming query
-parameters are not copied to the destination.
+parameters are not copied to the destination. Timing bounds use an inclusive activation and
+exclusive expiration window: `activeFrom <= now < activeUntil`.
 
 For example, `/legacy/guides/getting-started` becomes `/docs/guides/getting-started`, and
 `/files/reports/2026.pdf` becomes `/downloads/reports/2026.pdf`. Raw regular expressions and
@@ -169,6 +171,10 @@ entries.
 
 Lookup cache keys are derived from the complete normalized origin, including its query string, so
 distinct paths and query variants never share a cache record.
+
+The client does not revalidate cached single-lookup responses before navigation. A response may be
+stale for a short period after its timing window changes; this is an intentional performance
+trade-off.
 
 ```ts
 export default defineNuxtConfig({

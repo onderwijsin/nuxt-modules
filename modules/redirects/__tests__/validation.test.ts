@@ -11,6 +11,23 @@ describe("redirect validation", () => {
     });
   });
 
+  it("normalizes redirect timing bounds to epoch milliseconds", () => {
+    expect(
+      normalizeRedirect({
+        from: "/scheduled",
+        to: "/new",
+        activeFrom: "2026-08-26T12:00:00.000Z",
+        activeUntil: "2026-08-26T13:00:00.000Z"
+      })
+    ).toMatchObject({
+      activeFrom: Date.parse("2026-08-26T12:00:00.000Z"),
+      activeUntil: Date.parse("2026-08-26T13:00:00.000Z")
+    });
+    expect(() =>
+      normalizeRedirect({ from: "/scheduled", to: "/new", activeUntil: "invalid" })
+    ).toThrow("activeUntil must be a valid date");
+  });
+
   it("accepts internal paths and documented external destination forms", () => {
     for (const to of [
       "/new",
