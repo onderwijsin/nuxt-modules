@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1
+
+### Patch Changes
+
+- 1e30fbb: Emit the module-utils ESM and declaration artifacts with explicit `.mjs` and `.d.mts` extensions.
+- 451c582: Raise the supported and validated Node.js baseline to Node.js 24.
+
 ## 0.5.0
 
 ### Minor Changes

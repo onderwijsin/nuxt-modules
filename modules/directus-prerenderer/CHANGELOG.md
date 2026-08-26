@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 451c582: Raise the supported and validated Node.js baseline to Node.js 24.
+- Updated dependencies [de57301]
+- Updated dependencies [1e30fbb]
+- Updated dependencies [451c582]
+  - @onderwijsin/nuxt-directus-config@0.5.0
+  - @onderwijsin/nuxt-module-utils@0.5.1
+
 ## 0.2.0
 
 ### Minor Changes

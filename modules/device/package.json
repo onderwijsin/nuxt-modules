@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-device",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Nuxt module for request-aware device and browser detection.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

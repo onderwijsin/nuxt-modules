@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.4
+
+### Patch Changes
+
+- 451c582: Raise the supported and validated Node.js baseline to Node.js 24.
+- 1467a18: Rebuild pattern redirects from registered sources during pattern mutations to preserve canonical precedence.
+- 1467a18: Enforce activation and expiration windows during existing redirect lookups.
+- Updated dependencies [1e30fbb]
+- Updated dependencies [451c582]
+  - @onderwijsin/nuxt-module-utils@0.5.1
+
 ## 0.2.3
 
 ### Patch Changes
