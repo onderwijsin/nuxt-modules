@@ -32,6 +32,22 @@ describe("Directus client and server composables", async () => {
       return;
     }
 
+    if (request.url?.startsWith("/auth/magic-links/request")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({}));
+      return;
+    }
+
+    if (request.url?.startsWith("/auth/magic-links/redeem")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          data: { access_token: "magic-access", refresh_token: "magic-refresh", expires: 60_000 }
+        })
+      );
+      return;
+    }
+
     response.writeHead(404, { "content-type": "application/json" });
     response.end(
       JSON.stringify({
@@ -78,7 +94,9 @@ describe("Directus client and server composables", async () => {
     "/_directus/auth/refresh",
     "/_directus/auth/logout",
     "/_directus/auth/password-request",
-    "/_directus/auth/password-reset"
+    "/_directus/auth/password-reset",
+    "/_directus/auth/magic-links/request",
+    "/_directus/auth/magic-links/redeem"
   ])("rejects cross-origin authentication mutations at %s", async (route) => {
     await expect(
       $fetch(route, { method: "POST", headers: { origin: "https://attacker.example.test" } })
@@ -97,7 +115,8 @@ describe("Directus client and server composables", async () => {
 
   it.each([
     ["/_directus/auth/login", "directus-login"],
-    ["/_directus/auth/password-request", "directus-password-request"]
+    ["/_directus/auth/password-request", "directus-password-request"],
+    ["/_directus/auth/magic-links/request", "directus-magic-link-request"]
   ])("requires a Turnstile token for %s", async (route, expectedAction) => {
     const response = await fetch(route, {
       method: "POST",
@@ -112,12 +131,15 @@ describe("Directus client and server composables", async () => {
 
   it("accepts Turnstile tokens with the action exposed for each protected route", async () => {
     const headers = { origin: new URL(url("/")).origin };
-    const actions = await $fetch<{ login: string; passwordRequest: string }>(
-      "/api/directus-turnstile-actions"
-    );
+    const actions = await $fetch<{
+      login: string;
+      passwordRequest: string;
+      magicLinkRequest: string;
+    }>("/api/directus-turnstile-actions");
     expect(actions).toEqual({
       login: "directus-login",
-      passwordRequest: "directus-password-request"
+      passwordRequest: "directus-password-request",
+      magicLinkRequest: "directus-magic-link-request"
     });
     await expect(
       $fetch("/_directus/auth/login", {
@@ -133,5 +155,22 @@ describe("Directus client and server composables", async () => {
         headers: { ...headers, "x-turnstile-token": actions.passwordRequest }
       })
     ).resolves.toEqual({ success: true });
+    await expect(
+      $fetch("/_directus/auth/magic-links/request", {
+        method: "POST",
+        body: { email: "user@example.test", redirectUrl: "https://attacker.example.test" },
+        headers: { ...headers, "x-turnstile-token": actions.magicLinkRequest }
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  it("redeems a magic link into the normal cookie session", async () => {
+    await expect(
+      $fetch("/_directus/auth/magic-links/redeem", {
+        method: "POST",
+        body: { magicLinkToken: "raw-token", otp: "123456" },
+        headers: { origin: new URL(url("/")).origin }
+      })
+    ).resolves.toMatchObject({ userId: "user-1", requiresTfaSetup: false });
   });
 });

@@ -2,7 +2,11 @@ import { isReadonly, ref } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
-  session: undefined as { userId: string; email?: string } | null | undefined,
+  session: undefined as
+    | { userId: string; email?: string; requiresTfaSetup?: boolean }
+    | null
+    | undefined,
+  config: { public: { directusClient: { auth: { magicLinks: { enabled: true } } } } },
   fetch: vi.fn(),
   callHook: vi.fn()
 }));
@@ -16,13 +20,15 @@ vi.mock("#app", () => ({
 }));
 
 vi.mock("#imports", () => ({
-  $fetch: state.fetch
+  $fetch: state.fetch,
+  useRuntimeConfig: () => state.config
 }));
 
 const { useDirectusAuth } = await import("../src/runtime/app/composables/directus-auth");
 
 beforeEach(() => {
   state.session = null;
+  state.config.public.directusClient.auth.magicLinks.enabled = true;
   state.fetch.mockReset();
   state.callHook.mockReset();
   state.callHook.mockResolvedValue(undefined);
@@ -33,6 +39,18 @@ afterEach(() => {
 });
 
 describe("Directus authentication hooks", () => {
+  it("exposes magic-link support and the TFA setup state", () => {
+    state.session = {
+      userId: "user-1",
+      email: "user@example.test",
+      requiresTfaSetup: true
+    };
+    const auth = useDirectusAuth();
+
+    expect(auth.magicLinksEnabled).toBe(true);
+    expect(auth.requiresTfaSetup.value).toBe(true);
+  });
+
   it("emits a token-free login payload after the session request succeeds", async () => {
     const auth = useDirectusAuth();
     const snapshot = { userId: "user-1", email: "user@example.test" };
@@ -70,6 +88,51 @@ describe("Directus authentication hooks", () => {
       "/_directus/auth/password-request",
       expect.objectContaining({ headers: { "x-turnstile-token": "password-token" } })
     );
+  });
+
+  it("requests a magic link through the same-origin endpoint", async () => {
+    const auth = useDirectusAuth();
+    state.fetch.mockResolvedValue(undefined);
+
+    await auth.requestMagicLink("user@example.test", { turnstileToken: "magic-link-token" });
+
+    expect(state.fetch).toHaveBeenCalledWith("/_directus/auth/magic-links/request", {
+      method: "POST",
+      body: { email: "user@example.test" },
+      headers: { "x-turnstile-token": "magic-link-token" }
+    });
+  });
+
+  it("redeems a magic link into the normal session and login event", async () => {
+    const auth = useDirectusAuth();
+    const snapshot = {
+      userId: "user-1",
+      email: "user@example.test",
+      firstName: null,
+      lastName: null,
+      requiresTfaSetup: false
+    };
+    state.fetch.mockResolvedValue(snapshot);
+
+    await auth.redeemMagicLink("raw-token", "123456");
+
+    expect(auth._session.value).toEqual(snapshot);
+    expect(state.fetch).toHaveBeenCalledWith("/_directus/auth/magic-links/redeem", {
+      method: "POST",
+      body: { magicLinkToken: "raw-token", otp: "123456" }
+    });
+    expect(state.callHook).toHaveBeenCalledWith("directus:auth:login", snapshot);
+    expect(state.callHook.mock.calls[0]?.[1]).not.toHaveProperty("accessToken");
+  });
+
+  it("does not request magic-link endpoints when support is disabled", async () => {
+    state.config.public.directusClient.auth.magicLinks.enabled = false;
+    const auth = useDirectusAuth();
+
+    await auth.requestMagicLink("user@example.test");
+    await auth.redeemMagicLink("raw-token");
+
+    expect(state.fetch).not.toHaveBeenCalled();
   });
 
   it("emits refresh with the safe snapshot after a successful refresh", async () => {

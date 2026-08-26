@@ -148,6 +148,12 @@ describe("Directus error normalization", () => {
             maximum: 1024,
             path: ["token"],
             message: "Reset token is too long"
+          },
+          {
+            code: "too_big",
+            maximum: 1024,
+            path: ["magicLinkToken"],
+            message: "Magic-link token is too long"
           }
         ]
       }
@@ -162,10 +168,11 @@ describe("Directus error normalization", () => {
       isInvalidEmailInput: true,
       isInvalidPasswordInput: true,
       isInvalidOtpInput: true,
-      isInvalidPasswordResetTokenInput: true
+      isInvalidPasswordResetTokenInput: true,
+      isInvalidMagicLinkTokenInput: true
     });
     if (result.isNitroError) {
-      expect(result.errors).toHaveLength(4);
+      expect(result.errors).toHaveLength(5);
       expect(result.errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -173,7 +180,8 @@ describe("Directus error normalization", () => {
             message: "Too big: expected string to have <=512 characters",
             extensions: expect.objectContaining({ field: "password", maximum: 512 })
           }),
-          expect.objectContaining({ code: "INVALID_EMAIL_INPUT" })
+          expect.objectContaining({ code: "INVALID_EMAIL_INPUT" }),
+          expect.objectContaining({ code: "INVALID_MAGIC_LINK_TOKEN_INPUT" })
         ])
       );
     }

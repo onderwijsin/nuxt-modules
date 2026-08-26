@@ -141,10 +141,10 @@ Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. The result has `is
 credentials, forbidden, expired or invalid tokens, validation, rate-limit, service-unavailable, and
 route-not-found errors. Local authentication validation failures are marked with `isNitroError` and
 expose `isInvalidAuthInput`, `isInvalidEmailInput`, `isInvalidPasswordInput`, `isInvalidOtpInput`,
-and `isInvalidPasswordResetTokenInput`. Their `errors` entries use Nitro codes such as
-`INVALID_PASSWORD_INPUT` and preserve safe validation details including the field, message, and
-maximum length. Unknown errors return both discriminator flags as `false` with an empty `errors`
-list.
+`isInvalidPasswordResetTokenInput`, and `isInvalidMagicLinkTokenInput`. Their `errors` entries use
+Nitro codes such as `INVALID_PASSWORD_INPUT` and preserve safe validation details including the
+field, message, and maximum length. Unknown errors return both discriminator flags as `false` with
+an empty `errors` list.
 
 ### `useDirectusAuth`
 
@@ -167,6 +167,8 @@ All options are configured under `directusClient`:
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                       |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication, authentication routes, and `useDirectusAuth`.                          |
 | `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                            |
+| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.             |
+| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute callback URL sent upstream; required when enabled and server-only.                     |
 | `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                  |
 | `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                        |
 | `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                             |
@@ -263,26 +265,71 @@ openssl rand -base64 32
 
 The composable exposes a token-free, reactive session projection:
 
-| State                  | Type                                                 | Contract                                                                                  |
-| ---------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `auth._session`        | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only snapshot containing `userId` and optional `email`, `firstName`, and `lastName`. |
-| `auth.isAuthenticated` | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists.                                                            |
-| `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.                                                                          |
+| State                    | Type                                                 | Contract                                                              |
+| ------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| `auth._session`          | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only snapshot containing identity fields and `requiresTfaSetup`. |
+| `auth.isAuthenticated`   | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists.                                        |
+| `auth.userId`            | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.                                                      |
+| `auth.magicLinksEnabled` | `boolean`                                            | Whether the magic-link facade is enabled.                             |
+| `auth.requiresTfaSetup`  | `DeepReadonly<ComputedRef<boolean>>`                 | Server-derived informational TFA setup requirement.                   |
 
-The snapshot deliberately contains no access or refresh token, role, policy, or permission helpers.
+The snapshot contains nullable `email`, `firstName`, and `lastName` fields plus `requiresTfaSetup`,
+which reflects Directus' `enforce_tfa` claim. It deliberately contains no access or refresh token,
+role, policy, or permission helpers. `requiresTfaSetup` is informational; the consuming application
+owns any TFA setup UX or navigation.
 
-| Method            | Signature                                                | Behavior                                                                                                                                                              |
-| ----------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login`           | `login({ email, password, otp? }, meta?): Promise<void>` | Authenticates, fetches the selected current-user fields, writes the session cookie, updates state, and emits `directus:auth:login`.                                   |
-| `refresh`         | `refresh(): Promise<void>`                               | Refreshes and rotates the token pair, updates state, and emits `directus:auth:refresh`. On failure it clears state, emits `directus:auth:invalidated`, then rethrows. |
-| `logout`          | `logout(): Promise<void>`                                | Attempts upstream logout, always clears local state and cookie, and emits `directus:auth:logout`. An upstream failure is rethrown after cleanup.                      |
-| `passwordRequest` | `passwordRequest(email, meta?): Promise<void>`           | Requests a password-reset email using `client.auth.passwordResetUrl`.                                                                                                 |
-| `passwordReset`   | `passwordReset(token, password): Promise<void>`          | Completes a Directus password reset.                                                                                                                                  |
+| Method             | Signature                                                | Behavior                                                                                                                                                              |
+| ------------------ | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login`            | `login({ email, password, otp? }, meta?): Promise<void>` | Authenticates, fetches the selected current-user fields, writes the session cookie, updates state, and emits `directus:auth:login`.                                   |
+| `refresh`          | `refresh(): Promise<void>`                               | Refreshes and rotates the token pair, updates state, and emits `directus:auth:refresh`. On failure it clears state, emits `directus:auth:invalidated`, then rethrows. |
+| `logout`           | `logout(): Promise<void>`                                | Attempts upstream logout, always clears local state and cookie, and emits `directus:auth:logout`. An upstream failure is rethrown after cleanup.                      |
+| `passwordRequest`  | `passwordRequest(email, meta?): Promise<void>`           | Requests a password-reset email using `client.auth.passwordResetUrl`.                                                                                                 |
+| `passwordReset`    | `passwordReset(token, password): Promise<void>`          | Completes a Directus password reset.                                                                                                                                  |
+| `requestMagicLink` | `requestMagicLink(email, meta?): Promise<void>`          | Requests a passwordless login link when magic links are enabled.                                                                                                      |
+| `redeemMagicLink`  | `redeemMagicLink(token, otp?): Promise<void>`            | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                     |
 
 `meta` may be `{ turnstileToken?: string }` when Turnstile protection is enabled.
 
+### Magic links
+
+Install the `directus-magic-links-bundle` extension in Directus, then enable magic links with a
+fixed callback URL:
+
+```ts
+export default defineNuxtConfig({
+  directusClient: {
+    client: {
+      auth: {
+        enabled: true,
+        magicLinks: {
+          enabled: true,
+          redirectUrl: "https://app.example.test/auth/magic-link"
+        }
+      }
+    }
+  }
+});
+```
+
+Request and redeem links through the existing authentication facade:
+
+```ts
+const auth = useDirectusAuth();
+
+await auth.requestMagicLink("user@example.test");
+await auth.redeemMagicLink(token, otp);
+```
+
+The configured callback URL is fixed server configuration; the browser cannot override it. Directus
+access and refresh tokens remain in the sealed HTTP-only session. `auth.requiresTfaSetup` exposes
+the server-derived `enforce_tfa` state as informational data. The consuming application owns the
+callback page, URL token extraction and cleanup, OTP UI, TFA setup navigation, return-to state, and
+post-login navigation. When magic links are disabled, these facade methods perform no network
+request.
+
 Directus MFA failures are exposed through `useDirectusError(error).isOtpError`, allowing the UI to
-ask for an OTP and retry `auth.login`.
+ask for an OTP and retry `auth.login` or `auth.redeemMagicLink`. Local redemption token validation
+uses `INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, Directus session cookies are ignored: they are not read,
 refreshed, forwarded upstream, or added to the SSR payload. Static, preview, and unauthenticated
@@ -296,6 +343,12 @@ consistent Nitro storage driver; the default in-memory driver cannot provide tha
 deployment-level refresh races remain possible otherwise. Refresh results written to that storage
 are H3-sealed session values rather than plaintext token pairs; the configured Nitro storage backend
 must still be treated as sensitive infrastructure.
+
+When `client.auth.magicLinks.enabled` is true, the module additionally registers
+`POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These
+routes require the Directus magic-links extension. The request route uses the fixed server-side
+callback URL and redemption always requests Directus `mode: "json"`, establishing the normal sealed
+session.
 
 #### Rotating the session secret
 
@@ -323,8 +376,8 @@ enabled unless a local diagnostic explicitly requires otherwise.
 ### Turnstile protection
 
 Set `client.auth.turnstile.enabled: true` to register `@onderwijsin/nuxt-turnstile` and require a
-Turnstile token for login and password-reset-email requests. Configure the Turnstile site and secret
-keys through the usual top-level `turnstile` option. Follow the
+Turnstile token for login, password-reset-email, and magic-link request operations. Configure the
+Turnstile site and secret keys through the usual top-level `turnstile` option. Follow the
 [Turnstile module guide](../turnstile/README.md) to configure keys, render the widget, and manage
 the token lifecycle. The Directus module exposes the required widget actions through public runtime
 config, and the optional second argument to each auth method forwards the token in
@@ -341,10 +394,10 @@ const passwordRequestAction = config.public.directusClient.auth.turnstile.action
 ```
 
 Use `config.public.directusClient.auth.turnstile.actions.login` for the login widget and
-`passwordRequest` for the password-reset-request widget. Cloudflare's test credentials return a
-verified test-key response without an action, which the module recognizes only for those
-credentials. Tokens are required only when the option is enabled; reset each widget after its
-submission because Turnstile tokens are single-use.
+`passwordRequest` for the password-reset-request widget and `magicLinkRequest` for the magic-link
+request widget. Cloudflare's test credentials return a verified test-key response without an action,
+which the module recognizes only for those credentials. Tokens are required only when the option is
+enabled; reset each widget after its submission because Turnstile tokens are single-use.
 
 ## Generated types
 

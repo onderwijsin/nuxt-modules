@@ -100,6 +100,8 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | `preview.queryKeys`            | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                    |
 | `auth.enabled`                 | `false`                             | Enables cookie-backed authentication.                                                             |
 | `auth.turnstile.enabled`       | `false`                             | Enables Turnstile protection for authentication requests.                                         |
+| `auth.magicLinks.enabled`      | `false`                             | Enables optional Directus magic-link authentication routes; requires `auth.enabled`.              |
+| `auth.magicLinks.redirectUrl`  | —                                   | Absolute, server-only callback URL required when magic links are enabled.                         |
 | `auth.cookie`                  | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.   |
 | `auth.refreshSafetyWindow`     | `30000`                             | Milliseconds before expiry when a session is refreshed.                                           |
 | `auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters. |
@@ -112,6 +114,9 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | `typegen.augmentations`        | All `true`                          | Generated-source transforms.                                                                      |
 | `typegen.rules`                | `{}`                                | Collection and field type-expression overrides.                                                   |
 | `typegen.transform`            | —                                   | Final executable transform: `(source, context) => string`.                                        |
+
+Magic links require the `directus-magic-links-bundle` extension in Directus. The configured callback
+URL is server-only and is not included in the client-safe configuration.
 
 The default cookie is
 `{ name: "directus_session", secure: true, sameSite: "lax", path: "/", maxAge: 2592000 }`.

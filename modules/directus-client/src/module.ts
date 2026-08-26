@@ -37,7 +37,8 @@ const MODULE_KEY = "directusClient";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
 const DIRECTUS_TURNSTILE_ACTIONS = {
   login: "directus-login",
-  passwordRequest: "directus-password-request"
+  passwordRequest: "directus-password-request",
+  magicLinkRequest: "directus-magic-link-request"
 };
 const DEVELOPMENT_SESSION_SECRET = "nuxt-directus-development-session-secret-32-chars";
 
@@ -184,6 +185,7 @@ export default defineNuxtModule<ModuleOptions>({
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,
+          magicLinks: { enabled: options.client.auth.magicLinks.enabled },
           maskSecretsInPlayground: options.client.auth.maskSecretsInPlayground,
           turnstile: {
             enabled: options.client.auth.turnstile.enabled,
@@ -232,6 +234,18 @@ export default defineNuxtModule<ModuleOptions>({
           method,
           handler: resolver.resolve(runtimeDir, "server/handlers/auth/" + name + "." + method)
         });
+      }
+      if (options.client.auth.magicLinks.enabled) {
+        for (const [name, method] of [
+          ["magic-links/request", "post"],
+          ["magic-links/redeem", "post"]
+        ] as const) {
+          addServerHandler({
+            route: "/_directus/auth/" + name,
+            method,
+            handler: resolver.resolve(runtimeDir, "server/handlers/auth/" + name + "." + method)
+          });
+        }
       }
     }
     addServerHandler({

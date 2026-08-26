@@ -19,6 +19,10 @@ export default defineNuxtConfig({
         enabled: true,
         sessionSecret: "fixture-directus-session-secret-32-chars",
         turnstile: { enabled: true },
+        magicLinks: {
+          enabled: true,
+          redirectUrl: "https://app.example.test/auth/magic-link"
+        },
         cookie: { secure: false },
         passwordResetUrl: "https://app.example.test/reset-password"
       },

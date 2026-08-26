@@ -162,7 +162,7 @@ jobs:
           for path in $TEST_PATHS; do
             test_paths+=("$path")
           done
-          pnpm exec vitest run "${test_paths[@]}" --coverage
+          pnpm exec vitest run "${test_paths[@]}"
       - name: Build focused package artifacts
         if: needs.detect_changes.outputs.phase_pack == 'true' && needs.detect_changes.outputs.artifact_packages != ''
         shell: bash

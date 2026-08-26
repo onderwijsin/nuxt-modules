@@ -89,6 +89,7 @@ const directusCookieSchema = z
 const directusAuthSchemaDefaults = {
   enabled: false,
   turnstile: { enabled: false },
+  magicLinks: { enabled: false },
   cookie: directusCookieSchemaDefaults,
   refreshSafetyWindow: 30_000,
   previousSessionSecrets: [] as string[],
@@ -104,6 +105,12 @@ const directusAuthSchema = z
     turnstile: z
       .object({ enabled: z.boolean().default(directusAuthSchemaDefaults.turnstile.enabled) })
       .default(directusAuthSchemaDefaults.turnstile),
+    magicLinks: z
+      .strictObject({
+        enabled: z.boolean().default(directusAuthSchemaDefaults.magicLinks.enabled),
+        redirectUrl: z.url().optional().sensitive()
+      })
+      .default(directusAuthSchemaDefaults.magicLinks),
     cookie: directusCookieSchema.sensitive(),
     refreshSafetyWindow: z
       .number()
@@ -118,7 +125,23 @@ const directusAuthSchema = z
       .default(directusAuthSchemaDefaults.maskSecretsInPlayground),
     passwordResetUrl: z.url().optional().sensitive()
   })
-  .default(directusAuthSchemaDefaults);
+  .default(directusAuthSchemaDefaults)
+  .superRefine((options, context) => {
+    if (options.magicLinks.enabled && !options.enabled) {
+      context.addIssue({
+        code: "custom",
+        path: ["magicLinks", "enabled"],
+        message: "client.auth.magicLinks.enabled requires client.auth.enabled"
+      });
+    }
+    if (options.magicLinks.enabled && !options.magicLinks.redirectUrl) {
+      context.addIssue({
+        code: "custom",
+        path: ["magicLinks", "redirectUrl"],
+        message: "client.auth.magicLinks.redirectUrl is required when magic links are enabled"
+      });
+    }
+  });
 
 /** Shared Directus client settings excluding instance credentials. */
 export const directusClientSchema = z.strictObject({
