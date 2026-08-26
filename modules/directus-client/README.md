@@ -263,13 +263,16 @@ openssl rand -base64 32
 
 The composable exposes a token-free, reactive session projection:
 
-| State                  | Type                                                 | Contract                                                                                  |
-| ---------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `auth._session`        | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only snapshot containing `userId` and optional `email`, `firstName`, and `lastName`. |
-| `auth.isAuthenticated` | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists.                                                            |
-| `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.                                                                          |
+| State                  | Type                                                 | Contract                                                              |
+| ---------------------- | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| `auth._session`        | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only snapshot containing identity fields and `requiresTfaSetup`. |
+| `auth.isAuthenticated` | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists.                                        |
+| `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.                                                      |
 
-The snapshot deliberately contains no access or refresh token, role, policy, or permission helpers.
+The snapshot contains nullable `email`, `firstName`, and `lastName` fields plus `requiresTfaSetup`,
+which reflects Directus' `enforce_tfa` claim. It deliberately contains no access or refresh token,
+role, policy, or permission helpers. `requiresTfaSetup` is informational; the consuming application
+owns any TFA setup UX or navigation.
 
 | Method            | Signature                                                | Behavior                                                                                                                                                              |
 | ----------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

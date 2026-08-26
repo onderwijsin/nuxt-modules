@@ -15,9 +15,11 @@ import { z } from "zod";
 /** Token-free user data persisted with a Directus session. */
 export interface DirectusSessionSnapshot {
   readonly userId: string;
-  readonly email?: string;
-  readonly firstName?: string;
-  readonly lastName?: string;
+  readonly email: string | null;
+  readonly firstName: string | null;
+  readonly lastName: string | null;
+  /** Whether Directus requires this session to complete TFA setup. */
+  readonly requiresTfaSetup: boolean;
 }
 
 /** Internal cookie payload. Tokens never leave server utilities. */
@@ -38,9 +40,10 @@ const DIRECTUS_SESSION_DATA_PREFIX = "boop1:";
 
 const directusSessionSnapshotSchema = z.object({
   userId: z.string().min(1),
-  email: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional()
+  email: z.string().nullable().default(null),
+  firstName: z.string().nullable().default(null),
+  lastName: z.string().nullable().default(null),
+  requiresTfaSetup: z.boolean().default(false)
 });
 
 const directusSessionSchema = z.object({

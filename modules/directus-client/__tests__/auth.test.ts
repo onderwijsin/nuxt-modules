@@ -73,7 +73,13 @@ function expiringSession(): DirectusSession {
     accessToken: "old-access",
     refreshToken: "old-refresh",
     expiresAt: Date.now() + 1,
-    snapshot: { userId: "user-1" }
+    snapshot: {
+      userId: "user-1",
+      email: null,
+      firstName: null,
+      lastName: null,
+      requiresTfaSetup: false
+    }
   };
 }
 
@@ -96,7 +102,13 @@ beforeEach(() => {
         accessToken: refreshToken === "stored-refresh" ? "stored-access" : "new-access",
         refreshToken,
         expiresAt: Date.now() + 60_000,
-        snapshot: { userId: "user-1" }
+        snapshot: {
+          userId: "user-1",
+          email: null,
+          firstName: null,
+          lastName: null,
+          requiresTfaSetup: false
+        }
       },
       matchedSecretSlot: "active"
     };
@@ -126,7 +138,8 @@ describe("Directus current-user and login boundaries", () => {
       userId: "user-1",
       email: "user@example.test",
       firstName: "Test",
-      lastName: "User"
+      lastName: "User",
+      requiresTfaSetup: false
     });
     expect(fetch.mock.calls[0]?.[0]).toContain("users/me");
     expect(fetch.mock.calls[0]?.[0]).toContain("fields=id,email,first_name,last_name");
@@ -155,10 +168,40 @@ describe("Directus current-user and login boundaries", () => {
     expect(session).toMatchObject({
       accessToken: "access",
       refreshToken: "refresh",
-      snapshot: { userId: "user-1", email: "user@example.test" }
+      snapshot: {
+        userId: "user-1",
+        email: "user@example.test",
+        firstName: null,
+        lastName: null,
+        requiresTfaSetup: false
+      }
     });
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(state.session.set).toHaveBeenCalledWith(expect.anything(), session);
+  });
+
+  it("projects the enforce_tfa claim into the safe session snapshot", async () => {
+    const payload = btoa(JSON.stringify({ enforce_tfa: true }))
+      .replaceAll("+", "-")
+      .replaceAll("/", "_")
+      .replaceAll("=", "");
+    const fetch = mockFetch(
+      jsonResponse({
+        data: {
+          access_token: `header.${payload}.signature`,
+          refresh_token: "refresh"
+        }
+      }),
+      jsonResponse({ data: { id: "user-1" } })
+    );
+
+    await expect(
+      createDirectusSession(createTestEvent(), {
+        email: "user@example.test",
+        password: "password"
+      })
+    ).resolves.toMatchObject({ snapshot: { requiresTfaSetup: true } });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("rejects malformed login token responses without creating a session", async () => {
@@ -200,7 +243,13 @@ describe("Directus session refresh coordination", () => {
     expect(session).toMatchObject({
       accessToken: "new-access",
       refreshToken: "new-refresh",
-      snapshot: { userId: "user-1", lastName: "User" }
+      snapshot: {
+        userId: "user-1",
+        email: null,
+        firstName: null,
+        lastName: "User",
+        requiresTfaSetup: false
+      }
     });
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(state.storage.setItem).toHaveBeenCalledWith(
@@ -252,7 +301,13 @@ describe("Directus session refresh coordination", () => {
       accessToken: "stored-access",
       refreshToken: "stored-refresh",
       expiresAt: Date.now() + 60_000,
-      snapshot: { userId: "user-1" }
+      snapshot: {
+        userId: "user-1",
+        email: null,
+        firstName: null,
+        lastName: null,
+        requiresTfaSetup: false
+      }
     };
     state.storage.records.set("flight:" + hash(state.current.refreshToken), {
       status: "completed",

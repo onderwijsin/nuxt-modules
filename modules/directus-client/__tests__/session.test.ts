@@ -33,7 +33,13 @@ const session = {
   accessToken: "access",
   refreshToken: "refresh",
   expiresAt: Date.now() + 60_000,
-  snapshot: { userId: "user-1" }
+  snapshot: {
+    userId: "user-1",
+    email: null,
+    firstName: null,
+    lastName: null,
+    requiresTfaSetup: false
+  }
 };
 
 function cookieFromEvent(event: ReturnType<typeof createTestEvent>): string {
@@ -133,7 +139,13 @@ describe("Directus sealed session state", () => {
     await expect(
       setDirectusSession(createTestEvent(), {
         ...session,
-        snapshot: { userId: "user-1", email: "x".repeat(4000) }
+        snapshot: {
+          userId: "user-1",
+          email: "x".repeat(4000),
+          firstName: null,
+          lastName: null,
+          requiresTfaSetup: false
+        }
       })
     ).rejects.toThrow(/cookie size limit/);
     expect(DIRECTUS_SESSION_COOKIE_LIMIT).toBeLessThan(4096);

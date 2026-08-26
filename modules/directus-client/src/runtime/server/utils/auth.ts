@@ -1,7 +1,7 @@
 import type { H3Event } from "h3";
 import { createError, setResponseStatus } from "h3";
 import { useRuntimeConfig } from "#imports";
-import { attempt } from "@onderwijsin/nuxt-module-utils";
+import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
@@ -30,11 +30,40 @@ const directusTokenResponseSchema = z.object({
 const directusCurrentUserResponseSchema = z.object({
   data: z.object({
     id: z.string().min(1),
-    email: z.string().optional(),
-    first_name: z.string().optional(),
-    last_name: z.string().optional()
+    email: z.string().nullable().optional(),
+    first_name: z.string().nullable().optional(),
+    last_name: z.string().nullable().optional()
   })
 });
+
+export interface DirectusAuthenticationResult {
+  readonly accessToken: string;
+  readonly refreshToken: string;
+  readonly expires?: number;
+}
+
+/**
+ * Decodes a Directus access-token JWT and reads its TFA setup requirement claim.
+ *
+ * This is informational state only. The token is not cryptographically verified here because
+ * Directus has already issued it, and this value must not be used as an authorization decision.
+ *
+ * @param accessToken - Directus access token whose payload should be inspected.
+ * @returns Whether the token contains `enforce_tfa: true`; malformed tokens return `false`.
+ */
+function decodeDirectusTfaSetupRequirement(accessToken: string): boolean {
+  const payload = accessToken.split(".")[1];
+  if (!payload) return false;
+  const encoded = payload
+    .replaceAll("-", "+")
+    .replaceAll("_", "/")
+    .padEnd(Math.ceil(payload.length / 4) * 4, "=");
+  const decoded = attemptSync(() => atob(encoded));
+  if (decoded.error !== null || decoded.data === null) return false;
+  const parsed = attemptSync(() => JSON.parse(decoded.data));
+  if (parsed.error !== null || parsed.data === null || !isRecord(parsed.data)) return false;
+  return isBoolean(parsed.data.enforce_tfa) && parsed.data.enforce_tfa;
+}
 
 interface PendingRefreshFlight {
   readonly status: "pending";
@@ -113,10 +142,53 @@ export async function fetchDirectusCurrentUser(
     directusCurrentUserResponseSchema.parse(response).data;
   return {
     userId: id,
-    email: email,
-    firstName: first_name,
-    lastName: last_name
+    email: email ?? null,
+    firstName: first_name ?? null,
+    lastName: last_name ?? null,
+    requiresTfaSetup: false
   };
+}
+
+/**
+ * Builds a server-only Directus session from a validated authentication result.
+ *
+ * The returned session includes the access and refresh tokens for server-side use and a safe,
+ * token-free snapshot. This helper does not persist the session, allowing refresh coordination to
+ * seal and publish the result before writing the response cookie.
+ *
+ * @param event - Incoming request event.
+ * @param authentication - Validated Directus access and refresh tokens.
+ * @returns The server-only session payload.
+ */
+async function createDirectusSessionFromAuthentication(
+  event: H3Event,
+  authentication: DirectusAuthenticationResult
+): Promise<DirectusSession> {
+  return {
+    accessToken: authentication.accessToken,
+    refreshToken: authentication.refreshToken,
+    expiresAt: Date.now() + (authentication.expires ?? 900_000),
+    snapshot: {
+      ...(await fetchDirectusCurrentUser(event, authentication.accessToken)),
+      requiresTfaSetup: decodeDirectusTfaSetupRequirement(authentication.accessToken)
+    }
+  };
+}
+
+/**
+ * Establishes the server-owned session from a validated Directus authentication result.
+ *
+ * @param event - Incoming request event.
+ * @param authentication - Validated Directus access and refresh tokens.
+ * @returns The server-only session payload.
+ */
+export async function establishDirectusSession(
+  event: H3Event,
+  authentication: DirectusAuthenticationResult
+): Promise<DirectusSession> {
+  const session = await createDirectusSessionFromAuthentication(event, authentication);
+  await setDirectusSession(event, session);
+  return session;
 }
 
 /**
@@ -140,14 +212,11 @@ export async function createDirectusSession(
     }
   });
   const tokens = directusTokenResponseSchema.parse(response).data;
-  const session: DirectusSession = {
+  return establishDirectusSession(event, {
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token,
-    expiresAt: Date.now() + (tokens.expires ?? 900_000),
-    snapshot: await fetchDirectusCurrentUser(event, tokens.access_token)
-  };
-  await setDirectusSession(event, session);
-  return session;
+    expires: tokens.expires
+  });
 }
 
 /**
@@ -244,12 +313,11 @@ export async function ensureFreshDirectusSession(
       body: { refresh_token: current.refreshToken, mode: "json" }
     });
     const tokens = directusTokenResponseSchema.parse(response).data;
-    const session: DirectusSession = {
+    const session = await createDirectusSessionFromAuthentication(event, {
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
-      expiresAt: Date.now() + (tokens.expires ?? 900_000),
-      snapshot: await fetchDirectusCurrentUser(event, tokens.access_token)
-    };
+      expires: tokens.expires
+    });
     const sealedSession = await sealDirectusSession(event, session);
     await storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL });
     writeDirectusSessionCookie(event, sealedSession);

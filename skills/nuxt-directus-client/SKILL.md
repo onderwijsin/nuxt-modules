@@ -198,9 +198,11 @@ const auth = useDirectusAuth();
 | `auth.isAuthenticated` | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists. |
 | `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.               |
 
-The snapshot contains `userId` and optional `email`, `firstName`, and `lastName`. It does not
-contain access tokens or refresh tokens. The current implementation intentionally keeps the public
-snapshot identity-only; role, policy, and permission helpers are not part of this release.
+The snapshot contains `userId`, nullable `email`, `firstName`, and `lastName`, and the informational
+`requiresTfaSetup` flag derived server-side from Directus' `enforce_tfa` claim. It does not contain
+access tokens or refresh tokens. The current implementation intentionally keeps the public snapshot
+identity-only; role, policy, and permission helpers are not part of this release. TFA setup UX and
+navigation remain the consuming application's responsibility.
 
 #### Methods
 
