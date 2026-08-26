@@ -369,6 +369,17 @@ export function addDependencies(selected, graph) {
 }
 
 /**
+ * Selects public packages required by the validation closure for artifact packing.
+ *
+ * @param {Set<string>} selected Package names in the preparation closure.
+ * @param {Map<string, WorkspacePackage>} packageByName Packages indexed by name.
+ * @returns {string[]} Public package names that must be packed together.
+ */
+export function getArtifactPackages(selected, packageByName) {
+  return [...selected].filter((name) => packageByName.get(name)?.manifest.private !== true).sort();
+}
+
+/**
  * Finds test directories belonging to selected non-playground packages.
  *
  * @param {string[]} selected Package names selected for validation.
@@ -487,11 +498,9 @@ function main() {
   const selected = classification.full
     ? discovered.map((entry) => entry.manifest.name)
     : [...selectedPackages].sort();
-  const artifactPackages = selected.filter(
-    (name) => packageByName.get(name)?.manifest.private !== true
-  );
   const preparationPackages = new Set(selected);
   if (!classification.full) addDependencies(preparationPackages, buildDependencyGraph(discovered));
+  const artifactPackages = getArtifactPackages(preparationPackages, packageByName);
   const prepare = [...preparationPackages].sort();
   const testPaths = getTestPaths(selected, packageByName);
   const phases = selectPhases(classification.scope);

@@ -1,6 +1,8 @@
 import type { DynamicRedirectRule, ResolvedRedirect } from "../types/redirect";
 
 import { inject, parse } from "regexparam";
+import { isRedirectActive } from "./eligibility";
+import { isDefined } from "@onderwijsin/nuxt-module-utils/shared";
 
 /** A process-local dynamic matcher and destination resolver. */
 export interface CompiledDynamicRedirect {
@@ -8,6 +10,8 @@ export interface CompiledDynamicRedirect {
   destination: (params: Record<string, string>) => string;
   statusCode: DynamicRedirectRule["statusCode"];
   from: string;
+  activeFrom?: DynamicRedirectRule["activeFrom"];
+  activeUntil?: DynamicRedirectRule["activeUntil"];
 }
 
 function decodeParameter(value: string): string {
@@ -61,7 +65,9 @@ export function compileDynamicRedirects(
             ])
           )
         ),
-      statusCode: rule.statusCode
+      statusCode: rule.statusCode,
+      activeFrom: rule.activeFrom,
+      activeUntil: rule.activeUntil
     };
   });
 }
@@ -78,13 +84,16 @@ export function findCompiledDynamicRedirect(
   pathname: string
 ): ResolvedRedirect | null {
   for (const rule of compiled) {
+    if (!isRedirectActive(rule)) continue;
     const params = rule.match(pathname);
     if (params) {
       return {
         from: rule.from,
         to: rule.destination(params),
         statusCode: rule.statusCode,
-        match: "pattern"
+        match: "pattern",
+        ...(isDefined(rule.activeFrom) ? { activeFrom: rule.activeFrom } : {}),
+        ...(isDefined(rule.activeUntil) ? { activeUntil: rule.activeUntil } : {})
       };
     }
   }

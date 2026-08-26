@@ -1,4 +1,4 @@
-import type { Redirect } from "../../types/redirect";
+import type { RedirectTime, ResolvedRedirect } from "../../types/redirect";
 
 import { z } from "zod";
 
@@ -12,8 +12,27 @@ const redirectSchema = z.strictObject({
   statusCode: z
     .union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)])
     .default(302),
-  match: z.enum(["exact", "pattern"]).optional()
+  match: z.enum(["exact", "pattern"]).optional(),
+  activeFrom: z
+    .union([z.string().trim().min(1), z.number().finite()])
+    .nullable()
+    .optional(),
+  activeUntil: z
+    .union([z.string().trim().min(1), z.number().finite()])
+    .nullable()
+    .optional()
 });
+
+function normalizeRedirectTime(
+  value: RedirectTime | undefined,
+  field: string
+): number | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const timestamp = typeof value === "number" ? value : Date.parse(value);
+  if (Number.isNaN(timestamp)) throw new Error(`Redirect ${field} must be a valid date.`);
+  return timestamp;
+}
 
 /**
  * Checks that an explicit HTTP(S) or protocol-relative destination contains a host.
@@ -59,9 +78,7 @@ function hasPatternQuery(origin: string): boolean {
  * @param value - Untrusted source or webhook value.
  * @returns Canonical redirect record.
  */
-export function normalizeRedirect(
-  value: unknown
-): Redirect & { statusCode: NonNullable<Redirect["statusCode"]> } {
+export function normalizeRedirect(value: unknown): ResolvedRedirect {
   const redirect = redirectSchema.parse(value);
   if (!redirect.from.startsWith("/")) throw new Error("Redirect origins must start with '/'.");
   if (redirect.match === "pattern" && hasPatternQuery(redirect.from))
@@ -75,11 +92,15 @@ export function normalizeRedirect(
     throw new Error("Redirect destinations must be internal paths or HTTP(S) URLs.");
   }
 
+  const activeFrom = normalizeRedirectTime(redirect.activeFrom, "activeFrom");
+  const activeUntil = normalizeRedirectTime(redirect.activeUntil, "activeUntil");
   return {
     ...redirect,
     from:
       redirect.match === "pattern"
         ? withoutTrailingSlash(redirect.from)
-        : toRedirectOrigin(redirect.from)
+        : toRedirectOrigin(redirect.from),
+    ...(activeFrom === undefined ? {} : { activeFrom }),
+    ...(activeUntil === undefined ? {} : { activeUntil })
   };
 }

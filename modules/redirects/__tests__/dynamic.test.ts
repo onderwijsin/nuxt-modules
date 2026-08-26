@@ -50,6 +50,28 @@ describe("dynamic redirect matching", () => {
     expect(findCompiledDynamicRedirect(compiled, "/unknown")).toBeNull();
   });
 
+  it("skips inactive rules and continues matching", () => {
+    const rules = compileDynamicRedirects([
+      {
+        from: "/scheduled/:slug",
+        to: "/future/:slug",
+        statusCode: 301,
+        match: "pattern",
+        activeFrom: Date.parse("2999-01-01T00:00:00.000Z")
+      },
+      {
+        from: "/scheduled/:slug",
+        to: "/current/:slug",
+        statusCode: 302,
+        match: "pattern"
+      }
+    ]);
+
+    expect(findCompiledDynamicRedirect(rules, "/scheduled/page")).toMatchObject({
+      to: "/current/page"
+    });
+  });
+
   it("matches optional named and wildcard segments", () => {
     expect(findCompiledDynamicRedirect(compiled, "/guides/v2/intro")).toMatchObject({
       to: "/documentation/v2/intro",
