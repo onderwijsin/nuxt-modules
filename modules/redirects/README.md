@@ -163,11 +163,13 @@ middleware is on but the store is off. Both are wrapped in `defineCachedEventHan
 `cache.index` and `cache.lookup` separately.
 
 `upsertRedirect()`, `removeRedirect()`, and a complete source refresh immediately invalidate
-affected public cache entries; an upsert also primes its exact lookup response. A path-only change
-or complete refresh clears all lookup entries because path-only redirects are query fallbacks. Use a
-short `cache.index` TTL when the Pinia store must converge quickly after webhooks; a webhook-driven
-setup can safely use a longer `cache.lookup` TTL because mutations and refreshes invalidate affected
-entries.
+affected public cache entries; an upsert also primes its exact lookup response. Pattern mutations
+rebuild the ordered pattern manifest from registered sources so incremental updates cannot bypass
+provider precedence. A path-only change or complete refresh clears all lookup entries because
+path-only redirects are query fallbacks. Use a short `cache.index` TTL when the Pinia store must
+converge quickly after webhooks; a webhook-driven setup can safely use a longer `cache.lookup` TTL
+because mutations and refreshes invalidate affected entries. Update the provider before invoking a
+pattern mutation so the source-backed rebuild sees the canonical pattern set.
 
 Lookup cache keys are derived from the complete normalized origin, including its query string, so
 distinct paths and query variants never share a cache record.
