@@ -185,6 +185,7 @@ export default defineNuxtModule<ModuleOptions>({
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,
+          magicLinks: { enabled: options.client.auth.magicLinks.enabled },
           maskSecretsInPlayground: options.client.auth.maskSecretsInPlayground,
           turnstile: {
             enabled: options.client.auth.turnstile.enabled,

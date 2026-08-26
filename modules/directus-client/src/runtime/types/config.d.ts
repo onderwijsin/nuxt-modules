@@ -37,6 +37,7 @@ declare module "nuxt/schema" {
       };
       auth: {
         enabled: boolean;
+        magicLinks: { enabled: boolean };
         turnstile: {
           enabled: boolean;
           actions: { login: string; passwordRequest: string; magicLinkRequest: string };

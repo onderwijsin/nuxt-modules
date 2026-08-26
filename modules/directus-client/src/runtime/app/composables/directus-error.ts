@@ -37,7 +37,8 @@ export type NitroErrorCode =
   | "INVALID_EMAIL_INPUT"
   | "INVALID_PASSWORD_INPUT"
   | "INVALID_OTP_INPUT"
-  | "INVALID_PASSWORD_RESET_TOKEN_INPUT";
+  | "INVALID_PASSWORD_RESET_TOKEN_INPUT"
+  | "INVALID_MAGIC_LINK_TOKEN_INPUT";
 
 /** Any error code understood by the normalizer. */
 type NormalizedErrorCode = DirectusErrorCode | NitroErrorCode;
@@ -78,7 +79,8 @@ const normalizedErrorFlagDefaults = {
   isInvalidEmailInput: false,
   isInvalidPasswordInput: false,
   isInvalidOtpInput: false,
-  isInvalidPasswordResetTokenInput: false
+  isInvalidPasswordResetTokenInput: false,
+  isInvalidMagicLinkTokenInput: false
 } as const;
 
 /** Default error flag shape. */
@@ -135,6 +137,7 @@ export type NormalizedNitroError = NormalizedErrorVariant<
     isInvalidPasswordInput: boolean;
     isInvalidOtpInput: boolean;
     isInvalidPasswordResetTokenInput: boolean;
+    isInvalidMagicLinkTokenInput: boolean;
   }
 >;
 
@@ -203,7 +206,8 @@ const nitroErrorCodeByField: Record<string, NitroErrorCode> = {
   email: "INVALID_EMAIL_INPUT",
   password: "INVALID_PASSWORD_INPUT",
   otp: "INVALID_OTP_INPUT",
-  token: "INVALID_PASSWORD_RESET_TOKEN_INPUT"
+  token: "INVALID_PASSWORD_RESET_TOKEN_INPUT",
+  magicLinkToken: "INVALID_MAGIC_LINK_TOKEN_INPUT"
 };
 
 /**
@@ -276,6 +280,7 @@ function normalizeNitroError(envelope: LocatedEntries): NormalizedNitroError | u
     isInvalidPasswordInput: hasErrorCode(errors, "INVALID_PASSWORD_INPUT"),
     isInvalidOtpInput: hasErrorCode(errors, "INVALID_OTP_INPUT"),
     isInvalidPasswordResetTokenInput: hasErrorCode(errors, "INVALID_PASSWORD_RESET_TOKEN_INPUT"),
+    isInvalidMagicLinkTokenInput: hasErrorCode(errors, "INVALID_MAGIC_LINK_TOKEN_INPUT"),
     errors,
     ...(envelope.statusCode === undefined ? {} : { statusCode: envelope.statusCode })
   };

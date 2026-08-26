@@ -1,6 +1,6 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
 import { useNuxtApp, useState } from "#app";
-import { $fetch } from "#imports";
+import { $fetch, useRuntimeConfig } from "#imports";
 import { attempt } from "@onderwijsin/nuxt-module-utils";
 
 import type { DirectusSessionSnapshot } from "../../server/utils/session";
@@ -18,6 +18,8 @@ export interface DirectusAuthFacade {
   readonly _session: DeepReadonly<Ref<DirectusSessionSnapshot | null>>;
   readonly isAuthenticated: DeepReadonly<ComputedRef<boolean>>;
   readonly userId: DeepReadonly<ComputedRef<string | undefined>>;
+  readonly magicLinksEnabled: boolean;
+  readonly requiresTfaSetup: DeepReadonly<ComputedRef<boolean>>;
   readonly login: (
     input: { email: string; password: string; otp?: string },
     meta?: DirectusAuthRequestMeta
@@ -26,6 +28,8 @@ export interface DirectusAuthFacade {
   readonly logout: () => Promise<void>;
   readonly passwordRequest: (email: string, meta?: DirectusAuthRequestMeta) => Promise<void>;
   readonly passwordReset: (token: string, password: string) => Promise<void>;
+  readonly requestMagicLink: (email: string, meta?: DirectusAuthRequestMeta) => Promise<void>;
+  readonly redeemMagicLink: (token: string, otp?: string) => Promise<void>;
 }
 
 /**
@@ -34,6 +38,8 @@ export interface DirectusAuthFacade {
  */
 export function useDirectusAuth(): DirectusAuthFacade {
   const nuxtApp = useNuxtApp();
+  const runtimeConfig = useRuntimeConfig();
+  const magicLinksEnabled = runtimeConfig.public.directusClient.auth.magicLinks.enabled;
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
   const setSession = (value: DirectusSessionSnapshot | null): void => {
     session.value = value;
@@ -49,10 +55,13 @@ export function useDirectusAuth(): DirectusAuthFacade {
   const sessionView = readonly(session);
   const authenticatedView = readonly(computed(() => session.value !== null));
   const userIdView = readonly(computed(() => session.value?.userId));
+  const requiresTfaSetupView = readonly(computed(() => session.value?.requiresTfaSetup ?? false));
   return {
     _session: sessionView,
     isAuthenticated: authenticatedView,
     userId: userIdView,
+    magicLinksEnabled,
+    requiresTfaSetup: requiresTfaSetupView,
     login: async (input, meta): Promise<void> => {
       const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/login", {
         method: "POST",
@@ -106,6 +115,25 @@ export function useDirectusAuth(): DirectusAuthFacade {
         method: "POST",
         body: { token, password }
       });
+    },
+    requestMagicLink: async (email, meta): Promise<void> => {
+      if (!magicLinksEnabled) return;
+      await $fetch("/_directus/auth/magic-links/request", {
+        method: "POST",
+        body: { email },
+        headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
+      });
+    },
+    redeemMagicLink: async (token, otp): Promise<void> => {
+      if (!magicLinksEnabled) return;
+      const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/magic-links/redeem", {
+        method: "POST",
+        body: { magicLinkToken: token, ...(otp ? { otp } : {}) }
+      });
+      setSession(value);
+      await emit("directus:auth:login", () =>
+        Promise.resolve(nuxtApp.callHook("directus:auth:login", readonly(value)))
+      );
     }
   };
 }

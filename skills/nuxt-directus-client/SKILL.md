@@ -177,10 +177,10 @@ Normalizes Directus, SDK, `ofetch`, H3, and malformed errors. A normalized resul
 - `isRouteNotFoundError`.
 
 Local authentication validation failures also expose `isInvalidAuthInput`, `isInvalidEmailInput`,
-`isInvalidPasswordInput`, `isInvalidOtpInput`, and `isInvalidPasswordResetTokenInput`. Their
-`errors` entries use Nitro codes such as `INVALID_PASSWORD_INPUT` and include safe field, message,
-and constraint details. Directus errors retain their upstream codes; Nitro codes are not added to
-Directus error envelopes.
+`isInvalidPasswordInput`, `isInvalidOtpInput`, `isInvalidPasswordResetTokenInput`, and
+`isInvalidMagicLinkTokenInput`. Their `errors` entries use Nitro codes such as
+`INVALID_PASSWORD_INPUT` and include safe field, message, and constraint details. Directus errors
+retain their upstream codes; Nitro codes are not added to Directus error envelopes.
 
 Unknown errors return both discriminator flags as `false` and an empty `errors` array.
 
@@ -194,11 +194,13 @@ const auth = useDirectusAuth();
 
 #### State
 
-| Member                 | Type                                                 | Contract                       |
-| ---------------------- | ---------------------------------------------------- | ------------------------------ |
-| `auth._session`        | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only token-free snapshot. |
-| `auth.isAuthenticated` | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists. |
-| `auth.userId`          | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.               |
+| Member                   | Type                                                 | Contract                                            |
+| ------------------------ | ---------------------------------------------------- | --------------------------------------------------- |
+| `auth._session`          | `DeepReadonly<Ref<DirectusSessionSnapshot \| null>>` | Read-only token-free snapshot.                      |
+| `auth.isAuthenticated`   | `DeepReadonly<ComputedRef<boolean>>`                 | `true` when a snapshot exists.                      |
+| `auth.userId`            | `DeepReadonly<ComputedRef<string \| undefined>>`     | Current user ID.                                    |
+| `auth.magicLinksEnabled` | `boolean`                                            | Whether the magic-link facade is enabled.           |
+| `auth.requiresTfaSetup`  | `DeepReadonly<ComputedRef<boolean>>`                 | Server-derived informational TFA setup requirement. |
 
 The snapshot contains `userId`, nullable `email`, `firstName`, and `lastName`, and the informational
 `requiresTfaSetup` flag derived server-side from Directus' `enforce_tfa` claim. It does not contain
@@ -208,13 +210,15 @@ navigation remain the consuming application's responsibility.
 
 #### Methods
 
-| Method            | Signature                                                       | Behavior                                                                                                                                                                                                      |
-| ----------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login`           | `login(input, meta?): Promise<void>`                            | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                        |
-| `refresh`         | `refresh(): Promise<void>`                                      | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
-| `logout`          | `logout(): Promise<void>`                                       | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                               |
-| `passwordRequest` | `passwordRequest(email: string, meta?): Promise<void>`          | Requests a password-reset email using the configured `client.auth.passwordResetUrl`.                                                                                                                          |
-| `passwordReset`   | `passwordReset(token: string, password: string): Promise<void>` | Completes a Directus password reset.                                                                                                                                                                          |
+| Method             | Signature                                                       | Behavior                                                                                                                                                                                                      |
+| ------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login`            | `login(input, meta?): Promise<void>`                            | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                        |
+| `refresh`          | `refresh(): Promise<void>`                                      | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
+| `logout`           | `logout(): Promise<void>`                                       | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                               |
+| `passwordRequest`  | `passwordRequest(email: string, meta?): Promise<void>`          | Requests a password-reset email using the configured `client.auth.passwordResetUrl`.                                                                                                                          |
+| `passwordReset`    | `passwordReset(token: string, password: string): Promise<void>` | Completes a Directus password reset.                                                                                                                                                                          |
+| `requestMagicLink` | `requestMagicLink(email: string, meta?): Promise<void>`         | Requests a passwordless login link when magic links are enabled.                                                                                                                                              |
+| `redeemMagicLink`  | `redeemMagicLink(token: string, otp?: string): Promise<void>`   | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                             |
 
 The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
 state. Hydration therefore does not require a session request. Server-side refresh coordination uses
@@ -222,6 +226,29 @@ Nitro storage. A shared, read-after-write consistent storage driver is required 
 across processes or Cloudflare isolates; the default in-memory driver is instance-local. Completed
 refresh results are H3-sealed before they are stored, but the configured storage backend remains
 sensitive infrastructure.
+
+### Magic links
+
+Install the `directus-magic-links-bundle` extension in Directus and configure a fixed callback URL:
+
+```ts
+client: {
+  auth: {
+    enabled: true,
+    magicLinks: {
+      enabled: true,
+      redirectUrl: "https://app.example.test/auth/magic-link"
+    }
+  }
+}
+```
+
+Use `auth.requestMagicLink(email, meta?)` and `auth.redeemMagicLink(token, otp?)`. The browser
+cannot override the callback URL, and Directus access/refresh tokens remain server-side in the
+sealed HTTP-only session. The consuming application implements the callback route, URL token
+extraction and cleanup, OTP UI, TFA setup navigation, return-to state, and post-login navigation.
+When disabled, these methods perform no network request. Local invalid token input is exposed as
+`INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, the module does not read, refresh, forward, or serialize
 Directus session cookies. Static, preview, and unauthenticated access continue to work.
