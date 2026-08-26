@@ -15,6 +15,7 @@ They are binding for the feature they cover until explicitly revisited.
 | [Sentry config reads `NITRO_PRESET`](sentry-config-nitro-preset.md)         | Accepted | 2026-08-11 | Sentry module setup and Nitro runtime selection                       |
 | [Simple rate limiter](simple-rate-limiter.md)                               | Accepted | 2026-08-11 | Rate-limit guarantees, storage, proxy handling, and security scope    |
 | [Static text and Vue I18n compatibility](static-text-i18n-compatibility.md) | Accepted | 2026-08-11 | Static-text translation API and i18n coexistence                      |
+| [Redirect timing eligibility](redirect-timing-eligibility.md)               | Accepted | 2026-08-26 | Redirect timing checks, cached responses, and performance trade-offs  |
 | [Zod sensitivity augmentation](zod-sensitive.md)                            | Accepted | 2026-08-12 | Sensitive-field metadata and public Directus configuration projection |
 
 ## Create or revisit a decision

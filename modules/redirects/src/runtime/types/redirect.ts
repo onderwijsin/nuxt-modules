@@ -1,5 +1,8 @@
 import type { H3Event } from "h3";
 
+/** A redirect activation or expiration bound, represented as an ISO date or epoch milliseconds. */
+export type RedirectTime = string | number | null;
+
 /** A provider-independent redirect entry. */
 export interface Redirect {
   /** Source path, optionally including an exact query string. */
@@ -10,6 +13,10 @@ export interface Redirect {
   statusCode?: 301 | 302 | 307 | 308;
   /** Whether the origin is matched exactly or as a route pattern. */
   match?: "exact" | "pattern";
+  /** The inclusive activation time, when the redirect is scheduled. */
+  activeFrom?: RedirectTime;
+  /** The exclusive expiration time, when the redirect is time-limited. */
+  activeUntil?: RedirectTime;
 }
 
 /** A normalized redirect with an explicit status code. */
@@ -30,6 +37,10 @@ export interface DynamicRedirectRule {
   statusCode: 301 | 302 | 307 | 308;
   /** Identifies this rule as a dynamic pattern. */
   match: "pattern";
+  /** The inclusive activation time, when the redirect is scheduled. */
+  activeFrom?: RedirectTime;
+  /** The exclusive expiration time, when the redirect is time-limited. */
+  activeUntil?: RedirectTime;
 }
 
 /** A consumer-defined asynchronous source of redirect records. */

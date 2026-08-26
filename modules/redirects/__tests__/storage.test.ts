@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const values = new Map<string, unknown>();
 const localFetch = vi.fn();
+const callHook = vi.fn();
 let dynamicMatching = false;
 
 vi.mock("nitropack/runtime", () => ({
   useRuntimeConfig: () => ({ redirects: { storageMount: "redirects", dynamicMatching } }),
-  useNitroApp: () => ({ localFetch }),
+  useNitroApp: () => ({ localFetch, hooks: { callHook } }),
   useStorage: () => ({
     getItem: async <T>(key: string): Promise<T | null> =>
       (values.get(key) as T | undefined) ?? null,
@@ -33,6 +34,7 @@ describe("redirect storage refresh", () => {
     values.clear();
     dynamicMatching = false;
     localFetch.mockReset();
+    callHook.mockReset();
     localFetch.mockResolvedValue(undefined);
   });
 
@@ -67,6 +69,35 @@ describe("redirect storage refresh", () => {
       to: "/archive?source=redirect"
     });
     await expect(findRedirect("/search?q=new")).resolves.toMatchObject({ to: "/all" });
+  });
+
+  it("skips inactive exact records so path-only fallback can match", async () => {
+    await refreshRedirectStorage([
+      [
+        { from: "/offers", to: "/current-offer", activeFrom: "2000-01-01T00:00:00.000Z" },
+        {
+          from: "/offers?campaign=old",
+          to: "/expired-offer",
+          activeUntil: "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    ]);
+
+    await expect(findRedirect("/offers?campaign=old")).resolves.toMatchObject({
+      to: "/current-offer"
+    });
+  });
+
+  it("does not resolve future or expired exact records", async () => {
+    await refreshRedirectStorage([
+      [
+        { from: "/future", to: "/not-yet", activeFrom: "2999-01-01T00:00:00.000Z" },
+        { from: "/expired", to: "/no-longer", activeUntil: "2000-01-01T00:00:00.000Z" }
+      ]
+    ]);
+
+    await expect(findRedirect("/future")).resolves.toBeNull();
+    await expect(findRedirect("/expired")).resolves.toBeNull();
   });
 
   it("removes stale entries while replacing the compact manifest", async () => {
@@ -137,6 +168,43 @@ describe("redirect storage refresh", () => {
       exact: { "/products": expect.any(Object), "/products/special": expect.any(Object) },
       dynamic: [expect.objectContaining({ from: "/products/:slug", match: "pattern" })]
     });
+  });
+
+  it("rebuilds pattern mutations from source order", async () => {
+    dynamicMatching = true;
+    const source = vi.fn().mockResolvedValue([
+      { from: "/files/:name.pdf", to: "/pdf", match: "pattern" },
+      { from: "/files/*", to: "/wildcard", match: "pattern" }
+    ]);
+    callHook.mockImplementation(async (_name, context) => {
+      context.sources.push(source);
+    });
+
+    await upsertRedirect({ from: "/files/:name.pdf", to: "/pdf", match: "pattern" });
+
+    expect(source).toHaveBeenCalledOnce();
+    await expect(findRedirect("/files/report.pdf")).resolves.toMatchObject({ to: "/pdf" });
+  });
+
+  it("rebuilds pattern deletion and preserves exact-to-pattern transitions", async () => {
+    dynamicMatching = true;
+    const source = vi
+      .fn()
+      .mockResolvedValue([{ from: "/legacy/:slug", to: "/new/:slug", match: "pattern" }]);
+    callHook.mockImplementation(async (_name, context) => {
+      context.sources.push(source);
+    });
+
+    await upsertRedirect({ from: "/legacy/:slug", to: "/new/:slug", match: "pattern" });
+    await expect(findRedirect("/legacy/page")).resolves.toMatchObject({ to: "/new/page" });
+
+    source.mockResolvedValueOnce([]);
+    await removeRedirect("/legacy/:slug");
+    await expect(findRedirect("/legacy/page")).resolves.toBeNull();
+
+    await upsertRedirect({ from: "/legacy/:slug", to: "/new/:slug", match: "pattern" });
+    await upsertRedirect({ from: "/legacy/:slug", to: "/exact" });
+    await expect(findRedirect("/legacy/:slug")).resolves.toMatchObject({ to: "/exact" });
   });
 
   it("refreshes process-local dynamic rules after the manifest check interval", async () => {

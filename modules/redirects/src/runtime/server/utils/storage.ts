@@ -13,6 +13,8 @@ import { normalizeRedirect } from "./validation";
 import { invalidateRedirectCache, primeRedirectLookupCache } from "./cache";
 import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../utils/dynamic";
 import type { CompiledDynamicRedirect } from "../../utils/dynamic";
+import { isRedirectActive } from "../../utils/eligibility";
+import { collectRedirectSourceResults } from "./sources";
 
 const MANIFEST_KEY = "manifest";
 const DYNAMIC_MANIFEST_CHECK_INTERVAL_MS = 10_000;
@@ -97,12 +99,12 @@ export async function findRedirect(origin: string): Promise<ResolvedRedirect | n
   const storage = useRedirectStorage();
   const canonicalOrigin = toRedirectOrigin(origin);
   const exact = await storage.getItem<ResolvedRedirect>(toRedirectStorageKey(canonicalOrigin));
-  if (exact) return exact;
+  if (exact && isRedirectActive(exact)) return exact;
 
   const path = toRedirectPath(canonicalOrigin);
   if (path !== canonicalOrigin) {
     const pathOnly = await storage.getItem<ResolvedRedirect>(toRedirectStorageKey(path));
-    if (pathOnly) return pathOnly;
+    if (pathOnly && isRedirectActive(pathOnly)) return pathOnly;
   }
 
   if (!dynamicMatchingEnabled()) return null;
@@ -147,7 +149,9 @@ export async function refreshRedirectStorage(
           from: redirect.from,
           to: redirect.to,
           statusCode: redirect.statusCode,
-          match: "pattern"
+          match: "pattern",
+          activeFrom: redirect.activeFrom,
+          activeUntil: redirect.activeUntil
         });
         continue;
       }
@@ -191,6 +195,8 @@ export async function refreshRedirectStorage(
 
 /**
  * Adds or replaces one redirect after consumer-specific webhook validation.
+ * Pattern mutations rebuild from registered sources because source order is the canonical pattern
+ * precedence. The consumer must update its provider before invoking a pattern mutation.
  * Invalidates the public index and affected lookup cache, then immediately primes the new lookup.
  *
  * @param value - Provider-mapped redirect record.
@@ -203,28 +209,19 @@ export async function upsertRedirect(value: Redirect): Promise<ResolvedRedirect>
   if (redirect.match === "pattern" && !dynamicMatchingEnabled())
     throw new Error("Dynamic redirect matching is disabled.");
 
+  if (redirect.match === "pattern") {
+    await refreshRedirectStorage(await collectRedirectSourceResults());
+    return redirect;
+  }
+
   const exact = { ...manifest.exact };
   const dynamic = [...manifest.dynamic];
 
-  if (redirect.match === "pattern") {
-    delete exact[redirect.from];
-    const nextRule = {
-      from: redirect.from,
-      to: redirect.to,
-      statusCode: redirect.statusCode,
-      match: "pattern" as const
-    };
-    const index = dynamic.findIndex((rule) => rule.from === redirect.from);
-    if (index === -1) dynamic.push(nextRule);
-    else dynamic[index] = nextRule;
-  } else {
-    const dynamicIndex = dynamic.findIndex((rule) => rule.from === redirect.from);
-    if (dynamicIndex !== -1) dynamic.splice(dynamicIndex, 1);
-    exact[redirect.from] = redirect;
-  }
+  const dynamicIndex = dynamic.findIndex((rule) => rule.from === redirect.from);
+  if (dynamicIndex !== -1) dynamic.splice(dynamicIndex, 1);
+  exact[redirect.from] = redirect;
 
-  if (redirect.match === "pattern") await storage.removeItem(toRedirectStorageKey(redirect.from));
-  else await storage.setItem(toRedirectStorageKey(redirect.from), redirect);
+  await storage.setItem(toRedirectStorageKey(redirect.from), redirect);
   const updatedAt = new Date().toISOString();
   await storage.setItem<RedirectManifest>(MANIFEST_KEY, {
     exact,
@@ -232,13 +229,15 @@ export async function upsertRedirect(value: Redirect): Promise<ResolvedRedirect>
     updatedAt
   });
   setDynamicRedirectRules(dynamic, updatedAt);
-  await invalidateRedirectCache(redirect.match === "pattern" ? undefined : redirect.from);
-  if (redirect.match !== "pattern") await primeRedirectLookupCache(redirect.from);
+  await invalidateRedirectCache(redirect.from);
+  await primeRedirectLookupCache(redirect.from);
   return redirect;
 }
 
 /**
  * Removes one redirect after consumer-specific webhook validation.
+ * Pattern removals rebuild from registered sources because source order is the canonical pattern
+ * precedence. The consumer must update its provider before invoking a pattern removal.
  * The affected public cache entries are invalidated after the storage mutation.
  *
  * @param origin - Provider-mapped redirect origin.
@@ -247,6 +246,11 @@ export async function removeRedirect(origin: string): Promise<void> {
   const canonicalOrigin = toRedirectOrigin(origin);
   const storage = useRedirectStorage();
   const manifest = await getRedirectManifest();
+
+  if (manifest.dynamic.some((rule) => rule.from === canonicalOrigin)) {
+    await refreshRedirectStorage(await collectRedirectSourceResults());
+    return;
+  }
 
   await storage.removeItem(toRedirectStorageKey(canonicalOrigin));
   const exact = { ...manifest.exact };
@@ -259,7 +263,5 @@ export async function removeRedirect(origin: string): Promise<void> {
     updatedAt
   });
   setDynamicRedirectRules(dynamic, updatedAt);
-  await invalidateRedirectCache(
-    manifest.dynamic.some((rule) => rule.from === canonicalOrigin) ? undefined : canonicalOrigin
-  );
+  await invalidateRedirectCache(canonicalOrigin);
 }
