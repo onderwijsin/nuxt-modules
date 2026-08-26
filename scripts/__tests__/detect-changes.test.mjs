@@ -11,6 +11,7 @@ import {
   buildDependentGraph,
   classifyChanges,
   discoverPackages,
+  getArtifactPackages,
   getTestPaths,
   selectPhases
 } from "../detect-changes.mjs";
@@ -218,6 +219,33 @@ describe("change classification", () => {
   });
 });
 
+describe("artifact selection", () => {
+  it("includes public workspace dependencies in the packed artifact closure", () => {
+    const packages = [
+      workspacePackage("modules/redirects", "@onderwijsin/nuxt-redirects", {
+        "@onderwijsin/nuxt-module-utils": "workspace:^"
+      }),
+      workspacePackage("packages/module-utils", "@onderwijsin/nuxt-module-utils"),
+      workspacePackage(
+        "modules/redirects/playground",
+        "redirects-playground",
+        {},
+        { private: true }
+      )
+    ];
+    const packageByName = new Map(
+      packages.map((entry) => [entry.manifest.name, { ...entry, path: entry.directory }])
+    );
+    const selected = new Set(["@onderwijsin/nuxt-redirects"]);
+    addDependencies(selected, buildDependencyGraph(packages));
+
+    expect(getArtifactPackages(selected, packageByName)).toEqual([
+      "@onderwijsin/nuxt-module-utils",
+      "@onderwijsin/nuxt-redirects"
+    ]);
+  });
+});
+
 describe("workspace dependency graph", () => {
   const packages = [
     workspacePackage("packages/producer", "@test/producer"),
@@ -363,7 +391,9 @@ describe("detector command integration", () => {
       expect(outputs).toContain("phase_pack=true");
       expect(outputs).toContain("phase_external_consumer=true");
       expect(outputs).toContain("packages=@onderwijsin/nuxt-directus-sitemaps");
-      expect(outputs).toContain("artifact_packages=@onderwijsin/nuxt-directus-sitemaps");
+      expect(outputs).toContain(
+        "artifact_packages=@onderwijsin/nuxt-directus-client @onderwijsin/nuxt-directus-config @onderwijsin/nuxt-directus-sitemaps @onderwijsin/nuxt-module-utils @onderwijsin/nuxt-turnstile"
+      );
       expect(outputs).toContain("prepare_packages=");
       expect(summaryText).toContain("CI validation scope: focused");
     } finally {
