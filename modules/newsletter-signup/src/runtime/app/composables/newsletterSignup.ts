@@ -10,6 +10,8 @@ export interface NewsletterSignupPayload {
   firstName?: string;
   lastName?: string;
   organization?: string;
+  userId?: string;
+  userGroup?: string;
   source?: string;
   listId?: string;
 }

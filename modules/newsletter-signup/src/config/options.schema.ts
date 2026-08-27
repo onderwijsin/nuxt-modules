@@ -37,6 +37,8 @@ const commonOptionsShape = {
       firstName: newsletterFieldSchema.optional(),
       lastName: newsletterFieldSchema.optional(),
       organization: newsletterFieldSchema.optional(),
+      userId: newsletterFieldSchema.optional(),
+      userGroup: newsletterFieldSchema.optional(),
       source: newsletterFieldSchema.optional()
     })
     .optional()

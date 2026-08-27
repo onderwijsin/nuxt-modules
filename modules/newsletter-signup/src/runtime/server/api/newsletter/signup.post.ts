@@ -17,6 +17,8 @@ const signupSchema = z
     firstName: z.string().trim().min(1).max(256).optional(),
     lastName: z.string().trim().min(1).max(256).optional(),
     organization: z.string().trim().min(1).max(1024).optional(),
+    userId: z.string().trim().min(1).max(256).optional(),
+    userGroup: z.string().trim().min(1).max(256).optional(),
     source: z.string().trim().min(1).max(256).optional(),
     listId: z.string().trim().min(1).max(256).optional()
   })
@@ -79,6 +81,8 @@ export default defineEventHandler(async (event) => {
     firstName: parsed.data.firstName,
     lastName: parsed.data.lastName,
     organization: parsed.data.organization,
+    userId: parsed.data.userId,
+    userGroup: parsed.data.userGroup,
     source: parsed.data.source ?? "api",
     listId: parsed.data.listId
   };
