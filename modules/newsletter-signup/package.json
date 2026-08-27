@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-newsletter-signup",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "description": "Provider-independent newsletter signup endpoint for Nuxt.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
