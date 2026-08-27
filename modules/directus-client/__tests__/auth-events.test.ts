@@ -19,10 +19,9 @@ vi.mock("#app", () => ({
   }
 }));
 
-vi.mock("#imports", () => ({
-  $fetch: state.fetch,
-  useRuntimeConfig: () => state.config
-}));
+vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
+
+vi.mock("ofetch", () => ({ $fetch: state.fetch }));
 
 const { useDirectusAuth } = await import("../src/runtime/app/composables/directus-auth");
 

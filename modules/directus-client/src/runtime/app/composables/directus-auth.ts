@@ -1,7 +1,8 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
 import { useNuxtApp, useState } from "#app";
-import { $fetch, useRuntimeConfig } from "#imports";
+import { useRuntimeConfig } from "#imports";
 import { attempt } from "@onderwijsin/nuxt-module-utils";
+import { $fetch } from "ofetch";
 
 import type { DirectusSessionSnapshot } from "../../server/utils/session";
 
