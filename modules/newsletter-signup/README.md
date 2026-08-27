@@ -161,6 +161,8 @@ interface NewsletterSignupPayload {
   firstName?: string;
   lastName?: string;
   organization?: string;
+  userId?: string;
+  userGroup?: string;
   source?: string;
   listId?: string;
 }
@@ -168,13 +170,15 @@ interface NewsletterSignupPayload {
 
 The provider defaults are:
 
-| Input          | Loops            | Mailchimp       |
-| -------------- | ---------------- | --------------- |
-| `email`        | `email`          | `email_address` |
-| `firstName`    | `firstName`      | `FNAME`         |
-| `lastName`     | `lastName`       | `LNAME`         |
-| `organization` | `organization`   | `ORG`           |
-| `source`       | contact `source` | member tag      |
+| Input          | Loops            | Mailchimp                |
+| -------------- | ---------------- | ------------------------ |
+| `email`        | `email`          | `email_address`          |
+| `firstName`    | `firstName`      | `FNAME`                  |
+| `lastName`     | `lastName`       | `LNAME`                  |
+| `organization` | `organization`   | `ORG`                    |
+| `userId`       | `userId`         | configurable merge field |
+| `userGroup`    | `userGroup`      | configurable merge field |
+| `source`       | contact `source` | member tag               |
 
 `source` defaults to `"api"` when omitted. Loops receives it as the contact source. Mailchimp
 receives it as `tags: [source]`, not as a merge field.
@@ -185,7 +189,9 @@ Use `fields.*.target` to override provider property names for the configurable c
 fields: {
   firstName: { required: true, target: "FIRST_NAME" },
   lastName: { target: "LAST_NAME" },
-  organization: { target: "COMPANY" }
+  organization: { target: "COMPANY" },
+  userId: { required: true },
+  userGroup: { target: "USER_GROUP" }
 }
 ```
 

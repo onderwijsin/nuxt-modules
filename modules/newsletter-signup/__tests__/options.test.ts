@@ -34,6 +34,20 @@ describe("newsletter signup option shape", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts user identity fields and their required configuration", () => {
+    const result = optionsSchema.safeParse({
+      provider: "loops",
+      apiKey: "loops-key",
+      fields: {
+        userId: { required: true },
+        userGroup: { required: true }
+      },
+      lists: { default: "newsletter" }
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects Mailchimp lists without server values", () => {
     const result = optionsSchema.safeParse({
       provider: "mailchimp",

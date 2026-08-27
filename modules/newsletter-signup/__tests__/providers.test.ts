@@ -15,6 +15,8 @@ const input: NewsletterSignupInput = {
   firstName: "Ada",
   lastName: "Lovelace",
   organization: "Analytical Engines",
+  userId: "user-1",
+  userGroup: "customers",
   source: "homepage"
 };
 
@@ -42,6 +44,8 @@ describe("newsletter provider adapters", () => {
         firstName: "Ada",
         lastName: "Lovelace",
         organization: "Analytical Engines",
+        userId: "user-1",
+        userGroup: "customers",
         source: "homepage",
         mailingLists: { "loops-list": true }
       }

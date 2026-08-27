@@ -169,13 +169,18 @@ Only these fields are supported:
   firstName?: string;
   lastName?: string;
   organization?: string;
+  userId?: string;
+  userGroup?: string;
   source?: string;
   listId?: string;
 }
 ```
 
-`source` defaults to `"api"`. Loops stores it as the contact source; Mailchimp stores it as a member
-tag. Additional fields require a custom consumer endpoint.
+`userId` and `userGroup` are forwarded to Loops using their native field names. For Mailchimp, map
+them to custom merge fields with `fields.userId.target` and `fields.userGroup.target`. Any field can
+be made server-side required with `fields.<name>.required: true`. `source` defaults to `"api"`.
+Loops stores it as the contact source; Mailchimp stores it as a member tag. Additional fields
+require a custom consumer endpoint.
 
 ## Client usage
 

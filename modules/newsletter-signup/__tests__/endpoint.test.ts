@@ -103,6 +103,37 @@ describe("newsletter signup endpoint", () => {
     expect(loopsMock).not.toHaveBeenCalled();
   });
 
+  it("enforces user identity fields configured as required", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: {
+        provider: "loops",
+        apiKey: "key",
+        fields: { userId: { required: true }, userGroup: { required: true } },
+        lists: { default: "main" }
+      }
+    };
+    body.value = { email: "ada@example.com", userId: "user-1" };
+    const handler = await loadHandler();
+
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
+    expect(loopsMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards optional user identity fields", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "main" } }
+    };
+    body.value = { email: "ada@example.com", userId: "user-1", userGroup: "customers" };
+    const handler = await loadHandler();
+
+    await expect(handler(createTestEvent())).resolves.toEqual({ success: true });
+    expect(loopsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", userGroup: "customers" }),
+      "main",
+      runtimeConfig.value.newsletterSignup
+    );
+  });
+
   it("defaults source to api and uses the configured default Loops list", async () => {
     runtimeConfig.value = {
       newsletterSignup: {
