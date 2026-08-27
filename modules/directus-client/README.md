@@ -112,6 +112,28 @@ useDirectusServer<Output>(command: RestCommand<Output, Schema>, event?: H3Event)
 Runs a command from Nitro. Pass the current event to apply its preview context and, when
 authentication is enabled, its session.
 
+### `useDirectusServerAuth`
+
+```ts
+useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
+```
+
+Reads the current token-free Directus session from a Nitro request. It returns `null` when the
+request is unauthenticated, the session is invalid or expired, or authentication is disabled. Access
+and refresh tokens are never returned.
+
+```ts
+export default defineEventHandler(async (event) => {
+  const session = await useDirectusServerAuth(event);
+
+  if (!session) {
+    throw createError({ statusCode: 401 });
+  }
+
+  return { userId: session.userId };
+});
+```
+
 ### `useDirectusItemByPath`
 
 ```ts
