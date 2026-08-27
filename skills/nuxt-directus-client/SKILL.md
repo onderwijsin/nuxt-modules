@@ -135,6 +135,28 @@ import {
 } from "@onderwijsin/nuxt-directus-client/runtime/server";
 ```
 
+### `useDirectusServerAuth`
+
+```ts
+useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
+```
+
+Reads the current token-free Directus session from a Nitro request. It returns `null` for an
+unauthenticated, invalid, expired, or disabled session. Access and refresh tokens are never
+returned.
+
+```ts
+export default defineEventHandler(async (event) => {
+  const session = await useDirectusServerAuth(event);
+
+  if (!session) {
+    throw createError({ statusCode: 401 });
+  }
+
+  return { userId: session.userId };
+});
+```
+
 ### `useDirectusItemByPath`
 
 ```ts
