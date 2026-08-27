@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1
+
+### Patch Changes
+
+- e4e25d3: Add `useDirectusServerAuth` for reading the current token-free Directus session in Nitro handlers.
+
 ## 0.5.0
 
 ### Minor Changes

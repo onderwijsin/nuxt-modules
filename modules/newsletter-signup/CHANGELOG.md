@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- fbdb3e2: Add optional `userId` and `userGroup` signup fields, including configurable server-side required validation and provider field mapping.
+
 ## 1.0.8
 
 ### Patch Changes
