@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1
+
+### Patch Changes
+
+- 99835ec: Fix SSR authentication from asynchronous Nuxt page middleware by resolving server runtime
+  configuration through the current Nitro request event instead of relying on ambient Nuxt composable
+  context. Consumers no longer need to wrap `useDirectusAuth()` calls in `runWithContext()`.
+
 ## 0.6.0
 
 ### Minor Changes
