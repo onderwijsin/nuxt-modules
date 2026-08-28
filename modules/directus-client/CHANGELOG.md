@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.2
+
+### Patch Changes
+
+- af7c80c: Fix SSR authentication from asynchronous Nuxt page middleware by resolving server runtime
+  configuration through the current Nitro request event instead of relying on ambient Nuxt composable
+  context. Consumers no longer need to wrap `useDirectusAuth()` calls in `runWithContext()`.
+- af7c80c: Fix a server-runtime startup failure by resolving Directus configuration from the current H3 event
+  instead of importing Nitro's runtime barrel. This prevents generated Nitro virtual dependencies from
+  being loaded into application runtime code while keeping SSR authentication independent of ambient
+  Nuxt composable context.
+
 ## 0.6.1
 
 ### Patch Changes
