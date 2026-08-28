@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.11
+
+### Patch Changes
+
+- 55ad521: Preserve application dictionary key and placeholder type safety in the published `useText` declaration.
+
 ## 0.2.10
 
 ### Patch Changes

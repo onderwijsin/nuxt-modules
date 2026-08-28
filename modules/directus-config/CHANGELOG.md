@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+### Patch Changes
+
+- d225f8f: Use an absolute Nuxt application URL for server-side Directus authentication proxy requests while preserving relative same-origin browser requests.
+- 70baa65: Include the discovered `directus.config.ts` in Nuxt's generated Node TypeScript project so ambient
+  environment types remain available in IDEs.
+
 ## 0.5.0
 
 ### Minor Changes
