@@ -181,6 +181,7 @@ export default defineNuxtModule<ModuleOptions>({
     });
     nuxt.options.runtimeConfig.public.directusClient = defu(
       {
+        nuxtBaseUrl: options.client.nuxtBaseUrl,
         proxy: { path: options.client.proxy.path },
         preview: options.client.preview,
         auth: {

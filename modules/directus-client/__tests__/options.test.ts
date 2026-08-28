@@ -39,6 +39,22 @@ describe("Directus module options", () => {
     });
   });
 
+  it("requires the Nuxt application URL when authentication is enabled", () => {
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { auth: { enabled: true }, nuxtBaseUrl: undefined }
+      })
+    ).toThrow(/client\.nuxtBaseUrl is required/);
+    expect(
+      directusClientOptionsSchema.parse({
+        client: {
+          nuxtBaseUrl: "https://app.example.test",
+          auth: { enabled: true, sessionSecret: "a-valid-directus-session-secret-32-chars" }
+        }
+      }).client.nuxtBaseUrl
+    ).toBe("https://app.example.test");
+  });
+
   it("defaults magic links to disabled and validates their dependencies", () => {
     expect(directusClientOptionsSchema.parse({}).client.auth.magicLinks).toEqual({
       enabled: false
@@ -56,6 +72,7 @@ describe("Directus module options", () => {
     expect(
       directusClientOptionsSchema.parse({
         client: {
+          nuxtBaseUrl: "https://app.example.test",
           auth: {
             enabled: true,
             sessionSecret: "a-valid-directus-session-secret-32-chars",

@@ -34,6 +34,7 @@ export default defineDirectusConfig({
     staticToken: process.env.DIRECTUS_STATIC_TOKEN
   },
   client: {
+    nuxtBaseUrl: "https://app.example.com",
     commands: ["readItem", "readItems"],
     auth: {
       enabled: true,
@@ -91,29 +92,30 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 
 `client` contains Directus client module settings. Its nested schemas provide defaults.
 
-| Option                         | Default                             | Description                                                                                       |
-| ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `proxy.path`                   | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.   |
-| `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
-| `preview.enabled`              | `true`                              | Enables preview query parsing.                                                                    |
-| `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |
-| `preview.queryKeys`            | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                    |
-| `auth.enabled`                 | `false`                             | Enables cookie-backed authentication.                                                             |
-| `auth.turnstile.enabled`       | `false`                             | Enables Turnstile protection for authentication requests.                                         |
-| `auth.magicLinks.enabled`      | `false`                             | Enables optional Directus magic-link authentication routes; requires `auth.enabled`.              |
-| `auth.magicLinks.redirectUrl`  | —                                   | Absolute, server-only callback URL required when magic links are enabled.                         |
-| `auth.cookie`                  | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.   |
-| `auth.refreshSafetyWindow`     | `30000`                             | Milliseconds before expiry when a session is refreshed.                                           |
-| `auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters. |
-| `auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                            |
-| `auth.maskSecretsInPlayground` | `true`                              | Masks access and refresh tokens in the local session inspection playground.                       |
-| `auth.passwordResetUrl`        | —                                   | URL sent to Directus for password-reset requests.                                                 |
-| `typegen.enabled`              | `true`                              | Enables generated `#directus` schema declarations.                                                |
-| `typegen.introspectionToken`   | —                                   | Server-only schema-introspection token.                                                           |
-| `typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
-| `typegen.augmentations`        | All `true`                          | Generated-source transforms.                                                                      |
-| `typegen.rules`                | `{}`                                | Collection and field type-expression overrides.                                                   |
-| `typegen.transform`            | —                                   | Final executable transform: `(source, context) => string`.                                        |
+| Option                         | Default                             | Description                                                                                                           |
+| ------------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `nuxtBaseUrl`                  | —                                   | Absolute Nuxt application URL; required by the client module when authentication is enabled for SSR auth proxy calls. |
+| `proxy.path`                   | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.                       |
+| `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                                            |
+| `preview.enabled`              | `true`                              | Enables preview query parsing.                                                                                        |
+| `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                                               |
+| `preview.queryKeys`            | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                                        |
+| `auth.enabled`                 | `false`                             | Enables cookie-backed authentication.                                                                                 |
+| `auth.turnstile.enabled`       | `false`                             | Enables Turnstile protection for authentication requests.                                                             |
+| `auth.magicLinks.enabled`      | `false`                             | Enables optional Directus magic-link authentication routes; requires `auth.enabled`.                                  |
+| `auth.magicLinks.redirectUrl`  | —                                   | Absolute, server-only callback URL required when magic links are enabled.                                             |
+| `auth.cookie`                  | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.                       |
+| `auth.refreshSafetyWindow`     | `30000`                             | Milliseconds before expiry when a session is refreshed.                                                               |
+| `auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters.                     |
+| `auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                                                |
+| `auth.maskSecretsInPlayground` | `true`                              | Masks access and refresh tokens in the local session inspection playground.                                           |
+| `auth.passwordResetUrl`        | —                                   | URL sent to Directus for password-reset requests.                                                                     |
+| `typegen.enabled`              | `true`                              | Enables generated `#directus` schema declarations.                                                                    |
+| `typegen.introspectionToken`   | —                                   | Server-only schema-introspection token.                                                                               |
+| `typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                           |
+| `typegen.augmentations`        | All `true`                          | Generated-source transforms.                                                                                          |
+| `typegen.rules`                | `{}`                                | Collection and field type-expression overrides.                                                                       |
+| `typegen.transform`            | —                                   | Final executable transform: `(source, context) => string`.                                                            |
 
 Magic links require the `directus-magic-links-bundle` extension in Directus. The configured callback
 URL is server-only and is not included in the client-safe configuration.

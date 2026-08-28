@@ -145,6 +145,8 @@ const directusAuthSchema = z
 
 /** Shared Directus client settings excluding instance credentials. */
 export const directusClientSchema = z.strictObject({
+  /** Absolute URL of the Nuxt application, used for server-side proxy requests. */
+  nuxtBaseUrl: z.url().optional(),
   proxy: proxySchema,
   commands: z.array(directusCommandsSchema).default(["readItem", "readItems"]).sensitive(),
   preview: directusPreviewSchema,

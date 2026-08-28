@@ -65,37 +65,38 @@ in `runtimeConfig.public` or browser code.
 
 All options are configured under `directusClient`.
 
-| Option                                | Default                             | Contract                                                                                              |
-| ------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `enabled`                             | `true`                              | Enables the module.                                                                                   |
-| `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                              |
-| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                               |
-| `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected.     |
-| `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                     |
-| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                 |
-| `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                     |
-| `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                       |
-| `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.             |
-| `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                            |
-| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.             |
-| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute server-only callback URL; required when magic links are enabled.                       |
-| `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                  |
-| `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                        |
-| `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                             |
-| `client.auth.cookie.path`             | `/`                                 | Cookie path.                                                                                          |
-| `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                           |
-| `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                               |
-| `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                             |
-| `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters. |
-| `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                             |
-| `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                  |
-| `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent as Directus `reset_url`.                                  |
-| `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                           |
-| `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                      |
-| `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                           |
-| `client.typegen.augmentations`        | all `true`                          | Optional generated-output transforms.                                                                 |
-| `client.typegen.rules`                | `{}`                                | Generated field type overrides keyed by collection and field.                                         |
-| `client.typegen.transform`            | —                                   | Final build-time source transform.                                                                    |
+| Option                                | Default                             | Contract                                                                                                                 |
+| ------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`                             | `true`                              | Enables the module.                                                                                                      |
+| `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                                                 |
+| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                                                  |
+| `client.nuxtBaseUrl`                  | —                                   | Absolute Nuxt application URL; required when authentication is enabled for SSR auth proxy calls.                         |
+| `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected.                        |
+| `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                                        |
+| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                    |
+| `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                        |
+| `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                          |
+| `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`; requires `client.nuxtBaseUrl`. |
+| `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                                               |
+| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.                                |
+| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute server-only callback URL; required when magic links are enabled.                                          |
+| `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                                     |
+| `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                                           |
+| `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                                                |
+| `client.auth.cookie.path`             | `/`                                 | Cookie path.                                                                                                             |
+| `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                                              |
+| `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                                                  |
+| `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                                                |
+| `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters.                    |
+| `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                                                |
+| `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                                     |
+| `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent as Directus `reset_url`.                                                     |
+| `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                                              |
+| `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                                         |
+| `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                              |
+| `client.typegen.augmentations`        | all `true`                          | Optional generated-output transforms.                                                                                    |
+| `client.typegen.rules`                | `{}`                                | Generated field type overrides keyed by collection and field.                                                            |
+| `client.typegen.transform`            | —                                   | Final build-time source transform.                                                                                       |
 
 The module validates option values during Nuxt configuration. `instance.baseUrl` is optional, but
 requests cannot run without it; the module skips setup during `nuxt prepare` and CI when it is

@@ -36,6 +36,7 @@ export default defineDirectusConfig({
     staticToken: process.env.DIRECTUS_STATIC_TOKEN
   },
   client: {
+    nuxtBaseUrl: "https://app.example.com",
     proxy: { path: "/_directus/proxy" },
     commands: ["readItem", "readItems"],
     preview: {
