@@ -1,6 +1,7 @@
 declare module "nuxt/schema" {
   interface RuntimeConfig {
     directusClient: {
+      nuxtBaseUrl: string;
       baseUrl: string;
       staticToken?: string;
       auth: {
@@ -29,6 +30,7 @@ declare module "nuxt/schema" {
 
   interface PublicRuntimeConfig {
     directusClient: {
+      nuxtBaseUrl: string;
       proxy: { path: string };
       preview: {
         enabled: boolean;

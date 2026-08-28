@@ -14,6 +14,7 @@ export default defineNuxtConfig({
       baseUrl: process.env.DIRECTUS_E2E_URL ?? "https://sandbox.directus.com"
     },
     client: {
+      nuxtBaseUrl: "https://app.example.test",
       commands: ["readItems"],
       auth: {
         enabled: true,

@@ -6,7 +6,14 @@ const state = vi.hoisted(() => ({
     | { userId: string; email?: string; requiresTfaSetup?: boolean }
     | null
     | undefined,
-  config: { public: { directusClient: { auth: { magicLinks: { enabled: true } } } } },
+  config: {
+    public: {
+      directusClient: {
+        nuxtBaseUrl: "https://app.example.test",
+        auth: { magicLinks: { enabled: true } }
+      }
+    }
+  },
   fetch: vi.fn(),
   callHook: vi.fn()
 }));
@@ -79,12 +86,12 @@ describe("Directus authentication hooks", () => {
 
     expect(state.fetch).toHaveBeenNthCalledWith(
       1,
-      "/_directus/auth/login",
+      "https://app.example.test/_directus/auth/login",
       expect.objectContaining({ headers: { "x-turnstile-token": "login-token" } })
     );
     expect(state.fetch).toHaveBeenNthCalledWith(
       2,
-      "/_directus/auth/password-request",
+      "https://app.example.test/_directus/auth/password-request",
       expect.objectContaining({ headers: { "x-turnstile-token": "password-token" } })
     );
   });
@@ -95,11 +102,14 @@ describe("Directus authentication hooks", () => {
 
     await auth.requestMagicLink("user@example.test", { turnstileToken: "magic-link-token" });
 
-    expect(state.fetch).toHaveBeenCalledWith("/_directus/auth/magic-links/request", {
-      method: "POST",
-      body: { email: "user@example.test" },
-      headers: { "x-turnstile-token": "magic-link-token" }
-    });
+    expect(state.fetch).toHaveBeenCalledWith(
+      "https://app.example.test/_directus/auth/magic-links/request",
+      {
+        method: "POST",
+        body: { email: "user@example.test" },
+        headers: { "x-turnstile-token": "magic-link-token" }
+      }
+    );
   });
 
   it("redeems a magic link into the normal session and login event", async () => {
@@ -116,10 +126,13 @@ describe("Directus authentication hooks", () => {
     await auth.redeemMagicLink("raw-token", "123456");
 
     expect(auth._session.value).toEqual(snapshot);
-    expect(state.fetch).toHaveBeenCalledWith("/_directus/auth/magic-links/redeem", {
-      method: "POST",
-      body: { magicLinkToken: "raw-token", otp: "123456" }
-    });
+    expect(state.fetch).toHaveBeenCalledWith(
+      "https://app.example.test/_directus/auth/magic-links/redeem",
+      {
+        method: "POST",
+        body: { magicLinkToken: "raw-token", otp: "123456" }
+      }
+    );
     expect(state.callHook).toHaveBeenCalledWith("directus:auth:login", snapshot);
     expect(state.callHook.mock.calls[0]?.[1]).not.toHaveProperty("accessToken");
   });
