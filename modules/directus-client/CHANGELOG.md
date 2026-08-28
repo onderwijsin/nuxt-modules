@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- 6d438f7: Add complete SSR support to `useDirectusAuth()` authentication operations.
+
+  - Login, refresh, logout, password reset, password-reset requests, magic-link requests, and
+    magic-link redemption now execute directly against the request-bound server utilities during SSR.
+  - Browser calls continue to use the same-origin `/_directus/auth` proxy handlers.
+  - Public authentication handlers continue to enforce CSRF and Turnstile validation, while trusted
+    SSR calls avoid the internal HTTP hop and browser-only security metadata requirements.
+  - Shared server utilities keep SSR and HTTP-handler Directus payloads and session behavior aligned.
+
+  This is a minor release because authentication operations that previously failed during SSR, most
+  notably magic-link redemption from initial page middleware, are now supported.
+
+### Patch Changes
+
+- 6d438f7: Remove the temporary `client.nuxtBaseUrl` option from the Directus client and shared Directus
+  configuration schemas.
+
+  Authentication no longer needs an application base URL because SSR operations execute through the
+  request-bound server bridge, while browser operations continue to use relative same-origin proxy
+  paths. Consumers should remove `client.nuxtBaseUrl` from their configuration.
+
+- Updated dependencies [6d438f7]
+  - @onderwijsin/nuxt-directus-config@0.5.2
+
 ## 0.5.2
 
 ### Patch Changes
