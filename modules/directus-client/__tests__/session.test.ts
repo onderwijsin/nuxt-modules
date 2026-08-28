@@ -20,7 +20,7 @@ const state = {
   }
 };
 
-vi.mock("nitropack/runtime", () => ({ useRuntimeConfig: () => state.config }));
+vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 
 const {
   clearDirectusSession,

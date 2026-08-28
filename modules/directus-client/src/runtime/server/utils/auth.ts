@@ -1,6 +1,6 @@
 import type { H3Event } from "h3";
 import { createError, setResponseStatus } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
+import { useRuntimeConfig } from "nitropack/runtime/config";
 import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
 import { ofetch } from "ofetch";
@@ -118,7 +118,7 @@ interface RefreshStorage {
  * @returns The configured refresh-flight storage.
  */
 async function getRefreshStorage(): Promise<RefreshStorage> {
-  const { useStorage } = await import("nitropack/runtime");
+  const { useStorage } = await import("nitropack/runtime/storage");
   return useStorage(REFRESH_STORAGE_MOUNT);
 }
 

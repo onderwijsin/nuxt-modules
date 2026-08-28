@@ -1,6 +1,6 @@
 import type { H3Event } from "h3";
 import { createError } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
+import { useRuntimeConfig } from "nitropack/runtime/config";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";

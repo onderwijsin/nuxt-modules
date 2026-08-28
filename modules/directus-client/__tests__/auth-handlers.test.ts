@@ -36,7 +36,7 @@ vi.mock("#imports", () => ({
     throw new Error("Nuxt context is unavailable");
   }
 }));
-vi.mock("nitropack/runtime", () => ({ useRuntimeConfig: () => state.config }));
+vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
 vi.mock("../src/runtime/server/utils/auth", () => ({
   createDirectusSession: state.session,
