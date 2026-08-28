@@ -47,7 +47,7 @@ function createNuxt() {
   return {
     options: {
       rootDir: "/project",
-      typescript: { tsConfig: { compilerOptions: { paths } } },
+      typescript: { tsConfig: { compilerOptions: { paths } }, nodeTsConfig: { include: [] } },
       alias
     }
   };
@@ -95,6 +95,7 @@ describe("directus-config module setup", () => {
     expect(
       nuxt.options.typescript.tsConfig.compilerOptions.paths["#directus-config-server"]
     ).toEqual(["./types/directus-config-server.d.ts"]);
+    expect(nuxt.options.typescript.nodeTsConfig.include).toEqual(["/project/directus.config.ts"]);
   });
 
   it("reports a missing configured source and still exposes empty aliases", async () => {
@@ -103,13 +104,15 @@ describe("directus-config module setup", () => {
     const module = (await import("../src/module")).default;
     const setup = Reflect.get(module, "setup");
     if (typeof setup !== "function") throw new TypeError("Module setup is unavailable.");
+    const nuxt = createNuxt();
 
-    await setup({}, createNuxt());
+    await setup({}, nuxt);
 
     expect(logger.info).toHaveBeenCalledWith(
       "No Directus config source found at directus.config.ts."
     );
     expect(loadDirectusConfigSource).toHaveBeenCalledWith(undefined);
+    expect(nuxt.options.typescript.nodeTsConfig.include).toEqual([]);
     expect(addTemplate).toHaveBeenCalledTimes(1);
     expect(addServerTemplate).toHaveBeenCalledTimes(1);
   });
