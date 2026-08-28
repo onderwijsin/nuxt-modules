@@ -222,6 +222,10 @@ The Nuxt module options are configured under `directusConfig`:
 
 A missing default file is valid and resolves to an empty shared configuration.
 
+When a config source is discovered, the module adds its path to Nuxt's generated Node TypeScript
+project. This keeps ambient declarations from tools such as Varlock available in
+`directus.config.ts` when it is opened in an IDE.
+
 ## Public API
 
 `@onderwijsin/nuxt-directus-config/config` exports:
