@@ -20,7 +20,12 @@ const state = vi.hoisted(() => ({
   parseResponse: vi.fn()
 }));
 
-vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
+vi.mock("nitropack/runtime", () => ({ useRuntimeConfig: () => state.config }));
+vi.mock("#imports", () => ({
+  useRuntimeConfig: () => {
+    throw new Error("Nuxt context is unavailable");
+  }
+}));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
 vi.mock("../src/runtime/server/utils/auth", () => ({
   createDirectusSession: state.createSession,
@@ -104,6 +109,16 @@ describe("server authentication operations", () => {
           reset_url: "https://app.example.test/reset"
         }
       })
+    );
+  });
+
+  it("uses event-bound server configuration without Nuxt app context", async () => {
+    const event = createTestEvent();
+
+    await expect(requestMagicLinkServer(event, "user@example.test")).resolves.toBeUndefined();
+    expect(state.fetch).toHaveBeenCalledWith(
+      "https://directus.example.test/auth/magic-links/request",
+      expect.anything()
     );
   });
 

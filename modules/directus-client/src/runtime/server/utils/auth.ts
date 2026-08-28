@@ -1,6 +1,6 @@
 import type { H3Event } from "h3";
 import { createError, setResponseStatus } from "h3";
-import { useRuntimeConfig } from "#imports";
+import { useRuntimeConfig } from "nitropack/runtime";
 import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
 import { ofetch } from "ofetch";
