@@ -67,6 +67,13 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.configFile !== false && !configFile) {
       log.info(`No Directus config source found at ${options.configFile}.`);
     }
+    if (configFile) {
+      nuxt.options.typescript.nodeTsConfig = defu(nuxt.options.typescript.nodeTsConfig, {});
+      nuxt.options.typescript.nodeTsConfig.include ??= [];
+      if (!nuxt.options.typescript.nodeTsConfig.include.includes(configFile)) {
+        nuxt.options.typescript.nodeTsConfig.include.push(configFile);
+      }
+    }
     const resolvedConfig = await loadDirectusConfigSource(configFile);
     setResolvedDirectusConfig(nuxt, resolvedConfig);
 

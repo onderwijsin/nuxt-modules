@@ -125,7 +125,9 @@ export default defineNuxtConfig({
 ```
 
 `configFile` can be root-relative or absolute. Set it to `false` to disable discovery. A missing
-default `directus.config.ts` is valid and resolves to empty shared configuration.
+default `directus.config.ts` is valid and resolves to empty shared configuration. When a config
+source is discovered, its path is added to Nuxt's generated Node TypeScript project so ambient
+declarations from tools such as Varlock remain available in IDEs.
 
 | Prop name                   | Data type                   | Required | Description                                                                                              |
 | --------------------------- | --------------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
