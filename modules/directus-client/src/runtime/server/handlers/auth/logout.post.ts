@@ -1,10 +1,10 @@
 import { defineEventHandler } from "h3";
 
-import { destroyDirectusSession } from "../../utils/auth";
+import { logoutServer } from "../../utils/auth-server";
 import { assertDirectusEventSameOrigin } from "../../utils/csrf";
 
 export default defineEventHandler(async (event) => {
   assertDirectusEventSameOrigin(event);
-  await destroyDirectusSession(event);
+  await logoutServer(event);
   return null;
 });

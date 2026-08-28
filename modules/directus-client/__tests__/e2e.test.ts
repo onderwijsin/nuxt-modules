@@ -173,4 +173,12 @@ describe("Directus client and server composables", async () => {
       })
     ).resolves.toMatchObject({ userId: "user-1", requiresTfaSetup: false });
   });
+
+  it("redeems a magic link directly during initial SSR", async () => {
+    const response = await fetch(url("/redeem"));
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain('data-testid="redeemed"');
+  });
 });
