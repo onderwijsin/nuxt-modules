@@ -17,33 +17,32 @@ Use this reference for configuration changes involving `@onderwijsin/nuxt-direct
 
 ## `directus` options
 
-| Option                              | Default                             | Contract                                                                                                              |
-| ----------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                           | `true`                              | Enables the Directus module.                                                                                          |
-| `instance.baseUrl`                  | —                                   | Optional Directus URL; requests require it.                                                                           |
-| `instance.staticToken`              | —                                   | Server-only static credential.                                                                                        |
-| `client.nuxtBaseUrl`                | —                                   | Absolute Nuxt application URL; required by the client module when authentication is enabled for SSR auth proxy calls. |
-| `client.proxy.path`                 | `/_directus/proxy`                  | Absolute same-origin browser proxy path; root paths and auth-route collisions are rejected.                           |
-| `client.commands`                   | `readItem`, `readItems`             | SDK command names to auto-import.                                                                                     |
-| `client.preview.enabled`            | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                 |
-| `client.preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                                                     |
-| `client.preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names for preview context.                                                                            |
-| `client.auth.enabled`               | `false`                             | Enables cookie authentication, routes, and `useDirectusAuth`.                                                         |
-| `client.auth.turnstile.enabled`     | `false`                             | Enables Turnstile protection for login and password-reset-email requests.                                             |
-| `client.auth.cookie.name`           | `directus_session`                  | Session cookie name.                                                                                                  |
-| `client.auth.cookie.secure`         | `true`                              | Sends the cookie only over HTTPS.                                                                                     |
-| `client.auth.cookie.sameSite`       | `lax`                               | Cookie `SameSite` policy.                                                                                             |
-| `client.auth.cookie.path`           | `/`                                 | Cookie path.                                                                                                          |
-| `client.auth.cookie.maxAge`         | `2592000`                           | Cookie lifetime in seconds.                                                                                           |
-| `client.auth.cookie.domain`         | —                                   | Optional cookie domain.                                                                                               |
-| `client.auth.refreshSafetyWindow`   | `30000`                             | Refresh window in milliseconds before expiry.                                                                         |
-| `client.auth.passwordResetUrl`      | —                                   | URL sent to Directus as `reset_url`.                                                                                  |
-| `client.typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                                           |
-| `client.typegen.introspectionToken` | —                                   | Server-only schema-introspection token.                                                                               |
-| `client.typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                           |
-| `client.typegen.augmentations`      | all `true`                          | Generated-output transforms.                                                                                          |
-| `client.typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                                                         |
-| `client.typegen.transform`          | —                                   | Final build-time source transform.                                                                                    |
+| Option                              | Default                             | Contract                                                                                    |
+| ----------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| `enabled`                           | `true`                              | Enables the Directus module.                                                                |
+| `instance.baseUrl`                  | —                                   | Optional Directus URL; requests require it.                                                 |
+| `instance.staticToken`              | —                                   | Server-only static credential.                                                              |
+| `client.proxy.path`                 | `/_directus/proxy`                  | Absolute same-origin browser proxy path; root paths and auth-route collisions are rejected. |
+| `client.commands`                   | `readItem`, `readItems`             | SDK command names to auto-import.                                                           |
+| `client.preview.enabled`            | `true`                              | Enables preview query parsing and request-scoped preview credentials.                       |
+| `client.preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                           |
+| `client.preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names for preview context.                                                  |
+| `client.auth.enabled`               | `false`                             | Enables cookie authentication, routes, and `useDirectusAuth`.                               |
+| `client.auth.turnstile.enabled`     | `false`                             | Enables Turnstile protection for login and password-reset-email requests.                   |
+| `client.auth.cookie.name`           | `directus_session`                  | Session cookie name.                                                                        |
+| `client.auth.cookie.secure`         | `true`                              | Sends the cookie only over HTTPS.                                                           |
+| `client.auth.cookie.sameSite`       | `lax`                               | Cookie `SameSite` policy.                                                                   |
+| `client.auth.cookie.path`           | `/`                                 | Cookie path.                                                                                |
+| `client.auth.cookie.maxAge`         | `2592000`                           | Cookie lifetime in seconds.                                                                 |
+| `client.auth.cookie.domain`         | —                                   | Optional cookie domain.                                                                     |
+| `client.auth.refreshSafetyWindow`   | `30000`                             | Refresh window in milliseconds before expiry.                                               |
+| `client.auth.passwordResetUrl`      | —                                   | URL sent to Directus as `reset_url`.                                                        |
+| `client.typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                 |
+| `client.typegen.introspectionToken` | —                                   | Server-only schema-introspection token.                                                     |
+| `client.typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                 |
+| `client.typegen.augmentations`      | all `true`                          | Generated-output transforms.                                                                |
+| `client.typegen.rules`              | `{}`                                | Generated field type overrides keyed by collection and field.                               |
+| `client.typegen.transform`          | —                                   | Final build-time source transform.                                                          |
 
 ## Shared `collections` options
 

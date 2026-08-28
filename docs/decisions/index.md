@@ -5,18 +5,19 @@ They are binding for the feature they cover until explicitly revisited.
 
 ## Records
 
-| Decision                                                                    | Status   | Date       | Scope                                                                 |
-| --------------------------------------------------------------------------- | -------- | ---------- | --------------------------------------------------------------------- |
-| [Compatibility testing policy](compatibility-testing.md)                    | Accepted | 2026-08-15 | Supported Node, Nuxt, and deployment-runtime validation               |
-| [Shared Directus configuration](directus-config.md)                         | Accepted | 2026-08-12 | Directus configuration discovery, schemas, and module composition     |
-| [Directus and Nitro error normalization](directus-error-normalization.md)   | Accepted | 2026-08-13 | Directus client error boundary and Nitro validation errors            |
-| [Directus sealed session](directus-sealed-session.md)                       | Accepted | 2026-08-13 | Session sealing, rotation, cookies, and runtime boundaries            |
-| [Directus session authentication](directus-session-auth.md)                 | Accepted | 2026-08-13 | Directus login, refresh, logout, and session facade                   |
-| [Sentry config reads `NITRO_PRESET`](sentry-config-nitro-preset.md)         | Accepted | 2026-08-11 | Sentry module setup and Nitro runtime selection                       |
-| [Simple rate limiter](simple-rate-limiter.md)                               | Accepted | 2026-08-11 | Rate-limit guarantees, storage, proxy handling, and security scope    |
-| [Static text and Vue I18n compatibility](static-text-i18n-compatibility.md) | Accepted | 2026-08-11 | Static-text translation API and i18n coexistence                      |
-| [Redirect timing eligibility](redirect-timing-eligibility.md)               | Accepted | 2026-08-26 | Redirect timing checks, cached responses, and performance trade-offs  |
-| [Zod sensitivity augmentation](zod-sensitive.md)                            | Accepted | 2026-08-12 | Sensitive-field metadata and public Directus configuration projection |
+| Decision                                                                    | Status   | Date       | Scope                                                                   |
+| --------------------------------------------------------------------------- | -------- | ---------- | ----------------------------------------------------------------------- |
+| [Compatibility testing policy](compatibility-testing.md)                    | Accepted | 2026-08-15 | Supported Node, Nuxt, and deployment-runtime validation                 |
+| [Shared Directus configuration](directus-config.md)                         | Accepted | 2026-08-12 | Directus configuration discovery, schemas, and module composition       |
+| [Directus and Nitro error normalization](directus-error-normalization.md)   | Accepted | 2026-08-13 | Directus client error boundary and Nitro validation errors              |
+| [Directus authentication during SSR](directus-auth-ssr.md)                  | Accepted | 2026-08-28 | SSR authentication transport, security boundaries, and regression tests |
+| [Directus sealed session](directus-sealed-session.md)                       | Accepted | 2026-08-13 | Session sealing, rotation, cookies, and runtime boundaries              |
+| [Directus session authentication](directus-session-auth.md)                 | Accepted | 2026-08-13 | Directus login, refresh, logout, and session facade                     |
+| [Sentry config reads `NITRO_PRESET`](sentry-config-nitro-preset.md)         | Accepted | 2026-08-11 | Sentry module setup and Nitro runtime selection                         |
+| [Simple rate limiter](simple-rate-limiter.md)                               | Accepted | 2026-08-11 | Rate-limit guarantees, storage, proxy handling, and security scope      |
+| [Static text and Vue I18n compatibility](static-text-i18n-compatibility.md) | Accepted | 2026-08-11 | Static-text translation API and i18n coexistence                        |
+| [Redirect timing eligibility](redirect-timing-eligibility.md)               | Accepted | 2026-08-26 | Redirect timing checks, cached responses, and performance trade-offs    |
+| [Zod sensitivity augmentation](zod-sensitive.md)                            | Accepted | 2026-08-12 | Sensitive-field metadata and public Directus configuration projection   |
 
 ## Create or revisit a decision
 

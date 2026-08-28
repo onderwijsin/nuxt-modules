@@ -1,12 +1,9 @@
-import { createError, defineEventHandler } from "h3";
+import { defineEventHandler } from "h3";
 
-import { ensureFreshDirectusSession } from "../../utils/auth";
+import { refreshServer } from "../../utils/auth-server";
 import { assertDirectusEventSameOrigin } from "../../utils/csrf";
 
 export default defineEventHandler(async (event) => {
   assertDirectusEventSameOrigin(event);
-  const session = await ensureFreshDirectusSession(event);
-  if (!session)
-    throw createError({ statusCode: 401, statusMessage: "Directus session is invalid" });
-  return session.snapshot;
+  return refreshServer(event);
 });

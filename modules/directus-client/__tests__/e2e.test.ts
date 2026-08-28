@@ -14,9 +14,29 @@ describe("Directus client and server composables", async () => {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(
         JSON.stringify({
-          data: { access_token: "access", refresh_token: "refresh", expires: 60_000 }
+          data: { access_token: "access", refresh_token: "refresh", expires: 1 }
         })
       );
+      return;
+    }
+
+    if (request.url?.startsWith("/auth/refresh")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          data: {
+            access_token: "refreshed-access",
+            refresh_token: "refreshed-refresh",
+            expires: 60_000
+          }
+        })
+      );
+      return;
+    }
+
+    if (request.url?.startsWith("/auth/logout")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({}));
       return;
     }
 
@@ -27,6 +47,12 @@ describe("Directus client and server composables", async () => {
     }
 
     if (request.url?.startsWith("/auth/password/request")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({}));
+      return;
+    }
+
+    if (request.url?.startsWith("/auth/password/reset")) {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({}));
       return;
@@ -172,5 +198,27 @@ describe("Directus client and server composables", async () => {
         headers: { origin: new URL(url("/")).origin }
       })
     ).resolves.toMatchObject({ userId: "user-1", requiresTfaSetup: false });
+  });
+
+  it("redeems a magic link directly during initial SSR", async () => {
+    const response = await fetch(url("/redeem"));
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain('data-testid="redeemed"');
+  });
+
+  it("executes server-side password and magic-link operations without proxy requests", async () => {
+    const response = await fetch(url("/server-auth"));
+
+    expect(response.status).toBe(200);
+    await expect(response.text()).resolves.toContain('data-testid="server-auth"');
+  });
+
+  it("executes server-side refresh through the auth bridge", async () => {
+    const response = await fetch(url("/server-auth-refresh"));
+
+    expect(response.status).toBe(200);
+    await expect(response.text()).resolves.toContain('data-testid="server-auth-refresh"');
   });
 });

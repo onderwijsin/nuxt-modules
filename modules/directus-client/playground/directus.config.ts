@@ -7,7 +7,6 @@ export default defineDirectusConfig({
     staticToken: ENV.DIRECTUS_STATIC_TOKEN
   },
   client: {
-    nuxtBaseUrl: "http://localhost:3000",
     auth: {
       enabled: true,
       sessionSecret:

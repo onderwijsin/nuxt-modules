@@ -23,13 +23,6 @@ export const directusClientOptionsSchema = directusConfigSchema
         message: "client.auth.sessionSecret is required when authentication is enabled"
       });
     }
-    if (options.client.auth.enabled && !options.client.nuxtBaseUrl) {
-      context.addIssue({
-        code: "custom",
-        path: ["client", "nuxtBaseUrl"],
-        message: "client.nuxtBaseUrl is required when authentication is enabled"
-      });
-    }
   });
 
 export type ModuleOptions = z.input<typeof directusClientOptionsSchema>;
