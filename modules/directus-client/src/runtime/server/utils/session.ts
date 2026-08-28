@@ -8,9 +8,10 @@ import {
   type H3Event,
   type SessionConfig
 } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime/config";
 import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-utils";
 import { z } from "zod";
+
+import { getDirectusRuntimeConfig } from "./runtime-config";
 
 /** Token-free user data persisted with a Directus session. */
 export interface DirectusSessionSnapshot {
@@ -73,7 +74,7 @@ interface ResolvedDirectusSession {
  * @returns Cookie serialization options.
  */
 function cookieOptions(event: H3Event) {
-  const options = useRuntimeConfig(event).directusClient.auth;
+  const options = getDirectusRuntimeConfig(event).directusClient.auth;
   return {
     httpOnly: true,
     secure: options.cookie.secure,
@@ -96,7 +97,7 @@ function cookieOptions(event: H3Event) {
  * @returns H3 session configuration.
  */
 function sessionConfig(event: H3Event, secret: string): SessionConfig {
-  const auth = useRuntimeConfig(event).directusClient.auth;
+  const auth = getDirectusRuntimeConfig(event).directusClient.auth;
   return {
     name: auth.cookie.name,
     password: secret,
@@ -113,7 +114,7 @@ function sessionConfig(event: H3Event, secret: string): SessionConfig {
  * @returns Configured session secrets.
  */
 function sessionSecrets(event: H3Event): readonly string[] {
-  const auth = useRuntimeConfig(event).directusClient.auth;
+  const auth = getDirectusRuntimeConfig(event).directusClient.auth;
   return auth.sessionSecret ? [auth.sessionSecret, ...(auth.previousSessionSecrets ?? [])] : [];
 }
 
@@ -178,7 +179,7 @@ export async function sealDirectusSession(
  * @param cookieValue - Versioned sealed session value.
  */
 export function writeDirectusSessionCookie(event: H3Event, cookieValue: string): void {
-  const auth = useRuntimeConfig(event).directusClient.auth;
+  const auth = getDirectusRuntimeConfig(event).directusClient.auth;
   setCookie(event, auth.cookie.name, cookieValue, cookieOptions(event));
 }
 
@@ -206,7 +207,7 @@ export async function getDirectusSessionDetails(
   event: H3Event,
   sealedValue?: string
 ): Promise<ResolvedDirectusSession | undefined> {
-  const config = useRuntimeConfig(event);
+  const config = getDirectusRuntimeConfig(event);
   const value = sealedValue ?? getCookie(event, config.directusClient.auth.cookie.name);
   if (!isString(value) || !isNonBlankString(value)) return undefined;
   if (!value.startsWith(DIRECTUS_SESSION_DATA_PREFIX)) {
@@ -247,6 +248,6 @@ export async function getDirectusSession(event: H3Event): Promise<DirectusSessio
  * @param event - Incoming request event.
  */
 export function clearDirectusSession(event: H3Event): void {
-  const config = useRuntimeConfig(event);
+  const config = getDirectusRuntimeConfig(event);
   deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
 }
