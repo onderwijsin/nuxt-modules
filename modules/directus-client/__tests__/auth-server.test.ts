@@ -20,7 +20,7 @@ const state = vi.hoisted(() => ({
   parseResponse: vi.fn()
 }));
 
-vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
+vi.mock("nitropack/runtime", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
 vi.mock("../src/runtime/server/utils/auth", () => ({
   createDirectusSession: state.createSession,

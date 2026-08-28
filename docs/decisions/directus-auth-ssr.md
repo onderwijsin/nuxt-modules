@@ -50,6 +50,12 @@ The implementation follows this flow:
 5. The proxy handler validates CSRF, validates the body, validates Turnstile where configured, and
    delegates the actual Directus/session work to the server utility.
 
+Server-only utilities use Nitro's request-aware `useRuntimeConfig(event)` rather than Nuxt's ambient
+`#imports` version. The server bridge may be called from asynchronous page middleware after Nuxt's
+composable context has been suspended; configuration and session operations must therefore be
+resolved from the H3 event, not from ambient Nuxt context. Consumer code does not need to wrap the
+call in `runWithContext()`.
+
 The utility layer is deliberately shared by the server plugin and HTTP handlers so the two entry
 points cannot drift in Directus payloads, configured redirect URLs, session establishment, or error
 behavior.
@@ -87,6 +93,10 @@ security boundary strict while preventing SSR-only calls from being forced throu
 SSR authentication no longer depends on URL resolution, application host configuration, or an
 internal network request. It also avoids false CSRF failures during page middleware and keeps
 Directus requests request-scoped.
+
+Using Nitro's event-bound runtime configuration adds a small server-runtime constraint: utilities
+that participate in this bridge must receive and use the current H3 event for request-specific
+configuration.
 
 The server bridge is intentionally not a public HTTP API. It must remain available only through
 Nuxt's server runtime, and future server-side authentication operations must preserve the

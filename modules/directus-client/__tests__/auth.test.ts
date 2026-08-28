@@ -31,6 +31,7 @@ vi.mock("#imports", () => ({
 }));
 
 vi.mock("nitropack/runtime", () => ({
+  useRuntimeConfig: () => state.config,
   useStorage: () => state.storage
 }));
 
