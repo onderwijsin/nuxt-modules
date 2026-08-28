@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-static-text",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "Nuxt module for type-safe static text translation.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {

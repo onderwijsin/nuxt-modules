@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.2
+
+### Patch Changes
+
+- d225f8f: Use an absolute Nuxt application URL for server-side Directus authentication proxy requests while preserving relative same-origin browser requests.
+- Updated dependencies [d225f8f]
+- Updated dependencies [70baa65]
+  - @onderwijsin/nuxt-directus-config@0.5.1
+
 ## 0.5.1
 
 ### Patch Changes
