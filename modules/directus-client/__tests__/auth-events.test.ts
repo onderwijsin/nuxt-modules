@@ -106,6 +106,18 @@ describe("Directus authentication hooks", () => {
     });
   });
 
+  it("resets a password through the same-origin endpoint", async () => {
+    const auth = useDirectusAuth();
+    state.fetch.mockResolvedValue(undefined);
+
+    await auth.passwordReset("reset-token", "new-password");
+
+    expect(state.fetch).toHaveBeenCalledWith("/_directus/auth/password-reset", {
+      method: "POST",
+      body: { token: "reset-token", password: "new-password" }
+    });
+  });
+
   it("redeems a magic link into the normal session and login event", async () => {
     const auth = useDirectusAuth();
     const snapshot = {
