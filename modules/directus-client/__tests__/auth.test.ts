@@ -27,10 +27,13 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("#imports", () => ({
-  useRuntimeConfig: () => state.config
+  useRuntimeConfig: () => {
+    throw new Error("Nuxt context is unavailable");
+  }
 }));
 
 vi.mock("nitropack/runtime", () => ({
+  useRuntimeConfig: () => state.config,
   useStorage: () => state.storage
 }));
 

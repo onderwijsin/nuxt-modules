@@ -8,7 +8,7 @@ import {
   type H3Event,
   type SessionConfig
 } from "h3";
-import { useRuntimeConfig } from "#imports";
+import { useRuntimeConfig } from "nitropack/runtime";
 import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-utils";
 import { z } from "zod";
 
