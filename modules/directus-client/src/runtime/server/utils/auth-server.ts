@@ -1,6 +1,5 @@
 import type { H3Event } from "h3";
 import { createError } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
@@ -13,6 +12,7 @@ import {
   parseDirectusAuthenticationResponse
 } from "./auth";
 import type { DirectusSessionSnapshot } from "./session";
+import { getDirectusRuntimeConfig } from "./runtime-config";
 
 /** Validated login input accepted by the server authentication utility. */
 export const loginServerSchema = z.object({
@@ -85,7 +85,7 @@ export async function logoutServer(event: H3Event): Promise<void> {
  * @returns Resolves after Directus accepts the request.
  */
 export async function requestPasswordResetServer(event: H3Event, email: string): Promise<void> {
-  const config = useRuntimeConfig(event);
+  const config = getDirectusRuntimeConfig(event);
   const resetUrl = config.directusClient.auth.passwordResetUrl;
   if (!resetUrl)
     throw createError({ statusCode: 500, statusMessage: "Directus passwordResetUrl is required" });
@@ -107,7 +107,7 @@ export async function resetPasswordServer(
   token: string,
   password: string
 ): Promise<void> {
-  const config = useRuntimeConfig(event);
+  const config = getDirectusRuntimeConfig(event);
   await ofetch(joinURL(config.directusClient.baseUrl, "auth/password/reset"), {
     method: "POST",
     body: { token, password }
@@ -121,7 +121,7 @@ export async function resetPasswordServer(
  * @returns Resolves after Directus accepts the request.
  */
 export async function requestMagicLinkServer(event: H3Event, email: string): Promise<void> {
-  const config = useRuntimeConfig(event);
+  const config = getDirectusRuntimeConfig(event);
   const redirectUrl = config.directusClient.auth.magicLinks.redirectUrl;
   if (!redirectUrl)
     throw createError({
@@ -146,7 +146,7 @@ export async function redeemMagicLinkServer(
   token: string,
   otp?: string
 ): Promise<DirectusSessionSnapshot> {
-  const config = useRuntimeConfig(event);
+  const config = getDirectusRuntimeConfig(event);
   const response = await ofetch<unknown>(
     joinURL(config.directusClient.baseUrl, "auth/magic-links/redeem"),
     {

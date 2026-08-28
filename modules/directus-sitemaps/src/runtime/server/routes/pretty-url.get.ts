@@ -1,6 +1,7 @@
 import { defineEventHandler, getRequestURL, sendRedirect } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
+import { useRuntimeConfig } from "#imports";
 import { joinURL } from "ufo";
+import { isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 import config from "#directus-sitemaps-config";
 import { shouldUseNamedSitemaps } from "../utils/helpers";
 
@@ -19,7 +20,11 @@ export default defineEventHandler((event) => {
       301
     );
   }
-  const pathPrefix = useRuntimeConfig(event).sitemapsPathPrefix;
+  const runtimeConfig = useRuntimeConfig(event);
+  const pathPrefix =
+    isRecord(runtimeConfig) && isString(runtimeConfig.sitemapsPathPrefix)
+      ? runtimeConfig.sitemapsPathPrefix
+      : "/__sitemap__/";
   if (path.startsWith(pathPrefix) && path !== pathPrefix && !path.endsWith(".xml")) {
     return sendRedirect(event, joinURL(path, ".xml"), 301);
   }

@@ -20,11 +20,9 @@ const state = vi.hoisted(() => ({
   parseResponse: vi.fn()
 }));
 
-vi.mock("nitropack/runtime", () => ({ useRuntimeConfig: () => state.config }));
+vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("#imports", () => ({
-  useRuntimeConfig: () => {
-    throw new Error("Nuxt context is unavailable");
-  }
+  useRuntimeConfig: () => state.config
 }));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
 vi.mock("../src/runtime/server/utils/auth", () => ({

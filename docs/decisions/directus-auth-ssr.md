@@ -54,11 +54,12 @@ The utility layer is deliberately shared by the server plugin and HTTP handlers 
 points cannot drift in Directus payloads, configured redirect URLs, session establishment, or error
 behavior.
 
-Server-only utilities use Nitro's request-aware `useRuntimeConfig(event)` rather than Nuxt's ambient
-`#imports` version. The server bridge may be called from asynchronous page middleware after Nuxt's
-composable context has been suspended; configuration and session operations must therefore be
-resolved from the H3 event, not from ambient Nuxt context. Consumer code does not need to wrap the
-call in `runWithContext()`.
+Server-only utilities resolve configuration from the current H3 event rather than Nuxt's ambient
+`#imports` context or Nitro's broad runtime barrel. The server bridge may be called from
+asynchronous page middleware after Nuxt's composable context has been suspended; configuration and
+session operations must therefore be resolved from the H3 event. This also avoids loading Nitro's
+generated `#nitro-internal-virtual/storage` dependencies into application runtime code. Consumer
+code does not need to wrap the call in `runWithContext()`.
 
 ## Alternatives considered
 

@@ -1,6 +1,5 @@
 import type { H3Event } from "h3";
 import { createError, setResponseStatus } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
 import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
 import { ofetch } from "ofetch";
@@ -17,6 +16,7 @@ import {
   type DirectusSessionSnapshot,
   writeDirectusSessionCookie
 } from "./session";
+import { getDirectusRuntimeConfig } from "./runtime-config";
 
 const currentUserFields = ["id", "email", "first_name", "last_name"] as const;
 
@@ -118,7 +118,8 @@ interface RefreshStorage {
  * @returns The configured refresh-flight storage.
  */
 async function getRefreshStorage(): Promise<RefreshStorage> {
-  const { useStorage } = await import("nitropack/runtime");
+  const nitroStorageModule = "nitropack/runtime/storage";
+  const { useStorage } = await import(/* @vite-ignore */ nitroStorageModule);
   return useStorage(REFRESH_STORAGE_MOUNT);
 }
 
@@ -130,7 +131,7 @@ async function getRefreshStorage(): Promise<RefreshStorage> {
  * @returns An upstream Directus URL.
  */
 function getDirectusEndpoint(event: H3Event, path: string): string {
-  const baseUrl = useRuntimeConfig(event).directusClient.baseUrl;
+  const baseUrl = getDirectusRuntimeConfig(event).directusClient.baseUrl;
   if (!baseUrl) {
     throw createError({ statusCode: 503, statusMessage: "Directus is not configured" });
   }
@@ -288,7 +289,7 @@ export async function ensureFreshDirectusSession(
 ): Promise<DirectusSession | undefined> {
   const current = await getDirectusSession(event);
   if (!current) return undefined;
-  const safetyWindow = useRuntimeConfig(event).directusClient.auth.refreshSafetyWindow;
+  const safetyWindow = getDirectusRuntimeConfig(event).directusClient.auth.refreshSafetyWindow;
   if (current.expiresAt > Date.now() + safetyWindow) return current;
 
   const storage = await getRefreshStorage();

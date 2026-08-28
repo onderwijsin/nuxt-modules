@@ -1,4 +1,4 @@
-import { defineNuxtPlugin, useRequestEvent, useState } from "#app";
+import { defineNuxtPlugin, useRequestEvent, useRuntimeConfig, useState } from "#app";
 
 import { createServerDirectusClient } from "../../server/utils/client";
 import {
@@ -27,6 +27,13 @@ const { getDirectusSession } = await import("../../server/utils/session.js");
  */
 export default defineNuxtPlugin(async (nuxtApp) => {
   const event = useRequestEvent();
+
+  if (event) {
+    event.context.nitro = {
+      ...event.context.nitro,
+      runtimeConfig: useRuntimeConfig()
+    };
+  }
 
   // Load session into state in server plugin - this keeps the auth composable free of server runtime code
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
