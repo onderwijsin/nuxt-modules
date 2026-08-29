@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
-import { attempt, isDefined } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
 import { DEFAULT_TARGETS, FIELD_NAMES, NON_ALLOWED_PROPERTIES } from "../../../shared";
 import type { NewsletterSignupInput } from "../../../shared";
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
     throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
   }
 
-  for (const [name, field] of Object.entries(fields)) {
+  for (const [name, field] of toEntries(fields)) {
     const value = parsed.data[name];
     if (field.required && (!isDefined(value) || value === null || value === "")) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
