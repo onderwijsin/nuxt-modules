@@ -1,5 +1,7 @@
 type NewsletterProvider = "loops" | "mailchimp";
 
+export type NewsletterSignupPropertyValue = string | number | boolean | string[] | null | undefined;
+
 export interface NewsletterSignupInput {
   email: string;
   firstName?: string;
@@ -9,14 +11,17 @@ export interface NewsletterSignupInput {
   userGroup?: string;
   source: string;
   listId?: string;
+  [property: string]: NewsletterSignupPropertyValue;
 }
+
+/** Contact properties reserved for newsletter signup control data. */
+export const NON_ALLOWED_PROPERTIES = ["listId", "subscribed"] as const;
 
 export const DEFAULT_TARGETS: Record<NewsletterProvider, Record<string, string>> = {
   loops: {
     email: "email",
     firstName: "firstName",
     lastName: "lastName",
-    organization: "organization",
     userId: "userId",
     userGroup: "userGroup",
     source: "source"

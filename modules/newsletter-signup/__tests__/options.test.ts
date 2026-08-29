@@ -48,6 +48,17 @@ describe("newsletter signup option shape", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts arbitrary contact properties with provider targets", () => {
+    const result = optionsSchema.safeParse({
+      provider: "loops",
+      apiKey: "loops-key",
+      fields: { favoriteColor: { target: "favorite_color" } },
+      lists: { default: "newsletter" }
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects Mailchimp lists without server values", () => {
     const result = optionsSchema.safeParse({
       provider: "mailchimp",

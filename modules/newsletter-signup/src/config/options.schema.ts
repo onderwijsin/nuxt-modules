@@ -6,6 +6,8 @@ export const newsletterFieldSchema = z.object({
   required: z.boolean().optional()
 });
 
+const newsletterFieldsSchema = z.record(z.string().trim().min(1), newsletterFieldSchema);
+
 export const newsletterEndpointSchema = z.object({
   enabled: z.boolean().optional(),
   url: z
@@ -31,17 +33,7 @@ const commonOptionsShape = {
   enabled,
   apiKey: z.string().optional(),
   endpoint: newsletterEndpointSchema.optional(),
-  fields: z
-    .object({
-      email: newsletterFieldSchema.optional(),
-      firstName: newsletterFieldSchema.optional(),
-      lastName: newsletterFieldSchema.optional(),
-      organization: newsletterFieldSchema.optional(),
-      userId: newsletterFieldSchema.optional(),
-      userGroup: newsletterFieldSchema.optional(),
-      source: newsletterFieldSchema.optional()
-    })
-    .optional()
+  fields: newsletterFieldsSchema.optional()
 };
 
 const loopsOptionsSchema = z.strictObject({

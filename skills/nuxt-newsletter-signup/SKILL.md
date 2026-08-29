@@ -161,7 +161,9 @@ client-side selectors. Provider credentials and Mailchimp server values are not 
 
 ## Supported payload
 
-Only these fields are supported:
+These standard fields are supported, along with arbitrary properties configured with a `target`
+under `newsletterSignup.fields`. Custom values may be strings, numbers, booleans, string arrays,
+`null`, or `undefined`:
 
 ```ts
 {
@@ -173,14 +175,27 @@ Only these fields are supported:
   userGroup?: string;
   source?: string;
   listId?: string;
+  [property: string]: string | number | boolean | string[] | null | undefined;
 }
 ```
 
 `userId` and `userGroup` are forwarded to Loops using their native field names. For Mailchimp, map
 them to custom merge fields with `fields.userId.target` and `fields.userGroup.target`. Any field can
-be made server-side required with `fields.<name>.required: true`. `source` defaults to `"api"`.
-Loops stores it as the contact source; Mailchimp stores it as a member tag. Additional fields
-require a custom consumer endpoint.
+be made server-side required with `fields.<name>.required: true`. Loops requires
+`fields.organization.target` for `organization`; it has no Loops default. Custom properties also
+require a target and are sent to Loops using that target or to Mailchimp as merge fields:
+
+```ts
+fields: {
+  organization: { target: "company" },
+  favoriteColor: { target: "FAVORITE_COLOR" }
+}
+```
+
+An arbitrary property without a configured target is rejected. `source` defaults to `"api"`. Loops
+stores it as the contact source; Mailchimp stores it as a member tag. Additional fields must be
+string, number, boolean, string-array, `null`, or `undefined` values. The reserved properties
+`listId` and `subscribed` cannot be used as contact properties.
 
 ## Client usage
 
