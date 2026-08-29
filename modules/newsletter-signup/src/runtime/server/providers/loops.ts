@@ -1,6 +1,6 @@
 import { $fetch } from "ofetch";
 import { z } from "zod";
-import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import type { ModuleOptions, NewsletterFieldConfig } from "../../../config/options.schema";
 import { DEFAULT_TARGETS, NON_ALLOWED_PROPERTIES } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";
@@ -24,7 +24,7 @@ export async function subscribeToLoops(
   const fields: Record<string, NewsletterFieldConfig> = config.fields ?? {};
   const targets = DEFAULT_TARGETS.loops;
   const body: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(input)) {
+  for (const [name, value] of toEntries(input)) {
     if (NON_ALLOWED_PROPERTIES.some((property) => property === name)) continue;
     const target = fields[name]?.target ?? targets[name];
     if (target) body[target] = value;

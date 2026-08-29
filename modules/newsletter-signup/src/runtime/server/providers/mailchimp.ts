@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { $fetch } from "ofetch";
 import { z } from "zod";
-import { attemptWithRetry, isDefined } from "@onderwijsin/nuxt-module-utils/shared";
+import { attemptWithRetry, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import type { ModuleOptions, NewsletterFieldConfig } from "../../../config/options.schema";
 import { DEFAULT_TARGETS, NON_ALLOWED_PROPERTIES } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";
@@ -26,7 +26,7 @@ export async function subscribeToMailchimp(
 ): Promise<{ success: true }> {
   const fields: Record<string, NewsletterFieldConfig> = config.fields ?? {};
   const mergeFields: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(input)) {
+  for (const [name, value] of toEntries(input)) {
     if (
       name === "email" ||
       name === "source" ||
