@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { $fetch } from "ofetch";
 import { z } from "zod";
-import { attemptWithRetry } from "@onderwijsin/nuxt-module-utils/shared";
+import { attemptWithRetry, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import type { ModuleOptions, NewsletterFieldConfig } from "../../../config/options.schema";
-import { DEFAULT_TARGETS } from "../../shared";
+import { DEFAULT_TARGETS, NON_ALLOWED_PROPERTIES } from "../../shared";
 import type { NewsletterSignupInput } from "../../shared";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../types/errors";
 import { createNewsletterSignupError, getErrorStatus } from "../utils/errors";
@@ -25,9 +25,15 @@ export async function subscribeToMailchimp(
   config: ModuleOptions
 ): Promise<{ success: true }> {
   const fields: Record<string, NewsletterFieldConfig> = config.fields ?? {};
-  const mergeFields: Record<string, string> = {};
-  for (const [name, value] of Object.entries(input)) {
-    if (name === "email" || name === "source") continue;
+  const mergeFields: Record<string, unknown> = {};
+  for (const [name, value] of toEntries(input)) {
+    if (
+      name === "email" ||
+      name === "source" ||
+      NON_ALLOWED_PROPERTIES.some((property) => property === name)
+    )
+      continue;
+    if (!isDefined(value)) continue;
     const target = fields[name]?.target ?? DEFAULT_TARGETS.mailchimp[name];
     if (target) mergeFields[target] = value;
   }

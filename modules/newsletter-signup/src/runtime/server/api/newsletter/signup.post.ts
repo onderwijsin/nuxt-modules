@@ -1,9 +1,9 @@
 import { defineEventHandler, readBody } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { enforceRateLimit } from "@onderwijsin/nuxt-simple-rate-limiter/runtime";
-import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
-import { FIELD_NAMES } from "../../../shared";
+import { DEFAULT_TARGETS, FIELD_NAMES, NON_ALLOWED_PROPERTIES } from "../../../shared";
 import type { NewsletterSignupInput } from "../../../shared";
 import type { NewsletterFieldConfig } from "../../../../config/options.schema";
 import { NEWSLETTER_SIGNUP_ERROR_CODES } from "../../../types/errors";
@@ -22,7 +22,18 @@ const signupSchema = z
     source: z.string().trim().min(1).max(256).optional(),
     listId: z.string().trim().min(1).max(256).optional()
   })
-  .strict();
+  .catchall(
+    z.union([
+      z.string().trim().min(1).max(1024),
+      z.number().finite(),
+      z.boolean(),
+      z.array(z.string()),
+      z.null(),
+      z.undefined()
+    ])
+  );
+
+const standardFieldNames = new Set<string>(FIELD_NAMES);
 
 /**
  * Handles provider-independent newsletter signup requests.
@@ -58,8 +69,34 @@ export default defineEventHandler(async (event) => {
     throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
   }
 
-  for (const name of FIELD_NAMES.slice(1)) {
-    if (fields[name]?.required && !parsed.data[name]) {
+  for (const [name, field] of toEntries(fields)) {
+    const value = parsed.data[name];
+    if (field.required && (!isDefined(value) || value === null || value === "")) {
+      throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
+    }
+  }
+
+  for (const name of Object.keys(parsed.data)) {
+    if (name === "listId") continue;
+    if (NON_ALLOWED_PROPERTIES.some((property) => property === name)) {
+      throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
+    }
+    if (standardFieldNames.has(name)) continue;
+    if (!fields[name]?.target) {
+      throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
+    }
+  }
+
+  for (const name of FIELD_NAMES) {
+    if (
+      name === "email" ||
+      name === "source" ||
+      !isDefined(parsed.data[name]) ||
+      parsed.data[name] === null
+    )
+      continue;
+    const target = fields[name]?.target ?? DEFAULT_TARGETS[config.provider][name];
+    if (!target) {
       throw createNewsletterSignupError(400, NEWSLETTER_SIGNUP_ERROR_CODES.invalidInput);
     }
   }
@@ -77,14 +114,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const normalizedInput: NewsletterSignupInput = {
-    email: parsed.data.email,
-    firstName: parsed.data.firstName,
-    lastName: parsed.data.lastName,
-    organization: parsed.data.organization,
-    userId: parsed.data.userId,
-    userGroup: parsed.data.userGroup,
-    source: parsed.data.source ?? "api",
-    listId: parsed.data.listId
+    ...parsed.data,
+    source: parsed.data.source ?? "api"
   };
   if (config.provider === "loops") {
     return subscribeToLoops(normalizedInput, listId, config);

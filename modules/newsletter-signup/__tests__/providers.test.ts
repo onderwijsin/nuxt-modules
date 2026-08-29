@@ -20,7 +20,10 @@ const input: NewsletterSignupInput = {
   source: "homepage"
 };
 
-const loopsConfig: ModuleOptions = { apiKey: "loops-key", fields: {} };
+const loopsConfig: ModuleOptions = {
+  apiKey: "loops-key",
+  fields: { organization: { target: "organization" } }
+};
 const mailchimpConfig: ModuleOptions = { apiKey: "mailchimp-key", fields: {} };
 
 describe("newsletter provider adapters", () => {
@@ -97,6 +100,17 @@ describe("newsletter provider adapters", () => {
     expect(fetchMock.mock.calls[0]?.[1]?.body).toMatchObject({ given_name: "Ada" });
   });
 
+  it("maps arbitrary Loops contact properties to configured targets", async () => {
+    fetchMock.mockResolvedValue({ success: true, id: "contact-id" });
+
+    await subscribeToLoops({ ...input, favoriteColor: "blue" }, "loops-list", {
+      ...loopsConfig,
+      fields: { favoriteColor: { target: "favoriteColor" } }
+    });
+
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toMatchObject({ favoriteColor: "blue" });
+  });
+
   it("uses the selected Mailchimp audience server and sends source as a tag", async () => {
     fetchMock.mockResolvedValue({ email_address: input.email, status: "subscribed" });
 
@@ -126,6 +140,19 @@ describe("newsletter provider adapters", () => {
         }
       }
     );
+  });
+
+  it("maps arbitrary Mailchimp contact properties to merge fields", async () => {
+    fetchMock.mockResolvedValue({ email_address: input.email, status: "subscribed" });
+
+    await subscribeToMailchimp({ ...input, favoriteColor: "blue" }, "audience-a", "us4", {
+      ...mailchimpConfig,
+      fields: { favoriteColor: { target: "FAVORITE_COLOR" } }
+    });
+
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toMatchObject({
+      merge_fields: { FAVORITE_COLOR: "blue" }
+    });
   });
 
   it("upserts an existing unsubscribed Mailchimp member to subscribed", async () => {

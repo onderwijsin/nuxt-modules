@@ -153,7 +153,9 @@ and Mailchimp server values remain server-only.
 
 ## Supported fields and mapping
 
-The generated endpoint accepts only these fields:
+The generated endpoint accepts these standard fields plus arbitrary contact properties when they are
+configured under `fields` with a `target`. Custom values may be strings, numbers, booleans, string
+arrays, `null`, or `undefined`:
 
 ```ts
 interface NewsletterSignupPayload {
@@ -165,6 +167,7 @@ interface NewsletterSignupPayload {
   userGroup?: string;
   source?: string;
   listId?: string;
+  [property: string]: string | number | boolean | string[] | null | undefined;
 }
 ```
 
@@ -175,7 +178,7 @@ The provider defaults are:
 | `email`        | `email`          | `email_address`          |
 | `firstName`    | `firstName`      | `FNAME`                  |
 | `lastName`     | `lastName`       | `LNAME`                  |
-| `organization` | `organization`   | `ORG`                    |
+| `organization` | configurable     | `ORG`                    |
 | `userId`       | `userId`         | configurable merge field |
 | `userGroup`    | `userGroup`      | configurable merge field |
 | `source`       | contact `source` | member tag               |
@@ -183,7 +186,9 @@ The provider defaults are:
 `source` defaults to `"api"` when omitted. Loops receives it as the contact source. Mailchimp
 receives it as `tags: [source]`, not as a merge field.
 
-Use `fields.*.target` to override provider property names for the configurable contact fields:
+Use `fields.*.target` to map provider property names. Loops requires an explicit target for
+`organization` and any custom property. Mailchimp uses custom targets as merge-field names; its
+standard `firstName`, `lastName`, and `organization` mappings remain available by default:
 
 ```ts
 fields: {
@@ -195,9 +200,24 @@ fields: {
 }
 ```
 
+Custom properties use the same format:
+
+```ts
+fields: {
+  favoriteColor: {
+    target: "FAVORITE_COLOR";
+  }
+}
+```
+
+The signup payload may then include `favoriteColor: "blue"`. An arbitrary property without a
+configured target is rejected. `email` remains `email_address` for Mailchimp, and `source` remains a
+member tag there; their Mailchimp `target` values are ignored. `listId` selects the audience and is
+never sent as a contact property. The reserved properties `listId` and `subscribed` cannot be used
+as contact properties.
+
 `required` controls server-side request validation. Consumer-side form validation is still
-recommended for immediate feedback. Fields beyond the supported set require a consumer-owned custom
-endpoint.
+recommended for immediate feedback.
 
 ## Endpoint
 

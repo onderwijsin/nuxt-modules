@@ -60,9 +60,78 @@ describe("newsletter signup endpoint", () => {
     await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it("accepts payload values at the configured maximum lengths", async () => {
+  it("rejects arbitrary properties without a configured target", async () => {
     runtimeConfig.value = {
       newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "list" } }
+    };
+    body.value = { email: "ada@example.com", favoriteColor: "blue" };
+    const handler = await loadHandler();
+
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it("rejects reserved properties even when they have a configured target", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: {
+        provider: "loops",
+        apiKey: "key",
+        fields: { subscribed: { target: "subscribed" } },
+        lists: { default: "list" }
+      }
+    };
+    body.value = { email: "ada@example.com", subscribed: "true" };
+    const handler = await loadHandler();
+
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it("accepts supported custom property values configured with targets", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: {
+        provider: "loops",
+        apiKey: "key",
+        fields: {
+          favoriteColor: { target: "favorite_color" },
+          subscriberCount: { target: "subscriber_count" },
+          isActive: { target: "is_active" },
+          interests: { target: "interests" },
+          nickname: { target: "nickname" }
+        },
+        lists: { default: "list" }
+      }
+    };
+    body.value = {
+      email: "ada@example.com",
+      favoriteColor: "blue",
+      subscriberCount: 3,
+      isActive: false,
+      interests: ["math", "history"],
+      nickname: null
+    };
+    const handler = await loadHandler();
+
+    await expect(handler(createTestEvent())).resolves.toEqual({ success: true });
+    expect(loopsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        favoriteColor: "blue",
+        subscriberCount: 3,
+        isActive: false,
+        interests: ["math", "history"],
+        nickname: null
+      }),
+      "list",
+      runtimeConfig.value.newsletterSignup
+    );
+  });
+
+  it("accepts payload values at the configured maximum lengths", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: {
+        provider: "loops",
+        apiKey: "key",
+        fields: { organization: { target: "organization" } },
+        lists: { default: "list" }
+      }
     };
     body.value = {
       email: "a".repeat(500) + "@example.com",
@@ -81,6 +150,17 @@ describe("newsletter signup endpoint", () => {
       newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "list" } }
     };
     body.value = { email: "ada@example.com", organization: "a".repeat(1025) };
+    const handler = await loadHandler();
+
+    await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
+    expect(loopsMock).not.toHaveBeenCalled();
+  });
+
+  it("requires a target for Loops properties without a default mapping", async () => {
+    runtimeConfig.value = {
+      newsletterSignup: { provider: "loops", apiKey: "key", lists: { default: "list" } }
+    };
+    body.value = { email: "ada@example.com", organization: "Analytical Engines" };
     const handler = await loadHandler();
 
     await expect(handler(createTestEvent())).rejects.toMatchObject({ statusCode: 400 });
