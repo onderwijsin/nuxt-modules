@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+### Minor Changes
+
+- 7f15984: Support arbitrary contact properties through explicitly configured provider targets, and
+  remove the default Loops mapping for `organization`.
+
 ## 1.1.0
 
 ### Minor Changes
