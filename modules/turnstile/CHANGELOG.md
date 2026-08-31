@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- dc687da: Remove the upstream verifier preset after module dependencies finish registering.
+
 ## 0.3.1
 
 ### Patch Changes
