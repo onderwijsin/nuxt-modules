@@ -92,6 +92,8 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.turnstile = defu(nuxt.options.turnstile, {});
     nuxt.options.turnstile.siteKey ??= options.siteKey;
 
+    // The upstream module adds this preset from its own nitro:config hook after setup.
+    // Wait until all modules finish registering hooks so this filter runs afterwards.
     nuxt.hook("modules:done", () => {
       nuxt.hook("nitro:config", (nitro) => {
         const imports = nitro.imports;
