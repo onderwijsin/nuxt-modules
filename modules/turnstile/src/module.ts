@@ -97,7 +97,7 @@ export default defineNuxtModule<ModuleOptions>({
       if (!isRecord(imports) || !hasKey(imports, "presets")) return;
 
       const presets = imports.presets;
-      if (!Array.isArray(presets)) return;
+      if (!isArray(presets)) return;
 
       imports.presets = presets.filter((preset) => !isUpstreamTurnstileVerifierPreset(preset));
     });
