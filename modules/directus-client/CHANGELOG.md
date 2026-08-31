@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.3
+
+### Patch Changes
+
+- 07db095: Catch magic link redemption error so failed requests are not hanging indefinitely
+- Updated dependencies [07db095]
+  - @onderwijsin/nuxt-turnstile@0.2.10
+
 ## 0.6.2
 
 ### Patch Changes

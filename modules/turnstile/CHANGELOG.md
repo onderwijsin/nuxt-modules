@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.10
+
+### Patch Changes
+
+- 07db095: Preserve Cloudflare Turnstile test-key metadata when validating verifier responses.
+
 ## 0.2.9
 
 ### Patch Changes
