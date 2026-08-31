@@ -42,7 +42,7 @@ describe("turnstile module", async () => {
     ).resolves.toEqual({ ok: true });
   });
 
-  it("uses verifyTokenWithTurnstile for raw server verification", async () => {
+  it("uses verifyTurnstileToken for raw server verification", async () => {
     await expect(
       $fetch("/api/turnstile/raw-validate", {
         method: "POST",

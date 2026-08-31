@@ -65,6 +65,7 @@ describe("turnstile module setup", () => {
   it("registers dependencies, config, runtime imports, and types", async () => {
     const mod = (await import("../src/module")).default as any;
     const nuxt: any = {
+      hook: vi.fn(),
       options: {
         turnstile: {},
         runtimeConfig: {
@@ -94,13 +95,33 @@ describe("turnstile module setup", () => {
     expect(addTypeTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "types/turnstile-config.d.ts" })
     );
+
+    const nitro = {
+      imports: {
+        presets: [
+          {
+            from: "@nuxtjs/turnstile/runtime/server/utils/verify",
+            imports: ["verifyTurnstileToken"]
+          },
+          { from: "@nuxtjs/turnstile/runtime/server/utils/verify", imports: ["otherImport"] },
+          { from: "@onderwijsin/nuxt-turnstile/runtime", imports: ["verifyTurnstileToken"] }
+        ]
+      }
+    };
+    const nitroConfigHook = nuxt.hook.mock.calls[0][1];
+    nitroConfigHook(nitro);
+
+    expect(nitro.imports.presets).toEqual([
+      { from: "@nuxtjs/turnstile/runtime/server/utils/verify", imports: ["otherImport"] },
+      { from: "@onderwijsin/nuxt-turnstile/runtime", imports: ["verifyTurnstileToken"] }
+    ]);
   });
 
   it("still registers type declarations when disabled", async () => {
     const mod = (await import("../src/module")).default as any;
     mod.setup(
       { enabled: false },
-      { options: { runtimeConfig: { public: {} }, build: { transpile: [] } } }
+      { hook: vi.fn(), options: { runtimeConfig: { public: {} }, build: { transpile: [] } } }
     );
     expect(addTypeTemplate).toHaveBeenCalled();
     expect(addImportsDir).not.toHaveBeenCalled();

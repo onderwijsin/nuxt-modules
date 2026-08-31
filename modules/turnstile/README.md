@@ -103,9 +103,10 @@ export default defineEventHandler(async (event) => {
 });
 ```
 
-The helper reads `x-turnstile-token` and verifies it through `@nuxtjs/turnstile`. It rejects
-missing, failed, unavailable, or mismatched-action tokens. In development, an absent secret leaves
-local forms usable; in production, it produces `TURNSTILE_SERVER_MISCONFIGURED`.
+The helper reads `x-turnstile-token` and verifies it directly with Cloudflare's Turnstile siteverify
+endpoint. It rejects missing, failed, unavailable, or mismatched-action tokens. In development, an
+absent secret leaves local forms usable; in production, it produces
+`TURNSTILE_SERVER_MISCONFIGURED`.
 
 Cloudflare's official test credentials return `metadata.result_with_testing_key: true` without an
 `action`. The helper accepts only that verified test-key response without action matching, so test
@@ -135,7 +136,7 @@ Stable error codes are `TURNSTILE_TOKEN_MISSING`, `TURNSTILE_VALIDATION_FAILED`,
 `TURNSTILE_SERVER_MISCONFIGURED`. Apply authorization and business validation in the consuming route
 after Turnstile succeeds; the module does not replace the route's existing submit or business logic.
 
-`verifyTokenWithTurnstile` is also auto-imported for server-only use when the raw Cloudflare
+`verifyTurnstileToken` is also auto-imported for server-only use when the raw Cloudflare
 verification response is needed. Prefer `assertTurnstileToken` for protected application routes.
 
 ## Compatibility
