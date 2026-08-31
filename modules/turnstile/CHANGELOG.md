@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 4a5384a: Rename the server auto-import `verifyTurnstileToken` to `verifyTokenWithTurnstile` to avoid client helper naming conflicts.
+
 ## 0.2.10
 
 ### Patch Changes
