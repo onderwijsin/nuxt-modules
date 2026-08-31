@@ -28,6 +28,8 @@ describe("redirects module", async () => {
         },
         "/foo-bar": { from: "/foo-bar", to: "/hyphenated", statusCode: 302 },
         "/foobar": { from: "/foobar", to: "/plain", statusCode: 302 },
+        "/self-no-slash": { from: "/self-no-slash", to: "/self-no-slash", statusCode: 302 },
+        "/self-slash": { from: "/self-slash", to: "/self-slash/", statusCode: 302 },
         "/refresh-origin": {
           from: "/refresh-origin",
           to: "/refresh-first",
@@ -53,6 +55,14 @@ describe("redirects module", async () => {
     await expect($fetch("/api/_test/refresh", { method: "POST" })).resolves.toMatchObject({
       data: expect.any(Object)
     });
+  });
+
+  it("ignores internal redirects that only differ by a trailing slash", async () => {
+    for (const path of ["/self-slash", "/self-no-slash"]) {
+      const response = await fetch(url(path), { redirect: "manual" });
+      expect(response.status).toBe(200);
+      expect(response.headers.has("location")).toBe(false);
+    }
   });
 
   it("invalidates cached public responses and primes the lookup after a webhook upsert", async () => {

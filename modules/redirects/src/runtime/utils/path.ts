@@ -39,3 +39,14 @@ export function toRedirectPath(origin: string): string {
 export function toRedirectStorageKey(origin: string): string {
   return `entries:${encodeURIComponent(toRedirectOrigin(origin))}`;
 }
+
+/**
+ * Checks whether an internal destination resolves to the request's normalized origin.
+ *
+ * @param origin - Current request origin.
+ * @param destination - Internal redirect destination.
+ * @returns Whether the origin and destination are equivalent after normalization.
+ */
+export function isRedirectSelfRedirect(origin: string, destination: string): boolean {
+  return toRedirectOrigin(origin) === toRedirectOrigin(destination);
+}

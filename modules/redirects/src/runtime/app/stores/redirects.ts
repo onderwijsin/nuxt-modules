@@ -6,7 +6,7 @@ import { computed, shallowRef } from "vue";
 import { useRuntimeConfig } from "#app";
 import { piniaPluginPersistedstate } from "#imports";
 
-import { toRedirectOrigin, toRedirectPath } from "../../server/utils/path";
+import { toRedirectOrigin, toRedirectPath } from "../../utils/path";
 import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../utils/dynamic";
 import { isRedirectActive } from "../../utils/eligibility";
 

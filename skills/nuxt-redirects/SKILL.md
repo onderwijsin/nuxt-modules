@@ -171,11 +171,13 @@ wins across all sources and within a source; duplicate later entries are logged 
 
 Origins normalize non-root trailing slashes and sort query key/value pairs. A query-bearing origin
 requires the same normalized query. A path-only redirect remains a fallback for requests that have
-query parameters. Destination query strings are preserved and incoming request query parameters are
-never merged into destinations. Protocol-less domains such as `sub.example.com/new` are treated as
-external HTTPS destinations; explicit URLs and internal paths are otherwise used unchanged.
-Destinations must be an internal path, protocol-relative URL, absolute HTTP(S) URL, or bare domain;
-control characters and non-HTTP schemes are rejected during ingestion.
+query parameters. Internal destinations equivalent to the request after trailing-slash normalization
+are ignored with a warning by both server and client middleware. Destination query strings are
+preserved and incoming request query parameters are never merged into destinations. Protocol-less
+domains such as `sub.example.com/new` are treated as external HTTPS destinations; explicit URLs and
+internal paths are otherwise used unchanged. Destinations must be an internal path,
+protocol-relative URL, absolute HTTP(S) URL, or bare domain; control characters and non-HTTP schemes
+are rejected during ingestion.
 
 ## Storage drivers
 

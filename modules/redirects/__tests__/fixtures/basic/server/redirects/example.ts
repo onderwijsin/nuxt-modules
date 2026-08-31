@@ -6,6 +6,8 @@ export default defineRedirectSource(() => [
   { from: "/search?q=old", to: "/search-archive?source=redirect", statusCode: 308 },
   { from: "/foo-bar", to: "/hyphenated" },
   { from: "/foobar", to: "/plain" },
+  { from: "/self-slash", to: "/self-slash/" },
+  { from: "/self-no-slash/", to: "/self-no-slash" },
   {
     from: "/refresh-origin",
     to: process.env.REDIRECTS_TEST_REFRESH_DESTINATION ?? "/refresh-first"

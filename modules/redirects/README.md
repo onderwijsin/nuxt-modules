@@ -60,7 +60,8 @@ request query parameters are never appended implicitly. Protocol-less domains su
 `sub.example.com/new` are treated as external HTTPS destinations; explicit URLs and internal paths
 are otherwise used unchanged. Destinations must be an internal path, protocol-relative URL, absolute
 HTTP(S) URL, or bare domain; control characters and other schemes such as `javascript:` and `data:`
-are rejected during ingestion.
+are rejected during ingestion. Internal redirects whose destination is equivalent to the request
+after trailing-slash normalization are ignored with a warning by both server and client middleware.
 
 ## Refreshing
 

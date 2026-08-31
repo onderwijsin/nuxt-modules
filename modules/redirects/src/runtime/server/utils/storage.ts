@@ -8,7 +8,7 @@ import type {
 import { useRuntimeConfig, useStorage } from "nitropack/runtime";
 import type { Storage } from "unstorage";
 
-import { toRedirectOrigin, toRedirectPath, toRedirectStorageKey } from "./path";
+import { toRedirectOrigin, toRedirectPath, toRedirectStorageKey } from "../../utils/path";
 import { normalizeRedirect } from "./validation";
 import { invalidateRedirectCache, primeRedirectLookupCache } from "./cache";
 import { compileDynamicRedirects, findCompiledDynamicRedirect } from "../../utils/dynamic";

@@ -3,7 +3,8 @@ import { useRuntimeConfig } from "nitropack/runtime";
 
 import { findRedirect } from "../utils/storage";
 import { createRedirectExclusionMatcher, isRedirectExcluded } from "../../utils/exclusions";
-import { toRedirectDestination } from "../../utils/destination";
+import { isExternalRedirectDestination, toRedirectDestination } from "../../utils/destination";
+import { isRedirectSelfRedirect } from "../../utils/path";
 
 const config = useRuntimeConfig().redirects;
 const exclusions = config ? createRedirectExclusionMatcher(config) : null;
@@ -24,8 +25,19 @@ export default defineEventHandler(async (event) => {
 
   try {
     const redirect = await findRedirect(`${requestUrl.pathname}${requestUrl.search}`);
-    if (redirect)
-      return sendRedirect(event, toRedirectDestination(redirect.to), redirect.statusCode);
+    if (redirect) {
+      const destination = toRedirectDestination(redirect.to);
+      if (
+        !isExternalRedirectDestination(destination) &&
+        isRedirectSelfRedirect(`${requestUrl.pathname}${requestUrl.search}`, destination)
+      ) {
+        console.warn(
+          `[redirects] Ignoring self-redirect from ${JSON.stringify(requestUrl.pathname + requestUrl.search)} to ${JSON.stringify(destination)}.`
+        );
+        return;
+      }
+      return sendRedirect(event, destination, redirect.statusCode);
+    }
   } catch (error) {
     console.error("[redirects] Server redirect lookup failed", error);
   }

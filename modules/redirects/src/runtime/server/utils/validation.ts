@@ -3,7 +3,7 @@ import type { RedirectTime, ResolvedRedirect } from "../../types/redirect";
 import { z } from "zod";
 
 import { isExternalRedirectDestination } from "../../utils/destination";
-import { toRedirectOrigin } from "./path";
+import { toRedirectOrigin } from "../../utils/path";
 import { withoutTrailingSlash } from "ufo";
 
 const redirectSchema = z.strictObject({
