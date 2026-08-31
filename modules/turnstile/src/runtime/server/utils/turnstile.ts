@@ -1,7 +1,6 @@
 import type { H3Event } from "h3";
 import { createError, getRequestHeader } from "h3";
 import { useRuntimeConfig } from "#imports";
-import { verifyTurnstileToken } from "@nuxtjs/turnstile/runtime/server/utils/verify.js";
 import { isAdmin } from "@onderwijsin/nuxt-module-utils/server";
 import { attempt, hasKey, isNumber, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { z } from "zod";
@@ -13,6 +12,56 @@ const turnstileVerificationSchema = z.object({
   action: z.string().optional(),
   metadata: z.object({ result_with_testing_key: z.boolean().optional() }).optional()
 });
+
+export const turnstileValidationErrorCodeSchema = z.enum([
+  "missing-input-secret",
+  "invalid-input-secret",
+  "missing-input-response",
+  "invalid-input-response",
+  "bad-request",
+  "timeout-or-duplicate",
+  "internal-error"
+]);
+
+export const turnstileValidationResponseSchema = z.object({
+  success: z.boolean(),
+  hostname: z.string(),
+  "error-codes": z.array(turnstileValidationErrorCodeSchema),
+
+  challenge_ts: z.string().optional(),
+  action: z.string().optional(),
+  cdata: z.string().optional()
+});
+
+export type TurnstileValidationResponse = z.infer<typeof turnstileValidationResponseSchema>;
+
+const endpoint = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+/**
+ * Verifies a Turnstile token with the Cloudflare Turnstile API.
+ * @param token - The Turnstile token to verify.
+ * @param event - Optional H3 request event.
+ * @param signal - Optional AbortSignal for request cancellation.
+ * @returns The parsed Turnstile validation response.
+ */
+export const verifyTurnstileToken = async (
+  token: string,
+  event?: H3Event,
+  signal?: AbortSignal
+): Promise<TurnstileValidationResponse> => {
+  const secretKey = useRuntimeConfig(event).turnstile.secretKey;
+  const response = await $fetch(endpoint, {
+    method: "POST",
+    body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
+    headers: {
+      "content-type": "application/x-www-form-urlencoded"
+    },
+    signal
+  });
+
+  const data = turnstileValidationResponseSchema.parse(response);
+  return data;
+};
 
 /**
  * Validates the Turnstile token from a protected request.
