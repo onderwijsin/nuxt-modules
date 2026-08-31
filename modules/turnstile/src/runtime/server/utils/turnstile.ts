@@ -30,7 +30,8 @@ export const turnstileValidationResponseSchema = z.object({
 
   challenge_ts: z.string().optional(),
   action: z.string().optional(),
-  cdata: z.string().optional()
+  cdata: z.string().optional(),
+  metadata: z.object({ result_with_testing_key: z.boolean().optional() }).optional()
 });
 
 export type TurnstileValidationResponse = z.infer<typeof turnstileValidationResponseSchema>;
