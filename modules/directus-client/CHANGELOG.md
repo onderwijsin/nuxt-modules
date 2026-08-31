@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.5
+
+### Patch Changes
+
+- 0346bec: Catch magic request errors and throw nuxt error
+- Updated dependencies [0346bec]
+  - @onderwijsin/nuxt-turnstile@0.3.1
+
 ## 0.6.4
 
 ### Patch Changes

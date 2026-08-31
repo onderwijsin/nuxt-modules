@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- 0346bec: Replace the upstream Turnstile verifier auto-import with a compatible local verifier.
+
 ## 0.3.0
 
 ### Minor Changes
