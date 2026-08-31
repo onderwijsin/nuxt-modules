@@ -38,7 +38,7 @@ const consumerEnvironment = {
 function run(command, arguments_, cwd) {
   const result = spawnSync(command, arguments_, {
     cwd,
-    env: { ...consumerEnvironment, COREPACK_ENABLE_PROJECT_SPEC: "0" },
+    env: consumerEnvironment,
     stdio: "inherit"
   });
   if (result.status !== 0) {
