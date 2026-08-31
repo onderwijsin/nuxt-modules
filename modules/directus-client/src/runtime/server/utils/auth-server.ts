@@ -129,10 +129,17 @@ export async function requestMagicLinkServer(event: H3Event, email: string): Pro
       statusCode: 500,
       statusMessage: "Directus magicLinks.redirectUrl is required when magic links are enabled"
     });
-  await ofetch(joinURL(config.directusClient.baseUrl, "auth/magic-links/request"), {
-    method: "POST",
-    body: { email, redirectUrl }
+
+  const { data, error } = await attempt(async () => {
+    return ofetch(joinURL(config.directusClient.baseUrl, "auth/magic-links/request"), {
+      method: "POST",
+      body: { email, redirectUrl }
+    });
   });
+  if (error) {
+    throw createError({ statusCode: 400, statusMessage: "Failed to request magic link" });
+  }
+  return data;
 }
 
 /**

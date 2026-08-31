@@ -84,9 +84,9 @@ async function onSubmit() {
 ## Backend implementation
 
 Call the helper before performing the protected operation. It reads `x-turnstile-token`, verifies it
-with `@nuxtjs/turnstile`, and rejects missing, invalid, unavailable, or mismatched-action tokens.
-For server-only code that needs the raw verification response, use the auto-imported
-`verifyTokenWithTurnstile`; otherwise prefer `assertTurnstileToken`.
+directly with Cloudflare's Turnstile siteverify endpoint, and rejects missing, invalid, unavailable,
+or mismatched-action tokens. For server-only code that needs the raw verification response, use the
+auto-imported `verifyTurnstileToken`; otherwise prefer `assertTurnstileToken`.
 
 ```ts
 import { z } from "zod";

@@ -16,6 +16,7 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
+import { hasKey, isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { version } from "../package.json";
 import { turnstileOptionsSchema } from "./config/options.schema";
@@ -30,6 +31,21 @@ const DEFAULTS = {
   adminToken: "",
   adminHeaderName: "x-admin-token"
 } satisfies Required<ModuleOptions>;
+
+/**
+ * Identifies the upstream verifier auto-import preset that conflicts with this module's verifier.
+ * @param preset - A Nitro auto-import preset candidate.
+ * @returns Whether the preset provides the upstream Turnstile verifier.
+ */
+function isUpstreamTurnstileVerifierPreset(preset: unknown): boolean {
+  return (
+    isRecord(preset) &&
+    isString(preset.from) &&
+    preset.from.includes("@nuxtjs/turnstile") &&
+    isArray(preset.imports) &&
+    preset.imports.includes("verifyTurnstileToken")
+  );
+}
 
 /** Registers shared Turnstile configuration, client helpers, and server validation. */
 export default defineNuxtModule<ModuleOptions>({
@@ -75,6 +91,16 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.turnstile = defu(nuxt.options.turnstile, {});
     nuxt.options.turnstile.siteKey ??= options.siteKey;
+
+    nuxt.hook("nitro:config", (nitro) => {
+      const imports = nitro.imports;
+      if (!isRecord(imports) || !hasKey(imports, "presets")) return;
+
+      const presets = imports.presets;
+      if (!isArray(presets)) return;
+
+      imports.presets = presets.filter((preset) => !isUpstreamTurnstileVerifierPreset(preset));
+    });
 
     transpileRuntime(nuxt, runtimeDir);
     addImportsDir(resolver.resolve(runtimeDir, "app", "composables"));
