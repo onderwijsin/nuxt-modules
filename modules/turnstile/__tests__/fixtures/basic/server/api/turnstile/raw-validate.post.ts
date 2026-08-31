@@ -1,8 +1,8 @@
-import { getRequestHeader } from "h3";
-import { TURNSTILE_TOKEN_HEADER } from "@onderwijsin/nuxt-turnstile/runtime";
+import { verifyTokenWithTurnstile } from "../../../../../../src/runtime/server/utils/turnstile";
+import { defineEventHandler, getRequestHeader } from "h3";
 
 export default defineEventHandler(async (event) => {
-  const token = getRequestHeader(event, TURNSTILE_TOKEN_HEADER);
+  const token = getRequestHeader(event, "x-turnstile-token");
   const result = await verifyTokenWithTurnstile(token ?? "", event);
 
   return { success: result.success };
