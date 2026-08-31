@@ -42,6 +42,15 @@ describe("turnstile module", async () => {
     ).resolves.toEqual({ ok: true });
   });
 
+  it("auto-imports verifyTokenWithTurnstile for raw server verification", async () => {
+    await expect(
+      $fetch("/api/turnstile/raw-validate", {
+        method: "POST",
+        headers: { "x-turnstile-token": "fixture-success" }
+      })
+    ).resolves.toEqual({ success: true });
+  });
+
   it("rejects a request without a Turnstile token", async () => {
     await expectTurnstileError(undefined, 400, {
       code: "TURNSTILE_TOKEN_MISSING",

@@ -135,6 +135,9 @@ Stable error codes are `TURNSTILE_TOKEN_MISSING`, `TURNSTILE_VALIDATION_FAILED`,
 `TURNSTILE_SERVER_MISCONFIGURED`. Apply authorization and business validation in the consuming route
 after Turnstile succeeds; the module does not replace the route's existing submit or business logic.
 
+`verifyTokenWithTurnstile` is also auto-imported for server-only use when the raw Cloudflare
+verification response is needed. Prefer `assertTurnstileToken` for protected application routes.
+
 ## Compatibility
 
 - Nuxt 4
