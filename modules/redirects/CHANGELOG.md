@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5
+
+### Patch Changes
+
+- 775c67e: Ignore malformed internal redirects that only differ from the request by a trailing slash.
+
 ## 0.2.4
 
 ### Patch Changes

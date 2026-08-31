@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.5
+
+### Patch Changes
+
+- 775c67e: Allow numeric `defaults.radius` values alongside string theme defaults in the public options type.
+
 ## 0.4.4
 
 ### Patch Changes
