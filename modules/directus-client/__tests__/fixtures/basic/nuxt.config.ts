@@ -1,12 +1,6 @@
 import directusModule from "../../../src/module";
-import { fileURLToPath } from "node:url";
 
 export default defineNuxtConfig({
-  alias: {
-    "@nuxtjs/turnstile/runtime/server/utils/verify.js": fileURLToPath(
-      new URL("./server/fixture-verify.ts", import.meta.url)
-    )
-  },
   modules: [directusModule],
   turnstile: { siteKey: "fixture-site-key", secretKey: "fixture-secret-key" },
   directusClient: {

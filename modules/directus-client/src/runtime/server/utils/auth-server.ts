@@ -13,6 +13,7 @@ import {
 } from "./auth";
 import type { DirectusSessionSnapshot } from "./session";
 import { getDirectusRuntimeConfig } from "./runtime-config";
+import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 
 /** Validated login input accepted by the server authentication utility. */
 export const loginServerSchema = z.object({
@@ -147,16 +148,17 @@ export async function redeemMagicLinkServer(
   otp?: string
 ): Promise<DirectusSessionSnapshot> {
   const config = getDirectusRuntimeConfig(event);
-  const response = await ofetch<unknown>(
-    joinURL(config.directusClient.baseUrl, "auth/magic-links/redeem"),
-    {
+
+  const { data, error } = await attempt(async () => {
+    return ofetch(joinURL(config.directusClient.baseUrl, "auth/magic-links/redeem"), {
       method: "POST",
       body: { token, ...(otp ? { otp } : {}), mode: "json" }
-    }
-  );
-  const session = await establishDirectusSession(
-    event,
-    parseDirectusAuthenticationResponse(response)
-  );
+    });
+  });
+
+  if (error) {
+    throw createError({ statusCode: 400, statusMessage: "Failed to redeem magic link" });
+  }
+  const session = await establishDirectusSession(event, parseDirectusAuthenticationResponse(data));
   return session.snapshot;
 }
