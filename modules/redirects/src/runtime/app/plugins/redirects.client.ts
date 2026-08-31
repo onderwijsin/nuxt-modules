@@ -12,6 +12,7 @@ import { $fetch } from "ofetch";
 import { useRedirectsStore } from "../stores/redirects";
 import { createRedirectExclusionMatcher, isRedirectExcluded } from "../../utils/exclusions";
 import { isExternalRedirectDestination, toRedirectDestination } from "../../utils/destination";
+import { isRedirectSelfRedirect } from "../../utils/path";
 
 interface RedirectLookupResponse {
   data: Redirect | null;
@@ -64,6 +65,15 @@ export default defineNuxtPlugin((nuxtApp) => {
       if (!redirect) return;
 
       const destination = toRedirectDestination(redirect.to);
+      if (
+        !isExternalRedirectDestination(destination) &&
+        isRedirectSelfRedirect(to.fullPath, destination)
+      ) {
+        console.warn(
+          `[redirects] Ignoring self-redirect from ${JSON.stringify(to.fullPath)} to ${JSON.stringify(destination)}.`
+        );
+        return;
+      }
       return navigateTo(destination, {
         external: isExternalRedirectDestination(destination),
         redirectCode: redirect.statusCode ?? 302

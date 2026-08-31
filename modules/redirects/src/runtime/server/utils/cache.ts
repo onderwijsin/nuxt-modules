@@ -1,7 +1,7 @@
 import { useNitroApp, useRuntimeConfig, useStorage } from "nitropack/runtime";
 import { hash } from "ohash";
 
-import { toRedirectOrigin, toRedirectPath } from "./path";
+import { toRedirectOrigin, toRedirectPath } from "../../utils/path";
 
 const CACHE_PREFIX = "cache:redirects";
 const INDEX_CACHE_KEY = `${CACHE_PREFIX}:index:all.json`;

@@ -35,7 +35,7 @@ export const themeDefaultsSchema = z
     font: z.string().trim().min(1).max(100).optional(),
     radius: z.number().finite().nonnegative().optional()
   })
-  .catchall(z.string().trim().min(1).max(100));
+  .catchall(z.union([z.string().trim().min(1).max(100), z.number().finite()]));
 
 /** Runtime validation for configured theme palettes. */
 const themeOptionsShape = {

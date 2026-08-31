@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   toRedirectOrigin,
   toRedirectPath,
-  toRedirectStorageKey
-} from "../src/runtime/server/utils/path";
+  toRedirectStorageKey,
+  isRedirectSelfRedirect
+} from "../src/runtime/utils/path";
 
 describe("redirect origin keys", () => {
   it("normalizes trailing slashes and query parameter order", () => {
@@ -15,5 +16,11 @@ describe("redirect origin keys", () => {
   it("keeps path-only fallback keys separate from exact query keys", () => {
     expect(toRedirectPath("/old?campaign=spring")).toBe("/old");
     expect(toRedirectStorageKey("/old?campaign=spring")).not.toBe(toRedirectStorageKey("/old"));
+  });
+
+  it("identifies equivalent origins despite trailing slashes", () => {
+    expect(isRedirectSelfRedirect("/foo/", "/foo")).toBe(true);
+    expect(isRedirectSelfRedirect("/foo", "/foo/")).toBe(true);
+    expect(isRedirectSelfRedirect("/foo", "/bar")).toBe(false);
   });
 });

@@ -2,11 +2,18 @@ import { describe, expect, it } from "vitest";
 import { fromEntries } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { themeOptionsSchema } from "../src/config/options.schema";
-import type { ThemePalette } from "../src/config/options.schema";
+import type { ThemeCustomizerDefaults, ThemePalette } from "../src/config/options.schema";
 
 const palette = fromEntries(
   [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [shade, "#123456"])
 ) as ThemePalette;
+
+const typedDefaults: ThemeCustomizerDefaults = {
+  font: "Inter",
+  radius: 0.375,
+  primary: "ocean",
+  secondary: "violet"
+};
 
 describe("theme option validation", () => {
   it("accepts complete custom groups and preserves unknown group names", () => {
@@ -47,6 +54,7 @@ describe("theme option validation", () => {
   });
 
   it("accepts typed initial defaults for fonts, radius, and color groups", () => {
+    expect(typedDefaults).toMatchObject({ radius: 0.375 });
     const result = themeOptionsSchema.safeParse({
       primary: { ocean: palette },
       defaults: { primary: "ocean", font: " Inter ", radius: 0.375, accent: "violet" }
