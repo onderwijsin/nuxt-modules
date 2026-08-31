@@ -92,14 +92,16 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.turnstile = defu(nuxt.options.turnstile, {});
     nuxt.options.turnstile.siteKey ??= options.siteKey;
 
-    nuxt.hook("nitro:config", (nitro) => {
-      const imports = nitro.imports;
-      if (!isRecord(imports) || !hasKey(imports, "presets")) return;
+    nuxt.hook("modules:done", () => {
+      nuxt.hook("nitro:config", (nitro) => {
+        const imports = nitro.imports;
+        if (!isRecord(imports) || !hasKey(imports, "presets")) return;
 
-      const presets = imports.presets;
-      if (!isArray(presets)) return;
+        const presets = imports.presets;
+        if (!isArray(presets)) return;
 
-      imports.presets = presets.filter((preset) => !isUpstreamTurnstileVerifierPreset(preset));
+        imports.presets = presets.filter((preset) => !isUpstreamTurnstileVerifierPreset(preset));
+      });
     });
 
     transpileRuntime(nuxt, runtimeDir);

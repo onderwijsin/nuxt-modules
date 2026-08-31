@@ -64,8 +64,9 @@ describe("turnstile module setup", () => {
 
   it("registers dependencies, config, runtime imports, and types", async () => {
     const mod = (await import("../src/module")).default as any;
+    const hooks = new Map<string, (value?: unknown) => void>();
     const nuxt: any = {
-      hook: vi.fn(),
+      hook: vi.fn((name: string, hook: (value?: unknown) => void) => hooks.set(name, hook)),
       options: {
         turnstile: {},
         runtimeConfig: {
@@ -108,8 +109,8 @@ describe("turnstile module setup", () => {
         ]
       }
     };
-    const nitroConfigHook = nuxt.hook.mock.calls[0][1];
-    nitroConfigHook(nitro);
+    hooks.get("modules:done")?.();
+    hooks.get("nitro:config")?.(nitro);
 
     expect(nitro.imports.presets).toEqual([
       { from: "@nuxtjs/turnstile/runtime/server/utils/verify", imports: ["otherImport"] },
