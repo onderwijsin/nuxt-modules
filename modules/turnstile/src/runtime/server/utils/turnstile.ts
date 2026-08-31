@@ -45,7 +45,7 @@ const endpoint = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
  * @param signal - Optional AbortSignal for request cancellation.
  * @returns The parsed Turnstile validation response.
  */
-export const verifyTurnstileToken = async (
+export const verifyTokenWithTurnstile = async (
   token: string,
   event?: H3Event,
   signal?: AbortSignal
@@ -99,7 +99,7 @@ export async function assertTurnstileToken(event: H3Event, expectedAction: strin
       expectedAction
     );
 
-  const result = await attempt(() => verifyTurnstileToken(token));
+  const result = await attempt(() => verifyTokenWithTurnstile(token));
   if (result.error !== null) {
     if (isErrorWithStatusCode(result.error)) throw result.error;
     throw createError({

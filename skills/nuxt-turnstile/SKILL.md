@@ -85,6 +85,8 @@ async function onSubmit() {
 
 Call the helper before performing the protected operation. It reads `x-turnstile-token`, verifies it
 with `@nuxtjs/turnstile`, and rejects missing, invalid, unavailable, or mismatched-action tokens.
+For server-only code that needs the raw verification response, use the auto-imported
+`verifyTokenWithTurnstile`; otherwise prefer `assertTurnstileToken`.
 
 ```ts
 import { z } from "zod";
