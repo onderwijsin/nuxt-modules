@@ -1,5 +1,5 @@
-import { verifyTurnstileToken } from "../../../../../../src/runtime/server/utils/turnstile";
 import { defineEventHandler, getRequestHeader } from "h3";
+import { verifyTurnstileToken } from "../../../../../../src/runtime/server/utils/verify";
 
 export default defineEventHandler(async (event) => {
   const token = getRequestHeader(event, "x-turnstile-token");

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const addImportsDir = vi.fn();
-const addServerScanDir = vi.fn();
+const addServerImports = vi.fn();
 const addTypeTemplate = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
 vi.mock("@nuxt/kit", () => ({
   addImportsDir,
-  addServerScanDir,
+  addServerImports,
   addTypeTemplate,
   useLogger: () => logger,
   createResolver: () => ({ resolve: (...segments: string[]) => segments.join("/") }),
@@ -58,15 +58,13 @@ vi.mock("zod", () => ({
 describe("turnstile module setup", () => {
   beforeEach(() => {
     vi.resetModules();
-    for (const mock of [addImportsDir, addServerScanDir, addTypeTemplate, ...Object.values(logger)])
+    for (const mock of [addImportsDir, addServerImports, addTypeTemplate, ...Object.values(logger)])
       mock.mockReset();
   });
 
   it("registers dependencies, config, runtime imports, and types", async () => {
     const mod = (await import("../src/module")).default as any;
-    const hooks = new Map<string, (value?: unknown) => void>();
     const nuxt: any = {
-      hook: vi.fn((name: string, hook: (value?: unknown) => void) => hooks.set(name, hook)),
       options: {
         turnstile: {},
         runtimeConfig: {
@@ -92,30 +90,13 @@ describe("turnstile module setup", () => {
       siteKey: "site-key"
     });
     expect(addImportsDir).toHaveBeenCalledWith("./runtime/app/composables");
-    expect(addServerScanDir).toHaveBeenCalledWith("./runtime/server");
+    expect(addServerImports).toHaveBeenCalledWith({
+      name: "assertTurnstileToken",
+      from: "./runtime/server/utils/turnstile"
+    });
     expect(addTypeTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "types/turnstile-config.d.ts" })
     );
-
-    const nitro = {
-      imports: {
-        presets: [
-          {
-            from: "@nuxtjs/turnstile/runtime/server/utils/verify",
-            imports: ["verifyTurnstileToken"]
-          },
-          { from: "@nuxtjs/turnstile/runtime/server/utils/verify", imports: ["otherImport"] },
-          { from: "@onderwijsin/nuxt-turnstile/runtime", imports: ["verifyTurnstileToken"] }
-        ]
-      }
-    };
-    hooks.get("modules:done")?.();
-    hooks.get("nitro:config")?.(nitro);
-
-    expect(nitro.imports.presets).toEqual([
-      { from: "@nuxtjs/turnstile/runtime/server/utils/verify", imports: ["otherImport"] },
-      { from: "@onderwijsin/nuxt-turnstile/runtime", imports: ["verifyTurnstileToken"] }
-    ]);
   });
 
   it("still registers type declarations when disabled", async () => {
@@ -126,5 +107,6 @@ describe("turnstile module setup", () => {
     );
     expect(addTypeTemplate).toHaveBeenCalled();
     expect(addImportsDir).not.toHaveBeenCalled();
+    expect(addServerImports).not.toHaveBeenCalled();
   });
 });
