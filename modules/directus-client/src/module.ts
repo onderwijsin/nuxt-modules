@@ -182,6 +182,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.runtimeConfig.public.directusClient = defu(
       {
         proxy: { path: options.client.proxy.path },
+        assets: options.client.assets,
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,
@@ -260,6 +261,19 @@ export default defineNuxtModule<ModuleOptions>({
       },
       nuxt.options.routeRules[`${options.client.proxy.path}/**`]
     );
+    if (options.client.assets.enabled) {
+      addServerHandler({
+        route: `${options.client.assets.path}/**`,
+        handler: resolver.resolve(runtimeDir, "server/handlers/assets")
+      });
+      nuxt.options.routeRules[`${options.client.assets.path}/**`] = defu(
+        {
+          cache: false,
+          prerender: false
+        },
+        nuxt.options.routeRules[`${options.client.assets.path}/**`]
+      );
+    }
 
     end();
   }

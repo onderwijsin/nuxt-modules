@@ -94,6 +94,9 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | Option                         | Default                             | Description                                                                                       |
 | ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `proxy.path`                   | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.   |
+| `assets.enabled`               | `true`                              | Enables the dedicated Directus `/assets` proxy route.                                             |
+| `assets.path`                  | `/_directus/assets`                 | Local asset proxy route using the same safe path validation as `proxy.path`.                      |
+| `assets.publicOnly`            | `false`                             | Uses anonymous asset requests only and never attempts session authentication when enabled.        |
 | `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
 | `preview.enabled`              | `true`                              | Enables preview query parsing.                                                                    |
 | `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |

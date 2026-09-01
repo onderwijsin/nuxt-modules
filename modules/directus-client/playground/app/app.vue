@@ -46,6 +46,7 @@ async function logout(): Promise<void> {
           color="neutral"
           variant="ghost"
         />
+        <UButton to="/assets" icon="i-lucide-image" label="Asset" color="neutral" variant="ghost" />
         <UButton
           to="/server"
           icon="i-lucide-server"

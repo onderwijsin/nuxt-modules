@@ -5,7 +5,11 @@ import { directusClientOptionsSchema } from "../src/config/options.schema";
 
 describe("Directus module options", () => {
   it("allows enabled modules without a baseUrl", () => {
-    expect(directusClientOptionsSchema.parse({})).toMatchObject({ enabled: true, instance: {} });
+    expect(directusClientOptionsSchema.parse({})).toMatchObject({
+      enabled: true,
+      instance: {},
+      client: { assets: { enabled: true, path: "/_directus/assets", publicOnly: false } }
+    });
     expect(
       directusClientOptionsSchema.parse({ client: { typegen: { enabled: false } } })
     ).toMatchObject({
@@ -117,6 +121,20 @@ describe("Directus module options", () => {
   it("rejects non-local proxy paths", () => {
     expect(() =>
       directusClientOptionsSchema.parse({ client: { proxy: { path: "https://example.test" } } })
+    ).toThrow();
+  });
+
+  it("validates and defaults the dedicated assets proxy", () => {
+    expect(directusClientOptionsSchema.parse({}).client.assets).toEqual({
+      enabled: true,
+      path: "/_directus/assets",
+      publicOnly: false
+    });
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { assets: { path: "/../assets" } } })
+    ).toThrow();
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { assets: { path: "https://example.test" } } })
     ).toThrow();
   });
 

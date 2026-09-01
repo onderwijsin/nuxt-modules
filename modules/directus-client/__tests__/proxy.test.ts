@@ -4,9 +4,10 @@ import { describe, expect, it } from "vitest";
 import {
   createSanitizedProxyFetch,
   getForwardedProxyHeaders,
-  requiresDirectusProxySameOrigin,
-  resolveDirectusProxyUrl
+  requiresDirectusProxySameOrigin
 } from "../src/runtime/server/handlers/proxy";
+import { resolveDirectusAssetUrl } from "../src/runtime/server/handlers/assets";
+import { resolveDirectusProxyUrl } from "../src/runtime/server/utils/proxy";
 import { assertDirectusSameOrigin } from "../src/runtime/server/utils/csrf";
 import {
   getDirectusAuthorizationHeader,
@@ -14,6 +15,22 @@ import {
 } from "../src/runtime/server/utils/credentials";
 
 describe("Directus proxy boundary", () => {
+  it("keeps asset requests below the Directus assets prefix", () => {
+    expect(
+      resolveDirectusAssetUrl(
+        "https://cms.example.test/directus/",
+        "/_directus/assets",
+        new URL("https://app.example.test/_directus/assets/file-id?width=800&fit=cover")
+      )
+    ).toBe("https://cms.example.test/directus/assets/file-id?width=800&fit=cover");
+    expect(() =>
+      resolveDirectusAssetUrl(
+        "https://cms.example.test",
+        "/_directus/assets",
+        new URL("https://app.example.test/_directus/assets/../admin")
+      )
+    ).toThrow(/Invalid Directus proxy path/);
+  });
   it("requires same-origin metadata for every server-selected credential", () => {
     expect(requiresDirectusProxySameOrigin({ source: "none" })).toBe(false);
     expect(requiresDirectusProxySameOrigin({ source: "session", accessToken: "session" })).toBe(
