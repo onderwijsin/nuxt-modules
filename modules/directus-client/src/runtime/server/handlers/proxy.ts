@@ -1,8 +1,6 @@
-import { createError, defineEventHandler, getRequestURL, proxyRequest } from "h3";
+import { defineEventHandler, getRequestURL, proxyRequest } from "h3";
 import { useRuntimeConfig } from "#imports";
-import { attemptSync } from "@onderwijsin/nuxt-module-utils";
 import { ofetch } from "ofetch";
-import { hasProtocol, isScriptProtocol, joinURL } from "ufo";
 
 import {
   type DirectusCredential,
@@ -10,6 +8,7 @@ import {
   resolveDirectusRequestContext
 } from "../utils/credentials";
 import { assertDirectusEventSameOrigin } from "../utils/csrf";
+import { resolveDirectusProxyUrl } from "../utils/proxy";
 
 const blockedRequestHeaders = new Set([
   "authorization",
@@ -37,53 +36,6 @@ const blockedResponseHeaders = new Set([
   "transfer-encoding",
   "upgrade"
 ]);
-/**
- * Resolves a proxy request into a Directus URL while preserving the request query string.
- *
- * @param baseUrl Configured Directus URL.
- * @param proxyPath Configured same-origin proxy prefix.
- * @param requestUrl Incoming request URL.
- * @returns A validated upstream URL.
- */
-export function resolveDirectusProxyUrl(
-  baseUrl: string,
-  proxyPath: string,
-  requestUrl: URL
-): string {
-  const pathname = requestUrl.pathname;
-  if (pathname !== proxyPath && !pathname.startsWith(`${proxyPath}/`)) {
-    throw createError({ statusCode: 404, statusMessage: "Invalid Directus proxy path" });
-  }
-
-  const suffix = pathname.slice(proxyPath.length) || "/";
-  const { data: decodedSuffix } = attemptSync(() => decodeURIComponent(suffix));
-  if (!decodedSuffix) {
-    throw createError({ statusCode: 400, statusMessage: "Malformed Directus proxy path" });
-  }
-
-  if (
-    decodedSuffix.includes("\0") ||
-    decodedSuffix.split("/").some((segment) => segment === "." || segment === "..")
-  ) {
-    throw createError({ statusCode: 400, statusMessage: "Invalid Directus proxy path" });
-  }
-
-  const { data: base } = attemptSync(() => new URL(baseUrl));
-  if (!base) {
-    throw createError({ statusCode: 500, statusMessage: "Directus baseUrl must use HTTP(S)" });
-  }
-  if (
-    !hasProtocol(baseUrl, { strict: true }) ||
-    isScriptProtocol(base.protocol) ||
-    (base.protocol !== "http:" && base.protocol !== "https:")
-  ) {
-    throw createError({ statusCode: 500, statusMessage: "Directus baseUrl must use HTTP(S)" });
-  }
-
-  const target = new URL(joinURL(baseUrl, decodedSuffix));
-  target.search = requestUrl.search;
-  return target.toString();
-}
 
 /**
  * Returns request headers that are removed before forwarding to Directus.

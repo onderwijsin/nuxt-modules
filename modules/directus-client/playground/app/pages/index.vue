@@ -134,6 +134,28 @@ const requestStatus = computed(() => {
             />
           </div>
         </UCard>
+
+        <UCard>
+          <div class="flex h-full flex-col gap-5">
+            <div class="flex gap-3">
+              <UIcon name="i-lucide-image" class="mt-0.5 size-5 text-primary" />
+              <div>
+                <h3 class="font-semibold text-highlighted">Directus asset</h3>
+                <p class="mt-1 text-sm leading-6 text-muted">
+                  Fetch a fixed asset through the dedicated same-origin proxy.
+                </p>
+              </div>
+            </div>
+            <UButton
+              to="/assets"
+              label="Open asset"
+              trailing-icon="i-lucide-arrow-right"
+              color="neutral"
+              variant="outline"
+              class="w-fit"
+            />
+          </div>
+        </UCard>
       </div>
     </section>
 

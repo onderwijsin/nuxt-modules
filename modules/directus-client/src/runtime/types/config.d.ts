@@ -30,6 +30,7 @@ declare module "nuxt/schema" {
   interface PublicRuntimeConfig {
     directusClient: {
       proxy: { path: string };
+      assets: { enabled: boolean; path: string; publicOnly: boolean };
       preview: {
         enabled: boolean;
         versioning: boolean;
