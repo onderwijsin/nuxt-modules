@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- 8927938: Add a dedicated Directus assets proxy with anonymous-first, session-escalating authentication and configurable public-only behavior.
+
 ## 0.5.2
 
 ### Patch Changes

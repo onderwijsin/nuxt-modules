@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [8927938]
+  - @onderwijsin/nuxt-directus-client@0.7.0
+  - @onderwijsin/nuxt-directus-config@0.6.0
+
 ## 0.3.3
 
 ### Patch Changes

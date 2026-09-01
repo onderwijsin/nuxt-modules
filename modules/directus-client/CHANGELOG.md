@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- 8927938: Add a dedicated Directus assets proxy with anonymous-first, session-escalating authentication and configurable public-only behavior.
+
+### Patch Changes
+
+- Updated dependencies [8927938]
+- Updated dependencies [8927938]
+  - @onderwijsin/nuxt-directus-config@0.6.0
+  - @onderwijsin/nuxt-turnstile@0.3.3
+
 ## 0.6.5
 
 ### Patch Changes
