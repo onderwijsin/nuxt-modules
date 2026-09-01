@@ -22,6 +22,15 @@ const localPath = z
  */
 const proxySchema = z.strictObject({ path: localPath }).default({ path: "/_directus/proxy" });
 
+/** Zod schema for the dedicated Directus assets proxy configuration. */
+const assetsSchema = z
+  .strictObject({
+    enabled: z.boolean().default(true),
+    path: localPath.default("/_directus/assets"),
+    publicOnly: z.boolean().default(false)
+  })
+  .default({ enabled: true, path: "/_directus/assets", publicOnly: false });
+
 /**
  * Default values for the previewSchema
  */
@@ -146,6 +155,7 @@ const directusAuthSchema = z
 /** Shared Directus client settings excluding instance credentials. */
 export const directusClientSchema = z.strictObject({
   proxy: proxySchema,
+  assets: assetsSchema,
   commands: z.array(directusCommandsSchema).default(["readItem", "readItems"]).sensitive(),
   preview: directusPreviewSchema,
   auth: directusAuthSchema,

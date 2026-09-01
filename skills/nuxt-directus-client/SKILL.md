@@ -71,6 +71,9 @@ All options are configured under `directusClient`.
 | `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                              |
 | `instance.staticToken`                | —                                   | Optional server-only static credential.                                                               |
 | `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected.     |
+| `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                        |
+| `client.assets.path`                  | `/_directus/assets`                 | Absolute local asset-proxy path using the same safe local-path validation as the REST proxy.          |
+| `client.assets.publicOnly`            | `false`                             | Keeps asset requests anonymous and never escalates to the current session when enabled.               |
 | `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                     |
 | `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                 |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                     |

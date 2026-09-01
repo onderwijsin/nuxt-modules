@@ -37,6 +37,7 @@ describe("directus-config virtual aliases", () => {
     await expect($fetch("/api/public-config")).resolves.toEqual({
       client: {
         proxy: { path: "/_cms" },
+        assets: { enabled: true, path: "/_directus/assets", publicOnly: false },
         preview: {
           enabled: true,
           versioning: true,
