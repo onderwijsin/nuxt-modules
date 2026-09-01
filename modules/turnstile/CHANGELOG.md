@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+### Patch Changes
+
+- 8927938: Only `assertTurnstileToken` is now registered as a server auto-import; raw verification remains an explicit utility import.
+
 ## 0.3.2
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-directus-config",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Shared typed Directus configuration for Nuxt Directus modules.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
