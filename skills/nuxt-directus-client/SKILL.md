@@ -145,8 +145,9 @@ import {
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session from a Nitro request. It returns `null` for an
-unauthenticated, invalid, expired, or disabled session. Access and refresh tokens are never
+Reads the current token-free Directus session from a Nitro request. It refreshes an expiring or
+expired access token while Directus accepts the refresh token, and returns `null` for an
+unauthenticated, invalid, refresh-rejected, or disabled session. Access and refresh tokens are never
 returned.
 
 ```ts
@@ -246,14 +247,15 @@ navigation remain the consuming application's responsibility.
 | `requestMagicLink` | `requestMagicLink(email: string, meta?): Promise<void>`         | Requests a passwordless login link when magic links are enabled.                                                                                                                                              |
 | `redeemMagicLink`  | `redeemMagicLink(token: string, otp?: string): Promise<void>`   | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                             |
 
-The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
-state. Hydration therefore does not require a session request. Server-side refresh coordination uses
-Nitro storage. A shared, read-after-write consistent storage driver is required for coordination
-across processes or Cloudflare isolates; the default in-memory driver is instance-local. Refresh
-starts in the safety window and may continue after access-token expiry; Directus remains the
-authority on refresh-token validity. `refreshAttempts` controls the total number of `ofetch`
-attempts. Completed refresh results are H3-sealed before they are stored, but the configured storage
-backend remains sensitive infrastructure.
+The SSR server plugin refreshes an expiring access token when possible before reading the token-free
+snapshot from the `httpOnly` cookie into Nuxt state. The session endpoint uses the same
+refresh-aware path, and hydration does not require a separate session request. Server-side refresh
+coordination uses Nitro storage. A shared, read-after-write consistent storage driver is required
+for coordination across processes or Cloudflare isolates; the default in-memory driver is
+instance-local. Refresh starts in the safety window and may continue after access-token expiry;
+Directus remains the authority on refresh-token validity. `refreshAttempts` controls the total
+number of `ofetch` attempts. Completed refresh results are H3-sealed before they are stored, but the
+configured storage backend remains sensitive infrastructure.
 
 ### Magic links
 
@@ -373,7 +375,7 @@ When `client.auth.enabled` is `true`, the module registers:
 | `POST` | `/_directus/auth/login`            | Validates email (max 1024), password (max 512), optional OTP (max 6), and returns the safe snapshot. |
 | `POST` | `/_directus/auth/refresh`          | Refreshes the cookie session and returns the safe snapshot.                                          |
 | `POST` | `/_directus/auth/logout`           | Attempts upstream logout, clears local state, and returns `204`.                                     |
-| `GET`  | `/_directus/auth/session`          | Returns the persisted safe snapshot without contacting Directus.                                     |
+| `GET`  | `/_directus/auth/session`          | Refreshes when needed, then returns the persisted safe snapshot or `null`.                           |
 | `POST` | `/_directus/auth/password-request` | Validates email (max 1024), then proxies it with the configured reset URL.                           |
 | `POST` | `/_directus/auth/password-reset`   | Validates the reset token (max 1024) and new password (max 512), then proxies them.                  |
 

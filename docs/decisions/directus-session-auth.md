@@ -19,9 +19,13 @@ Refresh runs immediately before an authenticated request when the access token e
 safety window. It may still use the refresh token after access-token expiry; Directus remains
 authoritative for refresh-token validity. Nitro storage coordinates concurrent refreshes for the
 same refresh token, successful rotation replaces the entire cookie, and invalid refreshes clear it.
-Cross-instance coordination requires shared, read-after-write-consistent storage; with the default
-in-memory driver, horizontally scaled instances or Cloudflare isolates can still race, and Directus
-remains authoritative for rotating refresh-token policy.
+SSR authentication bootstrap and public session snapshots run through this refresh boundary before
+reporting authentication state. Raw sealed-session readers only inspect local session data, return
+expired access tokens by default so callers can retain the refresh token, and do not clear a valid
+sealed session when a caller explicitly filters expired access tokens. Cross-instance coordination
+requires shared, read-after-write-consistent storage; with the default in-memory driver,
+horizontally scaled instances or Cloudflare isolates can still race, and Directus remains
+authoritative for rotating refresh-token policy.
 
 The initial snapshot exposes only the identity fields needed by the playground and facade. Roles,
 policies, and permission helpers are intentionally not part of this release. Sealing and rotation

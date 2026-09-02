@@ -2,6 +2,7 @@ import type { H3Event } from "h3";
 import { createError, setResponseStatus } from "h3";
 import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
+import { useStorage } from "nitropack/runtime";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
@@ -111,15 +112,12 @@ interface RefreshStorage {
 /**
  * Resolves the Nitro storage mount used to coordinate refresh requests.
  *
- * Nitro's storage runtime is server-bundle-only because its implementation imports a generated
- * virtual storage module. Loading it at request time keeps that virtual module out of application
- * and client resolution graphs.
+ * The authentication utility is loaded only from server runtime entrypoints, keeping Nitro's
+ * storage implementation out of the client bundle.
  *
  * @returns The configured refresh-flight storage.
  */
 async function getRefreshStorage(): Promise<RefreshStorage> {
-  const nitroStorageModule = "nitropack/runtime/storage";
-  const { useStorage } = await import(/* @vite-ignore */ nitroStorageModule);
   return useStorage(REFRESH_STORAGE_MOUNT);
 }
 
@@ -269,7 +267,10 @@ async function readSealedRefreshSession(
   event: H3Event,
   sealedSession: string
 ): Promise<DirectusSession | undefined> {
-  const resolved = await getDirectusSessionDetails(event, { sealedValue: sealedSession });
+  const resolved = await getDirectusSessionDetails(event, {
+    sealedValue: sealedSession,
+    allowExpired: false
+  });
   if (!resolved) return undefined;
   if (resolved.matchedSecretSlot === "active") writeDirectusSessionCookie(event, sealedSession);
   return resolved.session;
@@ -288,7 +289,7 @@ async function readSealedRefreshSession(
 export async function ensureFreshDirectusSession(
   event: H3Event
 ): Promise<DirectusSession | undefined> {
-  const current = await getDirectusSession(event, { allowExpired: true });
+  const current = await getDirectusSession(event);
   if (!current) return undefined;
   const auth = getDirectusRuntimeConfig(event).directusClient.auth;
   if (current.expiresAt > Date.now() + auth.refreshSafetyWindow) return current;
@@ -365,7 +366,7 @@ export async function destroyDirectusSession(event: H3Event): Promise<void> {
 }
 
 /**
- * Reads the persisted token-free session snapshot without contacting Directus.
+ * Reads the current token-free session snapshot after refreshing an expiring access token.
  *
  * @param event - Incoming request event.
  * @returns The safe snapshot or null.
@@ -373,5 +374,5 @@ export async function destroyDirectusSession(event: H3Event): Promise<void> {
 export async function readDirectusSessionSnapshot(
   event: H3Event
 ): Promise<DirectusSessionSnapshot | null> {
-  return (await getDirectusSession(event))?.snapshot ?? null;
+  return (await ensureFreshDirectusSession(event))?.snapshot ?? null;
 }

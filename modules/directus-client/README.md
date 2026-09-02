@@ -118,9 +118,10 @@ authentication is enabled, its session.
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session from a Nitro request. It returns `null` when the
-request is unauthenticated, the session is invalid or expired, or authentication is disabled. Access
-and refresh tokens are never returned.
+Reads the current token-free Directus session from a Nitro request. It refreshes an expiring or
+expired access token while Directus still accepts the refresh token, and returns `null` when the
+request is unauthenticated, the sealed session is invalid, refresh is rejected, or authentication is
+disabled. Access and refresh tokens are never returned.
 
 ```ts
 export default defineEventHandler(async (event) => {
@@ -270,10 +271,10 @@ if (auth.isAuthenticated.value) {
 ```
 
 The session snapshot is persisted with the access and rotating refresh token in a bounded sealed
-`httpOnly` cookie and projected into Nuxt state during SSR, so hydration does not require a session
-fetch. Access and refresh tokens never enter client state or application code. H3 authenticated
-encryption protects the cookie's confidentiality and integrity; Directus remains the authorization
-boundary.
+`httpOnly` cookie. SSR refreshes an expiring access token when possible before projecting the
+snapshot into Nuxt state, so hydration does not require a session fetch. Access and refresh tokens
+never enter client state or application code. H3 authenticated encryption protects the cookie's
+confidentiality and integrity; Directus remains the authorization boundary.
 
 Authentication calls made during SSR execute directly against the current server request. Browser
 calls continue to use the same-origin `/_directus/auth/` endpoints.
@@ -365,15 +366,16 @@ refreshed, forwarded upstream, or added to the SSR payload. Static, preview, and
 access remain available.
 
 Authentication routes are registered under `/_directus/auth/`: `login`, `refresh`, `logout`,
-`session`, `password-request`, and `password-reset`. Refresh happens immediately before an
-authenticated Directus request when it enters the configured safety window. It can also refresh an
-access token that has already expired; Directus decides whether the refresh token is still valid.
-The refresh request uses `ofetch` retries, with `refreshAttempts` defining the total number of
-attempts. Concurrent refreshes are coalesced through Nitro storage. Cross-instance coordination
-requires a shared, read-after-write consistent Nitro storage driver; the default in-memory driver
-cannot provide that guarantee, and deployment-level refresh races remain possible otherwise. Refresh
-results written to that storage are H3-sealed session values rather than plaintext token pairs; the
-configured Nitro storage backend must still be treated as sensitive infrastructure.
+`session`, `password-request`, and `password-reset`. SSR authentication bootstrap, the session
+route, and authenticated Directus requests refresh when the access token enters the configured
+safety window. They can also refresh an access token that has already expired; Directus decides
+whether the refresh token is still valid. The refresh request uses `ofetch` retries, with
+`refreshAttempts` defining the total number of attempts. Concurrent refreshes are coalesced through
+Nitro storage. Cross-instance coordination requires a shared, read-after-write consistent Nitro
+storage driver; the default in-memory driver cannot provide that guarantee, and deployment-level
+refresh races remain possible otherwise. Refresh results written to that storage are H3-sealed
+session values rather than plaintext token pairs; the configured Nitro storage backend must still be
+treated as sensitive infrastructure.
 
 When `client.auth.magicLinks.enabled` is true, the module additionally registers
 `POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These
