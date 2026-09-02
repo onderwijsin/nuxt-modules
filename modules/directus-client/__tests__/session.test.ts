@@ -104,24 +104,26 @@ describe("Directus sealed session state", () => {
     state.config.directusClient.auth.cookie.maxAge = 2_592_000;
   });
 
-  it("rejects sessions whose Directus token expiry has passed", async () => {
+  it("returns sessions whose Directus access token has expired by default", async () => {
     const writeEvent = createTestEvent();
-    await setDirectusSession(writeEvent, { ...session, expiresAt: Date.now() - 1 });
+    const expiredSession = { ...session, expiresAt: Date.now() - 1 };
+    await setDirectusSession(writeEvent, expiredSession);
     const cookie = cookieFromEvent(writeEvent);
 
-    await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toBeUndefined();
+    await expect(getDirectusSessionDetails(eventWithCookie(cookie))).resolves.toMatchObject({
+      session: expiredSession
+    });
+    await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toEqual(expiredSession);
   });
 
-  it("can read an expired access session for refresh", async () => {
+  it("non-destructively rejects expired access tokens when explicitly requested", async () => {
     const writeEvent = createTestEvent();
     await setDirectusSession(writeEvent, { ...session, expiresAt: Date.now() - 1 });
     const cookie = cookieFromEvent(writeEvent);
+    const readEvent = eventWithCookie(cookie);
 
-    await expect(
-      getDirectusSession(eventWithCookie(cookie), { allowExpired: true })
-    ).resolves.toMatchObject({
-      refreshToken: "refresh"
-    });
+    await expect(getDirectusSession(readEvent, { allowExpired: false })).resolves.toBeUndefined();
+    expect(readEvent.node.res.getHeader("set-cookie")).toBeUndefined();
   });
 
   it("reads a supplied sealed session value from the options object", async () => {

@@ -197,12 +197,13 @@ export async function setDirectusSession(event: H3Event, session: DirectusSessio
  * Reads the current session from the configured sealed httpOnly cookie.
  *
  * Invalid cookies are ignored and cleared. Legacy unsigned cookies are never parsed as trusted
- * session data.
+ * session data. Expired access tokens are returned by default because the sealed session may still
+ * contain a valid refresh token.
  *
  * @param event - Incoming request event.
  * @param options - Options for retrieving the session, including an optional sealed value and whether to allow expired sessions.
  * @param options.sealedValue - Optional versioned sealed value supplied by refresh coordination.
- * @param options.allowExpired - Whether an expired access token may be returned for refresh.
+ * @param options.allowExpired - Whether an expired access token may be returned. Defaults to `true`.
  * @returns The validated session or undefined.
  */
 export async function getDirectusSessionDetails(
@@ -222,10 +223,8 @@ export async function getDirectusSessionDetails(
     value.slice(DIRECTUS_SESSION_DATA_PREFIX.length)
   );
   if (resolved) {
-    if (!options?.allowExpired && resolved.session.expiresAt <= Date.now()) {
-      deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
+    if (options?.allowExpired === false && resolved.session.expiresAt <= Date.now())
       return undefined;
-    }
     if (resolved.matchedSecretSlot !== "active") await setDirectusSession(event, resolved.session);
     return resolved;
   }
@@ -237,9 +236,13 @@ export async function getDirectusSessionDetails(
 /**
  * Reads the current session from the configured sealed httpOnly cookie.
  *
+ * Expired access tokens are returned by default so refresh-aware callers retain access to the
+ * refresh token. Pass `allowExpired: false` to require a currently valid access token; that filter
+ * does not clear the otherwise valid sealed session.
+ *
  * @param event - Incoming request event.
  * @param options - Options for retrieving the session, including whether to allow expired sessions.
- * @param options.allowExpired - Whether an expired access token may be returned for refresh.
+ * @param options.allowExpired - Whether an expired access token may be returned. Defaults to `true`.
  * @returns The validated session or undefined.
  */
 export async function getDirectusSession(

@@ -13,8 +13,8 @@ import {
 import type { DirectusSessionSnapshot } from "../../server/utils/session";
 import type { DirectusAuthServer } from "../composables/directus-auth";
 
-/** Loads session utilities from a separate server chunk to avoid SSR-entry naming collisions. */
-const { getDirectusSession } = await import("../../server/utils/session.js");
+/** Loads authentication utilities from a separate server chunk to avoid SSR-entry naming collisions. */
+const { ensureFreshDirectusSession } = await import("../../server/utils/auth.js");
 
 /**
  * Installs a request-scoped Directus client and exposes the safe session snapshot during SSR.
@@ -35,9 +35,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     };
   }
 
-  // Load session into state in server plugin - this keeps the auth composable free of server runtime code
+  // Load fresh session state in the server plugin so middleware sees the authenticated SSR state.
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
-  session.value = event ? ((await getDirectusSession(event))?.snapshot ?? null) : null;
+  session.value = event ? ((await ensureFreshDirectusSession(event))?.snapshot ?? null) : null;
   const directusAuthServer: DirectusAuthServer | undefined = event
     ? {
         login: (input) => loginServer(event, input),
