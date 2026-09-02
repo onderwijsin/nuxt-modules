@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- 40b3122: Allow Directus refresh timing and attempts to be configured, retry transient refresh failures with ofetch, and continue refreshing expired access tokens while Directus accepts the refresh token.
+
 ## 0.7.0
 
 ### Minor Changes
