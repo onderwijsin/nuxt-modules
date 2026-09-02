@@ -55,6 +55,7 @@ export default defineDirectusConfig({
         maxAge: 2592000
       },
       refreshSafetyWindow: 30000,
+      refreshAttempts: 3,
       sessionSecret: process.env.DIRECTUS_SESSION_SECRET,
       previousSessionSecrets: process.env.DIRECTUS_PREVIOUS_SESSION_SECRETS?.split(",") ?? [],
       maskSecretsInPlayground: true,

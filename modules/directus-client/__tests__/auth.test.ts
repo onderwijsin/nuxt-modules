@@ -8,7 +8,10 @@ const state = vi.hoisted(() => ({
   config: {
     directusClient: {
       baseUrl: "https://directus.example.test/",
-      auth: { refreshSafetyWindow: 30_000 }
+      auth: {
+        refreshSafetyWindow: 30_000,
+        refreshAttempts: 3
+      }
     }
   },
   current: undefined as DirectusSession | undefined,
@@ -94,24 +97,27 @@ beforeEach(() => {
   state.session.seal.mockImplementation(
     async (_event: unknown, session: DirectusSession) => `boop1:${session.refreshToken}`
   );
-  state.session.readDetails.mockImplementation(async (_event: unknown, sealed: string) => {
-    const refreshToken = sealed.slice("boop1:".length);
-    return {
-      session: {
-        accessToken: refreshToken === "stored-refresh" ? "stored-access" : "new-access",
-        refreshToken,
-        expiresAt: Date.now() + 60_000,
-        snapshot: {
-          userId: "user-1",
-          email: null,
-          firstName: null,
-          lastName: null,
-          requiresTfaSetup: false
-        }
-      },
-      matchedSecretSlot: "active"
-    };
-  });
+  state.session.readDetails.mockImplementation(
+    async (_event: unknown, options: { sealedValue?: string }) => {
+      const sealed = options.sealedValue ?? "";
+      const refreshToken = sealed.slice("boop1:".length);
+      return {
+        session: {
+          accessToken: refreshToken === "stored-refresh" ? "stored-access" : "new-access",
+          refreshToken,
+          expiresAt: Date.now() + 60_000,
+          snapshot: {
+            userId: "user-1",
+            email: null,
+            firstName: null,
+            lastName: null,
+            requiresTfaSetup: false
+          }
+        },
+        matchedSecretSlot: "active"
+      };
+    }
+  );
   state.session.writeCookie.mockReset();
 });
 
@@ -260,6 +266,21 @@ describe("Directus session refresh coordination", () => {
     expect(stored).toEqual({ status: "completed", sealedSession: "boop1:opaque-ciphertext" });
     expect(JSON.stringify(stored)).not.toContain("new-access");
     expect(JSON.stringify(stored)).not.toContain("new-refresh");
+  });
+
+  it("refreshes an expired access token while the refresh token is valid", async () => {
+    state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
+    const fetch = mockFetch(
+      new Error("temporary Directus failure"),
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
+      jsonResponse({ data: { id: "user-1" } })
+    );
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      accessToken: "new-access",
+      refreshToken: "new-refresh"
+    });
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 
   it("waits for a completed refresh published by shared storage", async () => {

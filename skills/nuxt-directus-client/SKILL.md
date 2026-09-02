@@ -89,6 +89,7 @@ All options are configured under `directusClient`.
 | `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                           |
 | `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                               |
 | `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                             |
+| `client.auth.refreshAttempts`         | `3`                                 | Total attempts for a refresh request, including the initial request.                                  |
 | `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters. |
 | `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                             |
 | `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                  |
@@ -248,9 +249,11 @@ navigation remain the consuming application's responsibility.
 The SSR server plugin reads the token-free snapshot directly from the `httpOnly` cookie into Nuxt
 state. Hydration therefore does not require a session request. Server-side refresh coordination uses
 Nitro storage. A shared, read-after-write consistent storage driver is required for coordination
-across processes or Cloudflare isolates; the default in-memory driver is instance-local. Completed
-refresh results are H3-sealed before they are stored, but the configured storage backend remains
-sensitive infrastructure.
+across processes or Cloudflare isolates; the default in-memory driver is instance-local. Refresh
+starts in the safety window and may continue after access-token expiry; Directus remains the
+authority on refresh-token validity. `refreshAttempts` controls the total number of `ofetch`
+attempts. Completed refresh results are H3-sealed before they are stored, but the configured storage
+backend remains sensitive infrastructure.
 
 ### Magic links
 
