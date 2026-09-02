@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+### Patch Changes
+
+- d1f5a9a: Preserve refreshable Directus sessions when access tokens expire, and refresh authentication state during SSR and session snapshot reads.
+
 ## 0.8.0
 
 ### Minor Changes
