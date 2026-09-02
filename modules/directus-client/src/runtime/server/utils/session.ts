@@ -200,15 +200,17 @@ export async function setDirectusSession(event: H3Event, session: DirectusSessio
  * session data.
  *
  * @param event - Incoming request event.
- * @param sealedValue - Optional versioned sealed value supplied by refresh coordination.
+ * @param options - Options for retrieving the session, including an optional sealed value and whether to allow expired sessions.
+ * @param options.sealedValue - Optional versioned sealed value supplied by refresh coordination.
+ * @param options.allowExpired - Whether an expired access token may be returned for refresh.
  * @returns The validated session or undefined.
  */
 export async function getDirectusSessionDetails(
   event: H3Event,
-  sealedValue?: string
+  options?: { sealedValue?: string; allowExpired?: boolean }
 ): Promise<ResolvedDirectusSession | undefined> {
   const config = getDirectusRuntimeConfig(event);
-  const value = sealedValue ?? getCookie(event, config.directusClient.auth.cookie.name);
+  const value = options?.sealedValue ?? getCookie(event, config.directusClient.auth.cookie.name);
   if (!isString(value) || !isNonBlankString(value)) return undefined;
   if (!value.startsWith(DIRECTUS_SESSION_DATA_PREFIX)) {
     deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
@@ -220,7 +222,7 @@ export async function getDirectusSessionDetails(
     value.slice(DIRECTUS_SESSION_DATA_PREFIX.length)
   );
   if (resolved) {
-    if (resolved.session.expiresAt <= Date.now()) {
+    if (!options?.allowExpired && resolved.session.expiresAt <= Date.now()) {
       deleteCookie(event, config.directusClient.auth.cookie.name, cookieOptions(event));
       return undefined;
     }
@@ -236,10 +238,15 @@ export async function getDirectusSessionDetails(
  * Reads the current session from the configured sealed httpOnly cookie.
  *
  * @param event - Incoming request event.
+ * @param options - Options for retrieving the session, including whether to allow expired sessions.
+ * @param options.allowExpired - Whether an expired access token may be returned for refresh.
  * @returns The validated session or undefined.
  */
-export async function getDirectusSession(event: H3Event): Promise<DirectusSession | undefined> {
-  return (await getDirectusSessionDetails(event))?.session;
+export async function getDirectusSession(
+  event: H3Event,
+  options?: { allowExpired?: boolean }
+): Promise<DirectusSession | undefined> {
+  return (await getDirectusSessionDetails(event, { allowExpired: options?.allowExpired }))?.session;
 }
 
 /**

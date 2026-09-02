@@ -182,10 +182,11 @@ async function createDirectusSessionFromAuthentication(
   event: H3Event,
   authentication: DirectusAuthenticationResult
 ): Promise<DirectusSession> {
+  const now = Date.now();
   return {
     accessToken: authentication.accessToken,
     refreshToken: authentication.refreshToken,
-    expiresAt: Date.now() + (authentication.expires ?? 900_000),
+    expiresAt: now + (authentication.expires ?? 900_000),
     snapshot: {
       ...(await fetchDirectusCurrentUser(event, authentication.accessToken)),
       requiresTfaSetup: decodeDirectusTfaSetupRequirement(authentication.accessToken)
@@ -268,7 +269,7 @@ async function readSealedRefreshSession(
   event: H3Event,
   sealedSession: string
 ): Promise<DirectusSession | undefined> {
-  const resolved = await getDirectusSessionDetails(event, sealedSession);
+  const resolved = await getDirectusSessionDetails(event, { sealedValue: sealedSession });
   if (!resolved) return undefined;
   if (resolved.matchedSecretSlot === "active") writeDirectusSessionCookie(event, sealedSession);
   return resolved.session;
@@ -287,10 +288,10 @@ async function readSealedRefreshSession(
 export async function ensureFreshDirectusSession(
   event: H3Event
 ): Promise<DirectusSession | undefined> {
-  const current = await getDirectusSession(event);
+  const current = await getDirectusSession(event, { allowExpired: true });
   if (!current) return undefined;
-  const safetyWindow = getDirectusRuntimeConfig(event).directusClient.auth.refreshSafetyWindow;
-  if (current.expiresAt > Date.now() + safetyWindow) return current;
+  const auth = getDirectusRuntimeConfig(event).directusClient.auth;
+  if (current.expiresAt > Date.now() + auth.refreshSafetyWindow) return current;
 
   const storage = await getRefreshStorage();
   const key = "flight:" + hash(current.refreshToken);
@@ -323,7 +324,8 @@ export async function ensureFreshDirectusSession(
   const result = await attempt(async () => {
     const response = await ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
       method: "POST",
-      body: { refresh_token: current.refreshToken, mode: "json" }
+      body: { refresh_token: current.refreshToken, mode: "json" },
+      retry: auth.refreshAttempts - 1
     });
     const session = await createDirectusSessionFromAuthentication(
       event,

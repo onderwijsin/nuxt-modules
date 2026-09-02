@@ -43,6 +43,28 @@ describe("Directus module options", () => {
     });
   });
 
+  it("configures refresh timing and attempts", () => {
+    expect(
+      directusClientOptionsSchema.parse({
+        client: {
+          auth: {
+            refreshSafetyWindow: 45_000,
+            refreshAttempts: 5
+          }
+        }
+      }).client.auth
+    ).toMatchObject({
+      refreshSafetyWindow: 45_000,
+      refreshAttempts: 5
+    });
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { auth: { refreshAttempts: 0 } } })
+    ).toThrow();
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { auth: { refreshTokenLifetime: 604_800_000 } } })
+    ).toThrow(/Unrecognized key/);
+  });
+
   it("defaults magic links to disabled and validates their dependencies", () => {
     expect(directusClientOptionsSchema.parse({}).client.auth.magicLinks).toEqual({
       enabled: false

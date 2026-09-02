@@ -26,6 +26,7 @@ vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
 const {
   clearDirectusSession,
   getDirectusSession,
+  getDirectusSessionDetails,
   setDirectusSession,
   DIRECTUS_SESSION_COOKIE_LIMIT
 } = await import("../src/runtime/server/utils/session");
@@ -109,6 +110,31 @@ describe("Directus sealed session state", () => {
     const cookie = cookieFromEvent(writeEvent);
 
     await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toBeUndefined();
+  });
+
+  it("can read an expired access session for refresh", async () => {
+    const writeEvent = createTestEvent();
+    await setDirectusSession(writeEvent, { ...session, expiresAt: Date.now() - 1 });
+    const cookie = cookieFromEvent(writeEvent);
+
+    await expect(
+      getDirectusSession(eventWithCookie(cookie), { allowExpired: true })
+    ).resolves.toMatchObject({
+      refreshToken: "refresh"
+    });
+  });
+
+  it("reads a supplied sealed session value from the options object", async () => {
+    const writeEvent = createTestEvent();
+    await setDirectusSession(writeEvent, session);
+    const cookie = cookieFromEvent(writeEvent);
+    const [, encodedValue] = cookie.split("=", 2);
+
+    await expect(
+      getDirectusSessionDetails(createTestEvent(), {
+        sealedValue: decodeURIComponent(encodedValue)
+      })
+    ).resolves.toMatchObject({ session });
   });
 
   it("requires an active session secret to seal", async () => {

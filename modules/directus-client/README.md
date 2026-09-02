@@ -201,6 +201,7 @@ All options are configured under `directusClient`:
 | `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                           |
 | `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                               |
 | `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                             |
+| `client.auth.refreshAttempts`         | `3`                                 | Total attempts for a refresh request, including the initial request.                                  |
 | `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters. |
 | `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                             |
 | `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                  |
@@ -365,12 +366,14 @@ access remain available.
 
 Authentication routes are registered under `/_directus/auth/`: `login`, `refresh`, `logout`,
 `session`, `password-request`, and `password-reset`. Refresh happens immediately before an
-authenticated Directus request when it enters the configured safety window. Concurrent refreshes are
-coalesced through Nitro storage. Cross-instance coordination requires a shared, read-after-write
-consistent Nitro storage driver; the default in-memory driver cannot provide that guarantee, and
-deployment-level refresh races remain possible otherwise. Refresh results written to that storage
-are H3-sealed session values rather than plaintext token pairs; the configured Nitro storage backend
-must still be treated as sensitive infrastructure.
+authenticated Directus request when it enters the configured safety window. It can also refresh an
+access token that has already expired; Directus decides whether the refresh token is still valid.
+The refresh request uses `ofetch` retries, with `refreshAttempts` defining the total number of
+attempts. Concurrent refreshes are coalesced through Nitro storage. Cross-instance coordination
+requires a shared, read-after-write consistent Nitro storage driver; the default in-memory driver
+cannot provide that guarantee, and deployment-level refresh races remain possible otherwise. Refresh
+results written to that storage are H3-sealed session values rather than plaintext token pairs; the
+configured Nitro storage backend must still be treated as sensitive infrastructure.
 
 When `client.auth.magicLinks.enabled` is true, the module additionally registers
 `POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These
