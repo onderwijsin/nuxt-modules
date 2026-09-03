@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1
+
+### Patch Changes
+
+- 4393d44: Normalize Directus asset proxy `Vary` headers to the `Accept` representation used by the optional asset cache.
+- 4393d44: Restore runtime-safe Nitro storage loading for Directus authentication refresh coordination and asset caching.
+
 ## 0.9.0
 
 ### Minor Changes
