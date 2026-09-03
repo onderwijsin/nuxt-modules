@@ -65,6 +65,7 @@ catalog:
   ofetch: 1.5.1
   ufo: 1.6.4
   ohash: 2.0.11
+  ocache: 0.3.0
   unctx: 2.5.0
   zod: 4.4.3
   "@iconify-json/lucide": 1.2.121

@@ -174,6 +174,10 @@ export default defineNuxtModule<ModuleOptions>({
               ...options.client.auth.turnstile,
               actions: DIRECTUS_TURNSTILE_ACTIONS
             }
+          },
+          assets: {
+            publicOnly: options.client.assets.publicOnly,
+            cache: options.client.assets.cache
           }
         },
         nuxt.options.runtimeConfig.directusClient
@@ -182,7 +186,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.runtimeConfig.public.directusClient = defu(
       {
         proxy: { path: options.client.proxy.path },
-        assets: options.client.assets,
+        assets: { enabled: options.client.assets.enabled, path: options.client.assets.path },
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,

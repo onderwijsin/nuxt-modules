@@ -24,13 +24,25 @@ declare module "nuxt/schema" {
         maskSecretsInPlayground: boolean;
         passwordResetUrl?: string;
       };
+      assets: {
+        publicOnly: boolean;
+        cache:
+          | { enabled: false }
+          | {
+              enabled: true;
+              storage: string;
+              maxAge: number;
+              swr: boolean;
+              staleMaxAge?: number;
+            };
+      };
     };
   }
 
   interface PublicRuntimeConfig {
     directusClient: {
       proxy: { path: string };
-      assets: { enabled: boolean; path: string; publicOnly: boolean };
+      assets: { enabled: boolean; path: string };
       preview: {
         enabled: boolean;
         versioning: boolean;

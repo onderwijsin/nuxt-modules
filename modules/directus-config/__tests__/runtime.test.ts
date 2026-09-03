@@ -23,6 +23,10 @@ describe("Directus config helpers", () => {
     expect(directusPublicConfigSchema.parse(validated)).not.toHaveProperty("client.commands");
     expect(directusPublicConfigSchema.parse(validated)).not.toHaveProperty("client.typegen");
     expect(directusPublicConfigSchema.parse(validated)).not.toHaveProperty("client.auth.cookie");
+    expect(directusPublicConfigSchema.parse(validated)).not.toHaveProperty(
+      "client.assets.publicOnly"
+    );
+    expect(directusPublicConfigSchema.parse(validated)).not.toHaveProperty("client.assets.cache");
     expect(() => validateDirectusConfig({ instance: { baseUrl: "not-a-url" } })).toThrow(
       "Invalid directus.config.ts configuration."
     );

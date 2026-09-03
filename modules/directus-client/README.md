@@ -187,6 +187,11 @@ All options are configured under `directusClient`:
 | `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                        |
 | `client.assets.path`                  | `/_directus/assets`                 | Absolute local asset-proxy path; uses the same safe local-path validation as `client.proxy.path`.     |
 | `client.assets.publicOnly`            | `false`                             | Uses anonymous Directus asset requests only; session authentication is never attempted when enabled.  |
+| `client.assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                          |
+| `client.assets.cache.storage`         | —                                   | Nitro storage mount name, required when enabled; it must support raw binary values.                   |
+| `client.assets.cache.maxAge`          | —                                   | Positive fresh cache lifetime in seconds, required when enabled.                                      |
+| `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                              |
+| `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                      |
 | `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                          |
 | `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                 |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                     |
