@@ -142,6 +142,7 @@ export async function fetchDirectusAsset(
 
   const safeHeaders = new Headers(response.headers);
   for (const header of blockedResponseHeaders) safeHeaders.delete(header);
+  safeHeaders.set("vary", "Accept");
   return new Response(response.body, {
     headers: safeHeaders,
     status: response.status,

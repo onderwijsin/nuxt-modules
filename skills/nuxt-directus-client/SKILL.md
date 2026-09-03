@@ -112,6 +112,10 @@ requests cannot run without it; the module skips setup during `nuxt prepare` and
 absent. Set `enabled: false` when Directus is not configured. Production type generation
 additionally requires `client.typegen.introspectionToken`.
 
+The asset proxy normalizes upstream `Vary` headers to `Accept`, matching the request representation
+that the proxy exposes and the optional asset cache keys. It does not vary on `Origin`, request
+`Cache-Control`, or `Accept-Encoding`.
+
 ## Public auto-imports
 
 ### `useDirectus`
