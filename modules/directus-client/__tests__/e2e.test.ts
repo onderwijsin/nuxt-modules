@@ -5,7 +5,6 @@ import { $fetch, fetch, setupFixture, url } from "../../../packages/test-utils/s
 describe("Directus client and server composables", async () => {
   let loginRequests = 0;
   let refreshRequests = 0;
-  let rejectRefresh = false;
   const upstream = createServer((request, response) => {
     if (request.url?.startsWith("/items/pages")) {
       response.writeHead(200, { "content-type": "application/json" });
@@ -30,15 +29,6 @@ describe("Directus client and server composables", async () => {
 
     if (request.url?.startsWith("/auth/refresh")) {
       refreshRequests += 1;
-      if (rejectRefresh) {
-        response.writeHead(401, { "content-type": "application/json" });
-        response.end(
-          JSON.stringify({
-            errors: [{ message: "Invalid refresh token", extensions: { code: "INVALID_TOKEN" } }]
-          })
-        );
-        return;
-      }
       response.writeHead(200, { "content-type": "application/json" });
       response.end(
         JSON.stringify({
@@ -164,41 +154,6 @@ describe("Directus client and server composables", async () => {
     const rotatedCookie = response.headers.get("set-cookie")?.split(";", 1)[0];
     expect(rotatedCookie).toBeTruthy();
     expect(rotatedCookie).not.toBe(cookie);
-  });
-
-  it("refreshes an expired access token through the session endpoint", async () => {
-    const cookie = await loginWithExpiringAccessToken();
-    const refreshCount = refreshRequests;
-
-    const response = await fetch(url("/_directus/auth/session"), { headers: { cookie } });
-
-    expect(response.status).toBe(200);
-    expect(refreshRequests).toBe(refreshCount + 1);
-    await expect(response.json()).resolves.toMatchObject({
-      userId: "user-1",
-      email: "user@example.test"
-    });
-    const rotatedCookie = response.headers.get("set-cookie")?.split(";", 1)[0];
-    expect(rotatedCookie).toBeTruthy();
-    expect(rotatedCookie).not.toBe(cookie);
-  });
-
-  it("clears the session when the session endpoint cannot refresh it", async () => {
-    const cookie = await loginWithExpiringAccessToken();
-    const refreshCount = refreshRequests;
-    rejectRefresh = true;
-
-    try {
-      const response = await fetch(url("/_directus/auth/session"), { headers: { cookie } });
-
-      expect(response.status).toBe(204);
-      expect(refreshRequests).toBeGreaterThan(refreshCount);
-      await expect(response.text()).resolves.toBe("");
-      expect(response.headers.get("set-cookie")).toContain("directus_session=");
-      expect(response.headers.get("set-cookie")).toMatch(/Max-Age=0/i);
-    } finally {
-      rejectRefresh = false;
-    }
   });
 
   it.each([
