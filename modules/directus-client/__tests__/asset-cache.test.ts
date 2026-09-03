@@ -19,7 +19,7 @@ const state = vi.hoisted(() => {
   return { rootStorage, storage, values };
 });
 
-vi.mock("nitropack/runtime", () => ({
+vi.mock("nitropack/runtime/storage", () => ({
   useStorage: (mount?: string) => (mount ? state.storage : state.rootStorage)
 }));
 
@@ -39,11 +39,12 @@ describe("Directus asset cache", () => {
     state.values.clear();
   });
 
-  it("fails when the configured Nitro storage mount is missing", () => {
+  it("fails when the configured Nitro storage mount is missing", async () => {
     const getMount = state.rootStorage.getMount;
     state.rootStorage.getMount = () => ({});
 
-    expect(() => createAssetCacheStorage("missing-assets")).toThrow(
+    const storage = createAssetCacheStorage("missing-assets");
+    await expect(storage.get("asset")).rejects.toThrow(
       'Directus asset cache storage mount "missing-assets" is not configured'
     );
 

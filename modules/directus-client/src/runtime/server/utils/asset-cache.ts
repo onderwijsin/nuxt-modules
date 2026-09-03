@@ -4,7 +4,6 @@ import {
   type CachedEventHandler,
   type HTTPEvent
 } from "ocache";
-import { useStorage } from "nitropack/runtime";
 import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
 
@@ -26,21 +25,30 @@ function getCacheControlDirectives(value: string): Set<string> {
   );
 }
 
-/** Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
+/** Resolves a configured Nitro storage mount through Nitro's server-only storage runtime.
  * @param mount Nitro storage mount name.
- * @returns An ocache storage interface backed by raw unstorage operations.
+ * @returns The configured Nitro storage mount.
  */
-export function createAssetCacheStorage(mount: string) {
+async function resolveAssetStorage(mount: string) {
+  const nitroStorageModule = "nitropack/runtime/storage";
+  const { useStorage } = await import(/* @vite-ignore */ nitroStorageModule);
   const rootStorage = useStorage();
   const resolvedMount = rootStorage.getMount(mount);
   if (!resolvedMount.base) {
     throw new Error(`Directus asset cache storage mount "${mount}" is not configured`);
   }
+  return useStorage(mount);
+}
 
-  const storage = useStorage(mount);
+/** Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
+ * @param mount Nitro storage mount name.
+ * @returns An ocache storage interface backed by raw unstorage operations.
+ */
+export function createAssetCacheStorage(mount: string) {
   return createBlobStorage({
-    get: (key) => storage.getItemRaw(key),
+    get: async (key) => (await resolveAssetStorage(mount)).getItemRaw(key),
     set: async (key, value, options) => {
+      const storage = await resolveAssetStorage(mount);
       if (value === null) return storage.removeItem(key);
       await storage.setItemRaw(key, value, { ttl: options?.ttl });
     }

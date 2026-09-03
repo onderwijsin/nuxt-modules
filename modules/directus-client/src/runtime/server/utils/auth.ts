@@ -2,7 +2,6 @@ import type { H3Event } from "h3";
 import { createError, setResponseStatus } from "h3";
 import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
-import { useStorage } from "nitropack/runtime";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
@@ -112,12 +111,15 @@ interface RefreshStorage {
 /**
  * Resolves the Nitro storage mount used to coordinate refresh requests.
  *
- * The authentication utility is loaded only from server runtime entrypoints, keeping Nitro's
- * storage implementation out of the client bundle.
+ * Nitro's storage runtime is server-bundle-only because its implementation imports a generated
+ * virtual storage module. Loading it at request time keeps that virtual module out of application
+ * and client resolution graphs.
  *
  * @returns The configured refresh-flight storage.
  */
 async function getRefreshStorage(): Promise<RefreshStorage> {
+  const nitroStorageModule = "nitropack/runtime/storage";
+  const { useStorage } = await import(/* @vite-ignore */ nitroStorageModule);
   return useStorage(REFRESH_STORAGE_MOUNT);
 }
 
