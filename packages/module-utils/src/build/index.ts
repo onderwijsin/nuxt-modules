@@ -6,6 +6,7 @@ export {
 } from "./directus-cache";
 export {
   isPrepareMode,
+  inlineNitroRuntime,
   moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveLoggerScope,

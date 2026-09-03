@@ -26,7 +26,8 @@ Use the narrowest subpath for the code you are writing:
 - `@onderwijsin/nuxt-module-utils/shared` contains framework-neutral runtime helpers, including the
   typed Directus REST client factory.
 - `@onderwijsin/nuxt-module-utils/build` contains Node-only module setup, option validation, and
-  build-time file discovery helpers, including the shared Directus setup cache.
+  build-time file discovery helpers, including runtime transpilation, Nitro runtime inlining, and
+  the shared Directus setup cache.
 - `@onderwijsin/nuxt-module-utils/server` contains H3-dependent request-token and
   administrator-authentication helpers.
 - `@onderwijsin/nuxt-module-utils` is a compatibility alias for the shared exports.

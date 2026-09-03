@@ -6,6 +6,7 @@ import {
 } from "ocache";
 import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
+import { useStorage } from "nitropack/runtime/storage";
 
 type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
 let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
@@ -30,8 +31,6 @@ function getCacheControlDirectives(value: string): Set<string> {
  * @returns The configured Nitro storage mount.
  */
 async function resolveAssetStorage(mount: string) {
-  const nitroStorageModule = "nitropack/runtime/storage";
-  const { useStorage } = await import(/* @vite-ignore */ nitroStorageModule);
   const rootStorage = useStorage();
   const resolvedMount = rootStorage.getMount(mount);
   if (!resolvedMount.base) {

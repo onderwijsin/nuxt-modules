@@ -61,6 +61,37 @@ export function transpileRuntime(nuxt: Nuxt, runtimeDir: string): void {
   nuxt.options.build.transpile.push(runtimeDir);
 }
 
+interface NitroRuntimeConfig {
+  externals?: {
+    inline?: string[];
+  } | null;
+}
+
+/**
+ * Adds a module's runtime directory to Nitro's inline externals.
+ * @param nuxt - The Nuxt context being configured.
+ * @param runtimeDir - Absolute path to the module runtime directory.
+ */
+export function inlineNitroRuntime(nuxt: Nuxt, runtimeDir: string): void {
+  nuxt.hook(
+    "nitro:config" as never,
+    ((nitroConfig: NitroRuntimeConfig) => {
+      const externals =
+        typeof nitroConfig.externals === "object" && nitroConfig.externals !== null
+          ? nitroConfig.externals
+          : {};
+
+      externals.inline ??= [];
+
+      if (!externals.inline.includes(runtimeDir)) {
+        externals.inline.push(runtimeDir);
+      }
+
+      nitroConfig.externals = externals;
+    }) as never
+  );
+}
+
 /**
  * Creates shared lifecycle helpers for a Nuxt module.
  * @param MODULE_NAME - The module name.

@@ -15,6 +15,7 @@ import {
 import type { ModuleDependencies } from "@nuxt/schema";
 import {
   moduleSetup,
+  inlineNitroRuntime,
   resolveLoggerScope,
   resolveModuleName,
   transpileRuntime,
@@ -202,6 +203,7 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
+    inlineNitroRuntime(nuxt, runtimeDir);
     for (const [name, file] of [
       ["useDirectus", "directus"],
       ["useDirectusError", "directus-error"],
