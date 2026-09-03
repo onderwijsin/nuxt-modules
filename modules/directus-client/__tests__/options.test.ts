@@ -165,7 +165,18 @@ describe("Directus module options", () => {
       directusClientOptionsSchema.parse({
         client: { assets: { cache: { enabled: true, storage: "assets", maxAge: 60 } } }
       }).client.assets.cache
-    ).toEqual({ enabled: true, storage: "assets", maxAge: 60, swr: false });
+    ).toEqual({
+      enabled: true,
+      storage: "assets",
+      maxAge: 60,
+      maxBodySize: 10 * 1024 * 1024,
+      swr: false
+    });
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { assets: { cache: { enabled: true, storage: "   ", maxAge: 60 } } }
+      })
+    ).toThrow();
     expect(() =>
       directusClientOptionsSchema.parse({ client: { assets: { path: "/../assets" } } })
     ).toThrow();

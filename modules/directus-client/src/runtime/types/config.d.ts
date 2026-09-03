@@ -32,6 +32,7 @@ declare module "nuxt/schema" {
               enabled: true;
               storage: string;
               maxAge: number;
+              maxBodySize: number;
               swr: boolean;
               staleMaxAge?: number;
             };

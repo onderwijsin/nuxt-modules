@@ -39,7 +39,7 @@ describe("Directus asset cache", () => {
   it("bypasses the cache for unsupported preconditions and forwards them upstream", async () => {
     const receivedHeaders: Headers[] = [];
     const handler = getAssetCacheHandler(
-      { storage: "directus-assets", maxAge: 60, swr: false },
+      { storage: "directus-assets", maxAge: 60, maxBodySize: 10 * 1024 * 1024, swr: false },
       async (event) => {
         receivedHeaders.push(new Headers(event.req.headers));
         return new Response(new Uint8Array([1, 2, 3]), {

@@ -1,5 +1,6 @@
 import {
   assertMethod,
+  createError,
   defineEventHandler,
   getRequestHeaders,
   getRequestURL,
@@ -9,7 +10,7 @@ import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
-import { isArray, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, isArray, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { resolveDirectusProxyUrl } from "../utils/proxy";
 
 const assetRequestHeaders = new Set([
@@ -23,6 +24,8 @@ const assetRequestHeaders = new Set([
 ]);
 const blockedResponseHeaders = new Set([
   "set-cookie",
+  "content-encoding",
+  "content-length",
   "connection",
   "keep-alive",
   "proxy-authenticate",
@@ -81,8 +84,8 @@ export function getAssetRequestHeaders(
 /**
  * Resolves and validates a Directus asset URL while preserving its complete query string.
  *
- * Asset transformation parameters are intentionally not inspected or normalized here. The
- * The asset path suffix and complete query string must be preserved when mapping the local proxy
+ * Asset transformation parameters are intentionally not inspected or normalized here. The asset
+ * path suffix and complete query string must be preserved when mapping the local proxy
  * URL to Directus so every transformation remains available to consumers.
  *
  * @param baseUrl Directus base URL.
@@ -120,13 +123,22 @@ export async function fetchDirectusAsset(
   const headers = new Headers(options.headers);
   if (options.accessToken) headers.set("authorization", "Bearer " + options.accessToken);
 
-  const response = await ofetch.raw(target, {
-    responseType: "stream",
-    method: options.method,
-    headers,
-    ignoreResponseError: true,
-    signal: options.signal
-  });
+  const { data: response, error } = await attempt(() =>
+    ofetch.raw(target, {
+      responseType: "stream",
+      method: options.method,
+      headers,
+      ignoreResponseError: true,
+      signal: options.signal
+    })
+  );
+  if (error !== null || response === null) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "Bad Gateway",
+      cause: error ?? new Error("Directus returned no asset response")
+    });
+  }
 
   const safeHeaders = new Headers(response.headers);
   for (const header of blockedResponseHeaders) safeHeaders.delete(header);

@@ -60,6 +60,7 @@ export function getAssetCacheHandler(
     name: "directus-assets",
     storage: () => createAssetCacheStorage(config.storage),
     maxAge: config.maxAge,
+    maxBodySize: config.maxBodySize,
     swr: config.swr,
     staleMaxAge: config.staleMaxAge,
     varies: ["accept"],

@@ -190,6 +190,7 @@ All options are configured under `directusClient`:
 | `client.assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                          |
 | `client.assets.cache.storage`         | —                                   | Nitro storage mount name, required when enabled; it must support raw binary values.                   |
 | `client.assets.cache.maxAge`          | —                                   | Positive fresh cache lifetime in seconds, required when enabled.                                      |
+| `client.assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                      |
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                              |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                      |
 | `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                          |
