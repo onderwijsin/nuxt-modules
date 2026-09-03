@@ -8,6 +8,7 @@ import {
 import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
+import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
 import { isArray, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { resolveDirectusProxyUrl } from "../utils/proxy";
 
@@ -40,13 +41,7 @@ interface AssetAuthenticationOptions {
   readonly publicOnly: boolean;
 }
 
-interface EnabledAssetCacheOptions {
-  readonly enabled: true;
-  readonly storage: string;
-  readonly maxAge: number;
-  readonly swr: boolean;
-  readonly staleMaxAge?: number;
-}
+type EnabledAssetCacheOptions = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
 
 /**
  * Returns whether Directus rejected the anonymous request for missing authorization.

@@ -33,6 +33,9 @@ const assetCacheSchema = z.discriminatedUnion("enabled", [
   })
 ]);
 
+/** Resolved Directus asset-cache options produced by the shared schema. */
+export type ResolvedDirectusAssetCacheOptions = z.output<typeof assetCacheSchema>;
+
 /** Zod schema for the dedicated Directus assets proxy configuration. */
 const assetsSchema = z
   .strictObject({

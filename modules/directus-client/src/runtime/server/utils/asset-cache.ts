@@ -6,13 +6,9 @@ import {
 } from "ocache";
 import { useStorage } from "nitropack/runtime";
 import type { H3Event } from "h3";
+import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
 
-interface AssetCacheConfig {
-  readonly storage: string;
-  readonly maxAge: number;
-  readonly swr: boolean;
-  readonly staleMaxAge?: number;
-}
+type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
 let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
 
 /**
