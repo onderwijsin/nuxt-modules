@@ -34,7 +34,7 @@ vi.mock("#imports", () => ({
 }));
 
 vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
-vi.mock("nitropack/runtime", () => ({ useStorage: () => state.storage }));
+vi.mock("nitropack/runtime/storage", () => ({ useStorage: () => state.storage }));
 
 vi.mock("../src/runtime/server/utils/session", () => ({
   clearDirectusSession: state.session.clear,

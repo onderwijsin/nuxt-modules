@@ -223,6 +223,10 @@ All options are configured under `directusClient`:
 The module validates options during Nuxt configuration. Production and CI type generation require
 both `instance.baseUrl` and `client.typegen.introspectionToken` when it is enabled.
 
+The asset proxy normalizes upstream `Vary` headers to `Accept`, matching the request representation
+that the proxy exposes and the optional asset cache keys. It does not vary on `Origin`, request
+`Cache-Control`, or `Accept-Encoding`.
+
 ## Version previews
 
 Directus Content Versions are independent, unpublished changes to a main item. A version has a
