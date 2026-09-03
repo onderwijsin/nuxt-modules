@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- 693e00e: Add optional `ocache`-backed caching for public anonymous Directus assets using an application-provided Nitro storage mount.
+
 ## 0.6.0
 
 ### Minor Changes
