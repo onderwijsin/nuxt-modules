@@ -150,8 +150,33 @@ describe("Directus module options", () => {
     expect(directusClientOptionsSchema.parse({}).client.assets).toEqual({
       enabled: true,
       path: "/_directus/assets",
-      publicOnly: false
+      publicOnly: false,
+      cache: { enabled: false }
     });
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { assets: { cache: { enabled: true } } } })
+    ).toThrow();
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { assets: { cache: { enabled: true, storage: "assets", maxAge: 0 } } }
+      })
+    ).toThrow();
+    expect(
+      directusClientOptionsSchema.parse({
+        client: { assets: { cache: { enabled: true, storage: "assets", maxAge: 60 } } }
+      }).client.assets.cache
+    ).toEqual({
+      enabled: true,
+      storage: "assets",
+      maxAge: 60,
+      maxBodySize: 10 * 1024 * 1024,
+      swr: false
+    });
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: { assets: { cache: { enabled: true, storage: "   ", maxAge: 60 } } }
+      })
+    ).toThrow();
     expect(() =>
       directusClientOptionsSchema.parse({ client: { assets: { path: "/../assets" } } })
     ).toThrow();

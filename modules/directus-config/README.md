@@ -97,6 +97,12 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | `assets.enabled`               | `true`                              | Enables the dedicated Directus `/assets` proxy route.                                             |
 | `assets.path`                  | `/_directus/assets`                 | Local asset proxy route using the same safe path validation as `proxy.path`.                      |
 | `assets.publicOnly`            | `false`                             | Uses anonymous asset requests only and never attempts session authentication when enabled.        |
+| `assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                      |
+| `assets.cache.storage`         | —                                   | Nitro storage mount name; required when caching is enabled and must support raw binary values.    |
+| `assets.cache.maxAge`          | —                                   | Fresh cache lifetime in seconds; required to be a positive integer when caching is enabled.       |
+| `assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                  |
+| `assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                          |
+| `assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                  |
 | `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
 | `preview.enabled`              | `true`                              | Enables preview query parsing.                                                                    |
 | `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |
@@ -117,7 +123,13 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | `typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
 | `typegen.augmentations`        | All `true`                          | Generated-source transforms.                                                                      |
 | `typegen.rules`                | `{}`                                | Collection and field type-expression overrides.                                                   |
-| `typegen.transform`            | —                                   | Final executable transform: `(source, context) => string`.                                        |
+| `typegen.transform`            | —                                   | Final executable source transform.                                                                |
+
+Asset caching is disabled by default. `assets.cache.storage` names a Nitro storage mount supplied by
+the application; the module does not create or choose its driver. Use filesystem storage for Node
+deployments and a raw-byte-capable mount such as Cloudflare R2 for Cloudflare deployments.
+Cloudflare KV's text-only storage is not recommended. Authenticated or private assets are never
+cached.
 
 Magic links require the `directus-magic-links-bundle` extension in Directus. The configured callback
 URL is server-only and is not included in the client-safe configuration.

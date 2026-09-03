@@ -52,6 +52,7 @@
     "directus-sdk-typegen": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
+    "ocache": "catalog:",
     "ofetch": "catalog:",
     "ohash": "catalog:",
     "ufo": "catalog:",

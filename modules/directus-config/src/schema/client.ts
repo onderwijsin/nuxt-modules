@@ -22,14 +22,39 @@ const localPath = z
  */
 const proxySchema = z.strictObject({ path: localPath }).default({ path: "/_directus/proxy" });
 
+const assetCacheSchema = z.discriminatedUnion("enabled", [
+  z.strictObject({ enabled: z.literal(false) }),
+  z.strictObject({
+    enabled: z.literal(true),
+    storage: z.string().trim().min(1),
+    maxAge: z.number().int().positive(),
+    maxBodySize: z
+      .number()
+      .int()
+      .positive()
+      .default(10 * 1024 * 1024),
+    swr: z.boolean().default(false),
+    staleMaxAge: z.number().int().nonnegative().optional()
+  })
+]);
+
+/** Resolved Directus asset-cache options produced by the shared schema. */
+export type ResolvedDirectusAssetCacheOptions = z.output<typeof assetCacheSchema>;
+
 /** Zod schema for the dedicated Directus assets proxy configuration. */
 const assetsSchema = z
   .strictObject({
     enabled: z.boolean().default(true),
     path: localPath.default("/_directus/assets"),
-    publicOnly: z.boolean().default(false)
+    publicOnly: z.boolean().default(false).sensitive(),
+    cache: assetCacheSchema.prefault({ enabled: false }).sensitive()
   })
-  .default({ enabled: true, path: "/_directus/assets", publicOnly: false });
+  .default({
+    enabled: true,
+    path: "/_directus/assets",
+    publicOnly: false,
+    cache: { enabled: false }
+  });
 
 /**
  * Default values for the previewSchema
