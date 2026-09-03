@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   addImports,
   addPlugin,
+  addServerPlugin,
   addServerHandler,
   addServerImportsDir,
   addTypeTemplate,
@@ -15,7 +16,6 @@ import {
 import type { ModuleDependencies } from "@nuxt/schema";
 import {
   moduleSetup,
-  inlineNitroRuntime,
   resolveLoggerScope,
   resolveModuleName,
   transpileRuntime,
@@ -203,7 +203,6 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
-    inlineNitroRuntime(nuxt, runtimeDir);
     for (const [name, file] of [
       ["useDirectus", "directus"],
       ["useDirectusError", "directus-error"],
@@ -220,6 +219,9 @@ export default defineNuxtModule<ModuleOptions>({
       ),
       mode: "server"
     });
+    if (options.client.auth.enabled) {
+      addServerPlugin(resolver.resolve(runtimeDir, "server/plugins/directus-auth"));
+    }
 
     if (options.client.auth.enabled) {
       addImports({

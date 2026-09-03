@@ -257,15 +257,17 @@ navigation remain the consuming application's responsibility.
 | `requestMagicLink` | `requestMagicLink(email: string, meta?): Promise<void>`         | Requests a passwordless login link when magic links are enabled.                                                                                                                                              |
 | `redeemMagicLink`  | `redeemMagicLink(token: string, otp?: string): Promise<void>`   | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                             |
 
-The SSR server plugin refreshes an expiring access token when possible before reading the token-free
-snapshot from the `httpOnly` cookie into Nuxt state. The session endpoint uses the same
-refresh-aware path, and hydration does not require a separate session request. Server-side refresh
-coordination uses Nitro storage. A shared, read-after-write consistent storage driver is required
-for coordination across processes or Cloudflare isolates; the default in-memory driver is
-instance-local. Refresh starts in the safety window and may continue after access-token expiry;
-Directus remains the authority on refresh-token validity. `refreshAttempts` controls the total
-number of `ofetch` attempts. Completed refresh results are H3-sealed before they are stored, but the
-configured storage backend remains sensitive infrastructure.
+Nitro refreshes an expiring access token when possible before the SSR server plugin reads the
+token-free snapshot from the `httpOnly` cookie into Nuxt state. The session endpoint uses the same
+refresh-aware path, and hydration does not require a separate session request. Authentication
+mutations are browser-facing same-origin endpoint calls; they are not executed directly by the Nuxt
+application runtime. Server-side refresh coordination uses Nitro storage. A shared, read-after-write
+consistent storage driver is required for coordination across processes or Cloudflare isolates; the
+default in-memory driver is instance-local. Refresh starts in the safety window and may continue
+after access-token expiry; Directus remains the authority on refresh-token validity.
+`refreshAttempts` controls the total number of `ofetch` attempts. Completed refresh results are
+H3-sealed before they are stored, but the configured storage backend remains sensitive
+infrastructure.
 
 ### Magic links
 
@@ -373,8 +375,8 @@ The default auto-imports are `readItem` and `readItems`. The supported command n
 
 Commands not configured for auto-import can be imported directly from `@directus/sdk`.
 
-Authentication calls made during SSR execute directly against the current server request. Browser
-calls continue to use the same-origin authentication routes below.
+Authentication mutations use the same-origin authentication routes below. SSR only consumes the
+session state prepared by Nitro; the Nuxt application runtime does not execute auth mutations.
 
 ## Authentication routes
 

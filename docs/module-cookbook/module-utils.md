@@ -54,7 +54,6 @@ use the source-level generic types; type-only exports are listed separately belo
 | `resolveLoggerScope`             | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `@onderwijsin/nuxt-module-utils/build`  |
 | `isPrepareMode`                  | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `@onderwijsin/nuxt-module-utils/build`  |
 | `transpileRuntime`               | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `@onderwijsin/nuxt-module-utils/build`  |
-| `inlineNitroRuntime`             | `inlineNitroRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                         | `@onderwijsin/nuxt-module-utils/build`  |
 | `moduleSetup`                    | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/build`  |
 | `moduleDependenciesWhenEnabled`  | `moduleDependenciesWhenEnabled<T extends object>(options: false \| { enabled?: boolean } \| undefined, dependencies: T): T \| Record<string, never>`               | `@onderwijsin/nuxt-module-utils/build`  |
 | `validateModuleOptions`          | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `@onderwijsin/nuxt-module-utils/build`  |
@@ -211,19 +210,6 @@ modules that publish runtime code consumed by Nuxt.
 import { transpileRuntime } from "@onderwijsin/nuxt-module-utils/build";
 
 transpileRuntime(nuxt, runtimeDir);
-```
-
-## `inlineNitroRuntime`
-
-`inlineNitroRuntime` adds a module's runtime directory to Nitro's inline externals. Use it for
-published module runtime code that imports Nitro features backed by generated virtual modules.
-Combine it with `transpileRuntime` when the same runtime is consumed by both Nuxt and Nitro.
-
-```ts
-import { inlineNitroRuntime, transpileRuntime } from "@onderwijsin/nuxt-module-utils/build";
-
-transpileRuntime(nuxt, runtimeDir);
-inlineNitroRuntime(nuxt, runtimeDir);
 ```
 
 ## `moduleSetup`

@@ -12,16 +12,9 @@ import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-ut
 import { z } from "zod";
 
 import { getDirectusRuntimeConfig } from "./runtime-config";
+import type { DirectusSessionSnapshot } from "../../types/auth";
 
-/** Token-free user data persisted with a Directus session. */
-export interface DirectusSessionSnapshot {
-  readonly userId: string;
-  readonly email: string | null;
-  readonly firstName: string | null;
-  readonly lastName: string | null;
-  /** Whether Directus requires this session to complete TFA setup. */
-  readonly requiresTfaSetup: boolean;
-}
+export type { DirectusSessionSnapshot } from "../../types/auth";
 
 /** Internal cookie payload. Tokens never leave server utilities. */
 export interface DirectusSession {

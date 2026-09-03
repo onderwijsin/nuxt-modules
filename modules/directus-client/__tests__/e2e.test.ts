@@ -240,26 +240,4 @@ describe("Directus client and server composables", async () => {
       })
     ).resolves.toMatchObject({ userId: "user-1", requiresTfaSetup: false });
   });
-
-  it("redeems a magic link directly during initial SSR", async () => {
-    const response = await fetch(url("/redeem"));
-
-    expect(response.status).toBe(200);
-    const html = await response.text();
-    expect(html).toContain('data-testid="redeemed"');
-  });
-
-  it("executes server-side password and magic-link operations without proxy requests", async () => {
-    const response = await fetch(url("/server-auth"));
-
-    expect(response.status).toBe(200);
-    await expect(response.text()).resolves.toContain('data-testid="server-auth"');
-  });
-
-  it("executes server-side refresh through the auth bridge", async () => {
-    const response = await fetch(url("/server-auth-refresh"));
-
-    expect(response.status).toBe(200);
-    await expect(response.text()).resolves.toContain('data-testid="server-auth-refresh"');
-  });
 });

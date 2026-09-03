@@ -6,7 +6,7 @@ import {
 } from "ocache";
 import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
-import { useStorage } from "nitropack/runtime/storage";
+import { useStorage } from "nitropack/runtime";
 
 type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
 let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;

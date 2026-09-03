@@ -5,7 +5,7 @@ import { hash } from "ohash";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
-import { useStorage } from "nitropack/runtime/storage";
+import { useStorage } from "nitropack/runtime";
 
 import {
   clearDirectusSession,

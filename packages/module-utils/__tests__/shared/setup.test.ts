@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   enabled,
-  inlineNitroRuntime,
   moduleDependenciesWhenEnabled,
   isPrepareMode,
   moduleSetup,
@@ -55,44 +54,6 @@ describe("transpileRuntime", () => {
     transpileRuntime(nuxt, "/module/runtime");
 
     expect(nuxt.options.build.transpile).toEqual(["/module/runtime"]);
-  });
-});
-
-describe("inlineNitroRuntime", () => {
-  it("adds the runtime directory to Nitro inline externals", () => {
-    let hook: ((config: { externals?: unknown }) => void) | undefined;
-    const nuxt = {
-      hook: vi.fn((name: string, callback: (config: { externals?: unknown }) => void) => {
-        expect(name).toBe("nitro:config");
-        hook = callback;
-      })
-    } as never;
-
-    inlineNitroRuntime(nuxt, "/module/runtime");
-
-    const config = { externals: { inline: ["/existing/runtime"] } };
-    hook?.(config);
-    hook?.(config);
-
-    expect(config.externals).toEqual({
-      inline: ["/existing/runtime", "/module/runtime"]
-    });
-  });
-
-  it("initializes inline externals when Nitro has no external configuration", () => {
-    let hook: ((config: { externals?: unknown }) => void) | undefined;
-    const nuxt = {
-      hook: vi.fn((_name: string, callback: (config: { externals?: unknown }) => void) => {
-        hook = callback;
-      })
-    } as never;
-
-    inlineNitroRuntime(nuxt, "/module/runtime");
-
-    const config: { externals?: unknown } = {};
-    hook?.(config);
-
-    expect(config.externals).toEqual({ inline: ["/module/runtime"] });
   });
 });
 

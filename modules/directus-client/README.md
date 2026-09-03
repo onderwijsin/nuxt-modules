@@ -286,8 +286,9 @@ snapshot into Nuxt state, so hydration does not require a session fetch. Access 
 never enter client state or application code. H3 authenticated encryption protects the cookie's
 confidentiality and integrity; Directus remains the authorization boundary.
 
-Authentication calls made during SSR execute directly against the current server request. Browser
-calls continue to use the same-origin `/_directus/auth/` endpoints.
+Authentication mutations use the same-origin `/_directus/auth/` endpoints. During SSR, Nitro
+refreshes the session before Nuxt reads its token-free snapshot; authentication mutations are not
+executed from the Nuxt application runtime.
 
 When authentication is enabled, configure `client.auth.sessionSecret` from a cryptographically
 random, server-only value of at least 32 characters. Existing unsigned cookies are rejected and

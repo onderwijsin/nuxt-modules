@@ -19,23 +19,17 @@ const state = vi.hoisted(() => ({
         }
       }
     }
-  },
-  ensureFreshDirectusSession: vi.fn()
+  }
 }));
 
 vi.mock("#imports", () => ({
   useRuntimeConfig: () => state.config
 }));
 
-vi.mock("../src/runtime/server/utils/auth", () => ({
-  ensureFreshDirectusSession: state.ensureFreshDirectusSession
-}));
-
 const { createServerDirectusClient } = await import("../src/runtime/server/utils/client");
 
 beforeEach(() => {
   state.config.directusClient.auth.enabled = false;
-  state.ensureFreshDirectusSession.mockReset();
 });
 
 afterEach(() => {
@@ -55,12 +49,12 @@ describe("Directus server client authentication boundary", () => {
     await expect(
       createServerDirectusClient(createTestEvent()).request(readItems("pages"))
     ).resolves.toEqual([]);
-    expect(state.ensureFreshDirectusSession).not.toHaveBeenCalled();
   });
 
   it("uses a refreshed session only when auth is enabled", async () => {
     state.config.directusClient.auth.enabled = true;
-    state.ensureFreshDirectusSession.mockResolvedValue({ accessToken: "session-token" });
+    const event = createTestEvent();
+    event.context.directusAuth = { accessToken: "session-token", snapshot: null };
     const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       expect(new Headers(init?.headers).get("authorization")).toBe("Bearer session-token");
       return new Response(JSON.stringify({ data: [] }), {
@@ -69,9 +63,8 @@ describe("Directus server client authentication boundary", () => {
     });
     vi.stubGlobal("fetch", fetch);
 
-    await expect(
-      createServerDirectusClient(createTestEvent()).request(readItems("pages"))
-    ).resolves.toEqual([]);
-    expect(state.ensureFreshDirectusSession).toHaveBeenCalledTimes(1);
+    await expect(createServerDirectusClient(event).request(readItems("pages"))).resolves.toEqual(
+      []
+    );
   });
 });

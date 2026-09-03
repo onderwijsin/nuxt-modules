@@ -175,7 +175,7 @@ async function retryAssetWithFreshSession(
   if (!isAuthenticationFailure(response) || options.publicOnly || !options.authEnabled)
     return response;
 
-  const { ensureFreshDirectusSession } = await import("../utils/auth.js");
+  const { ensureFreshDirectusSession } = await import("../utils/auth");
   const session = await ensureFreshDirectusSession(event);
   if (!session) return response;
 
