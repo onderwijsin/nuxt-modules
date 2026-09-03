@@ -15,11 +15,32 @@ interface AssetCacheConfig {
 }
 let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
 
+/**
+ * Parses directive names from a Cache-Control header, ignoring directive values.
+ *
+ * @param value Raw Cache-Control header value.
+ * @returns Lowercase directive names.
+ */
+function getCacheControlDirectives(value: string): Set<string> {
+  return new Set(
+    value
+      .split(",")
+      .map((directive) => directive.trim().split("=", 1)[0]?.toLowerCase())
+      .filter((directive): directive is string => Boolean(directive))
+  );
+}
+
 /** Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
  * @param mount Nitro storage mount name.
  * @returns An ocache storage interface backed by raw unstorage operations.
  */
-function createAssetCacheStorage(mount: string) {
+export function createAssetCacheStorage(mount: string) {
+  const rootStorage = useStorage();
+  const resolvedMount = rootStorage.getMount(mount);
+  if (!resolvedMount.base) {
+    throw new Error(`Directus asset cache storage mount "${mount}" is not configured`);
+  }
+
   const storage = useStorage(mount);
   return createBlobStorage({
     get: (key) => storage.getItemRaw(key),
@@ -49,13 +70,16 @@ export function getAssetCacheHandler(
     allowQuery: true,
     sendCacheControl: false,
     cacheStatusHeader: "x-directus-asset-cache",
+    stream: true,
+    shouldBypassCache: (event) =>
+      event.req.headers.has("if-match") || event.req.headers.has("if-unmodified-since"),
     shouldCache: (entry) => {
-      const cacheControl = entry.headers["cache-control"]?.toLowerCase() ?? "";
+      const directives = getCacheControlDirectives(entry.headers["cache-control"] ?? "");
       return (
         entry.status === 200 &&
-        cacheControl.includes("public") &&
-        !cacheControl.includes("private") &&
-        !cacheControl.includes("no-store")
+        directives.has("public") &&
+        !directives.has("private") &&
+        !directives.has("no-store")
       );
     }
   });

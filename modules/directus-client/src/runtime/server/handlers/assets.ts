@@ -6,9 +6,9 @@ import {
   type H3Event
 } from "h3";
 import { useRuntimeConfig } from "#imports";
-import { FetchError, ofetch } from "ofetch";
+import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
-import { attempt, isArray, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
+import { isArray, isDefined, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
 import { resolveDirectusProxyUrl } from "../utils/proxy";
 
 const assetRequestHeaders = new Set([
@@ -87,8 +87,8 @@ export function getAssetRequestHeaders(
  * Resolves and validates a Directus asset URL while preserving its complete query string.
  *
  * Asset transformation parameters are intentionally not inspected or normalized here. The
- * upstream URL must remain identical to the browser's request so every Directus transformation
- * remains available to consumers.
+ * The asset path suffix and complete query string must be preserved when mapping the local proxy
+ * URL to Directus so every transformation remains available to consumers.
  *
  * @param baseUrl Directus base URL.
  * @param proxyPath Local asset proxy path.
@@ -115,25 +115,23 @@ export function resolveDirectusAssetUrl(
  */
 export async function fetchDirectusAsset(
   target: string,
-  options: { method: AssetRequestMethod; headers: Headers; accessToken?: string }
+  options: {
+    method: AssetRequestMethod;
+    headers: Headers;
+    accessToken?: string;
+    signal?: AbortSignal;
+  }
 ): Promise<Response> {
   const headers = new Headers(options.headers);
   if (options.accessToken) headers.set("authorization", "Bearer " + options.accessToken);
 
-  const result = await attempt(() =>
-    ofetch.raw(target, {
-      responseType: "stream",
-      method: options.method,
-      headers,
-      ignoreResponseError: false
-    })
-  );
-
-  let response: Response;
-  if (result.error || !result.data) {
-    if (!(result.error instanceof FetchError) || !result.error.response) throw result.error;
-    response = result.error.response;
-  } else response = result.data;
+  const response = await ofetch.raw(target, {
+    responseType: "stream",
+    method: options.method,
+    headers,
+    ignoreResponseError: true,
+    signal: options.signal
+  });
 
   const safeHeaders = new Headers(response.headers);
   for (const header of blockedResponseHeaders) safeHeaders.delete(header);
@@ -158,7 +156,7 @@ export async function fetchDirectusAsset(
  * @param options Authentication policy.
  * @returns The original or authenticated response.
  */
-async function resolveAssetAuthentication(
+async function retryAssetWithFreshSession(
   event: H3Event,
   target: string,
   method: AssetRequestMethod,
@@ -173,12 +171,18 @@ async function resolveAssetAuthentication(
   const session = await ensureFreshDirectusSession(event);
   if (!session) return response;
 
-  response.body?.cancel();
+  if (response.body) {
+    try {
+      await response.body.cancel();
+    } catch {
+      // Best-effort cleanup only; the authenticated retry remains authoritative.
+    }
+  }
   return fetchDirectusAsset(target, { method, headers, accessToken: session.accessToken });
 }
 
 /**
- * Fetches anonymously once, then applies the optional session fallback outside the cache.
+ * Fetches anonymously once, then applies an optional session fallback outside the cache.
  *
  * @param event Incoming H3 event used for session resolution.
  * @param target Directus asset URL.
@@ -187,7 +191,7 @@ async function resolveAssetAuthentication(
  * @param options Authentication policy.
  * @returns The anonymous or authenticated response.
  */
-async function fetchAssetWithAuthentication(
+async function fetchAssetWithSessionFallback(
   event: H3Event,
   target: string,
   method: AssetRequestMethod,
@@ -195,7 +199,7 @@ async function fetchAssetWithAuthentication(
   options: AssetAuthenticationOptions
 ): Promise<Response> {
   const anonymousResponse = await fetchDirectusAsset(target, { method, headers });
-  return resolveAssetAuthentication(event, target, method, headers, anonymousResponse, options);
+  return retryAssetWithFreshSession(event, target, method, headers, anonymousResponse, options);
 }
 
 /**
@@ -210,7 +214,7 @@ async function fetchAssetWithAuthentication(
  * @param cache Enabled cache configuration.
  * @returns The anonymous cached response.
  */
-async function fetchCachedAnonymousAsset(
+async function fetchAssetWithCache(
   event: H3Event,
   target: string,
   headers: Headers,
@@ -222,7 +226,8 @@ async function fetchCachedAnonymousAsset(
     const method: AssetRequestMethod = cachedEvent.req.method === "HEAD" ? "HEAD" : "GET";
     return fetchDirectusAsset(cachedEvent.req.url, {
       method,
-      headers: getAssetRequestHeaders(cachedEvent.req.headers)
+      headers: getAssetRequestHeaders(cachedEvent.req.headers),
+      signal: cachedEvent.req.signal
     });
   })(cacheEvent);
 
@@ -252,10 +257,10 @@ export default defineEventHandler(async (event) => {
   );
   const headers = getAssetRequestHeaders(getRequestHeaders(event));
   if (!assets.cache.enabled) {
-    return fetchAssetWithAuthentication(event, target, method, headers, authentication);
+    return fetchAssetWithSessionFallback(event, target, method, headers, authentication);
   }
 
   // Only the anonymous request is cached. Authentication is applied to the result below.
-  const response = await fetchCachedAnonymousAsset(event, target, headers, assets.cache);
-  return resolveAssetAuthentication(event, target, method, headers, response, authentication);
+  const response = await fetchAssetWithCache(event, target, headers, assets.cache);
+  return retryAssetWithFreshSession(event, target, method, headers, response, authentication);
 });
