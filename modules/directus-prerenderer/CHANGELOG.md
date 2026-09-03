@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [693e00e]
+  - @onderwijsin/nuxt-directus-config@0.7.0
+
 ## 0.2.2
 
 ### Patch Changes
