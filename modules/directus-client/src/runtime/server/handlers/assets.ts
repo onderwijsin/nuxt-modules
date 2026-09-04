@@ -175,9 +175,8 @@ async function retryAssetWithFreshSession(
   if (!isAuthenticationFailure(response) || options.publicOnly || !options.authEnabled)
     return response;
 
-  const { ensureFreshDirectusSession } = await import("../utils/auth");
-  const session = await ensureFreshDirectusSession(event);
-  if (!session) return response;
+  const authState = await event.context.directusAuth?.resolve();
+  if (!authState?.accessToken) return response;
 
   if (response.body) {
     try {
@@ -186,7 +185,7 @@ async function retryAssetWithFreshSession(
       // Best-effort cleanup only; the authenticated retry remains authoritative.
     }
   }
-  return fetchDirectusAsset(target, { method, headers, accessToken: session.accessToken });
+  return fetchDirectusAsset(target, { method, headers, accessToken: authState.accessToken });
 }
 
 /**

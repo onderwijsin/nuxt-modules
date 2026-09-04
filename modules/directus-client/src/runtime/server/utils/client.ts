@@ -27,7 +27,10 @@ export function createServerDirectusClient(event?: H3Event): DirectusSchemaClien
     onRequest: async ({ options }) => {
       if (!event) return;
 
-      const sessionAccessToken = event?.context.directusAuth?.accessToken;
+      const authState = config.directusClient.auth.enabled
+        ? await event.context.directusAuth?.resolve()
+        : undefined;
+      const sessionAccessToken = authState?.accessToken;
 
       const { credential } = resolveDirectusRequestContext(event, {
         preview: config.public.directusClient.preview,

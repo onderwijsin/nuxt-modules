@@ -8,8 +8,13 @@ export interface DirectusSessionSnapshot {
   readonly requiresTfaSetup: boolean;
 }
 
-/** Request-local Directus authentication state prepared by Nitro. */
-export interface DirectusRequestAuthContext {
+/** Request-local Directus authentication state resolved by Nitro. */
+export interface DirectusRequestAuthState {
   readonly accessToken?: string;
   readonly snapshot: DirectusSessionSnapshot | null;
+}
+
+/** Lazy request-local Directus authentication boundary exposed by Nitro. */
+export interface DirectusRequestAuthContext {
+  readonly resolve: () => Promise<DirectusRequestAuthState>;
 }

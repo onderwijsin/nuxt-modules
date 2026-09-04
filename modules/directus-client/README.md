@@ -286,9 +286,18 @@ snapshot into Nuxt state, so hydration does not require a session fetch. Access 
 never enter client state or application code. H3 authenticated encryption protects the cookie's
 confidentiality and integrity; Directus remains the authorization boundary.
 
-Authentication mutations use the same-origin `/_directus/auth/` endpoints. During SSR, Nitro
-refreshes the session before Nuxt reads its token-free snapshot; authentication mutations are not
-executed from the Nuxt application runtime.
+Authentication mutations use Nuxt's request-aware fetch against the same-origin `/_directus/auth/`
+endpoints. The composable remains SSR-safe: reading `isAuthenticated`, `userId`, and the session
+state works during SSR. Automatic SSR session refresh happens directly through the Nitro request
+boundary, not through an internal HTTP refresh call.
+
+Mutations that do not depend on writing a new browser cookie can work naturally through the internal
+route. Login, refresh, logout, and magic-link redemption may require response-cookie propagation
+when invoked during SSR because `Set-Cookie` from a nested internal request is not automatically
+equivalent to writing on the outer SSR response. Initial SSR POST mutations may also be subject to
+the same-origin and CSRF requirements described below. Do not rely on SSR mutation calls for
+establishing or clearing a browser session unless the outer response explicitly propagates the
+cookie.
 
 When authentication is enabled, configure `client.auth.sessionSecret` from a cryptographically
 random, server-only value of at least 32 characters. Existing unsigned cookies are rejected and

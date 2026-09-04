@@ -7,7 +7,10 @@ const profile = JSON.parse(
 export default defineNuxtConfig({
   compatibilityDate: "2025-01-01",
   nitro: {
-    storage: { externalRedirects: { driver: "memory" } },
+    storage: {
+      externalRedirects: { driver: "memory" },
+      "directus-assets": { driver: "memory" }
+    },
     experimental: { tasks: true }
   },
   extends: profile.layers.map((layer: string) => `./consumer-layers/${layer}`)

@@ -1,8 +1,7 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
-import { useNuxtApp, useState } from "#app";
+import { useNuxtApp, useRequestFetch, useState } from "#app";
 import { useRuntimeConfig } from "#imports";
 import { attempt } from "@onderwijsin/nuxt-module-utils";
-import { $fetch } from "ofetch";
 
 import type { DirectusSessionSnapshot } from "../../types/auth";
 
@@ -39,6 +38,7 @@ export interface DirectusAuthFacade {
  */
 export function useDirectusAuth(): DirectusAuthFacade {
   const nuxtApp = useNuxtApp();
+  const requestFetch = useRequestFetch();
   const runtimeConfig = useRuntimeConfig();
   const magicLinksEnabled = runtimeConfig.public.directusClient.auth.magicLinks.enabled;
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
@@ -67,7 +67,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
     input: { email: string; password: string; otp?: string },
     meta?: DirectusAuthRequestMeta
   ): Promise<void> => {
-    const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/login", {
+    const value = await requestFetch<DirectusSessionSnapshot>("/_directus/auth/login", {
       method: "POST",
       body: input,
       headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
@@ -81,7 +81,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
   /** Refreshes the current Directus session. */
   const refresh = async (): Promise<void> => {
     const result = await attempt(async () => {
-      const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/refresh", {
+      const value = await requestFetch<DirectusSessionSnapshot>("/_directus/auth/refresh", {
         method: "POST"
       });
       setSession(value);
@@ -104,7 +104,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
     const previousUserId = session.value?.userId ?? null;
 
     const result = await attempt(async () => {
-      await $fetch("/_directus/auth/logout", { method: "POST" });
+      await requestFetch("/_directus/auth/logout", { method: "POST" });
     });
     setSession(null);
     await emit("directus:auth:logout", () =>
@@ -119,7 +119,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
    * @param meta - Optional browser authentication metadata.
    */
   const passwordRequest = async (email: string, meta?: DirectusAuthRequestMeta): Promise<void> => {
-    await $fetch("/_directus/auth/password-request", {
+    await requestFetch("/_directus/auth/password-request", {
       method: "POST",
       body: { email },
       headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
@@ -132,7 +132,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
    * @param password - New password.
    */
   const passwordReset = async (token: string, password: string): Promise<void> => {
-    await $fetch("/_directus/auth/password-reset", {
+    await requestFetch("/_directus/auth/password-reset", {
       method: "POST",
       body: { token, password }
     });
@@ -146,7 +146,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
   const requestMagicLink = async (email: string, meta?: DirectusAuthRequestMeta): Promise<void> => {
     if (!magicLinksEnabled) return;
 
-    await $fetch("/_directus/auth/magic-links/request", {
+    await requestFetch("/_directus/auth/magic-links/request", {
       method: "POST",
       body: { email },
       headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
@@ -161,10 +161,13 @@ export function useDirectusAuth(): DirectusAuthFacade {
   const redeemMagicLink = async (token: string, otp?: string): Promise<void> => {
     if (!magicLinksEnabled) return;
 
-    const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/magic-links/redeem", {
-      method: "POST",
-      body: { magicLinkToken: token, ...(otp ? { otp } : {}) }
-    });
+    const value = await requestFetch<DirectusSessionSnapshot>(
+      "/_directus/auth/magic-links/redeem",
+      {
+        method: "POST",
+        body: { magicLinkToken: token, ...(otp ? { otp } : {}) }
+      }
+    );
     setSession(value);
     await emit("directus:auth:login", () =>
       Promise.resolve(nuxtApp.callHook("directus:auth:login", readonly(value)))

@@ -1,5 +1,6 @@
 ---
-"@onderwijsin/nuxt-directus-client": patch
+"@onderwijsin/nuxt-directus-client": minor
 ---
 
-Restore the Nitro-only Directus authentication runtime boundary while preserving SSR session refresh.
+Remove the direct Nitro SSR auth bridge, restore Nuxt request-aware auth transport, and preserve
+automatic SSR session refresh through the Nitro request context boundary.

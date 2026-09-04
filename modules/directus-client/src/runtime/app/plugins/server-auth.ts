@@ -9,14 +9,13 @@ import type { DirectusSessionSnapshot } from "../../types/auth";
  * This plugin is registered only when cookie authentication is enabled so applications that use
  * static, preview, or unauthenticated access do not read or serialize session cookies.
  *
- * @param nuxtApp Current Nuxt application instance.
  * @returns The injected request-scoped client.
  */
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin(async () => {
   const event = useRequestEvent();
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
-  const authContext = event?.context.directusAuth;
-  session.value = authContext?.snapshot ?? null;
+  const authState = event ? await event.context.directusAuth?.resolve() : undefined;
+  session.value = authState?.snapshot ?? null;
 
   return {
     provide: {

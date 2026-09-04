@@ -198,6 +198,19 @@ async function runFocusedAssertions(port, profile) {
  * @returns {Promise<void>}
  */
 async function runFullAssertions(port, profile) {
+  if (profile.modules.includes("@onderwijsin/nuxt-directus-client")) {
+    const response = await fetch(`http://127.0.0.1:${port}/_directus/assets/packed-regression`, {
+      signal: AbortSignal.timeout(5_000)
+    });
+    const body = await response.text();
+    if (
+      body.includes("ERR_PACKAGE_IMPORT_NOT_DEFINED") ||
+      body.includes("#nitro-internal-virtual/storage")
+    )
+      throw new Error(`Packed Directus storage regression: ${body}`);
+    if (response.status !== 502)
+      throw new Error(`Packed Directus asset storage path returned ${response.status}: ${body}`);
+  }
   if (
     profile.modules.includes("@onderwijsin/nuxt-healthcheck") &&
     (await (await waitForResponse(`http://127.0.0.1:${port}/api/system/ping`)).text()) !== "pong"

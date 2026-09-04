@@ -54,7 +54,11 @@ describe("Directus server client authentication boundary", () => {
   it("uses a refreshed session only when auth is enabled", async () => {
     state.config.directusClient.auth.enabled = true;
     const event = createTestEvent();
-    event.context.directusAuth = { accessToken: "session-token", snapshot: null };
+    const resolve = vi.fn().mockResolvedValue({
+      accessToken: "session-token",
+      snapshot: null
+    });
+    event.context.directusAuth = { resolve };
     const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       expect(new Headers(init?.headers).get("authorization")).toBe("Bearer session-token");
       return new Response(JSON.stringify({ data: [] }), {
@@ -66,5 +70,6 @@ describe("Directus server client authentication boundary", () => {
     await expect(createServerDirectusClient(event).request(readItems("pages"))).resolves.toEqual(
       []
     );
+    expect(resolve).toHaveBeenCalledTimes(1);
   });
 });

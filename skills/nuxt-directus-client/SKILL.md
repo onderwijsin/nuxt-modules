@@ -260,8 +260,11 @@ navigation remain the consuming application's responsibility.
 Nitro refreshes an expiring access token when possible before the SSR server plugin reads the
 token-free snapshot from the `httpOnly` cookie into Nuxt state. The session endpoint uses the same
 refresh-aware path, and hydration does not require a separate session request. Authentication
-mutations are browser-facing same-origin endpoint calls; they are not executed directly by the Nuxt
-application runtime. Server-side refresh coordination uses Nitro storage. A shared, read-after-write
+mutations use Nuxt's request-aware fetch against the same-origin routes; they are not executed
+directly through a Nitro utility. Reading authentication state remains SSR-safe, while login,
+refresh, logout, and magic-link redemption may require explicit outer-response cookie propagation
+when invoked during SSR. Initial SSR POST mutations may also be subject to the same-origin and CSRF
+requirements. Server-side refresh coordination uses Nitro storage. A shared, read-after-write
 consistent storage driver is required for coordination across processes or Cloudflare isolates; the
 default in-memory driver is instance-local. Refresh starts in the safety window and may continue
 after access-token expiry; Directus remains the authority on refresh-token validity.
