@@ -5,6 +5,7 @@ import { hash } from "ohash";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
+import { useStorage } from "nitropack/runtime";
 
 import {
   clearDirectusSession,
@@ -111,15 +112,9 @@ interface RefreshStorage {
 /**
  * Resolves the Nitro storage mount used to coordinate refresh requests.
  *
- * Nitro's storage runtime is server-bundle-only because its implementation imports a generated
- * virtual storage module. Loading it at request time keeps that virtual module out of application
- * and client resolution graphs.
- *
  * @returns The configured refresh-flight storage.
  */
 async function getRefreshStorage(): Promise<RefreshStorage> {
-  const nitroStorageModule = "nitropack/runtime/storage";
-  const { useStorage } = await import(/* @vite-ignore */ nitroStorageModule);
   return useStorage(REFRESH_STORAGE_MOUNT);
 }
 

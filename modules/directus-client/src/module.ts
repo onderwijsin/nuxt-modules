@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   addImports,
   addPlugin,
+  addServerPlugin,
   addServerHandler,
   addServerImportsDir,
   addTypeTemplate,
@@ -218,6 +219,9 @@ export default defineNuxtModule<ModuleOptions>({
       ),
       mode: "server"
     });
+    if (options.client.auth.enabled) {
+      addServerPlugin(resolver.resolve(runtimeDir, "server/plugins/directus-auth"));
+    }
 
     if (options.client.auth.enabled) {
       addImports({

@@ -8,8 +8,8 @@ import { createServerDirectusClient } from "../../server/utils/client";
  * @param nuxtApp Current Nuxt application instance.
  * @returns The injected request-scoped client.
  */
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
   return {
-    provide: { directus: createServerDirectusClient(useRequestEvent(), nuxtApp) }
+    provide: { directus: createServerDirectusClient(useRequestEvent()) }
   };
 });

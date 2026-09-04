@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
 
 vi.mock("#app", () => ({
   useNuxtApp: () => ({ callHook: state.callHook }),
+  useRequestFetch: () => state.fetch,
   useState: () => {
     if (state.session === undefined) state.session = null;
     return ref(state.session);
@@ -24,8 +25,6 @@ vi.mock("#app", () => ({
 }));
 
 vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
-
-vi.mock("ofetch", () => ({ $fetch: state.fetch }));
 
 const { useDirectusAuth } = await import("../src/runtime/app/composables/directus-auth");
 

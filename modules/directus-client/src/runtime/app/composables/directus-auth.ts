@@ -1,10 +1,9 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
-import { useNuxtApp, useState } from "#app";
+import { useNuxtApp, useRequestFetch, useState } from "#app";
 import { useRuntimeConfig } from "#imports";
 import { attempt } from "@onderwijsin/nuxt-module-utils";
-import { $fetch } from "ofetch";
 
-import type { DirectusSessionSnapshot } from "../../server/utils/session";
+import type { DirectusSessionSnapshot } from "../../types/auth";
 
 /** Token-free session payload delivered to Directus authentication hooks. */
 export type DirectusAuthSession = DeepReadonly<DirectusSessionSnapshot>;
@@ -12,21 +11,6 @@ export type DirectusAuthSession = DeepReadonly<DirectusSessionSnapshot>;
 /** Optional metadata forwarded with a Directus authentication mutation. */
 export interface DirectusAuthRequestMeta {
   readonly turnstileToken?: string;
-}
-
-/** Server-side authentication operations bound to the current Nuxt request event. */
-export interface DirectusAuthServer {
-  readonly login: (input: {
-    email: string;
-    password: string;
-    otp?: string;
-  }) => Promise<DirectusSessionSnapshot>;
-  readonly refresh: () => Promise<DirectusSessionSnapshot>;
-  readonly logout: () => Promise<void>;
-  readonly requestPasswordReset: (email: string) => Promise<void>;
-  readonly resetPassword: (token: string, password: string) => Promise<void>;
-  readonly requestMagicLink: (email: string) => Promise<void>;
-  readonly redeemMagicLink: (token: string, otp?: string) => Promise<DirectusSessionSnapshot>;
 }
 
 /** Client-safe authentication facade. Tokens remain exclusively in the httpOnly cookie. */
@@ -54,6 +38,7 @@ export interface DirectusAuthFacade {
  */
 export function useDirectusAuth(): DirectusAuthFacade {
   const nuxtApp = useNuxtApp();
+  const requestFetch = useRequestFetch();
   const runtimeConfig = useRuntimeConfig();
   const magicLinksEnabled = runtimeConfig.public.directusClient.auth.magicLinks.enabled;
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
@@ -82,18 +67,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
     input: { email: string; password: string; otp?: string },
     meta?: DirectusAuthRequestMeta
   ): Promise<void> => {
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      const value = await serverAuth.login(input);
-      setSession(value);
-      await emit("directus:auth:login", () =>
-        Promise.resolve(nuxtApp.callHook("directus:auth:login", readonly(value)))
-      );
-      return;
-    }
-
-    const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/login", {
+    const value = await requestFetch<DirectusSessionSnapshot>("/_directus/auth/login", {
       method: "POST",
       body: input,
       headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
@@ -106,29 +80,8 @@ export function useDirectusAuth(): DirectusAuthFacade {
 
   /** Refreshes the current Directus session. */
   const refresh = async (): Promise<void> => {
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      const result = await attempt(async () => {
-        const value = await serverAuth.refresh();
-        setSession(value);
-        await emit("directus:auth:refresh", () =>
-          Promise.resolve(nuxtApp.callHook("directus:auth:refresh", readonly(value)))
-        );
-      });
-      if (result.error !== null) {
-        const previousUserId = session.value?.userId ?? null;
-        setSession(null);
-        await emit("directus:auth:invalidated", () =>
-          Promise.resolve(nuxtApp.callHook("directus:auth:invalidated", previousUserId))
-        );
-        throw result.error;
-      }
-      return;
-    }
-
     const result = await attempt(async () => {
-      const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/refresh", {
+      const value = await requestFetch<DirectusSessionSnapshot>("/_directus/auth/refresh", {
         method: "POST"
       });
       setSession(value);
@@ -150,20 +103,8 @@ export function useDirectusAuth(): DirectusAuthFacade {
   const logout = async (): Promise<void> => {
     const previousUserId = session.value?.userId ?? null;
 
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      const result = await attempt(() => serverAuth.logout());
-      setSession(null);
-      await emit("directus:auth:logout", () =>
-        Promise.resolve(nuxtApp.callHook("directus:auth:logout", previousUserId))
-      );
-      if (result.error !== null) throw result.error;
-      return;
-    }
-
     const result = await attempt(async () => {
-      await $fetch("/_directus/auth/logout", { method: "POST" });
+      await requestFetch("/_directus/auth/logout", { method: "POST" });
     });
     setSession(null);
     await emit("directus:auth:logout", () =>
@@ -178,14 +119,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
    * @param meta - Optional browser authentication metadata.
    */
   const passwordRequest = async (email: string, meta?: DirectusAuthRequestMeta): Promise<void> => {
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      await serverAuth.requestPasswordReset(email);
-      return;
-    }
-
-    await $fetch("/_directus/auth/password-request", {
+    await requestFetch("/_directus/auth/password-request", {
       method: "POST",
       body: { email },
       headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
@@ -198,14 +132,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
    * @param password - New password.
    */
   const passwordReset = async (token: string, password: string): Promise<void> => {
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      await serverAuth.resetPassword(token, password);
-      return;
-    }
-
-    await $fetch("/_directus/auth/password-reset", {
+    await requestFetch("/_directus/auth/password-reset", {
       method: "POST",
       body: { token, password }
     });
@@ -219,14 +146,7 @@ export function useDirectusAuth(): DirectusAuthFacade {
   const requestMagicLink = async (email: string, meta?: DirectusAuthRequestMeta): Promise<void> => {
     if (!magicLinksEnabled) return;
 
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      await serverAuth.requestMagicLink(email);
-      return;
-    }
-
-    await $fetch("/_directus/auth/magic-links/request", {
+    await requestFetch("/_directus/auth/magic-links/request", {
       method: "POST",
       body: { email },
       headers: meta?.turnstileToken ? { "x-turnstile-token": meta.turnstileToken } : undefined
@@ -241,21 +161,13 @@ export function useDirectusAuth(): DirectusAuthFacade {
   const redeemMagicLink = async (token: string, otp?: string): Promise<void> => {
     if (!magicLinksEnabled) return;
 
-    if (import.meta.server) {
-      const serverAuth = nuxtApp.$directusAuthServer;
-      if (!serverAuth) throw new Error("Directus server authentication is unavailable.");
-      const value = await serverAuth.redeemMagicLink(token, otp);
-      setSession(value);
-      await emit("directus:auth:login", () =>
-        Promise.resolve(nuxtApp.callHook("directus:auth:login", readonly(value)))
-      );
-      return;
-    }
-
-    const value = await $fetch<DirectusSessionSnapshot>("/_directus/auth/magic-links/redeem", {
-      method: "POST",
-      body: { magicLinkToken: token, ...(otp ? { otp } : {}) }
-    });
+    const value = await requestFetch<DirectusSessionSnapshot>(
+      "/_directus/auth/magic-links/redeem",
+      {
+        method: "POST",
+        body: { magicLinkToken: token, ...(otp ? { otp } : {}) }
+      }
+    );
     setSession(value);
     await emit("directus:auth:login", () =>
       Promise.resolve(nuxtApp.callHook("directus:auth:login", readonly(value)))

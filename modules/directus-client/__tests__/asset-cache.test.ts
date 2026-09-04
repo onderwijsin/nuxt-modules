@@ -19,7 +19,7 @@ const state = vi.hoisted(() => {
   return { rootStorage, storage, values };
 });
 
-vi.mock("nitropack/runtime/storage", () => ({
+vi.mock("nitropack/runtime", () => ({
   useStorage: (mount?: string) => (mount ? state.storage : state.rootStorage)
 }));
 

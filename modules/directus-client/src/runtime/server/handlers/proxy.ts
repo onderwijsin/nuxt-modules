@@ -99,8 +99,7 @@ export default defineEventHandler(async (event) => {
   );
   let sessionAccessToken: string | undefined;
   if (config.directusClient.auth.enabled) {
-    const { ensureFreshDirectusSession } = await import("../utils/auth.js");
-    sessionAccessToken = (await ensureFreshDirectusSession(event))?.accessToken;
+    sessionAccessToken = (await event.context.directusAuth?.resolve())?.accessToken;
   }
   const { credential } = resolveDirectusRequestContext(event, {
     preview: config.public.directusClient.preview,
