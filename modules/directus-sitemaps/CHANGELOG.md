@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.7
+
+### Patch Changes
+
+- Updated dependencies [4a319e4]
+  - @onderwijsin/nuxt-directus-client@0.10.0
+
 ## 0.3.6
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- 4a319e4: Remove the direct Nitro SSR auth bridge, restore Nuxt request-aware auth transport, and preserve
+  automatic SSR session refresh through the Nitro request context boundary.
+
 ## 0.9.1
 
 ### Patch Changes
