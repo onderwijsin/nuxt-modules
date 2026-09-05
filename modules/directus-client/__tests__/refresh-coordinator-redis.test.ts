@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+
 import { createRedisCoordinator } from "../src/runtime/auth/server/refresh-coordinator/redis";
+import type { RefreshOwnerResult } from "../src/runtime/auth/server/refresh-coordinator/shared";
 import { FakeRedis } from "./fixtures/fake-redis";
 
 function createCoordinator(redis: FakeRedis) {
@@ -21,8 +23,8 @@ describe("Directus Redis refresh coordination", () => {
   it("executes one owner, publishes with a five-second TTL, and releases safely", async () => {
     const redis = new FakeRedis();
     const coordinator = createCoordinator(redis);
-    const operation = vi.fn(async () => ({
-      flight: { status: "completed" as const, sealedSession: "boop1:sealed" },
+    const operation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "completed", sealedSession: "boop1:sealed" },
       value: "owner-session"
     }));
 
@@ -49,8 +51,9 @@ describe("Directus Redis refresh coordination", () => {
       "EX",
       5
     );
-    const operation = vi.fn(async () => ({
-      flight: { status: "completed" as const, sealedSession: "unused" }
+    const operation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "completed", sealedSession: "unused" },
+      value: "should-not-be-used"
     }));
 
     await expect(coordinator.coordinate("existing", operation)).resolves.toEqual({
@@ -64,22 +67,26 @@ describe("Directus Redis refresh coordination", () => {
     const redis = new FakeRedis();
     const firstCoordinator = createCoordinator(redis);
     const secondCoordinator = createCoordinator(redis);
-    let resolveOwner!: (result: { status: "completed"; sealedSession: string }) => void;
+    let resolveOwner!: (result: RefreshOwnerResult<string>) => void;
     const ownerOperation = vi.fn(
       () =>
-        new Promise<{ flight: { status: "completed"; sealedSession: string } }>((resolve) => {
-          resolveOwner = (flight) => resolve({ flight });
+        new Promise<RefreshOwnerResult<string>>((resolve) => {
+          resolveOwner = resolve;
         })
     );
-    const followerOperation = vi.fn(async () => ({
-      flight: { status: "completed" as const, sealedSession: "wrong" }
+    const followerOperation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "completed", sealedSession: "wrong" },
+      value: "should-not-be-used"
     }));
 
     const owner = firstCoordinator.coordinate("race", ownerOperation);
     await vi.waitFor(() => expect(ownerOperation).toHaveBeenCalledOnce());
     const follower = secondCoordinator.coordinate("race", followerOperation);
     await vi.waitFor(() => expect(followerOperation).not.toHaveBeenCalled());
-    resolveOwner({ status: "completed", sealedSession: "boop1:shared" });
+    resolveOwner({
+      flight: { status: "completed", sealedSession: "boop1:shared" },
+      value: "owner-session"
+    });
 
     await expect(owner).resolves.toMatchObject({ source: "owner" });
     await expect(follower).resolves.toEqual({
@@ -101,8 +108,9 @@ describe("Directus Redis refresh coordination", () => {
       );
       redis.beforeLeaseSet = undefined;
     };
-    const operation = vi.fn(async () => ({
-      flight: { status: "completed" as const, sealedSession: "wrong" }
+    const operation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "completed", sealedSession: "wrong" },
+      value: "should-not-be-used"
     }));
 
     await expect(coordinator.coordinate("acquire-race", operation)).resolves.toEqual({
@@ -120,18 +128,26 @@ describe("Directus Redis refresh coordination", () => {
       const secondCoordinator = createCoordinator(redis);
       const ownerOperation = vi.fn(
         () =>
-          new Promise<{ flight: { status: "completed"; sealedSession: string } }>((resolve) => {
+          new Promise<RefreshOwnerResult<string>>((resolve) => {
             setTimeout(
-              () => resolve({ flight: { status: "completed", sealedSession: "boop1:slow" } }),
+              () =>
+                resolve({
+                  flight: { status: "completed", sealedSession: "boop1:slow" },
+                  value: "slow-owner"
+                }),
               4_000
             );
           })
       );
       const owner = firstCoordinator.coordinate("slow", ownerOperation);
       await vi.waitFor(() => expect(ownerOperation).toHaveBeenCalledOnce());
-      const follower = secondCoordinator.coordinate("slow", async () => ({
-        flight: { status: "completed" as const, sealedSession: "wrong" }
-      }));
+      const follower = secondCoordinator.coordinate(
+        "slow",
+        async (): Promise<RefreshOwnerResult<string>> => ({
+          flight: { status: "completed", sealedSession: "wrong" },
+          value: "should-not-be-used"
+        })
+      );
 
       await vi.advanceTimersByTimeAsync(4_000);
       await expect(follower).resolves.toMatchObject({
@@ -150,8 +166,9 @@ describe("Directus Redis refresh coordination", () => {
       const redis = new FakeRedis();
       const coordinator = createCoordinator(redis);
       await redis.set(leaseKey("orphaned"), "dead-owner", "EX", 30);
-      const operation = vi.fn(async () => ({
-        flight: { status: "completed" as const, sealedSession: "boop1:recovered" }
+      const operation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+        flight: { status: "completed", sealedSession: "boop1:recovered" },
+        value: "recovered"
       }));
       const follower = coordinator.coordinate("orphaned", operation);
       setTimeout(() => redis.delete(leaseKey("orphaned")), 100);
@@ -173,8 +190,9 @@ describe("Directus Redis refresh coordination", () => {
       void redis.set(leaseKey("ownership"), "new-owner", "EX", 30);
     };
 
-    await coordinator.coordinate("ownership", async () => ({
-      flight: { status: "completed" as const, sealedSession: "boop1:owned" }
+    await coordinator.coordinate("ownership", async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "completed", sealedSession: "boop1:owned" },
+      value: "owned"
     }));
     expect(await redis.get(leaseKey("ownership"))).toBe("new-owner");
     expect(redis.evalCalls[0]?.script).toContain('redis.call("get", KEYS[1]) == ARGV[1]');
@@ -190,16 +208,20 @@ describe("Directus Redis refresh coordination", () => {
       redis.failNextResultPublication = true;
 
       await expect(
-        owner.coordinate("publication-failure", async () => ({
-          flight: { status: "completed" as const, sealedSession: "boop1:local" },
+        owner.coordinate("publication-failure", async (): Promise<RefreshOwnerResult<string>> => ({
+          flight: { status: "completed", sealedSession: "boop1:local" },
           value: "local-session"
         }))
       ).resolves.toMatchObject({ source: "owner", value: "local-session" });
       expect(await redis.get(leaseKey("publication-failure"))).toEqual(expect.any(String));
 
-      const staleFollower = follower.coordinate("publication-failure", async () => ({
-        flight: { status: "completed" as const, sealedSession: "wrong" }
-      }));
+      const staleFollower = follower.coordinate(
+        "publication-failure",
+        async (): Promise<RefreshOwnerResult<string>> => ({
+          flight: { status: "completed", sealedSession: "wrong" },
+          value: "should-not-be-used"
+        })
+      );
       const staleOutcome = staleFollower.catch((error: unknown) => error);
       await vi.advanceTimersByTimeAsync(12_000);
       await expect(staleOutcome).resolves.toMatchObject({
@@ -216,12 +238,13 @@ describe("Directus Redis refresh coordination", () => {
       const redis = new FakeRedis();
       const coordinator = createCoordinator(redis);
       const operation = vi
-        .fn()
+        .fn<() => Promise<RefreshOwnerResult<string>>>()
         .mockResolvedValueOnce({
           flight: { status: "failed" as const, outcome: "transient" as const }
         })
         .mockResolvedValueOnce({
-          flight: { status: "completed" as const, sealedSession: "boop1:recovered" }
+          flight: { status: "completed" as const, sealedSession: "boop1:recovered" },
+          value: "recovered"
         });
 
       await coordinator.coordinate("transient", operation);
@@ -246,8 +269,8 @@ describe("Directus Redis refresh coordination", () => {
   it("uses a five-second result window for terminal failures", async () => {
     const redis = new FakeRedis();
     const coordinator = createCoordinator(redis);
-    const operation = vi.fn(async () => ({
-      flight: { status: "failed" as const, outcome: "terminal" as const }
+    const operation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "failed", outcome: "terminal" }
     }));
 
     await coordinator.coordinate("terminal", operation);
@@ -268,12 +291,14 @@ describe("Directus Redis refresh coordination", () => {
       const redis = new FakeRedis();
       const coordinator = createCoordinator(redis);
       const operation = vi
-        .fn()
+        .fn<() => Promise<RefreshOwnerResult<string>>>()
         .mockResolvedValueOnce({
-          flight: { status: "completed" as const, sealedSession: "boop1:first" }
+          flight: { status: "completed" as const, sealedSession: "boop1:first" },
+          value: "first"
         })
         .mockResolvedValueOnce({
-          flight: { status: "completed" as const, sealedSession: "boop1:second" }
+          flight: { status: "completed" as const, sealedSession: "boop1:second" },
+          value: "second"
         });
 
       await coordinator.coordinate("completed", operation);
