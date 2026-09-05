@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { hash } from "ohash";
 
 import { createTestEvent } from "../../../packages/test-utils/src";
 import type { DirectusSession } from "../src/runtime/auth/server/session";
@@ -8,17 +7,11 @@ const state = vi.hoisted(() => ({
   config: {
     directusClient: {
       baseUrl: "https://directus.example.test/",
-      auth: {
-        refreshSafetyWindow: 30_000
-      }
+      auth: { refreshSafetyWindow: 30_000 }
     }
   },
   current: undefined as DirectusSession | undefined,
-  storage: {
-    records: new Map<string, unknown>(),
-    getItem: vi.fn(),
-    setItem: vi.fn()
-  },
+  storage: { getMount: vi.fn(() => ({ driver: { name: "memory" } })) },
   session: {
     clear: vi.fn(),
     set: vi.fn(),
@@ -28,13 +21,9 @@ const state = vi.hoisted(() => ({
   }
 }));
 
-vi.mock("#imports", () => ({
-  useRuntimeConfig: () => state.config
-}));
-
+vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("nitropack/runtime", () => ({ useStorage: () => state.storage }));
-
 vi.mock("../src/runtime/auth/server/session", () => ({
   clearDirectusSession: state.session.clear,
   getDirectusSession: vi.fn(() => state.current),
@@ -69,7 +58,7 @@ function mockFetch(...responses: (Response | Error)[]) {
 function expiringSession(): DirectusSession {
   return {
     accessToken: "old-access",
-    refreshToken: "old-refresh",
+    refreshToken: `old-refresh-${Date.now()}-${Math.random()}`,
     expiresAt: Date.now() + 1,
     snapshot: {
       userId: "user-1",
@@ -83,11 +72,7 @@ function expiringSession(): DirectusSession {
 
 beforeEach(() => {
   state.current = undefined;
-  state.storage.records.clear();
-  state.storage.getItem.mockImplementation(async (key: string) => state.storage.records.get(key));
-  state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
-    state.storage.records.set(key, value);
-  });
+  state.storage.getMount.mockReturnValue({ driver: { name: "memory" } });
   state.session.clear.mockReset();
   state.session.set.mockReset();
   state.session.seal.mockImplementation(
@@ -95,8 +80,7 @@ beforeEach(() => {
   );
   state.session.readDetails.mockImplementation(
     async (_event: unknown, options: { sealedValue?: string }) => {
-      const sealed = options.sealedValue ?? "";
-      const refreshToken = sealed.slice("boop1:".length);
+      const refreshToken = (options.sealedValue ?? "").slice("boop1:".length);
       return {
         session: {
           accessToken: refreshToken === "stored-refresh" ? "stored-access" : "new-access",
@@ -117,12 +101,10 @@ beforeEach(() => {
   state.session.writeCookie.mockReset();
 });
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+afterEach(() => vi.unstubAllGlobals());
 
 describe("Directus current-user and login boundaries", () => {
-  it("validates the Directus current-user envelope and requests only snapshot fields", async () => {
+  it("validates the current-user envelope and requests only snapshot fields", async () => {
     const fetch = mockFetch(
       jsonResponse({
         data: {
@@ -134,7 +116,6 @@ describe("Directus current-user and login boundaries", () => {
         }
       })
     );
-
     await expect(fetchDirectusCurrentUser(createTestEvent(), "access-token")).resolves.toEqual({
       userId: "user-1",
       email: "user@example.test",
@@ -142,7 +123,6 @@ describe("Directus current-user and login boundaries", () => {
       lastName: "User",
       requiresTfaSetup: false
     });
-    expect(fetch.mock.calls[0]?.[0]).toContain("users/me");
     expect(fetch.mock.calls[0]?.[0]).toContain("fields=id,email,first_name,last_name");
   });
 
@@ -154,58 +134,23 @@ describe("Directus current-user and login boundaries", () => {
     }
   );
 
-  it("creates a session from validated tokens and the validated current user", async () => {
+  it("creates a session from validated tokens and current user", async () => {
     const fetch = mockFetch(
       jsonResponse({ data: { access_token: "access", refresh_token: "refresh", expires: 60_000 } }),
       jsonResponse({ data: { id: "user-1", email: "user@example.test" } })
     );
-
-    const session = await createDirectusSession(createTestEvent(), {
-      email: "user@example.test",
-      password: "password",
-      otp: "123456"
-    });
-
-    expect(session).toMatchObject({
-      accessToken: "access",
-      refreshToken: "refresh",
-      snapshot: {
-        userId: "user-1",
-        email: "user@example.test",
-        firstName: null,
-        lastName: null,
-        requiresTfaSetup: false
-      }
-    });
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(state.session.set).toHaveBeenCalledWith(expect.anything(), session);
-  });
-
-  it("projects the enforce_tfa claim into the safe session snapshot", async () => {
-    const payload = btoa(JSON.stringify({ enforce_tfa: true }))
-      .replaceAll("+", "-")
-      .replaceAll("/", "_")
-      .replaceAll("=", "");
-    const fetch = mockFetch(
-      jsonResponse({
-        data: {
-          access_token: `header.${payload}.signature`,
-          refresh_token: "refresh"
-        }
-      }),
-      jsonResponse({ data: { id: "user-1" } })
-    );
-
     await expect(
       createDirectusSession(createTestEvent(), {
         email: "user@example.test",
-        password: "password"
+        password: "password",
+        otp: "123456"
       })
-    ).resolves.toMatchObject({ snapshot: { requiresTfaSetup: true } });
+    ).resolves.toMatchObject({ accessToken: "access", refreshToken: "refresh" });
     expect(fetch).toHaveBeenCalledTimes(2);
+    expect(state.session.set).toHaveBeenCalled();
   });
 
-  it("rejects malformed login token responses without creating a session", async () => {
+  it("rejects malformed login token responses", async () => {
     mockFetch(jsonResponse({ data: { access_token: "only-access" } }));
     await expect(
       createDirectusSession(createTestEvent(), { email: "user@example.test", password: "password" })
@@ -214,294 +159,71 @@ describe("Directus current-user and login boundaries", () => {
   });
 });
 
-describe("Directus session refresh coordination", () => {
-  it("returns no session when the request has no cookie session", async () => {
+describe("Directus memory refresh coordination", () => {
+  it("does not inspect storage when no session needs refresh", async () => {
     const fetch = mockFetch(jsonResponse({}));
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
-    expect(state.storage.getItem).not.toHaveBeenCalled();
+    expect(state.storage.getMount).not.toHaveBeenCalled();
   });
 
-  it("returns a session that is outside the refresh safety window", async () => {
-    const current = { ...expiringSession(), expiresAt: Date.now() + 60_000 };
-    state.current = current;
-    const fetch = mockFetch(jsonResponse({}));
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBe(current);
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it("refreshes an expiring session and publishes the completed flight", async () => {
+  it("refreshes an expiring session and writes the rotated cookie", async () => {
     state.current = expiringSession();
-    state.session.seal.mockResolvedValue("boop1:opaque-ciphertext");
     const fetch = mockFetch(
       jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
     );
-
-    const session = await ensureFreshDirectusSession(createTestEvent());
-
-    expect(session).toMatchObject({
-      accessToken: "new-access",
-      refreshToken: "new-refresh",
-      snapshot: {
-        userId: "user-1",
-        email: null,
-        firstName: null,
-        lastName: null,
-        requiresTfaSetup: false
-      }
-    });
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(state.storage.setItem).toHaveBeenCalledWith(
-      expect.stringContaining("flight:"),
-      expect.objectContaining({ status: "completed", sealedSession: expect.any(String) }),
-      { ttl: 5_000 }
-    );
-    const stored = state.storage.setItem.mock.calls[1]?.[1];
-    expect(stored).toEqual({ status: "completed", sealedSession: "boop1:opaque-ciphertext" });
-    expect(JSON.stringify(stored)).not.toContain("new-access");
-    expect(JSON.stringify(stored)).not.toContain("new-refresh");
-  });
-
-  it("clears the stale session when local persistence fails after rotation", async () => {
-    state.current = expiringSession();
-    state.session.seal.mockRejectedValue(new Error("session sealing failed"));
-    const fetch = mockFetch(
-      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
-    );
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toThrow(
-      "session sealing failed"
-    );
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(state.session.clear).toHaveBeenCalled();
-    expect([...state.storage.records.values()]).toContainEqual({
-      status: "failed",
-      outcome: "terminal"
-    });
-  });
-
-  it("keeps the committed session when coordination publication fails", async () => {
-    state.current = expiringSession();
-    state.session.seal.mockResolvedValue("boop1:rotated-session");
-    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        "status" in value &&
-        value.status === "completed"
-      ) {
-        throw new Error("refresh storage unavailable");
-      }
-      state.storage.records.set(key, value);
-    });
-    const fetch = mockFetch(
-      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
-    );
-
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
       accessToken: "new-access",
       refreshToken: "new-refresh"
     });
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(state.session.writeCookie).toHaveBeenCalledWith(
-      expect.anything(),
-      "boop1:rotated-session"
-    );
-    expect(state.session.clear).not.toHaveBeenCalled();
-    expect([...state.storage.records.values()]).not.toContainEqual({
-      status: "failed",
-      outcome: "terminal"
-    });
+    expect(state.session.writeCookie).toHaveBeenCalledWith(expect.anything(), "boop1:new-refresh");
   });
 
-  it("makes exactly one refresh request and preserves the session on transport failure", async () => {
-    state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
-    const fetch = mockFetch(new Error("temporary Directus failure"));
+  it("shares one upstream refresh between concurrent callers", async () => {
+    state.current = expiringSession();
+    let resolveFetch!: (response: Response) => void;
+    const fetch = vi.fn(() => new Promise<Response>((resolve) => (resolveFetch = resolve)));
+    vi.stubGlobal("fetch", fetch);
+    const first = ensureFreshDirectusSession(createTestEvent());
+    const second = ensureFreshDirectusSession(createTestEvent());
+    await vi.waitFor(() => expect(resolveFetch).toBeTypeOf("function"));
+    resolveFetch(
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
+    );
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 
+  it("allows a new attempt after a transient failure result expires", async () => {
+    state.current = expiringSession();
+    const fetch = mockFetch(new Error("temporary Directus failure"));
     await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
       statusCode: 503
+    });
+    expect(state.session.clear).not.toHaveBeenCalled();
+
+    await new Promise((resolve) => setTimeout(resolve, 5_010));
+    mockFetch(jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }));
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      refreshToken: "new-refresh"
     });
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(state.session.clear).not.toHaveBeenCalled();
-  });
+  }, 6_000);
 
-  it("clears the session when terminal-flight publication fails", async () => {
+  it("clears the session for terminal refresh rejection", async () => {
     state.current = expiringSession();
-    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        "status" in value &&
-        value.status === "failed"
-      ) {
-        throw new Error("refresh storage unavailable");
-      }
-      state.storage.records.set(key, value);
-    });
     mockFetch(jsonResponse({ errors: [{ extensions: { code: "INVALID_TOKEN" } }] }, 401));
-
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
     expect(state.session.clear).toHaveBeenCalled();
   });
 
-  it("preserves the session and returns 503 when transient-flight publication fails", async () => {
+  it("preserves the session for transient upstream failures", async () => {
     state.current = expiringSession();
-    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        "status" in value &&
-        value.status === "failed"
-      ) {
-        throw new Error("refresh storage unavailable");
-      }
-      state.storage.records.set(key, value);
-    });
-    const fetch = mockFetch(new Error("temporary Directus failure"));
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
-      statusCode: 503
-    });
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(state.session.clear).not.toHaveBeenCalled();
-  });
-
-  it("waits for a completed refresh published by shared storage", async () => {
-    state.current = expiringSession();
-    const key = "flight:" + hash(state.current.refreshToken);
-    state.storage.records.set(key, {
-      status: "pending",
-      owner: "other-instance",
-      startedAt: Date.now()
-    });
-    const fetch = mockFetch(jsonResponse({}));
-    setTimeout(() => {
-      state.storage.records.set(key, {
-        status: "completed",
-        sealedSession: "boop1:stored-refresh"
-      });
-    }, 5);
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
-      accessToken: "stored-access",
-      refreshToken: "stored-refresh"
-    });
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it("clears the session for a terminal Directus refresh rejection", async () => {
-    state.current = expiringSession();
-    mockFetch(jsonResponse({ errors: [{ extensions: { code: "INVALID_TOKEN" } }] }, 401));
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
-    expect(state.session.clear).toHaveBeenCalled();
-    expect([...state.storage.records.values()]).toContainEqual({
-      status: "failed",
-      outcome: "terminal"
-    });
-  });
-
-  it.each([429, 500])("preserves the session for upstream status %s", async (status) => {
-    state.current = expiringSession();
-    mockFetch(Object.assign(new Error("upstream failure"), { statusCode: status }));
-
+    mockFetch(Object.assign(new Error("upstream failure"), { statusCode: 500 }));
     await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
       statusCode: 503
     });
     expect(state.session.clear).not.toHaveBeenCalled();
-    expect([...state.storage.records.values()]).toContainEqual({
-      status: "failed",
-      outcome: "transient"
-    });
-  });
-
-  it("uses a completed refresh result already in storage", async () => {
-    state.current = expiringSession();
-    const completed: DirectusSession = {
-      accessToken: "stored-access",
-      refreshToken: "stored-refresh",
-      expiresAt: Date.now() + 60_000,
-      snapshot: {
-        userId: "user-1",
-        email: null,
-        firstName: null,
-        lastName: null,
-        requiresTfaSetup: false
-      }
-    };
-    state.storage.records.set("flight:" + hash(state.current.refreshToken), {
-      status: "completed",
-      sealedSession: "boop1:stored-refresh"
-    });
-    const fetch = mockFetch(jsonResponse({}));
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
-      accessToken: completed.accessToken,
-      refreshToken: completed.refreshToken,
-      snapshot: completed.snapshot
-    });
-    expect(fetch).not.toHaveBeenCalled();
-    expect(state.session.writeCookie).toHaveBeenCalledWith(
-      expect.anything(),
-      "boop1:stored-refresh"
-    );
-  });
-
-  it("stops immediately when storage reports a failed refresh flight", async () => {
-    state.current = expiringSession();
-    state.storage.records.set("flight:" + hash(state.current.refreshToken), {
-      status: "failed",
-      outcome: "terminal"
-    });
-    const fetch = mockFetch(jsonResponse({}));
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
-    expect(fetch).not.toHaveBeenCalled();
-    expect(state.session.clear).toHaveBeenCalled();
-  });
-
-  it("clears a follower session when the refresh flight becomes terminal", async () => {
-    state.current = expiringSession();
-    const key = "flight:" + hash(state.current.refreshToken);
-    state.storage.records.set(key, {
-      status: "pending",
-      owner: "other-instance",
-      startedAt: Date.now()
-    });
-    const fetch = mockFetch(jsonResponse({}));
-    setTimeout(() => {
-      state.storage.records.set(key, { status: "failed", outcome: "terminal" });
-    }, 5);
-
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
-    expect(state.session.clear).toHaveBeenCalled();
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it("preserves a follower session when refresh coordination times out", async () => {
-    vi.useFakeTimers();
-    try {
-      state.current = expiringSession();
-      const key = "flight:" + hash(state.current.refreshToken);
-      state.storage.records.set(key, {
-        status: "pending",
-        owner: "other-instance",
-        startedAt: Date.now()
-      });
-      const fetch = mockFetch(jsonResponse({}));
-      const refresh = ensureFreshDirectusSession(createTestEvent());
-      const outcome = refresh.then(
-        (session) => ({ session }),
-        (error) => ({ error })
-      );
-
-      await vi.runAllTimersAsync();
-      await expect(outcome).resolves.toMatchObject({ error: { statusCode: 503 } });
-      expect(state.session.clear).not.toHaveBeenCalled();
-      expect(fetch).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });

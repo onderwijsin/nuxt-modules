@@ -11,8 +11,12 @@ import {
 } from "@onderwijsin/nuxt-module-utils/shared";
 import { hash } from "ohash";
 import { ofetch } from "ofetch";
-import { useStorage } from "nitropack/runtime";
 
+import {
+  getRefreshCoordinator,
+  type FailedRefreshFlight,
+  type RefreshOperationResult
+} from "./refresh-coordinator";
 import {
   decodeDirectusTfaSetupRequirement,
   getDirectusEndpoint,
@@ -28,24 +32,6 @@ import {
   type DirectusSessionSnapshot,
   writeDirectusSessionCookie
 } from "./session";
-
-interface PendingRefreshFlight {
-  readonly status: "pending";
-  readonly owner: string;
-  readonly startedAt: number;
-}
-
-interface CompletedRefreshFlight {
-  readonly status: "completed";
-  readonly sealedSession: string;
-}
-
-interface FailedRefreshFlight {
-  readonly status: "failed";
-  readonly outcome: "terminal" | "transient";
-}
-
-type RefreshFlight = PendingRefreshFlight | CompletedRefreshFlight | FailedRefreshFlight;
 
 const terminalRefreshCodes = new Set([
   "FORBIDDEN",
@@ -119,60 +105,10 @@ function createTransientRefreshError(cause: unknown) {
   });
 }
 
-const REFRESH_STORAGE_MOUNT = "directus-auth-refresh";
-const REFRESH_FLIGHT_TTL = 30_000;
-const REFRESH_RESULT_TTL = 5_000;
-
-interface RefreshStorage {
-  getItem<T>(key: string): Promise<T | null>;
-  setItem<T>(key: string, value: T, options?: { ttl?: number }): Promise<void>;
-}
-
-/**
- * Resolves the Nitro storage mount used to coordinate refresh requests.
- *
- * @returns The configured refresh-flight storage.
- */
-async function getRefreshStorage(): Promise<RefreshStorage> {
-  return useStorage(REFRESH_STORAGE_MOUNT);
-}
-
-/**
- * Waits for another request to publish a storage-backed refresh result.
- *
- * @param event - Incoming request event.
- * @param key - Refresh-flight storage key.
- * @returns The completed session or undefined after failure/timeout.
- */
-async function waitForRefreshFlight(
-  event: H3Event,
-  key: string
-): Promise<DirectusSession | undefined> {
-  const storage = await getRefreshStorage();
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    const flight = await storage.getItem<RefreshFlight>(key);
-    if (flight?.status === "completed") {
-      const session = await readSealedRefreshSession(event, flight.sealedSession);
-      if (!session) return undefined;
-      return session;
-    }
-    if (flight?.status === "failed") {
-      if (flight.outcome === "transient") throw createTransientRefreshError(undefined);
-      if (flight.outcome === "terminal") {
-        clearDirectusSession(event);
-        return undefined;
-      }
-    }
-    await new Promise<void>((resolve) => setTimeout(resolve, 100));
-  }
-  throw createTransientRefreshError(undefined);
-}
-
 /**
  * Restores a sealed refresh result and writes it to the current response cookie.
- *
  * @param event - Incoming request event.
- * @param sealedSession - H3-sealed, versioned session value from Nitro storage.
+ * @param sealedSession - H3-sealed, versioned session value from refresh coordination.
  * @returns The validated session or undefined when the stored value is invalid or expired.
  */
 async function readSealedRefreshSession(
@@ -190,7 +126,6 @@ async function readSealedRefreshSession(
 
 /**
  * Creates a rotated session without refetching the unchanged user snapshot.
- *
  * @param current - The session whose refresh token was rotated.
  * @param authentication - The validated replacement tokens.
  * @returns The server-only session with the replacement token pair.
@@ -210,31 +145,71 @@ function createRotatedDirectusSession(
   };
 }
 
-/**
- * Records a failed refresh flight after Directus has rotated the token pair.
- *
- * @param storage - Refresh coordination storage.
- * @param key - Refresh-flight storage key.
- * @param cause - The failure that made the rotated session unusable.
- * @returns The original failure unless recording the failure itself fails.
- */
-async function failAfterRefreshRotation(
-  storage: RefreshStorage,
-  key: string,
-  cause: unknown
-): Promise<never> {
-  await attempt(() =>
-    storage.setItem(key, { status: "failed", outcome: "terminal" }, { ttl: REFRESH_RESULT_TTL })
-  );
-  throw cause;
+function failedResult(
+  outcome: FailedRefreshFlight["outcome"],
+  error?: unknown
+): RefreshOperationResult<DirectusSession> {
+  return {
+    flight: { status: "failed", outcome },
+    ...(isDefined(error) ? { error } : {})
+  };
 }
 
 /**
- * Refreshes an expiring session through a Nitro-storage single-flight record.
+ * Executes a refresh through the auth-owned memory or Redis coordinator.
+ * @param event - Incoming request event.
+ * @param current - The expiring session to refresh.
+ * @returns The local refresh outcome and its reusable coordination result.
+ */
+async function runRefreshFlight(
+  event: H3Event,
+  current: DirectusSession
+): Promise<RefreshOperationResult<DirectusSession>> {
+  const key = hash(current.refreshToken);
+  const coordinator = await getRefreshCoordinator();
+  return coordinator.coordinate(key, async () => {
+    const result = await attempt(async () => {
+      return ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
+        method: "POST",
+        body: { refresh_token: current.refreshToken, mode: "json" },
+        retry: 0,
+        timeout: 25_000
+      });
+    });
+    if (result.error !== null || result.data === null) {
+      const outcome = classifyRefreshFailure(result.error);
+      if (outcome === "terminal") clearDirectusSession(event);
+      return failedResult(
+        outcome,
+        outcome === "transient" ? createTransientRefreshError(result.error) : undefined
+      );
+    }
+
+    let authentication: DirectusAuthenticationResult;
+    try {
+      authentication = parseDirectusAuthenticationResponse(result.data);
+    } catch (error) {
+      clearDirectusSession(event);
+      return failedResult("terminal", error);
+    }
+
+    try {
+      const session = createRotatedDirectusSession(current, authentication);
+      const sealedSession = await sealDirectusSession(event, session);
+      writeDirectusSessionCookie(event, sealedSession);
+      return { flight: { status: "completed", sealedSession }, value: session };
+    } catch (error) {
+      clearDirectusSession(event);
+      return failedResult("terminal", error);
+    }
+  });
+}
+
+/**
+ * Refreshes an expiring session through the supported auth coordinator.
  *
- * The storage record contains a short-lived server-only result so concurrent requests can reuse
- * the rotated token pair without keeping a process-local Promise map. A deployment still needs a
- * storage driver with read-after-write consistency for strongest coordination.
+ * Memory deployments coordinate only within one server process. Multi-process, multi-container,
+ * and multi-replica deployments must configure the `directus-auth-refresh` Nitro mount with Redis.
  *
  * @param event - Incoming request event.
  * @returns The fresh session or undefined when no valid session remains.
@@ -247,80 +222,24 @@ export async function ensureFreshDirectusSession(
   const auth = useRuntimeConfig(event).directusClient.auth;
   if (current.expiresAt > Date.now() + auth.refreshSafetyWindow) return current;
 
-  const storage = await getRefreshStorage();
-  const key = "flight:" + hash(current.refreshToken);
-  const existing = await storage.getItem<RefreshFlight>(key);
-  if (existing?.status === "completed") {
-    return readSealedRefreshSession(event, existing.sealedSession);
-  }
-  if (existing?.status === "failed") {
-    if (existing.outcome === "transient") throw createTransientRefreshError(undefined);
-    if (existing.outcome === "terminal") {
-      clearDirectusSession(event);
-      return undefined;
-    }
-  }
-  if (existing?.status === "pending" && existing.startedAt + REFRESH_FLIGHT_TTL > Date.now()) {
-    return waitForRefreshFlight(event, key);
-  }
-
-  const owner = crypto.randomUUID();
-  await storage.setItem(
-    key,
-    { status: "pending", owner, startedAt: Date.now() },
-    { ttl: REFRESH_FLIGHT_TTL }
-  );
-  const claim = await storage.getItem<RefreshFlight>(key);
-  if (claim?.status === "completed") {
-    return readSealedRefreshSession(event, claim.sealedSession);
-  }
-  if (claim?.status === "pending" && claim.owner !== owner) {
-    return waitForRefreshFlight(event, key);
-  }
-
-  const result = await attempt(async () => {
-    return ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
-      method: "POST",
-      body: { refresh_token: current.refreshToken, mode: "json" },
-      retry: 0
-    });
-  });
-  if (result.error !== null || result.data === null) {
-    const outcome = classifyRefreshFailure(result.error);
-    if (outcome === "terminal") {
-      clearDirectusSession(event);
-      await attempt(() =>
-        storage.setItem(key, { status: "failed", outcome }, { ttl: REFRESH_RESULT_TTL })
-      );
-      return undefined;
-    }
-    await attempt(() => storage.setItem(key, { status: "failed", outcome }, { ttl: 100 }));
-    throw createTransientRefreshError(result.error);
-  }
-
-  let authentication: DirectusAuthenticationResult;
+  let result: RefreshOperationResult<DirectusSession>;
   try {
-    authentication = parseDirectusAuthenticationResponse(result.data);
+    result = await runRefreshFlight(event, current);
   } catch (error) {
-    clearDirectusSession(event);
-    return failAfterRefreshRotation(storage, key, error);
+    throw createTransientRefreshError(error);
   }
 
-  let session: DirectusSession;
-  let sealedSession: string;
-  try {
-    session = createRotatedDirectusSession(current, authentication);
-    sealedSession = await sealDirectusSession(event, session);
-    writeDirectusSessionCookie(event, sealedSession);
-  } catch (error) {
-    clearDirectusSession(event);
-    return failAfterRefreshRotation(storage, key, error);
+  if (result.flight.status === "completed") {
+    if (result.value) return result.value;
+    return readSealedRefreshSession(event, result.flight.sealedSession);
   }
-
-  await attempt(() =>
-    storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL })
-  );
-  return session;
+  if (result.flight.outcome === "terminal") {
+    if (isDefined(result.error)) throw result.error;
+    clearDirectusSession(event);
+    return undefined;
+  }
+  if (isDefined(result.error)) throw result.error;
+  throw createTransientRefreshError(undefined);
 }
 
 export async function readDirectusSessionSnapshot(

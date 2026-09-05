@@ -400,12 +400,12 @@ whether the refresh token is still valid. The refresh request is attempted exact
 Directus may rotate the refresh token even when a response is lost. The existing safe user snapshot
 is reused after rotation; only access-token-derived state such as `requiresTfaSetup` is
 recalculated. If a later local persistence step fails, the old session is cleared because its
-refresh token may already be invalid. Concurrent refreshes are coalesced through Nitro storage.
-Cross-instance coordination requires a shared, read-after-write consistent Nitro storage driver; the
-default in-memory driver cannot provide that guarantee, and deployment-level refresh races remain
-possible otherwise. Refresh results written to that storage are H3-sealed session values rather than
-plaintext token pairs; the configured Nitro storage backend must still be treated as sensitive
-infrastructure.
+refresh token may already be invalid. Refresh coordination uses the `directus-auth-refresh` Nitro
+mount: the `memory` driver provides process-local single-flight coordination, while the `redis`
+driver provides atomic cross-process coordination using its configured Redis client. Configure Redis
+for multiple Node processes, containers, replicas, or Cloudflare isolates; unsupported drivers fail
+explicitly. Refresh results are H3-sealed and short-lived, and the configured Redis backend must be
+treated as sensitive infrastructure.
 
 When `client.auth.magicLinks.enabled` is true, the module additionally registers
 `POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These

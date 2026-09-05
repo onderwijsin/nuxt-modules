@@ -17,15 +17,15 @@ refresh tokens.
 
 Refresh runs immediately before an authenticated request when the access token enters the configured
 safety window. It may still use the refresh token after access-token expiry; Directus remains
-authoritative for refresh-token validity. Nitro storage coordinates concurrent refreshes for the
-same refresh token, successful rotation replaces the entire cookie, and invalid refreshes clear it.
+authoritative for refresh-token validity. The `directus-auth-refresh` Nitro mount coordinates
+concurrent refreshes: `memory` is process-local, while `redis` provides atomic cross-instance leases
+and result reuse. Successful rotation replaces the entire cookie, and invalid refreshes clear it.
 SSR authentication bootstrap and public session snapshots run through this refresh boundary before
 reporting authentication state. Raw sealed-session readers only inspect local session data, return
 expired access tokens by default so callers can retain the refresh token, and do not clear a valid
-sealed session when a caller explicitly filters expired access tokens. Cross-instance coordination
-requires shared, read-after-write-consistent storage; with the default in-memory driver,
-horizontally scaled instances or Cloudflare isolates can still race, and Directus remains
-authoritative for rotating refresh-token policy.
+sealed session when a caller explicitly filters expired access tokens. Horizontally scaled instances
+and Cloudflare isolates must configure Redis; unsupported coordination drivers fail explicitly, and
+Directus remains authoritative for rotating refresh-token policy.
 
 Refresh calls are single-attempt operations because Directus may rotate a refresh token even when a
 response is lost. Before Directus returns a replacement token pair, only definitive
