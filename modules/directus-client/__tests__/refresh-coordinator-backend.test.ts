@@ -7,7 +7,7 @@ const { getRefreshCoordinator } = await import("../src/runtime/auth/server/refre
 
 describe("Directus refresh coordinator backend resolution", () => {
   it("rejects unsupported storage drivers instead of falling back to memory", async () => {
-    await expect(getRefreshCoordinator()).rejects.toThrow(
+    expect(() => getRefreshCoordinator()).toThrow(
       "Unsupported Directus refresh storage driver: filesystem"
     );
     expect(getMount).toHaveBeenCalledWith("directus-auth-refresh");

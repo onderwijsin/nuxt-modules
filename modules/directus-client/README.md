@@ -405,7 +405,8 @@ mount: the `memory` driver provides process-local single-flight coordination, wh
 driver provides atomic cross-process coordination using its configured Redis client. Configure Redis
 for multiple Node processes, containers, replicas, or Cloudflare isolates; unsupported drivers fail
 explicitly. Refresh results are H3-sealed and short-lived, and the configured Redis backend must be
-treated as sensitive infrastructure.
+treated as sensitive infrastructure. Completed and terminal results are reusable for five seconds;
+transient failures are shared for only one second to suppress an immediate request burst.
 
 When `client.auth.magicLinks.enabled` is true, the module additionally registers
 `POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These

@@ -25,7 +25,8 @@ reporting authentication state. Raw sealed-session readers only inspect local se
 expired access tokens by default so callers can retain the refresh token, and do not clear a valid
 sealed session when a caller explicitly filters expired access tokens. Horizontally scaled instances
 and Cloudflare isolates must configure Redis; unsupported coordination drivers fail explicitly, and
-Directus remains authoritative for rotating refresh-token policy.
+Directus remains authoritative for rotating refresh-token policy. Reusable state contains only the
+sealed session; transient failures are shared briefly to suppress a request burst.
 
 Refresh calls are single-attempt operations because Directus may rotate a refresh token even when a
 response is lost. Before Directus returns a replacement token pair, only definitive

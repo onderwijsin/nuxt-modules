@@ -13,9 +13,10 @@ import { hash } from "ohash";
 import { ofetch } from "ofetch";
 
 import {
+  type CoordinatedRefreshResult,
   getRefreshCoordinator,
   type FailedRefreshFlight,
-  type RefreshOperationResult
+  type RefreshOwnerResult
 } from "./refresh-coordinator";
 import {
   decodeDirectusTfaSetupRequirement,
@@ -148,7 +149,7 @@ function createRotatedDirectusSession(
 function failedResult(
   outcome: FailedRefreshFlight["outcome"],
   error?: unknown
-): RefreshOperationResult<DirectusSession> {
+): RefreshOwnerResult<DirectusSession> {
   return {
     flight: { status: "failed", outcome },
     ...(isDefined(error) ? { error } : {})
@@ -164,16 +165,16 @@ function failedResult(
 async function runRefreshFlight(
   event: H3Event,
   current: DirectusSession
-): Promise<RefreshOperationResult<DirectusSession>> {
+): Promise<CoordinatedRefreshResult<DirectusSession>> {
   const key = hash(current.refreshToken);
-  const coordinator = await getRefreshCoordinator();
-  return coordinator.coordinate(key, async () => {
+  const coordinator = getRefreshCoordinator();
+  return coordinator.coordinate(key, async (): Promise<RefreshOwnerResult<DirectusSession>> => {
     const result = await attempt(async () => {
       return ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
         method: "POST",
         body: { refresh_token: current.refreshToken, mode: "json" },
         retry: 0,
-        timeout: 25_000
+        timeout: 10_000
       });
     });
     if (result.error !== null || result.data === null) {
@@ -222,23 +223,34 @@ export async function ensureFreshDirectusSession(
   const auth = useRuntimeConfig(event).directusClient.auth;
   if (current.expiresAt > Date.now() + auth.refreshSafetyWindow) return current;
 
-  let result: RefreshOperationResult<DirectusSession>;
+  let result: CoordinatedRefreshResult<DirectusSession>;
   try {
     result = await runRefreshFlight(event, current);
   } catch (error) {
     throw createTransientRefreshError(error);
   }
 
+  if (result.source === "owner") {
+    if (result.flight.status === "completed") {
+      if (result.value) return result.value;
+      return readSealedRefreshSession(event, result.flight.sealedSession);
+    }
+    if (result.flight.outcome === "terminal") {
+      if (isDefined(result.error)) throw result.error;
+      clearDirectusSession(event);
+      return undefined;
+    }
+    if (isDefined(result.error)) throw result.error;
+    throw createTransientRefreshError(undefined);
+  }
+
   if (result.flight.status === "completed") {
-    if (result.value) return result.value;
     return readSealedRefreshSession(event, result.flight.sealedSession);
   }
   if (result.flight.outcome === "terminal") {
-    if (isDefined(result.error)) throw result.error;
     clearDirectusSession(event);
     return undefined;
   }
-  if (isDefined(result.error)) throw result.error;
   throw createTransientRefreshError(undefined);
 }
 

@@ -191,25 +191,38 @@ describe("Directus memory refresh coordination", () => {
     resolveFetch(
       jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
     );
-    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
+    const sessions = await Promise.all([first, second]);
+    expect(sessions).toHaveLength(2);
     expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.writeCookie).toHaveBeenCalledTimes(2);
+    expect(sessions).toEqual([
+      expect.objectContaining({ refreshToken: "new-refresh" }),
+      expect.objectContaining({ refreshToken: "new-refresh" })
+    ]);
   });
 
   it("allows a new attempt after a transient failure result expires", async () => {
-    state.current = expiringSession();
-    const fetch = mockFetch(new Error("temporary Directus failure"));
-    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
-      statusCode: 503
-    });
-    expect(state.session.clear).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    try {
+      state.current = expiringSession();
+      const fetch = mockFetch(new Error("temporary Directus failure"));
+      await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+        statusCode: 503
+      });
+      expect(state.session.clear).not.toHaveBeenCalled();
 
-    await new Promise((resolve) => setTimeout(resolve, 5_010));
-    mockFetch(jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }));
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
-      refreshToken: "new-refresh"
-    });
-    expect(fetch).toHaveBeenCalledTimes(1);
-  }, 6_000);
+      await vi.advanceTimersByTimeAsync(1_001);
+      mockFetch(
+        jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
+      );
+      await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+        refreshToken: "new-refresh"
+      });
+      expect(fetch).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it("clears the session for terminal refresh rejection", async () => {
     state.current = expiringSession();
