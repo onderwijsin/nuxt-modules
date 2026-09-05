@@ -9,8 +9,7 @@ const state = vi.hoisted(() => ({
     directusClient: {
       baseUrl: "https://directus.example.test/",
       auth: {
-        refreshSafetyWindow: 30_000,
-        refreshAttempts: 3
+        refreshSafetyWindow: 30_000
       }
     }
   },
@@ -268,19 +267,15 @@ describe("Directus session refresh coordination", () => {
     expect(JSON.stringify(stored)).not.toContain("new-refresh");
   });
 
-  it("refreshes an expired access token while the refresh token is valid", async () => {
+  it("makes exactly one refresh request and preserves the session on transport failure", async () => {
     state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
-    const fetch = mockFetch(
-      new Error("temporary Directus failure"),
-      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
-      jsonResponse({ data: { id: "user-1" } })
-    );
+    const fetch = mockFetch(new Error("temporary Directus failure"));
 
-    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
-      accessToken: "new-access",
-      refreshToken: "new-refresh"
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
     });
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.clear).not.toHaveBeenCalled();
   });
 
   it("waits for a completed refresh published by shared storage", async () => {
@@ -306,13 +301,23 @@ describe("Directus session refresh coordination", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("clears the session and publishes failure when refresh fails", async () => {
+  it("clears the session for a terminal Directus refresh rejection", async () => {
     state.current = expiringSession();
-    mockFetch(new Error("Directus unavailable"));
+    mockFetch(jsonResponse({ errors: [{ extensions: { code: "INVALID_TOKEN" } }] }, 401));
 
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
     expect(state.session.clear).toHaveBeenCalled();
     expect([...state.storage.records.values()]).toContainEqual({ status: "failed" });
+  });
+
+  it.each([429, 500])("preserves the session for upstream status %s", async (status) => {
+    state.current = expiringSession();
+    mockFetch(Object.assign(new Error("upstream failure"), { statusCode: status }));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
+    });
+    expect(state.session.clear).not.toHaveBeenCalled();
   });
 
   it("uses a completed refresh result already in storage", async () => {

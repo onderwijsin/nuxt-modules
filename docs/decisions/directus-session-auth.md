@@ -27,6 +27,13 @@ requires shared, read-after-write-consistent storage; with the default in-memory
 horizontally scaled instances or Cloudflare isolates can still race, and Directus remains
 authoritative for rotating refresh-token policy.
 
+Refresh calls are single-attempt operations because Directus may rotate a refresh token even when a
+response is lost. Only definitive authentication/session rejections clear the local session:
+recognized Directus authentication codes on a 4xx response (including `INVALID_TOKEN`,
+`TOKEN_EXPIRED`, `SESSION_EXPIRED`, `FORBIDDEN`, `UNAUTHORIZED`, `INVALID_CREDENTIALS`, and
+`INVALID_OTP`) or an HTTP 401 response. Transport failures, HTTP 429, and HTTP 5xx responses are
+transient and preserve the sealed session while surfacing a temporary service failure.
+
 The initial snapshot exposes only the identity fields needed by the playground and facade. Roles,
 policies, and permission helpers are intentionally not part of this release. Sealing and rotation
 are defined separately in [directus-sealed-session.md](directus-sealed-session.md).

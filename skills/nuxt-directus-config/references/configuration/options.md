@@ -46,7 +46,6 @@ Use this reference for configuration changes involving `@onderwijsin/nuxt-direct
 | `client.auth.cookie.maxAge`         | `2592000`                           | Cookie lifetime in seconds.                                                                      |
 | `client.auth.cookie.domain`         | —                                   | Optional cookie domain.                                                                          |
 | `client.auth.refreshSafetyWindow`   | `30000`                             | Refresh window in milliseconds before expiry.                                                    |
-| `client.auth.refreshAttempts`       | `3`                                 | Total attempts for a refresh request, including the initial request.                             |
 | `client.auth.passwordResetUrl`      | —                                   | URL sent to Directus as `reset_url`.                                                             |
 | `client.typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                      |
 | `client.typegen.introspectionToken` | —                                   | Server-only schema-introspection token.                                                          |

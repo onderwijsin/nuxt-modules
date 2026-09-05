@@ -1,7 +1,7 @@
 import { computed, readonly, type ComputedRef, type DeepReadonly, type Ref } from "vue";
 import { useNuxtApp, useRequestFetch, useState } from "#app";
 import { useRuntimeConfig } from "#imports";
-import { attempt } from "@onderwijsin/nuxt-module-utils";
+import { attempt, isInteger, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 
 import type { DirectusSessionSnapshot } from "../../types/auth";
 
@@ -90,6 +90,12 @@ export function useDirectusAuth(): DirectusAuthFacade {
       );
     });
     if (result.error !== null) {
+      if (
+        isRecord(result.error) &&
+        isInteger(result.error.statusCode) &&
+        result.error.statusCode === 503
+      )
+        throw result.error;
       const previousUserId = session.value?.userId ?? null;
       setSession(null);
       await emit("directus:auth:invalidated", () =>
