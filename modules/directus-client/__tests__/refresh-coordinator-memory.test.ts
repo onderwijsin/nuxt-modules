@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createMemoryCoordinator } from "../src/runtime/auth/server/refresh-coordinator/memory";
+import {
+  createMemoryCoordinator,
+  pruneExpiredFlights
+} from "../src/runtime/auth/server/refresh-coordinator/memory";
 import type { RefreshOwnerResult } from "../src/runtime/auth/server/refresh-coordinator/shared";
 
 describe("Directus memory refresh coordination", () => {
@@ -94,6 +97,82 @@ describe("Directus memory refresh coordination", () => {
         flight: { sealedSession: "boop1:after-expiry" }
       });
       expect(operation).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("prunes expired settled flights when coordination starts", async () => {
+    vi.useFakeTimers();
+    try {
+      const flights = new Map([
+        [
+          "transient",
+          { expiresAt: 999, settled: true, flight: { status: "failed", outcome: "transient" } }
+        ],
+        [
+          "completed",
+          {
+            expiresAt: 999,
+            settled: true,
+            flight: { status: "completed", sealedSession: "sealed" }
+          }
+        ],
+        ["active", { expiresAt: 999, settled: false }]
+      ]);
+
+      pruneExpiredFlights(flights, 1_000);
+
+      expect(flights.has("transient")).toBe(false);
+      expect(flights.has("completed")).toBe(false);
+      expect(flights.has("active")).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("cleans expired flights for other keys without interrupting an active owner", async () => {
+    vi.useFakeTimers();
+    try {
+      const coordinator = createMemoryCoordinator();
+      let resolveOwner!: (result: RefreshOwnerResult<string>) => void;
+      const activeOwner = coordinator.coordinate(
+        "active",
+        () =>
+          new Promise<RefreshOwnerResult<string>>((resolve) => {
+            resolveOwner = resolve;
+          })
+      );
+      const transientOperation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+        flight: { status: "failed", outcome: "transient" }
+      }));
+      await coordinator.coordinate("expired", transientOperation);
+
+      vi.advanceTimersByTime(30_001);
+      const cleanupOperation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+        flight: { status: "completed", sealedSession: "boop1:cleanup" },
+        value: "cleanup"
+      }));
+      await coordinator.coordinate("cleanup", cleanupOperation);
+
+      const secondActive = coordinator.coordinate(
+        "active",
+        vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+          flight: { status: "completed", sealedSession: "boop1:wrong" },
+          value: "wrong"
+        }))
+      );
+      resolveOwner({
+        flight: { status: "completed", sealedSession: "boop1:active" },
+        value: "active"
+      });
+
+      await expect(activeOwner).resolves.toMatchObject({ source: "owner", value: "active" });
+      await expect(secondActive).resolves.toEqual({
+        source: "shared",
+        flight: { status: "completed", sealedSession: "boop1:active" }
+      });
+      expect(transientOperation).toHaveBeenCalledOnce();
     } finally {
       vi.useRealTimers();
     }

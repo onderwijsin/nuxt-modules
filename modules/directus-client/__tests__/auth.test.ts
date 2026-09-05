@@ -55,6 +55,14 @@ function mockFetch(...responses: (Response | Error)[]) {
   return fetch;
 }
 
+function accessTokenRequiringTfa(): string {
+  const payload = btoa(JSON.stringify({ enforce_tfa: true }))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+  return `header.${payload}.signature`;
+}
+
 function expiringSession(): DirectusSession {
   return {
     accessToken: "old-access",
@@ -145,9 +153,39 @@ describe("Directus current-user and login boundaries", () => {
         password: "password",
         otp: "123456"
       })
-    ).resolves.toMatchObject({ accessToken: "access", refreshToken: "refresh" });
+    ).resolves.toMatchObject({
+      accessToken: "access",
+      refreshToken: "refresh",
+      snapshot: {
+        userId: "user-1",
+        email: "user@example.test",
+        firstName: null,
+        lastName: null,
+        requiresTfaSetup: false
+      }
+    });
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(state.session.set).toHaveBeenCalled();
+    expect(state.session.set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ refreshToken: "refresh" })
+    );
+  });
+
+  it("projects enforce_tfa from the login access token into the snapshot", async () => {
+    const accessToken = accessTokenRequiringTfa();
+    mockFetch(
+      jsonResponse({
+        data: { access_token: accessToken, refresh_token: "refresh", expires: 60_000 }
+      }),
+      jsonResponse({ data: { id: "user-1", email: "user@example.test" } })
+    );
+
+    await expect(
+      createDirectusSession(createTestEvent(), {
+        email: "user@example.test",
+        password: "password"
+      })
+    ).resolves.toMatchObject({ snapshot: { requiresTfaSetup: true } });
   });
 
   it("rejects malformed login token responses", async () => {
@@ -160,6 +198,18 @@ describe("Directus current-user and login boundaries", () => {
 });
 
 describe("Directus memory refresh coordination", () => {
+  it("returns an unexpired session without selecting a refresh coordinator", async () => {
+    state.current = {
+      ...expiringSession(),
+      expiresAt: Date.now() + 60_000
+    };
+    const fetch = mockFetch(jsonResponse({}));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toEqual(state.current);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(state.storage.getMount).not.toHaveBeenCalled();
+  });
+
   it("does not inspect storage when no session needs refresh", async () => {
     const fetch = mockFetch(jsonResponse({}));
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
@@ -178,6 +228,23 @@ describe("Directus memory refresh coordination", () => {
     });
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(state.session.writeCookie).toHaveBeenCalledWith(expect.anything(), "boop1:new-refresh");
+  });
+
+  it("projects enforce_tfa from the rotated access token", async () => {
+    state.current = expiringSession();
+    mockFetch(
+      jsonResponse({
+        data: {
+          access_token: accessTokenRequiringTfa(),
+          refresh_token: "new-refresh"
+        }
+      })
+    );
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      refreshToken: "new-refresh",
+      snapshot: { requiresTfaSetup: true }
+    });
   });
 
   it("shares one upstream refresh between concurrent callers", async () => {
@@ -238,5 +305,26 @@ describe("Directus memory refresh coordination", () => {
       statusCode: 503
     });
     expect(state.session.clear).not.toHaveBeenCalled();
+  });
+
+  it("classifies a 429 refresh response as transient and preserves the session", async () => {
+    state.current = expiringSession();
+    mockFetch(Object.assign(new Error("rate limited"), { statusCode: 429 }));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
+    });
+    expect(state.session.clear).not.toHaveBeenCalled();
+  });
+
+  it("clears the stale session when local persistence fails after rotation", async () => {
+    state.current = expiringSession();
+    const persistenceError = new Error("cannot seal session");
+    state.session.seal.mockRejectedValueOnce(persistenceError);
+    mockFetch(jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toBe(persistenceError);
+    expect(state.session.clear).toHaveBeenCalledOnce();
+    expect(state.session.writeCookie).not.toHaveBeenCalled();
   });
 });
