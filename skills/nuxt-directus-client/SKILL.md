@@ -272,18 +272,19 @@ mutations use Nuxt's request-aware fetch against the same-origin routes; they ar
 directly through a Nitro utility. Reading authentication state remains SSR-safe, while login,
 refresh, logout, and magic-link redemption may require explicit outer-response cookie propagation
 when invoked during SSR. Initial SSR POST mutations may also be subject to the same-origin and CSRF
-requirements. Server-side refresh coordination uses Nitro storage. A shared, read-after-write
-consistent storage driver is required for coordination across processes or Cloudflare isolates; the
-default in-memory driver is instance-local. Refresh starts in the safety window and may continue
-after access-token expiry; Directus remains the authority on refresh-token validity. Refresh
-requests are attempted exactly once because Directus may rotate the refresh token even when a
-response is lost. The existing safe user snapshot is reused after rotation; only
+requirements. Server-side refresh coordination resolves the root `directus-auth-refresh` mount:
+`memory` is process-local, while `redis` uses the configured Redis client for atomic cross-process
+leases and short-lived H3-sealed results. Configure Redis for multiple processes, containers,
+replicas, or Cloudflare isolates; unsupported drivers fail explicitly. Refresh starts in the safety
+window and may continue after access-token expiry; Directus remains the authority on refresh-token
+validity. Refresh requests are attempted exactly once because Directus may rotate the refresh token
+even when a response is lost. The existing safe user snapshot is reused after rotation; only
 access-token-derived state such as `requiresTfaSetup` is recalculated. If a later local persistence
 step fails, the old session is cleared because its refresh token may already be invalid. Terminal
 Directus authentication rejections clear the local session; transport failures, HTTP 429, and HTTP
-5xx responses preserve it and surface a temporary service error. Completed refresh results are
-H3-sealed before they are stored, but the configured storage backend remains sensitive
-infrastructure.
+5xx responses preserve it and surface a temporary service error. The configured Redis backend
+remains sensitive infrastructure. Completed and terminal coordination results are reusable for five
+seconds; transient failures are shared for one second only.
 
 ### Magic links
 
