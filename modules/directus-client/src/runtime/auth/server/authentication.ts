@@ -1,12 +1,12 @@
 import type { H3Event } from "h3";
 import { createError } from "h3";
+import { useRuntimeConfig } from "#imports";
 import { attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
 
 import { setDirectusSession, type DirectusSession, type DirectusSessionSnapshot } from "./session";
-import { getDirectusRuntimeConfig } from "../../core/runtime-config";
 
 const currentUserFields = ["id", "email", "first_name", "last_name"] as const;
 
@@ -80,7 +80,7 @@ export function decodeDirectusTfaSetupRequirement(accessToken: string): boolean 
  * @returns An upstream Directus URL.
  */
 export function getDirectusEndpoint(event: H3Event, path: string): string {
-  const baseUrl = getDirectusRuntimeConfig(event).directusClient.baseUrl;
+  const baseUrl = useRuntimeConfig(event).directusClient.baseUrl;
   if (!baseUrl) {
     throw createError({ statusCode: 503, statusMessage: "Directus is not configured" });
   }

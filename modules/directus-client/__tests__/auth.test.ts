@@ -47,7 +47,6 @@ vi.mock("../src/runtime/auth/server/session", () => ({
 const { createDirectusSession, fetchDirectusCurrentUser } =
   await import("../src/runtime/auth/server/authentication");
 const { ensureFreshDirectusSession } = await import("../src/runtime/auth/server/refresh");
-const { destroyDirectusSession } = await import("../src/runtime/auth/server/actions");
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -504,22 +503,5 @@ describe("Directus session refresh coordination", () => {
     } finally {
       vi.useRealTimers();
     }
-  });
-});
-
-describe("Directus logout cleanup", () => {
-  it("clears a local session even when Directus logout fails", async () => {
-    state.current = expiringSession();
-    mockFetch(new Error("Directus unavailable"));
-
-    await expect(destroyDirectusSession(createTestEvent())).rejects.toThrow("Directus unavailable");
-    expect(state.session.clear).toHaveBeenCalled();
-  });
-
-  it("clears a local session without contacting Directus when already signed out", async () => {
-    const fetch = mockFetch(jsonResponse({}));
-    await expect(destroyDirectusSession(createTestEvent())).resolves.toBeUndefined();
-    expect(fetch).not.toHaveBeenCalled();
-    expect(state.session.clear).toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import type { H3Event } from "h3";
 import { createError } from "h3";
+import { useRuntimeConfig } from "#imports";
 import {
   attempt,
   isArray,
@@ -27,7 +28,6 @@ import {
   type DirectusSessionSnapshot,
   writeDirectusSessionCookie
 } from "./session";
-import { getDirectusRuntimeConfig } from "../../core/runtime-config";
 
 interface PendingRefreshFlight {
   readonly status: "pending";
@@ -244,7 +244,7 @@ export async function ensureFreshDirectusSession(
 ): Promise<DirectusSession | undefined> {
   const current = await getDirectusSession(event);
   if (!current) return undefined;
-  const auth = getDirectusRuntimeConfig(event).directusClient.auth;
+  const auth = useRuntimeConfig(event).directusClient.auth;
   if (current.expiresAt > Date.now() + auth.refreshSafetyWindow) return current;
 
   const storage = await getRefreshStorage();

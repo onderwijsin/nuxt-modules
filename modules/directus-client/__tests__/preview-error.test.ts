@@ -1,6 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { useDirectusError } from "../src/runtime/errors/use-directus-error";
+import type {
+  NormalizedDirectusError,
+  NormalizedNitroError,
+  NormalizedUnknownError
+} from "../src/runtime/errors/types";
+
+expectTypeOf<NormalizedUnknownError["isDirectusError"]>().toEqualTypeOf<false>();
+expectTypeOf<NormalizedUnknownError["isValidationError"]>().toEqualTypeOf<false>();
+expectTypeOf<NormalizedDirectusError["isDirectusError"]>().toEqualTypeOf<true>();
+expectTypeOf<NormalizedDirectusError["isNitroError"]>().toEqualTypeOf<false>();
+expectTypeOf<NormalizedNitroError["isNitroError"]>().toEqualTypeOf<true>();
+expectTypeOf<NormalizedNitroError["isDirectusError"]>().toEqualTypeOf<false>();
 import { parseDirectusPreviewContext } from "../src/runtime/preview/context";
 
 const preview = {

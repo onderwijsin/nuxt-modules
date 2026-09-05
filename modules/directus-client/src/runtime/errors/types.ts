@@ -44,23 +44,23 @@ export interface NormalizedErrorEntry<TCode extends NormalizedErrorCode = Normal
 }
 
 type NormalizedErrorFlagDefaults = {
-  readonly isDirectusError: boolean;
-  readonly isNitroError: boolean;
-  readonly isOtpError: boolean;
-  readonly isInvalidCredentialError: boolean;
-  readonly isForbiddenError: boolean;
-  readonly isTokenExpiredError: boolean;
-  readonly isInvalidTokenError: boolean;
-  readonly isValidationError: boolean;
-  readonly isRateLimitError: boolean;
-  readonly isServiceUnavailableError: boolean;
-  readonly isRouteNotFoundError: boolean;
-  readonly isInvalidAuthInput: boolean;
-  readonly isInvalidEmailInput: boolean;
-  readonly isInvalidPasswordInput: boolean;
-  readonly isInvalidOtpInput: boolean;
-  readonly isInvalidPasswordResetTokenInput: boolean;
-  readonly isInvalidMagicLinkTokenInput: boolean;
+  readonly isDirectusError: false;
+  readonly isNitroError: false;
+  readonly isOtpError: false;
+  readonly isInvalidCredentialError: false;
+  readonly isForbiddenError: false;
+  readonly isTokenExpiredError: false;
+  readonly isInvalidTokenError: false;
+  readonly isValidationError: false;
+  readonly isRateLimitError: false;
+  readonly isServiceUnavailableError: false;
+  readonly isRouteNotFoundError: false;
+  readonly isInvalidAuthInput: false;
+  readonly isInvalidEmailInput: false;
+  readonly isInvalidPasswordInput: false;
+  readonly isInvalidOtpInput: false;
+  readonly isInvalidPasswordResetTokenInput: false;
+  readonly isInvalidMagicLinkTokenInput: false;
 };
 type NormalizedErrorFlagName = keyof NormalizedErrorFlagDefaults;
 type NormalizedErrorFlagOverrides = Partial<Record<NormalizedErrorFlagName, boolean>>;

@@ -3,24 +3,24 @@ import { attemptSync } from "@onderwijsin/nuxt-module-utils";
 import { hasProtocol, isScriptProtocol, joinURL } from "ufo";
 
 /**
- * Resolves a proxy request into a Directus URL while preserving the request query string.
+ * Resolves a mounted request into a Directus URL while preserving the request query string.
  *
  * @param baseUrl Configured Directus URL.
- * @param proxyPath Configured same-origin proxy prefix.
+ * @param mountPath Configured local mount path.
  * @param requestUrl Incoming request URL.
  * @returns A validated upstream URL.
  */
 export function resolveDirectusUpstreamUrl(
   baseUrl: string,
-  proxyPath: string,
+  mountPath: string,
   requestUrl: URL
 ): string {
   const pathname = requestUrl.pathname;
-  if (pathname !== proxyPath && !pathname.startsWith(`${proxyPath}/`)) {
+  if (pathname !== mountPath && !pathname.startsWith(`${mountPath}/`)) {
     throw createError({ statusCode: 404, statusMessage: "Invalid Directus proxy path" });
   }
 
-  const suffix = pathname.slice(proxyPath.length) || "/";
+  const suffix = pathname.slice(mountPath.length) || "/";
   const { data: decodedSuffix } = attemptSync(() => decodeURIComponent(suffix));
   if (!decodedSuffix) {
     throw createError({ statusCode: 400, statusMessage: "Malformed Directus proxy path" });

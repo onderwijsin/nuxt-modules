@@ -15,6 +15,8 @@ const state = vi.hoisted(() => ({
   },
   fetch: vi.fn(async () => undefined),
   session: vi.fn(async (_event: unknown, input: unknown) => ({ snapshot: { input } })),
+  clearSession: vi.fn(),
+  currentSession: undefined as { refreshToken: string } | undefined,
   establish: vi.fn(async (_event: unknown, input: unknown) => ({ snapshot: { input } })),
   parse: vi.fn(() => ({ accessToken: "access", refreshToken: "refresh" })),
   turnstile: vi.fn()
@@ -23,6 +25,7 @@ const state = vi.hoisted(() => ({
 vi.mock("h3", () => ({
   defineEventHandler: (handler: unknown) => handler,
   createEvent: () => ({}),
+  setResponseStatus: vi.fn(),
   readValidatedBody: async (_event: unknown, validator: (body: unknown) => unknown) => {
     try {
       return validator(state.body);
@@ -39,7 +42,12 @@ vi.mock("ofetch", () => ({ ofetch: state.fetch }));
 vi.mock("../src/runtime/auth/server/authentication", () => ({
   createDirectusSession: state.session,
   establishDirectusSession: state.establish,
+  getDirectusEndpoint: () => "https://directus.example.test/auth/logout",
   parseDirectusAuthenticationResponse: state.parse
+}));
+vi.mock("../src/runtime/auth/server/session", () => ({
+  clearDirectusSession: state.clearSession,
+  getDirectusSession: () => state.currentSession
 }));
 vi.mock("../src/runtime/auth/server/refresh", () => ({
   ensureFreshDirectusSession: vi.fn()
@@ -50,6 +58,7 @@ vi.mock("../src/runtime/auth/server/turnstile", () => ({
 }));
 
 import loginHandler from "../src/runtime/auth/server/handlers/login.post";
+import logoutHandler from "../src/runtime/auth/server/handlers/logout.post";
 import passwordRequestHandler from "../src/runtime/auth/server/handlers/password-request.post";
 import passwordResetHandler from "../src/runtime/auth/server/handlers/password-reset.post";
 import magicLinkRequestHandler from "../src/runtime/auth/server/handlers/magic-links/request.post";
@@ -74,9 +83,24 @@ beforeEach(() => {
   state.establish.mockClear();
   state.parse.mockClear();
   state.turnstile.mockClear();
+  state.clearSession.mockClear();
+  state.currentSession = undefined;
 });
 
 describe("Directus authentication input limits", () => {
+  it("clears the local session when upstream logout succeeds", async () => {
+    await expect(logoutHandler(createTestEvent())).resolves.toBeNull();
+    expect(state.clearSession).toHaveBeenCalled();
+  });
+
+  it("clears the local session when upstream logout fails", async () => {
+    state.currentSession = { refreshToken: "refresh-token" };
+    state.fetch.mockRejectedValueOnce(new Error("Directus unavailable"));
+
+    await expect(logoutHandler(createTestEvent())).rejects.toThrow("Directus unavailable");
+    expect(state.clearSession).toHaveBeenCalled();
+  });
+
   it("accepts login values at their maximum lengths", async () => {
     state.body = {
       email: `${"a".repeat(1011)}@example.test`,
