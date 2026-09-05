@@ -24,6 +24,7 @@ Use this reference for configuration changes involving `@onderwijsin/nuxt-direct
 | `instance.staticToken`              | —                                   | Server-only static credential.                                                              |
 | `client.proxy.path`                 | `/_directus/proxy`                  | Absolute same-origin browser proxy path; root paths and auth-route collisions are rejected. |
 | `client.assets.enabled`             | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                              |
+| `client.assets.url`                 | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.   |
 | `client.assets.path`                | `/_directus/assets`                 | Absolute local asset-proxy path using the shared safe local-path validation.                |
 | `client.assets.publicOnly`          | `false`                             | Uses anonymous asset requests only and never attempts session authentication when enabled.  |
 | `client.assets.cache.enabled`       | `false`                             | Enables server-side caching of explicitly public anonymous assets.                          |

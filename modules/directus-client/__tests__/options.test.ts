@@ -153,6 +153,14 @@ describe("Directus module options", () => {
       publicOnly: false,
       cache: { enabled: false }
     });
+    expect(
+      directusClientOptionsSchema.parse({
+        client: { assets: { url: "https://assets.example.test" } }
+      }).client.assets
+    ).toMatchObject({ url: "https://assets.example.test" });
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { assets: { url: "not-a-url" } } })
+    ).toThrow();
     expect(() =>
       directusClientOptionsSchema.parse({ client: { assets: { cache: { enabled: true } } } })
     ).toThrow();

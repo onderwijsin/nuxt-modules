@@ -37,7 +37,12 @@ export default defineDirectusConfig({
   },
   client: {
     proxy: { path: "/_directus/proxy" },
-    assets: { path: "/_directus/assets", publicOnly: false, cache: { enabled: false } },
+    assets: {
+      url: "https://assets.example.com",
+      path: "/_directus/assets",
+      publicOnly: false,
+      cache: { enabled: false }
+    },
     commands: ["readItem", "readItems"],
     preview: {
       enabled: true,

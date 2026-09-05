@@ -46,6 +46,18 @@ interface AssetAuthenticationOptions {
 
 type EnabledAssetCacheOptions = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
 
+/** Options used to resolve an asset proxy request to its upstream URL. */
+export interface DirectusAssetUrlOptions {
+  /** Directus base URL used when no custom asset URL is configured. */
+  readonly baseUrl: string;
+  /** Local asset proxy path. */
+  readonly proxyPath: string;
+  /** Incoming asset proxy request URL. */
+  readonly requestUrl: URL;
+  /** Optional custom asset upstream base URL. */
+  readonly assetUrl?: string;
+}
+
 /**
  * Returns whether Directus rejected the anonymous request for missing authorization.
  *
@@ -88,17 +100,15 @@ export function getAssetRequestHeaders(
  * path suffix and complete query string must be preserved when mapping the local proxy
  * URL to Directus so every transformation remains available to consumers.
  *
- * @param baseUrl Directus base URL.
- * @param proxyPath Local asset proxy path.
- * @param requestUrl Incoming request URL.
+ * @param options Asset URL resolution options.
  * @returns Validated Directus asset URL.
  */
-export function resolveDirectusAssetUrl(
-  baseUrl: string,
-  proxyPath: string,
-  requestUrl: URL
-): string {
-  return resolveDirectusProxyUrl(joinURL(baseUrl, "assets"), proxyPath, requestUrl);
+export function resolveDirectusAssetUrl(options: DirectusAssetUrlOptions): string {
+  return resolveDirectusProxyUrl(
+    options.assetUrl ?? joinURL(options.baseUrl, "assets"),
+    options.proxyPath,
+    options.requestUrl
+  );
 }
 
 /**
@@ -257,11 +267,12 @@ export default defineEventHandler(async (event) => {
     authEnabled: config.directusClient.auth.enabled,
     publicOnly: assets.publicOnly
   };
-  const target = resolveDirectusAssetUrl(
-    config.directusClient.baseUrl,
-    config.public.directusClient.assets.path,
-    getRequestURL(event)
-  );
+  const target = resolveDirectusAssetUrl({
+    baseUrl: config.directusClient.baseUrl,
+    proxyPath: config.public.directusClient.assets.path,
+    requestUrl: getRequestURL(event),
+    assetUrl: config.directusClient.assets.url
+  });
   const headers = getAssetRequestHeaders(getRequestHeaders(event));
   if (!assets.cache.enabled) {
     return fetchAssetWithSessionFallback(event, target, method, headers, authentication);

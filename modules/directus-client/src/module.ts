@@ -177,6 +177,7 @@ export default defineNuxtModule<ModuleOptions>({
             }
           },
           assets: {
+            ...(options.client.assets.url ? { url: options.client.assets.url } : {}),
             publicOnly: options.client.assets.publicOnly,
             cache: options.client.assets.cache
           }

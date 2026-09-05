@@ -72,6 +72,7 @@ All options are configured under `directusClient`.
 | `instance.staticToken`                | —                                   | Optional server-only static credential.                                                               |
 | `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected.     |
 | `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                        |
+| `client.assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.             |
 | `client.assets.path`                  | `/_directus/assets`                 | Absolute local asset-proxy path using the same safe local-path validation as the REST proxy.          |
 | `client.assets.publicOnly`            | `false`                             | Keeps asset requests anonymous and never escalates to the current session when enabled.               |
 | `client.assets.cache.enabled`         | `false`                             | Enables server-side caching of explicitly public anonymous assets.                                    |

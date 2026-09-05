@@ -71,19 +71,30 @@ describe("Directus proxy boundary", () => {
 
   it("keeps asset requests below the Directus assets prefix", () => {
     expect(
-      resolveDirectusAssetUrl(
-        "https://cms.example.test/directus/",
-        "/_directus/assets",
-        new URL("https://app.example.test/_directus/assets/file-id?width=800&fit=cover")
-      )
+      resolveDirectusAssetUrl({
+        baseUrl: "https://cms.example.test/directus/",
+        proxyPath: "/_directus/assets",
+        requestUrl: new URL("https://app.example.test/_directus/assets/file-id?width=800&fit=cover")
+      })
     ).toBe("https://cms.example.test/directus/assets/file-id?width=800&fit=cover");
     expect(() =>
-      resolveDirectusAssetUrl(
-        "https://cms.example.test",
-        "/_directus/assets",
-        new URL("https://app.example.test/_directus/assets/../admin")
-      )
+      resolveDirectusAssetUrl({
+        baseUrl: "https://cms.example.test",
+        proxyPath: "/_directus/assets",
+        requestUrl: new URL("https://app.example.test/_directus/assets/../admin")
+      })
     ).toThrow(/Invalid Directus proxy path/);
+  });
+
+  it("uses a custom asset upstream base URL", () => {
+    expect(
+      resolveDirectusAssetUrl({
+        baseUrl: "https://cms.example.test",
+        proxyPath: "/_directus/assets",
+        requestUrl: new URL("https://app.example.test/_directus/assets/file-id?width=800"),
+        assetUrl: "https://assets.example.test"
+      })
+    ).toBe("https://assets.example.test/file-id?width=800");
   });
   it("requires same-origin metadata for every server-selected credential", () => {
     expect(requiresDirectusProxySameOrigin({ source: "none" })).toBe(false);

@@ -25,6 +25,7 @@ declare module "nuxt/schema" {
         passwordResetUrl?: string;
       };
       assets: {
+        url?: string;
         publicOnly: boolean;
         cache:
           | { enabled: false }

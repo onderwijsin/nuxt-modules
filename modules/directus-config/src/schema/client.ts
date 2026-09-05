@@ -45,6 +45,7 @@ export type ResolvedDirectusAssetCacheOptions = z.output<typeof assetCacheSchema
 const assetsSchema = z
   .strictObject({
     enabled: z.boolean().default(true),
+    url: z.url().optional().sensitive(),
     path: localPath.default("/_directus/assets"),
     publicOnly: z.boolean().default(false).sensitive(),
     cache: assetCacheSchema.prefault({ enabled: false }).sensitive()
