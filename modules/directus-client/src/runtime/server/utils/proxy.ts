@@ -46,6 +46,10 @@ export function resolveDirectusProxyUrl(
   }
 
   const target = new URL(joinURL(baseUrl, decodedSuffix));
+  const basePath = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
+  if (target.origin !== base.origin || !target.pathname.startsWith(basePath)) {
+    throw createError({ statusCode: 400, statusMessage: "Invalid Directus proxy path" });
+  }
   target.search = requestUrl.search;
   return target.toString();
 }

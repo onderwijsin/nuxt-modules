@@ -23,6 +23,27 @@ export const directusClientOptionsSchema = directusConfigSchema
         message: "client.auth.sessionSecret is required when authentication is enabled"
       });
     }
+
+    const routes = [
+      ["client.proxy.path", options.client.proxy.path],
+      ["client.assets.path", options.client.assets.path],
+      ["reserved /_directus/auth", "/_directus/auth"]
+    ] as const;
+    for (const [index, [name, path]] of routes.entries()) {
+      for (const [otherName, otherPath] of routes.slice(index + 1)) {
+        if (
+          path === otherPath ||
+          path.startsWith(`${otherPath}/`) ||
+          otherPath.startsWith(`${path}/`)
+        ) {
+          context.addIssue({
+            code: "custom",
+            path: ["client", name.startsWith("client.proxy") ? "proxy" : "assets", "path"],
+            message: `${name} overlaps with ${otherName}`
+          });
+        }
+      }
+    }
   });
 
 export type ModuleOptions = z.input<typeof directusClientOptionsSchema>;

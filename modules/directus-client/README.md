@@ -178,48 +178,48 @@ reference is in [Authentication](#authentication).
 
 All options are configured under `directusClient`:
 
-| Option                                | Default                             | Contract                                                                                              |
-| ------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `enabled`                             | `true`                              | Enables the module.                                                                                   |
-| `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                              |
-| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                               |
-| `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths and auth-route collisions are rejected.     |
-| `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                        |
-| `client.assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.             |
-| `client.assets.path`                  | `/_directus/assets`                 | Absolute local asset-proxy path; uses the same safe local-path validation as `client.proxy.path`.     |
-| `client.assets.publicOnly`            | `false`                             | Uses anonymous Directus asset requests only; session authentication is never attempted when enabled.  |
-| `client.assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                          |
-| `client.assets.cache.storage`         | —                                   | Nitro storage mount name, required when enabled; it must support raw binary values.                   |
-| `client.assets.cache.maxAge`          | —                                   | Positive fresh cache lifetime in seconds, required when enabled.                                      |
-| `client.assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                      |
-| `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                              |
-| `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                      |
-| `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                          |
-| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                 |
-| `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                     |
-| `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                       |
-| `client.auth.enabled`                 | `false`                             | Enables cookie authentication, authentication routes, and `useDirectusAuth`.                          |
-| `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                            |
-| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.             |
-| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute callback URL sent upstream; required when enabled and server-only.                     |
-| `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                  |
-| `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                        |
-| `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                             |
-| `client.auth.cookie.path`             | `/`                                 | Cookie path.                                                                                          |
-| `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                           |
-| `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                               |
-| `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                             |
-| `client.auth.refreshAttempts`         | `3`                                 | Total attempts for a refresh request, including the initial request.                                  |
-| `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters. |
-| `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                             |
-| `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                  |
-| `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent to Directus as `reset_url`.                               |
-| `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                           |
-| `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                      |
-| `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                           |
-| `client.typegen.augmentations`        | all `true`                          | Optional generated-output transforms.                                                                 |
-| `client.typegen.rules`                | `{}`                                | Generated field type overrides keyed by collection and field.                                         |
-| `client.typegen.transform`            | —                                   | Final build-time source transform.                                                                    |
+| Option                                | Default                             | Contract                                                                                                                               |
+| ------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                             | `true`                              | Enables the module.                                                                                                                    |
+| `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                                                               |
+| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                                                                |
+| `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths, auth-route collisions, and overlaps with `client.assets.path` are rejected. |
+| `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                                                         |
+| `client.assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.                                              |
+| `client.assets.path`                  | `/_directus/assets`                 | Absolute local asset-proxy path; uses the same safe local-path validation and cannot overlap the REST proxy or reserved auth routes.   |
+| `client.assets.publicOnly`            | `false`                             | Uses anonymous Directus asset requests only; session authentication is never attempted when enabled.                                   |
+| `client.assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                                                           |
+| `client.assets.cache.storage`         | —                                   | Nitro storage mount name, required when enabled; it must support raw binary values.                                                    |
+| `client.assets.cache.maxAge`          | —                                   | Positive fresh cache lifetime in seconds, required when enabled.                                                                       |
+| `client.assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                                                       |
+| `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
+| `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
+| `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                                                           |
+| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                                  |
+| `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
+| `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
+| `client.auth.enabled`                 | `false`                             | Enables cookie authentication, authentication routes, and `useDirectusAuth`.                                                           |
+| `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                                                             |
+| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.                                              |
+| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute callback URL sent upstream; required when enabled and server-only.                                                      |
+| `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                                                   |
+| `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                                                         |
+| `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                                                              |
+| `client.auth.cookie.path`             | `/`                                 | Cookie path.                                                                                                                           |
+| `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                                                            |
+| `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                                                                |
+| `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                                                              |
+| `client.auth.refreshAttempts`         | `3`                                 | Total attempts for a refresh request, including the initial request.                                                                   |
+| `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters.                                  |
+| `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                                                              |
+| `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                                                   |
+| `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent to Directus as `reset_url`.                                                                |
+| `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                                                            |
+| `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                                                       |
+| `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                                            |
+| `client.typegen.augmentations`        | all `true`                          | Optional generated-output transforms.                                                                                                  |
+| `client.typegen.rules`                | `{}`                                | Generated field type overrides keyed by collection and field.                                                                          |
+| `client.typegen.transform`            | —                                   | Final build-time source transform.                                                                                                     |
 
 The module validates options during Nuxt configuration. Production and CI type generation require
 both `instance.baseUrl` and `client.typegen.introspectionToken` when it is enabled.
@@ -311,6 +311,12 @@ Generate a session secret with:
 ```sh
 openssl rand -base64 32
 ```
+
+During local development, the module supplies a fixed convenience secret when authentication is
+enabled without an explicit value. `nuxt prepare` and CI use a fresh cryptographically random
+ephemeral secret so generated or tested artifacts never inherit the development value. Production
+does not provide a fallback: configure an explicit deployment secret to keep sessions stable across
+builds and deployments.
 
 ### `useDirectusAuth` API
 

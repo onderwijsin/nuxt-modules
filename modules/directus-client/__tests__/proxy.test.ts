@@ -149,6 +149,16 @@ describe("Directus proxy boundary", () => {
         new URL("https://app.example.test/_directus/proxy/items")
       )
     ).toThrow(/must use HTTP/);
+
+    for (const path of ["%2e%2e/admin", "%2E%2E/admin", "%252e%252e/admin"]) {
+      expect(() =>
+        resolveDirectusProxyUrl(
+          "https://cms.example.test/directus",
+          "/_directus/proxy",
+          new URL(`https://app.example.test/_directus/proxy/${path}`)
+        )
+      ).toThrow(/Invalid Directus proxy path/);
+    }
   });
 
   it("filters all credential and origin headers before forwarding", () => {
