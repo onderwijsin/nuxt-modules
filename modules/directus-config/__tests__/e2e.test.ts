@@ -29,7 +29,7 @@ describe("directus-config virtual aliases", () => {
 
     const clientBundle = readFiles(join(outputDir, "public/_nuxt")).join("\n");
 
-    expect(clientBundle).not.toContain("server-only-static-token");
+    expect(clientBundle).not.toContain("server-only-proxy-token");
     expect(clientBundle).not.toContain("server-only-introspection-token");
   });
 
@@ -57,7 +57,7 @@ describe("directus-config virtual aliases", () => {
     await expect($fetch("/api/server-config")).resolves.toMatchObject({
       instance: {
         baseUrl: "https://cms.example.test",
-        staticToken: "server-only-static-token"
+        proxyToken: "server-only-proxy-token"
       },
       client: {
         commands: ["readItems"],

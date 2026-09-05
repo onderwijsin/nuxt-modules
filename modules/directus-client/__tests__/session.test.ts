@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { isArray } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { createTestEvent } from "../../../packages/test-utils/src";
 
@@ -46,7 +47,7 @@ const session = {
 
 function cookieFromEvent(event: ReturnType<typeof createTestEvent>): string {
   const value = event.node.res.getHeader("set-cookie");
-  const first = Array.isArray(value) ? value[0] : value;
+  const first = isArray(value) ? value[0] : value;
   if (typeof first !== "string") throw new Error("Cookie not written");
   return first.split(";", 1)[0];
 }

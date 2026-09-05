@@ -31,7 +31,7 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 export default defineDirectusConfig({
   instance: {
     baseUrl: "https://cms.example.com",
-    staticToken: process.env.DIRECTUS_STATIC_TOKEN
+    proxyToken: process.env.DIRECTUS_PROXY_TOKEN
   },
   client: {
     commands: ["readItem", "readItems"],
@@ -80,12 +80,14 @@ openssl rand -base64 32
 
 ### `instance`
 
-| Option        | Required | Description                                                              |
-| ------------- | -------- | ------------------------------------------------------------------------ |
-| `baseUrl`     | No       | Directus instance URL. Consumers that make Directus requests require it. |
-| `staticToken` | No       | Server-only static Directus credential.                                  |
+| Option       | Required | Description                                                                                          |
+| ------------ | -------- | ---------------------------------------------------------------------------------------------------- |
+| `baseUrl`    | No       | Directus instance URL. Consumers that make Directus requests require it.                             |
+| `proxyToken` | No       | Server-held credential delegated through the proxy; its permissions must be safe for public callers. |
 
-Both fields are sensitive and never appear in the client-safe virtual configuration.
+Both fields are sensitive and never appear in the client-safe virtual configuration. `proxyToken`
+may remain secret, but its permissions are not private: browser callers can exercise them through
+the application proxy.
 
 ### `client`
 
@@ -95,6 +97,7 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `proxy.path`                   | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.   |
 | `assets.enabled`               | `true`                              | Enables the dedicated Directus `/assets` proxy route.                                             |
+| `assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.         |
 | `assets.path`                  | `/_directus/assets`                 | Local asset proxy route using the same safe path validation as `proxy.path`.                      |
 | `assets.publicOnly`            | `false`                             | Uses anonymous asset requests only and never attempts session authentication when enabled.        |
 | `assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                      |
@@ -113,7 +116,6 @@ Both fields are sensitive and never appear in the client-safe virtual configurat
 | `auth.magicLinks.redirectUrl`  | —                                   | Absolute, server-only callback URL required when magic links are enabled.                         |
 | `auth.cookie`                  | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.   |
 | `auth.refreshSafetyWindow`     | `30000`                             | Milliseconds before expiry when a session is refreshed.                                           |
-| `auth.refreshAttempts`         | `3`                                 | Total attempts for a refresh request, including the initial request.                              |
 | `auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters. |
 | `auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                            |
 | `auth.maskSecretsInPlayground` | `true`                              | Masks access and refresh tokens in the local session inspection playground.                       |

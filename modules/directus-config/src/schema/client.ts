@@ -45,6 +45,7 @@ export type ResolvedDirectusAssetCacheOptions = z.output<typeof assetCacheSchema
 const assetsSchema = z
   .strictObject({
     enabled: z.boolean().default(true),
+    url: z.url().optional().sensitive(),
     path: localPath.default("/_directus/assets"),
     publicOnly: z.boolean().default(false).sensitive(),
     cache: assetCacheSchema.prefault({ enabled: false }).sensitive()
@@ -126,7 +127,6 @@ const directusAuthSchemaDefaults = {
   magicLinks: { enabled: false },
   cookie: directusCookieSchemaDefaults,
   refreshSafetyWindow: 30_000,
-  refreshAttempts: 3,
   previousSessionSecrets: [] as string[],
   maskSecretsInPlayground: true
 } as const;
@@ -152,12 +152,6 @@ const directusAuthSchema = z
       .int()
       .nonnegative()
       .default(directusAuthSchemaDefaults.refreshSafetyWindow)
-      .sensitive(),
-    refreshAttempts: z
-      .number()
-      .int()
-      .positive()
-      .default(directusAuthSchemaDefaults.refreshAttempts)
       .sensitive(),
     sessionSecret: z.string().min(32).optional().sensitive(),
     previousSessionSecrets: z.array(z.string().min(32)).default([]).sensitive(),

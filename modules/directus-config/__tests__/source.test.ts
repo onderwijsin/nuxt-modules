@@ -21,6 +21,15 @@ afterEach(() => {
 });
 
 describe("Directus config source discovery", () => {
+  it("uses the proxy credential name without a static-token compatibility alias", () => {
+    expect(directusConfigSchema.parse({ instance: { proxyToken: "proxy-token" } })).toMatchObject({
+      instance: { proxyToken: "proxy-token" }
+    });
+    expect(() => directusConfigSchema.parse({ instance: { staticToken: "proxy-token" } })).toThrow(
+      /Unrecognized key/
+    );
+  });
+
   it("discovers a root-relative config source when it exists", () => {
     const root = mkdtempSync(join(tmpdir(), "nuxt-directus-config-"));
     directories.push(root);
@@ -81,7 +90,7 @@ describe("Directus config source discovery", () => {
   it("generates a client-safe virtual source from the resolved config", () => {
     const source = generateDirectusRuntimeConfigSource(
       directusConfigSchema.parse({
-        instance: { baseUrl: "https://cms.example.test", staticToken: "server-only-token" },
+        instance: { baseUrl: "https://cms.example.test", proxyToken: "server-only-token" },
         client: { commands: ["readItems"] }
       })
     );

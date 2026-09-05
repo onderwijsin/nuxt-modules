@@ -33,11 +33,16 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 export default defineDirectusConfig({
   instance: {
     baseUrl: "https://cms.example.com",
-    staticToken: process.env.DIRECTUS_STATIC_TOKEN
+    proxyToken: process.env.DIRECTUS_PROXY_TOKEN
   },
   client: {
     proxy: { path: "/_directus/proxy" },
-    assets: { path: "/_directus/assets", publicOnly: false, cache: { enabled: false } },
+    assets: {
+      url: "https://assets.example.com",
+      path: "/_directus/assets",
+      publicOnly: false,
+      cache: { enabled: false }
+    },
     commands: ["readItem", "readItems"],
     preview: {
       enabled: true,
@@ -55,7 +60,6 @@ export default defineDirectusConfig({
         maxAge: 2592000
       },
       refreshSafetyWindow: 30000,
-      refreshAttempts: 3,
       sessionSecret: process.env.DIRECTUS_SESSION_SECRET,
       previousSessionSecrets: process.env.DIRECTUS_PREVIOUS_SESSION_SECRETS?.split(",") ?? [],
       maskSecretsInPlayground: true,

@@ -10,20 +10,17 @@ import {
 import { assertDirectusEventSameOrigin } from "../utils/csrf";
 import { resolveDirectusProxyUrl } from "../utils/proxy";
 
-const blockedRequestHeaders = new Set([
-  "authorization",
-  "cookie",
-  "host",
-  "origin",
-  "content-length",
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailer",
-  "transfer-encoding",
-  "upgrade"
+const forwardedRequestHeaders = new Set([
+  "accept",
+  "accept-language",
+  "cache-control",
+  "content-type",
+  "if-match",
+  "if-none-match",
+  "if-modified-since",
+  "if-unmodified-since",
+  "prefer",
+  "range"
 ]);
 const blockedResponseHeaders = new Set([
   "set-cookie",
@@ -37,13 +34,17 @@ const blockedResponseHeaders = new Set([
   "upgrade"
 ]);
 
+function isCorsHeader(header: string): boolean {
+  return header.toLowerCase().startsWith("access-control-");
+}
+
 /**
- * Returns request headers that are removed before forwarding to Directus.
+ * Returns the REST request headers permitted across the proxy boundary.
  *
- * @returns Credential and routing headers that must not cross the proxy boundary.
+ * @returns Allowlisted request headers forwarded to Directus.
  */
 export function getForwardedProxyHeaders(): string[] {
-  return [...blockedRequestHeaders];
+  return [...forwardedRequestHeaders];
 }
 
 /**
@@ -57,7 +58,7 @@ export function requiresDirectusProxySameOrigin(credential: DirectusCredential):
 }
 
 /**
- * Creates a fetch adapter that removes caller credentials before proxying.
+ * Creates a fetch adapter that applies the proxy request and response header policies.
  *
  * @param credential Server-selected upstream credential.
  * @returns A sanitized Fetch-compatible adapter.
@@ -66,15 +67,24 @@ export function createSanitizedProxyFetch(credential: DirectusCredential): typeo
   const directusFetch = ofetch.create({ responseType: "stream" });
 
   return async (input, init) => {
-    const headers = new Headers(init?.headers);
-    for (const header of blockedRequestHeaders) headers.delete(header);
+    const incomingHeaders = new Headers(init?.headers);
+    const headers = new Headers();
+    for (const [header, value] of incomingHeaders) {
+      if (forwardedRequestHeaders.has(header.toLowerCase())) headers.set(header, value);
+    }
     const authorization = getDirectusAuthorizationHeader(credential).authorization;
     if (authorization) headers.set("authorization", authorization);
 
     const request = input instanceof URL ? input.toString() : input;
-    const response = await directusFetch.raw(request, { ...init, headers });
+    const response = await directusFetch.raw(request, {
+      ...init,
+      headers,
+      ignoreResponseError: true
+    });
     const safeHeaders = new Headers(response.headers);
-    for (const header of blockedResponseHeaders) safeHeaders.delete(header);
+    for (const header of [...safeHeaders.keys()]) {
+      if (blockedResponseHeaders.has(header) || isCorsHeader(header)) safeHeaders.delete(header);
+    }
     return new Response(response.body, {
       headers: safeHeaders,
       status: response.status,
@@ -103,7 +113,7 @@ export default defineEventHandler(async (event) => {
   }
   const { credential } = resolveDirectusRequestContext(event, {
     preview: config.public.directusClient.preview,
-    staticToken: config.directusClient.staticToken,
+    proxyToken: config.directusClient.proxyToken,
     sessionAccessToken
   });
   if (requiresDirectusProxySameOrigin(credential)) {
@@ -114,9 +124,6 @@ export default defineEventHandler(async (event) => {
 
   return proxyRequest(event, targetUrl.toString(), {
     streamRequest: true,
-    fetch: createSanitizedProxyFetch(credential),
-    fetchOptions: {
-      headers: getDirectusAuthorizationHeader(credential)
-    }
+    fetch: createSanitizedProxyFetch(credential)
   });
 });

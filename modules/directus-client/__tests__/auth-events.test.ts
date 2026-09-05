@@ -171,6 +171,21 @@ describe("Directus authentication hooks", () => {
     expect(state.callHook).toHaveBeenLastCalledWith("directus:auth:invalidated", "user-1");
   });
 
+  it("preserves state when refresh reports a temporary service failure", async () => {
+    const auth = useDirectusAuth();
+    const snapshot = { userId: "user-1" };
+    state.fetch
+      .mockResolvedValueOnce(snapshot)
+      .mockRejectedValueOnce(
+        Object.assign(new Error("temporarily unavailable"), { statusCode: 503 })
+      );
+    await auth.login({ email: "user@example.test", password: "secret" });
+
+    await expect(auth.refresh()).rejects.toMatchObject({ statusCode: 503 });
+    expect(auth._session.value).toEqual(snapshot);
+    expect(state.callHook).not.toHaveBeenCalledWith("directus:auth:invalidated", "user-1");
+  });
+
   it("emits logout after local state is cleared, even when upstream logout fails", async () => {
     const auth = useDirectusAuth();
     state.fetch

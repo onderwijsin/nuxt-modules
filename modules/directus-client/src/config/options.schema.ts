@@ -23,6 +23,39 @@ export const directusClientOptionsSchema = directusConfigSchema
         message: "client.auth.sessionSecret is required when authentication is enabled"
       });
     }
+
+    const routes = [
+      {
+        label: "client.proxy.path",
+        path: options.client.proxy.path,
+        issuePath: ["client", "proxy", "path"]
+      },
+      {
+        label: "client.assets.path",
+        path: options.client.assets.path,
+        issuePath: ["client", "assets", "path"]
+      },
+      {
+        label: "reserved /_directus/auth",
+        path: "/_directus/auth",
+        issuePath: ["client", "proxy", "path"]
+      }
+    ] as const;
+
+    function routesOverlap(left: string, right: string): boolean {
+      return left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
+    }
+
+    for (const [index, route] of routes.entries()) {
+      for (const otherRoute of routes.slice(index + 1)) {
+        if (!routesOverlap(route.path, otherRoute.path)) continue;
+        context.addIssue({
+          code: "custom",
+          path: [...route.issuePath],
+          message: `${route.label} overlaps with ${otherRoute.label}`
+        });
+      }
+    }
   });
 
 export type ModuleOptions = z.input<typeof directusClientOptionsSchema>;

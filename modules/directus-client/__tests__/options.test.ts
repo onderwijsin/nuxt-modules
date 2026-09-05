@@ -43,23 +43,18 @@ describe("Directus module options", () => {
     });
   });
 
-  it("configures refresh timing and attempts", () => {
+  it("configures refresh timing without refresh retries", () => {
     expect(
       directusClientOptionsSchema.parse({
         client: {
           auth: {
-            refreshSafetyWindow: 45_000,
-            refreshAttempts: 5
+            refreshSafetyWindow: 45_000
           }
         }
       }).client.auth
     ).toMatchObject({
-      refreshSafetyWindow: 45_000,
-      refreshAttempts: 5
+      refreshSafetyWindow: 45_000
     });
-    expect(() =>
-      directusClientOptionsSchema.parse({ client: { auth: { refreshAttempts: 0 } } })
-    ).toThrow();
     expect(() =>
       directusClientOptionsSchema.parse({ client: { auth: { refreshTokenLifetime: 604_800_000 } } })
     ).toThrow(/Unrecognized key/);
@@ -146,6 +141,26 @@ describe("Directus module options", () => {
     ).toThrow();
   });
 
+  it("rejects equal and parent-child overlaps between owned route namespaces", () => {
+    for (const [proxyPath, assetsPath] of [
+      ["/_directus/routes", "/_directus/routes"],
+      ["/_directus", "/_directus/assets"],
+      ["/_directus/assets/files", "/_directus/assets"]
+    ]) {
+      expect(() =>
+        directusClientOptionsSchema.parse({
+          client: { proxy: { path: proxyPath }, assets: { path: assetsPath } }
+        })
+      ).toThrow(/client\.(proxy|assets)\.path overlaps with/);
+    }
+  });
+
+  it("protects the reserved auth namespace from parent proxy paths", () => {
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { proxy: { path: "/_directus" } } })
+    ).toThrow(/reserved \/_directus\/auth/);
+  });
+
   it("validates and defaults the dedicated assets proxy", () => {
     expect(directusClientOptionsSchema.parse({}).client.assets).toEqual({
       enabled: true,
@@ -153,6 +168,14 @@ describe("Directus module options", () => {
       publicOnly: false,
       cache: { enabled: false }
     });
+    expect(
+      directusClientOptionsSchema.parse({
+        client: { assets: { url: "https://assets.example.test" } }
+      }).client.assets
+    ).toMatchObject({ url: "https://assets.example.test" });
+    expect(() =>
+      directusClientOptionsSchema.parse({ client: { assets: { url: "not-a-url" } } })
+    ).toThrow();
     expect(() =>
       directusClientOptionsSchema.parse({ client: { assets: { cache: { enabled: true } } } })
     ).toThrow();

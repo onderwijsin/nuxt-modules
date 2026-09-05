@@ -9,8 +9,7 @@ const state = vi.hoisted(() => ({
     directusClient: {
       baseUrl: "https://directus.example.test/",
       auth: {
-        refreshSafetyWindow: 30_000,
-        refreshAttempts: 3
+        refreshSafetyWindow: 30_000
       }
     }
   },
@@ -239,8 +238,7 @@ describe("Directus session refresh coordination", () => {
     state.current = expiringSession();
     state.session.seal.mockResolvedValue("boop1:opaque-ciphertext");
     const fetch = mockFetch(
-      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
-      jsonResponse({ data: { id: "user-1", last_name: "User" } })
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
     );
 
     const session = await ensureFreshDirectusSession(createTestEvent());
@@ -252,11 +250,11 @@ describe("Directus session refresh coordination", () => {
         userId: "user-1",
         email: null,
         firstName: null,
-        lastName: "User",
+        lastName: null,
         requiresTfaSetup: false
       }
     });
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(state.storage.setItem).toHaveBeenCalledWith(
       expect.stringContaining("flight:"),
       expect.objectContaining({ status: "completed", sealedSession: expect.any(String) }),
@@ -268,19 +266,108 @@ describe("Directus session refresh coordination", () => {
     expect(JSON.stringify(stored)).not.toContain("new-refresh");
   });
 
-  it("refreshes an expired access token while the refresh token is valid", async () => {
-    state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
+  it("clears the stale session when local persistence fails after rotation", async () => {
+    state.current = expiringSession();
+    state.session.seal.mockRejectedValue(new Error("session sealing failed"));
     const fetch = mockFetch(
-      new Error("temporary Directus failure"),
-      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
-      jsonResponse({ data: { id: "user-1" } })
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
+    );
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toThrow(
+      "session sealing failed"
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.clear).toHaveBeenCalled();
+    expect([...state.storage.records.values()]).toContainEqual({
+      status: "failed",
+      outcome: "terminal"
+    });
+  });
+
+  it("keeps the committed session when coordination publication fails", async () => {
+    state.current = expiringSession();
+    state.session.seal.mockResolvedValue("boop1:rotated-session");
+    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "status" in value &&
+        value.status === "completed"
+      ) {
+        throw new Error("refresh storage unavailable");
+      }
+      state.storage.records.set(key, value);
+    });
+    const fetch = mockFetch(
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
     );
 
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
       accessToken: "new-access",
       refreshToken: "new-refresh"
     });
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.writeCookie).toHaveBeenCalledWith(
+      expect.anything(),
+      "boop1:rotated-session"
+    );
+    expect(state.session.clear).not.toHaveBeenCalled();
+    expect([...state.storage.records.values()]).not.toContainEqual({
+      status: "failed",
+      outcome: "terminal"
+    });
+  });
+
+  it("makes exactly one refresh request and preserves the session on transport failure", async () => {
+    state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
+    const fetch = mockFetch(new Error("temporary Directus failure"));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.clear).not.toHaveBeenCalled();
+  });
+
+  it("clears the session when terminal-flight publication fails", async () => {
+    state.current = expiringSession();
+    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "status" in value &&
+        value.status === "failed"
+      ) {
+        throw new Error("refresh storage unavailable");
+      }
+      state.storage.records.set(key, value);
+    });
+    mockFetch(jsonResponse({ errors: [{ extensions: { code: "INVALID_TOKEN" } }] }, 401));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
+    expect(state.session.clear).toHaveBeenCalled();
+  });
+
+  it("preserves the session and returns 503 when transient-flight publication fails", async () => {
+    state.current = expiringSession();
+    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "status" in value &&
+        value.status === "failed"
+      ) {
+        throw new Error("refresh storage unavailable");
+      }
+      state.storage.records.set(key, value);
+    });
+    const fetch = mockFetch(new Error("temporary Directus failure"));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.clear).not.toHaveBeenCalled();
   });
 
   it("waits for a completed refresh published by shared storage", async () => {
@@ -306,13 +393,30 @@ describe("Directus session refresh coordination", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("clears the session and publishes failure when refresh fails", async () => {
+  it("clears the session for a terminal Directus refresh rejection", async () => {
     state.current = expiringSession();
-    mockFetch(new Error("Directus unavailable"));
+    mockFetch(jsonResponse({ errors: [{ extensions: { code: "INVALID_TOKEN" } }] }, 401));
 
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
     expect(state.session.clear).toHaveBeenCalled();
-    expect([...state.storage.records.values()]).toContainEqual({ status: "failed" });
+    expect([...state.storage.records.values()]).toContainEqual({
+      status: "failed",
+      outcome: "terminal"
+    });
+  });
+
+  it.each([429, 500])("preserves the session for upstream status %s", async (status) => {
+    state.current = expiringSession();
+    mockFetch(Object.assign(new Error("upstream failure"), { statusCode: status }));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
+    });
+    expect(state.session.clear).not.toHaveBeenCalled();
+    expect([...state.storage.records.values()]).toContainEqual({
+      status: "failed",
+      outcome: "transient"
+    });
   });
 
   it("uses a completed refresh result already in storage", async () => {
@@ -349,12 +453,59 @@ describe("Directus session refresh coordination", () => {
 
   it("stops immediately when storage reports a failed refresh flight", async () => {
     state.current = expiringSession();
-    state.storage.records.set("flight:" + hash(state.current.refreshToken), { status: "failed" });
+    state.storage.records.set("flight:" + hash(state.current.refreshToken), {
+      status: "failed",
+      outcome: "terminal"
+    });
     const fetch = mockFetch(jsonResponse({}));
 
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
     expect(state.session.clear).toHaveBeenCalled();
+  });
+
+  it("clears a follower session when the refresh flight becomes terminal", async () => {
+    state.current = expiringSession();
+    const key = "flight:" + hash(state.current.refreshToken);
+    state.storage.records.set(key, {
+      status: "pending",
+      owner: "other-instance",
+      startedAt: Date.now()
+    });
+    const fetch = mockFetch(jsonResponse({}));
+    setTimeout(() => {
+      state.storage.records.set(key, { status: "failed", outcome: "terminal" });
+    }, 5);
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
+    expect(state.session.clear).toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("preserves a follower session when refresh coordination times out", async () => {
+    vi.useFakeTimers();
+    try {
+      state.current = expiringSession();
+      const key = "flight:" + hash(state.current.refreshToken);
+      state.storage.records.set(key, {
+        status: "pending",
+        owner: "other-instance",
+        startedAt: Date.now()
+      });
+      const fetch = mockFetch(jsonResponse({}));
+      const refresh = ensureFreshDirectusSession(createTestEvent());
+      const outcome = refresh.then(
+        (session) => ({ session }),
+        (error) => ({ error })
+      );
+
+      await vi.runAllTimersAsync();
+      await expect(outcome).resolves.toMatchObject({ error: { statusCode: 503 } });
+      expect(state.session.clear).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

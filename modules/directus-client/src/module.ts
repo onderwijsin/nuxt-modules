@@ -31,6 +31,7 @@ import {
 import { parseDirectusCommands } from "./config/commands";
 import { directusClientOptionsSchema } from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
+import { resolveDirectusSessionSecret } from "./config/session-secret";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./config/options.schema";
 
@@ -41,7 +42,6 @@ const DIRECTUS_TURNSTILE_ACTIONS = {
   passwordRequest: "directus-password-request",
   magicLinkRequest: "directus-magic-link-request"
 };
-const DEVELOPMENT_SESSION_SECRET = "nuxt-directus-development-session-secret-32-chars";
 
 /** Registers the server-safe Directus module foundation and its validated proxy boundary. */
 export default defineNuxtModule<ModuleOptions>({
@@ -95,11 +95,15 @@ export default defineNuxtModule<ModuleOptions>({
     // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
     const input = defu(rawOptions, sharedConfig);
+    const sessionSecret = resolveDirectusSessionSecret({
+      configured: input.client?.auth?.sessionSecret ?? undefined,
+      isCI: process.env.CI === "true",
+      isPrepare: nuxt.options._prepare,
+      isDevelopment: nuxt.options.dev
+    });
     const validationOptions =
-      input.client?.auth?.enabled &&
-      !input.client.auth.sessionSecret &&
-      (nuxt.options.dev || nuxt.options._prepare || process.env.CI === "true")
-        ? defu({ client: { auth: { sessionSecret: DEVELOPMENT_SESSION_SECRET } } }, input)
+      input.client?.auth?.enabled && sessionSecret
+        ? defu({ client: { auth: { sessionSecret } } }, input)
         : input;
     const options = validateModuleOptions(validationOptions, directusClientOptionsSchema, log);
 
@@ -168,7 +172,7 @@ export default defineNuxtModule<ModuleOptions>({
       directusClient: defu(
         {
           baseUrl,
-          ...(options.instance.staticToken ? { staticToken: options.instance.staticToken } : {}),
+          ...(options.instance.proxyToken ? { proxyToken: options.instance.proxyToken } : {}),
           auth: {
             ...options.client.auth,
             turnstile: {
@@ -177,6 +181,7 @@ export default defineNuxtModule<ModuleOptions>({
             }
           },
           assets: {
+            ...(options.client.assets.url ? { url: options.client.assets.url } : {}),
             publicOnly: options.client.assets.publicOnly,
             cache: options.client.assets.cache
           }

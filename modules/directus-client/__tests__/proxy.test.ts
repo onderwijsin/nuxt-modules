@@ -71,26 +71,37 @@ describe("Directus proxy boundary", () => {
 
   it("keeps asset requests below the Directus assets prefix", () => {
     expect(
-      resolveDirectusAssetUrl(
-        "https://cms.example.test/directus/",
-        "/_directus/assets",
-        new URL("https://app.example.test/_directus/assets/file-id?width=800&fit=cover")
-      )
+      resolveDirectusAssetUrl({
+        baseUrl: "https://cms.example.test/directus/",
+        proxyPath: "/_directus/assets",
+        requestUrl: new URL("https://app.example.test/_directus/assets/file-id?width=800&fit=cover")
+      })
     ).toBe("https://cms.example.test/directus/assets/file-id?width=800&fit=cover");
     expect(() =>
-      resolveDirectusAssetUrl(
-        "https://cms.example.test",
-        "/_directus/assets",
-        new URL("https://app.example.test/_directus/assets/../admin")
-      )
+      resolveDirectusAssetUrl({
+        baseUrl: "https://cms.example.test",
+        proxyPath: "/_directus/assets",
+        requestUrl: new URL("https://app.example.test/_directus/assets/../admin")
+      })
     ).toThrow(/Invalid Directus proxy path/);
+  });
+
+  it("uses a custom asset upstream base URL", () => {
+    expect(
+      resolveDirectusAssetUrl({
+        baseUrl: "https://cms.example.test",
+        proxyPath: "/_directus/assets",
+        requestUrl: new URL("https://app.example.test/_directus/assets/file-id?width=800"),
+        assetUrl: "https://assets.example.test"
+      })
+    ).toBe("https://assets.example.test/file-id?width=800");
   });
   it("requires same-origin metadata for every server-selected credential", () => {
     expect(requiresDirectusProxySameOrigin({ source: "none" })).toBe(false);
     expect(requiresDirectusProxySameOrigin({ source: "session", accessToken: "session" })).toBe(
       true
     );
-    expect(requiresDirectusProxySameOrigin({ source: "static", accessToken: "static" })).toBe(true);
+    expect(requiresDirectusProxySameOrigin({ source: "proxy", accessToken: "proxy" })).toBe(true);
     expect(requiresDirectusProxySameOrigin({ source: "preview", accessToken: "preview" })).toBe(
       true
     );
@@ -138,21 +149,80 @@ describe("Directus proxy boundary", () => {
         new URL("https://app.example.test/_directus/proxy/items")
       )
     ).toThrow(/must use HTTP/);
+
+    for (const path of ["%2e%2e/admin", "%2E%2E/admin", "%252e%252e/admin"]) {
+      expect(() =>
+        resolveDirectusProxyUrl(
+          "https://cms.example.test/directus",
+          "/_directus/proxy",
+          new URL(`https://app.example.test/_directus/proxy/${path}`)
+        )
+      ).toThrow(/Invalid Directus proxy path/);
+    }
   });
 
-  it("filters all credential and origin headers before forwarding", () => {
+  it("allows REST headers while excluding credential, referer, and proxy identity headers", () => {
     expect(getForwardedProxyHeaders()).toEqual(
-      expect.arrayContaining([
-        "authorization",
-        "cookie",
-        "content-length",
-        "host",
-        "origin",
-        "connection",
-        "transfer-encoding"
-      ])
+      expect.arrayContaining(["accept", "content-type", "if-none-match", "prefer"])
+    );
+    expect(getForwardedProxyHeaders()).not.toEqual(
+      expect.arrayContaining(["authorization", "cookie", "referer", "forwarded", "x-real-ip"])
     );
   });
+
+  it.each([400, 401, 403, 404, 409, 429, 500, 503])(
+    "preserves upstream HTTP status %s and body while sanitizing both header directions",
+    async (status) => {
+      const receivedHeaders: Record<string, string | undefined> = {};
+      const server = createServer((request, response) => {
+        for (const header of ["accept", "referer", "forwarded", "x-forwarded-for", "x-real-ip"])
+          receivedHeaders[header] = request.headers[header];
+        response.writeHead(status, {
+          "content-type": "text/plain",
+          "access-control-allow-origin": "https://attacker.example",
+          "x-upstream": "safe"
+        });
+        response.end(`status-${status}`);
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        server.once("error", reject);
+        server.listen(0, "127.0.0.1", resolve);
+      });
+
+      try {
+        const address = server.address();
+        if (!address || typeof address === "string")
+          throw new Error("Test server did not expose a port");
+        const response = await createSanitizedProxyFetch({
+          source: "proxy",
+          accessToken: "server-token"
+        })(`http://127.0.0.1:${address.port}`, {
+          headers: {
+            accept: "application/json",
+            referer: "https://app.test/?preview=true&token=secret",
+            forwarded: "for=attacker",
+            "x-forwarded-for": "127.0.0.1",
+            "x-real-ip": "127.0.0.1"
+          }
+        });
+
+        expect(response.status).toBe(status);
+        await expect(response.text()).resolves.toBe(`status-${status}`);
+        expect(response.headers.get("access-control-allow-origin")).toBeNull();
+        expect(response.headers.get("x-upstream")).toBe("safe");
+        expect(receivedHeaders.accept).toBe("application/json");
+        expect(receivedHeaders.referer).toBeUndefined();
+        expect(receivedHeaders.forwarded).toBeUndefined();
+        expect(receivedHeaders["x-forwarded-for"]).toBeUndefined();
+        expect(receivedHeaders["x-real-ip"]).toBeUndefined();
+      } finally {
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
+    }
+  );
 
   it("sanitizes request and response headers while preserving the streamed body", async () => {
     let receivedAuthorization: string | undefined;
@@ -180,7 +250,7 @@ describe("Directus proxy boundary", () => {
 
       const proxyFetch = createSanitizedProxyFetch({
         accessToken: "server-token",
-        source: "static"
+        source: "proxy"
       });
       const response = await proxyFetch(`http://127.0.0.1:${address.port}`, {
         headers: {
@@ -228,10 +298,10 @@ describe("Directus CSRF boundary", () => {
 });
 
 describe("Directus credential selection", () => {
-  it("prefers a session token over a static token", () => {
+  it("prefers a session token over a proxy token", () => {
     const credential = resolveDirectusCredential({
       sessionAccessToken: "session",
-      staticToken: "static"
+      proxyToken: "proxy"
     });
 
     expect(credential).toEqual({ accessToken: "session", source: "session" });
@@ -245,15 +315,15 @@ describe("Directus credential selection", () => {
       resolveDirectusCredential({
         previewAccessToken: "preview",
         sessionAccessToken: "session",
-        staticToken: "static"
+        proxyToken: "proxy"
       })
     ).toEqual({ accessToken: "preview", source: "preview" });
   });
 
-  it("falls back to static and then unauthenticated requests", () => {
-    expect(resolveDirectusCredential({ staticToken: "static" })).toEqual({
-      accessToken: "static",
-      source: "static"
+  it("falls back to a proxy token and then unauthenticated requests", () => {
+    expect(resolveDirectusCredential({ proxyToken: "proxy" })).toEqual({
+      accessToken: "proxy",
+      source: "proxy"
     });
     expect(resolveDirectusCredential({})).toEqual({ source: "none" });
     expect(getDirectusAuthorizationHeader({ source: "none" })).toEqual({});

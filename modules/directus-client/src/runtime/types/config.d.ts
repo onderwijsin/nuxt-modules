@@ -2,7 +2,7 @@ declare module "nuxt/schema" {
   interface RuntimeConfig {
     directusClient: {
       baseUrl: string;
-      staticToken?: string;
+      proxyToken?: string;
       auth: {
         enabled: boolean;
         turnstile: {
@@ -25,6 +25,7 @@ declare module "nuxt/schema" {
         passwordResetUrl?: string;
       };
       assets: {
+        url?: string;
         publicOnly: boolean;
         cache:
           | { enabled: false }

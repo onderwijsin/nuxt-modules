@@ -25,16 +25,15 @@ export function createServerDirectusClient(event?: H3Event): DirectusSchemaClien
 
   const serverFetch = ofetch.create({
     onRequest: async ({ options }) => {
-      if (!event) return;
-
-      const authState = config.directusClient.auth.enabled
-        ? await event.context.directusAuth?.resolve()
-        : undefined;
+      const authState =
+        event && config.directusClient.auth.enabled
+          ? await event.context.directusAuth?.resolve()
+          : undefined;
       const sessionAccessToken = authState?.accessToken;
 
       const { credential } = resolveDirectusRequestContext(event, {
         preview: config.public.directusClient.preview,
-        staticToken: config.directusClient.staticToken,
+        proxyToken: config.directusClient.proxyToken,
         sessionAccessToken
       });
 
