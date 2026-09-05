@@ -463,6 +463,50 @@ describe("Directus session refresh coordination", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(state.session.clear).toHaveBeenCalled();
   });
+
+  it("clears a follower session when the refresh flight becomes terminal", async () => {
+    state.current = expiringSession();
+    const key = "flight:" + hash(state.current.refreshToken);
+    state.storage.records.set(key, {
+      status: "pending",
+      owner: "other-instance",
+      startedAt: Date.now()
+    });
+    const fetch = mockFetch(jsonResponse({}));
+    setTimeout(() => {
+      state.storage.records.set(key, { status: "failed", outcome: "terminal" });
+    }, 5);
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
+    expect(state.session.clear).toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("preserves a follower session when refresh coordination times out", async () => {
+    vi.useFakeTimers();
+    try {
+      state.current = expiringSession();
+      const key = "flight:" + hash(state.current.refreshToken);
+      state.storage.records.set(key, {
+        status: "pending",
+        owner: "other-instance",
+        startedAt: Date.now()
+      });
+      const fetch = mockFetch(jsonResponse({}));
+      const refresh = ensureFreshDirectusSession(createTestEvent());
+      const outcome = refresh.then(
+        (session) => ({ session }),
+        (error) => ({ error })
+      );
+
+      await vi.runAllTimersAsync();
+      await expect(outcome).resolves.toMatchObject({ error: { statusCode: 503 } });
+      expect(state.session.clear).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("Directus logout cleanup", () => {

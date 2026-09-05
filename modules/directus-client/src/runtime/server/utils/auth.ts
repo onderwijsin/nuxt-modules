@@ -330,11 +330,14 @@ async function waitForRefreshFlight(
     }
     if (flight?.status === "failed") {
       if (flight.outcome === "transient") throw createTransientRefreshError(undefined);
-      if (flight.outcome === "terminal") return undefined;
+      if (flight.outcome === "terminal") {
+        clearDirectusSession(event);
+        return undefined;
+      }
     }
     await new Promise<void>((resolve) => setTimeout(resolve, 100));
   }
-  return undefined;
+  throw createTransientRefreshError(undefined);
 }
 
 /**
