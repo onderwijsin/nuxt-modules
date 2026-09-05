@@ -1,21 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-const state = vi.hoisted(() => ({ rootStorage: { getMount: vi.fn() } }));
-vi.mock("nitropack/runtime", () => ({ useStorage: () => state.rootStorage }));
-
-async function loadCoordinator() {
-  vi.resetModules();
-  return import("../src/runtime/auth/server/refresh-coordinator");
-}
-
-beforeEach(() => {
-  state.rootStorage.getMount.mockReset();
-  state.rootStorage.getMount.mockReturnValue({ driver: { name: "memory" } });
-});
+import { createMemoryCoordinator } from "../src/runtime/auth/server/refresh-coordinator/memory";
 
 describe("Directus memory refresh coordination", () => {
   it("shares only the reusable flight with followers", async () => {
-    const { getRefreshCoordinator } = await loadCoordinator();
+    const coordinator = createMemoryCoordinator();
     let resolveOwner!: (result: { status: "completed"; sealedSession: string }) => void;
     const ownerOperation = vi.fn(
       () =>
@@ -28,8 +17,8 @@ describe("Directus memory refresh coordination", () => {
             resolve({ flight, value: "owner-only", error: new Error("owner-only") });
         })
     );
-    const owner = getRefreshCoordinator().coordinate("memory-shared", ownerOperation);
-    const follower = getRefreshCoordinator().coordinate("memory-shared", async () => ({
+    const owner = coordinator.coordinate("memory-shared", ownerOperation);
+    const follower = coordinator.coordinate("memory-shared", async () => ({
       flight: { status: "completed" as const, sealedSession: "wrong" }
     }));
     resolveOwner({ status: "completed", sealedSession: "boop1:shared" });
@@ -49,8 +38,7 @@ describe("Directus memory refresh coordination", () => {
   it("expires transient results after one second and completed results after five seconds", async () => {
     vi.useFakeTimers();
     try {
-      const { getRefreshCoordinator } = await loadCoordinator();
-      const coordinator = getRefreshCoordinator();
+      const coordinator = createMemoryCoordinator();
       const operation = vi
         .fn()
         .mockResolvedValueOnce({

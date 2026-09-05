@@ -2,57 +2,26 @@ import { useStorage } from "nitropack/runtime";
 
 import { createMemoryCoordinator } from "./memory";
 import { createRedisCoordinator } from "./redis";
+import type { RefreshCoordinator } from "./shared";
+
+export {
+  getRefreshFlightTtlSeconds,
+  REFRESH_LEASE_TTL_SECONDS,
+  REFRESH_POLL_INTERVAL_MS,
+  REFRESH_RESULT_TTL_SECONDS,
+  REFRESH_TRANSIENT_RESULT_TTL_SECONDS,
+  REFRESH_WAIT_TIMEOUT_MS
+} from "./shared";
+export type {
+  CoordinatedRefreshResult,
+  CompletedRefreshFlight,
+  FailedRefreshFlight,
+  RefreshCoordinator,
+  RefreshFlight,
+  RefreshOwnerResult
+} from "./shared";
 
 export const REFRESH_STORAGE_MOUNT = "directus-auth-refresh";
-export const REFRESH_LEASE_SECONDS = 30;
-export const REFRESH_RESULT_SECONDS = 5;
-export const REFRESH_TRANSIENT_RESULT_SECONDS = 1;
-export const REFRESH_WAIT_TIMEOUT_MS = 12_000;
-export const REFRESH_POLL_INTERVAL_MS = 100;
-
-export interface CompletedRefreshFlight {
-  readonly status: "completed";
-  readonly sealedSession: string;
-}
-
-export interface FailedRefreshFlight {
-  readonly status: "failed";
-  readonly outcome: "terminal" | "transient";
-}
-
-export type RefreshFlight = CompletedRefreshFlight | FailedRefreshFlight;
-
-export interface RefreshOwnerResult<T> {
-  readonly flight: RefreshFlight;
-  readonly value?: T;
-  readonly error?: unknown;
-}
-
-export type CoordinatedRefreshResult<T> =
-  | ({ readonly source: "owner" } & RefreshOwnerResult<T>)
-  | { readonly source: "shared"; readonly flight: RefreshFlight };
-
-export interface RefreshCoordinator {
-  coordinate<T>(
-    refreshKey: string,
-    operation: () => Promise<RefreshOwnerResult<T>>
-  ): Promise<CoordinatedRefreshResult<T>>;
-}
-
-export type RefreshStorageDriver = ReturnType<ReturnType<typeof useStorage>["getMount"]>["driver"];
-
-/**
- * Selects the result reuse window for a reusable refresh outcome.
- *
- * @param flight - The reusable result published to followers.
- * @returns The result lifetime in seconds.
- */
-export function getRefreshFlightTtlSeconds(flight: RefreshFlight): number {
-  if (flight.status === "failed" && flight.outcome === "transient") {
-    return REFRESH_TRANSIENT_RESULT_SECONDS;
-  }
-  return REFRESH_RESULT_SECONDS;
-}
 
 function createRefreshCoordinator(): RefreshCoordinator {
   const driver = useStorage().getMount(REFRESH_STORAGE_MOUNT).driver;

@@ -44,6 +44,8 @@ const terminalRefreshCodes = new Set([
   "UNAUTHORIZED"
 ]);
 
+const REFRESH_REQUEST_TIMEOUT_MS = 10_000;
+
 /**
  * Reads the HTTP status and Directus error code from an unknown upstream failure.
  * @param error - Upstream error thrown by ofetch.
@@ -112,7 +114,7 @@ function createTransientRefreshError(cause: unknown) {
  * @param sealedSession - H3-sealed, versioned session value from refresh coordination.
  * @returns The validated session or undefined when the stored value is invalid or expired.
  */
-async function readSealedRefreshSession(
+async function restoreSharedRefreshSession(
   event: H3Event,
   sealedSession: string
 ): Promise<DirectusSession | undefined> {
@@ -157,53 +159,64 @@ function failedResult(
 }
 
 /**
- * Executes a refresh through the auth-owned memory or Redis coordinator.
+ * Executes one Directus refresh as the coordinator owner.
+ *
  * @param event - Incoming request event.
  * @param current - The expiring session to refresh.
- * @returns The local refresh outcome and its reusable coordination result.
+ * @returns The owner-local result and reusable coordination flight.
  */
-async function runRefreshFlight(
+async function executeDirectusRefresh(
+  event: H3Event,
+  current: DirectusSession
+): Promise<RefreshOwnerResult<DirectusSession>> {
+  const result = await attempt(async () => {
+    return ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
+      method: "POST",
+      body: { refresh_token: current.refreshToken, mode: "json" },
+      retry: 0,
+      timeout: REFRESH_REQUEST_TIMEOUT_MS
+    });
+  });
+  if (result.error !== null || result.data === null) {
+    const outcome = classifyRefreshFailure(result.error);
+    return failedResult(
+      outcome,
+      outcome === "transient" ? createTransientRefreshError(result.error) : undefined
+    );
+  }
+
+  let authentication: DirectusAuthenticationResult;
+  try {
+    authentication = parseDirectusAuthenticationResponse(result.data);
+  } catch (error) {
+    return failedResult("terminal", error);
+  }
+
+  try {
+    const session = createRotatedDirectusSession(current, authentication);
+    const sealedSession = await sealDirectusSession(event, session);
+    writeDirectusSessionCookie(event, sealedSession);
+    return { flight: { status: "completed", sealedSession }, value: session };
+  } catch (error) {
+    return failedResult("terminal", error);
+  }
+}
+
+/**
+ * Coordinates one Directus refresh operation by its hashed refresh token.
+ *
+ * @param event - Incoming request event.
+ * @param current - The expiring session to refresh.
+ * @returns The owner-local or shared coordinated result.
+ */
+async function coordinateDirectusRefresh(
   event: H3Event,
   current: DirectusSession
 ): Promise<CoordinatedRefreshResult<DirectusSession>> {
-  const key = hash(current.refreshToken);
-  const coordinator = getRefreshCoordinator();
-  return coordinator.coordinate(key, async (): Promise<RefreshOwnerResult<DirectusSession>> => {
-    const result = await attempt(async () => {
-      return ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
-        method: "POST",
-        body: { refresh_token: current.refreshToken, mode: "json" },
-        retry: 0,
-        timeout: 10_000
-      });
-    });
-    if (result.error !== null || result.data === null) {
-      const outcome = classifyRefreshFailure(result.error);
-      if (outcome === "terminal") clearDirectusSession(event);
-      return failedResult(
-        outcome,
-        outcome === "transient" ? createTransientRefreshError(result.error) : undefined
-      );
-    }
-
-    let authentication: DirectusAuthenticationResult;
-    try {
-      authentication = parseDirectusAuthenticationResponse(result.data);
-    } catch (error) {
-      clearDirectusSession(event);
-      return failedResult("terminal", error);
-    }
-
-    try {
-      const session = createRotatedDirectusSession(current, authentication);
-      const sealedSession = await sealDirectusSession(event, session);
-      writeDirectusSessionCookie(event, sealedSession);
-      return { flight: { status: "completed", sealedSession }, value: session };
-    } catch (error) {
-      clearDirectusSession(event);
-      return failedResult("terminal", error);
-    }
-  });
+  const refreshKey = hash(current.refreshToken);
+  return getRefreshCoordinator().coordinate(refreshKey, () =>
+    executeDirectusRefresh(event, current)
+  );
 }
 
 /**
@@ -225,27 +238,21 @@ export async function ensureFreshDirectusSession(
 
   let result: CoordinatedRefreshResult<DirectusSession>;
   try {
-    result = await runRefreshFlight(event, current);
+    result = await coordinateDirectusRefresh(event, current);
   } catch (error) {
     throw createTransientRefreshError(error);
   }
 
   if (result.source === "owner") {
-    if (result.flight.status === "completed") {
-      if (result.value) return result.value;
-      return readSealedRefreshSession(event, result.flight.sealedSession);
+    if ("value" in result) return result.value;
+    if ("error" in result && isDefined(result.error)) {
+      if (result.flight.outcome === "terminal") clearDirectusSession(event);
+      throw result.error;
     }
-    if (result.flight.outcome === "terminal") {
-      if (isDefined(result.error)) throw result.error;
-      clearDirectusSession(event);
-      return undefined;
-    }
-    if (isDefined(result.error)) throw result.error;
-    throw createTransientRefreshError(undefined);
   }
 
   if (result.flight.status === "completed") {
-    return readSealedRefreshSession(event, result.flight.sealedSession);
+    return restoreSharedRefreshSession(event, result.flight.sealedSession);
   }
   if (result.flight.outcome === "terminal") {
     clearDirectusSession(event);

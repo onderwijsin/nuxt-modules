@@ -1,11 +1,11 @@
 import {
   getRefreshFlightTtlSeconds,
-  REFRESH_LEASE_SECONDS,
+  REFRESH_LEASE_TTL_SECONDS,
   type CoordinatedRefreshResult,
   type RefreshCoordinator,
   type RefreshFlight,
   type RefreshOwnerResult
-} from "./index";
+} from "./shared";
 
 interface MemoryFlightEntry {
   readonly sharedFlight: Promise<RefreshFlight>;
@@ -40,7 +40,7 @@ export function createMemoryCoordinator(): RefreshCoordinator {
       const sharedFlight = ownerResult.then((result) => result.flight);
       const entry: MemoryFlightEntry = {
         sharedFlight,
-        expiresAt: now + REFRESH_LEASE_SECONDS * 1_000
+        expiresAt: now + REFRESH_LEASE_TTL_SECONDS * 1_000
       };
       flights.set(refreshKey, entry);
 

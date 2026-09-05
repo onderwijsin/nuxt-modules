@@ -2,15 +2,21 @@ import { isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import {
   getRefreshFlightTtlSeconds,
-  REFRESH_LEASE_SECONDS,
+  REFRESH_LEASE_TTL_SECONDS,
   REFRESH_POLL_INTERVAL_MS,
   REFRESH_WAIT_TIMEOUT_MS,
   type CoordinatedRefreshResult,
   type RefreshCoordinator,
   type RefreshFlight,
-  type RefreshOwnerResult,
-  type RefreshStorageDriver
-} from "./index";
+  type RefreshOwnerResult
+} from "./shared";
+
+interface RedisStorageDriver {
+  readonly options?: {
+    readonly base?: string;
+  };
+  readonly getInstance?: () => unknown;
+}
 
 interface RefreshRedisClient {
   get(key: string): Promise<string | null>;
@@ -27,7 +33,7 @@ end
 return 0
 `;
 
-function parseFlight(value: string | null): RefreshFlight | undefined {
+function parseRefreshFlight(value: string | null): RefreshFlight | undefined {
   if (!value) return undefined;
   try {
     const parsed: unknown = JSON.parse(value);
@@ -47,7 +53,7 @@ function parseFlight(value: string | null): RefreshFlight | undefined {
   return undefined;
 }
 
-function createKey(base: string, refreshKey: string, suffix: "lease" | "result"): string {
+function createRedisKey(base: string, refreshKey: string, suffix: "lease" | "result"): string {
   const prefix = base.replace(/:+$/, "");
   const key = `directus-auth-refresh:{${refreshKey}}:${suffix}`;
   return prefix ? `${prefix}:${key}` : key;
@@ -62,7 +68,7 @@ function isRefreshRedisClient(value: unknown): value is RefreshRedisClient {
   );
 }
 
-function getRedisClient(driver: RefreshStorageDriver): RefreshRedisClient {
+function getRedisClient(driver: RedisStorageDriver): RefreshRedisClient {
   const instance = driver.getInstance?.();
   if (!isRefreshRedisClient(instance)) {
     throw new Error("Directus refresh Redis storage does not expose a compatible client");
@@ -70,15 +76,11 @@ function getRedisClient(driver: RefreshStorageDriver): RefreshRedisClient {
   return instance;
 }
 
-function isLeaseAcquired(response: unknown): boolean {
-  return response === "OK" || response === true;
-}
-
 async function getPublishedFlight(
   client: RefreshRedisClient,
   resultKey: string
 ): Promise<RefreshFlight | undefined> {
-  return parseFlight(await client.get(resultKey));
+  return parseRefreshFlight(await client.get(resultKey));
 }
 
 async function tryAcquireLease(
@@ -86,7 +88,8 @@ async function tryAcquireLease(
   leaseKey: string,
   leaseOwner: string
 ): Promise<boolean> {
-  return isLeaseAcquired(await client.set(leaseKey, leaseOwner, "NX", "EX", REFRESH_LEASE_SECONDS));
+  const response = await client.set(leaseKey, leaseOwner, "NX", "EX", REFRESH_LEASE_TTL_SECONDS);
+  return response === "OK";
 }
 
 async function releaseLease(
@@ -97,6 +100,18 @@ async function releaseLease(
   await client.eval(releaseLeaseScript, 1, leaseKey, leaseOwner);
 }
 
+async function releaseLeaseBestEffort(
+  client: RefreshRedisClient,
+  leaseKey: string,
+  leaseOwner: string
+): Promise<void> {
+  try {
+    await releaseLease(client, leaseKey, leaseOwner);
+  } catch {
+    // Releasing is best effort; compare-and-delete protects later owners.
+  }
+}
+
 async function publishFlight(
   client: RefreshRedisClient,
   resultKey: string,
@@ -105,6 +120,16 @@ async function publishFlight(
   await client.set(resultKey, JSON.stringify(flight), "EX", getRefreshFlightTtlSeconds(flight));
 }
 
+/**
+ * Waits for the current owner to publish a result or for its lease to disappear.
+ *
+ * @param client - The Redis client.
+ * @param resultKey - The published result key.
+ * @param leaseKey - The active lease key.
+ * @param waitDeadline - The absolute time at which waiting must stop.
+ * @returns The published flight, or undefined when acquisition should be retried.
+ * @throws When the follower wait deadline expires.
+ */
 async function waitForPublishedFlight(
   client: RefreshRedisClient,
   resultKey: string,
@@ -120,13 +145,39 @@ async function waitForPublishedFlight(
   throw new Error("Directus refresh coordination timed out");
 }
 
+async function runAsLeaseOwner<T>(
+  client: RefreshRedisClient,
+  leaseKey: string,
+  resultKey: string,
+  leaseOwner: string,
+  operation: () => Promise<RefreshOwnerResult<T>>
+): Promise<CoordinatedRefreshResult<T>> {
+  const flightAfterAcquire = await getPublishedFlight(client, resultKey);
+  if (flightAfterAcquire) {
+    await releaseLeaseBestEffort(client, leaseKey, leaseOwner);
+    return { source: "shared", flight: flightAfterAcquire };
+  }
+
+  const ownerResult = await operation();
+  try {
+    await publishFlight(client, resultKey, ownerResult.flight);
+  } catch {
+    // The local owner result remains authoritative. Retain the lease until
+    // expiry so a stale caller cannot immediately retry a rotated token.
+    return { source: "owner", ...ownerResult };
+  }
+
+  await releaseLeaseBestEffort(client, leaseKey, leaseOwner);
+  return { source: "owner", ...ownerResult };
+}
+
 /**
  * Creates the Redis-backed refresh coordinator.
  *
  * @param driver - The configured Redis driver from the root Nitro mount.
  * @returns A coordinator using the driver's existing Redis client.
  */
-export function createRedisCoordinator(driver: RefreshStorageDriver): RefreshCoordinator {
+export function createRedisCoordinator(driver: RedisStorageDriver): RefreshCoordinator {
   return {
     async coordinate<T>(
       refreshKey: string,
@@ -134,54 +185,26 @@ export function createRedisCoordinator(driver: RefreshStorageDriver): RefreshCoo
     ): Promise<CoordinatedRefreshResult<T>> {
       const client = getRedisClient(driver);
       const base = driver.options?.base ?? "";
-      const leaseKey = createKey(base, refreshKey, "lease");
-      const resultKey = createKey(base, refreshKey, "result");
+      const leaseKey = createRedisKey(base, refreshKey, "lease");
+      const resultKey = createRedisKey(base, refreshKey, "result");
       const leaseOwner = crypto.randomUUID();
       const waitDeadline = Date.now() + REFRESH_WAIT_TIMEOUT_MS;
-      let acquired = false;
-      let canReleaseLease = false;
 
-      try {
-        while (!acquired) {
-          const publishedFlight = await getPublishedFlight(client, resultKey);
-          if (publishedFlight) return { source: "shared", flight: publishedFlight };
+      while (true) {
+        const publishedFlight = await getPublishedFlight(client, resultKey);
+        if (publishedFlight) return { source: "shared", flight: publishedFlight };
 
-          acquired = await tryAcquireLease(client, leaseKey, leaseOwner);
-          if (acquired) {
-            const flightAfterAcquire = await getPublishedFlight(client, resultKey);
-            if (flightAfterAcquire) {
-              canReleaseLease = true;
-              return { source: "shared", flight: flightAfterAcquire };
-            }
-            break;
-          }
-
-          const waitedFlight = await waitForPublishedFlight(
-            client,
-            resultKey,
-            leaseKey,
-            waitDeadline
-          );
-          if (waitedFlight) return { source: "shared", flight: waitedFlight };
+        if (await tryAcquireLease(client, leaseKey, leaseOwner)) {
+          return runAsLeaseOwner(client, leaseKey, resultKey, leaseOwner, operation);
         }
 
-        const ownerResult = await operation();
-        try {
-          await publishFlight(client, resultKey, ownerResult.flight);
-          canReleaseLease = true;
-        } catch {
-          // The local owner result remains authoritative. Retain the lease until
-          // expiry so a stale caller cannot immediately retry a rotated token.
-        }
-        return { source: "owner", ...ownerResult };
-      } finally {
-        if (acquired && canReleaseLease) {
-          try {
-            await releaseLease(client, leaseKey, leaseOwner);
-          } catch {
-            // Releasing is best effort; compare-and-delete protects later owners.
-          }
-        }
+        const waitedFlight = await waitForPublishedFlight(
+          client,
+          resultKey,
+          leaseKey,
+          waitDeadline
+        );
+        if (waitedFlight) return { source: "shared", flight: waitedFlight };
       }
     }
   };
