@@ -501,10 +501,13 @@ URL or receiving a static, preview, or session token. The server chooses credent
 preview token, current session when authentication is enabled, static token, then no credential.
 
 The proxy preserves the request method, body, query string, response status, and safe response
-headers. It removes caller-supplied credential, cookie, host, origin, connection, and hop-by-hop
-headers; strips the preview token from the upstream query; and never forwards upstream `Set-Cookie`
-headers. Credentialed mutations (`POST`, `PUT`, `PATCH`, and `DELETE`) require a same-origin
-`Origin` or `Referer` header.
+headers. It forwards only REST headers needed for representation, caching, conditional requests,
+range, and preference semantics. Caller-supplied credential, cookie, host, origin, `Referer`,
+connection, hop-by-hop, forwarding, client-IP, and platform identity headers are not forwarded; the
+preview token is stripped from the upstream query; and upstream `Set-Cookie` and `Access-Control-*`
+headers are never returned to the browser. Upstream non-2xx status codes and bodies are preserved,
+while network failures remain proxy errors. Credentialed mutations (`POST`, `PUT`, `PATCH`, and
+`DELETE`) require a same-origin `Origin` or `Referer` header.
 
 It is not a general-purpose proxy, a CORS bypass, a session-token API, or an authorization layer. It
 only targets the configured Directus URL, and Directus permissions remain the final access control.

@@ -454,11 +454,15 @@ The browser endpoint at `proxy.path` (default `/_directus/proxy`) forwards Direc
 preserves method, body, query, response status, and safe response headers, while browser code never
 receives the Directus URL or a server credential.
 
-- The proxy removes incoming `Authorization`, `Cookie`, `Host`, `Origin`, connection, and hop-by-hop
-  headers before forwarding.
+- The proxy forwards only REST headers needed for representation, caching, conditional requests,
+  range, and preference semantics. Incoming `Authorization`, `Cookie`, `Host`, `Origin`, `Referer`,
+  connection, hop-by-hop, forwarding, client-IP, and platform identity headers are not forwarded.
 - Credential precedence is preview token, current session (when `client.auth.enabled`), static
   token, then unauthenticated.
 - Upstream `Set-Cookie` headers are not forwarded to the browser.
+- Upstream `Access-Control-*` headers are removed so the Nuxt application owns the browser-facing
+  CORS and security boundary. Directus non-2xx statuses and response bodies are preserved; network
+  failures remain proxy errors.
 - Credentialed `POST`, `PUT`, `PATCH`, and `DELETE` proxy requests require an `Origin` or `Referer`
   matching the application origin. Missing and cross-origin metadata is rejected with `403`,
   including for `sameSite: "none"` cookies.

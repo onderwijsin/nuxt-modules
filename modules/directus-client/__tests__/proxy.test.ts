@@ -161,19 +161,68 @@ describe("Directus proxy boundary", () => {
     }
   });
 
-  it("filters all credential and origin headers before forwarding", () => {
+  it("allows REST headers while excluding credential, referer, and proxy identity headers", () => {
     expect(getForwardedProxyHeaders()).toEqual(
-      expect.arrayContaining([
-        "authorization",
-        "cookie",
-        "content-length",
-        "host",
-        "origin",
-        "connection",
-        "transfer-encoding"
-      ])
+      expect.arrayContaining(["accept", "content-type", "if-none-match", "prefer"])
+    );
+    expect(getForwardedProxyHeaders()).not.toEqual(
+      expect.arrayContaining(["authorization", "cookie", "referer", "forwarded", "x-real-ip"])
     );
   });
+
+  it.each([400, 401, 403, 404, 409, 429, 500, 503])(
+    "preserves upstream HTTP status %s and body while sanitizing both header directions",
+    async (status) => {
+      const receivedHeaders: Record<string, string | undefined> = {};
+      const server = createServer((request, response) => {
+        for (const header of ["accept", "referer", "forwarded", "x-forwarded-for", "x-real-ip"])
+          receivedHeaders[header] = request.headers[header];
+        response.writeHead(status, {
+          "content-type": "text/plain",
+          "access-control-allow-origin": "https://attacker.example",
+          "x-upstream": "safe"
+        });
+        response.end(`status-${status}`);
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        server.once("error", reject);
+        server.listen(0, "127.0.0.1", resolve);
+      });
+
+      try {
+        const address = server.address();
+        if (!address || typeof address === "string")
+          throw new Error("Test server did not expose a port");
+        const response = await createSanitizedProxyFetch({
+          source: "static",
+          accessToken: "server-token"
+        })(`http://127.0.0.1:${address.port}`, {
+          headers: {
+            accept: "application/json",
+            referer: "https://app.test/?preview=true&token=secret",
+            forwarded: "for=attacker",
+            "x-forwarded-for": "127.0.0.1",
+            "x-real-ip": "127.0.0.1"
+          }
+        });
+
+        expect(response.status).toBe(status);
+        await expect(response.text()).resolves.toBe(`status-${status}`);
+        expect(response.headers.get("access-control-allow-origin")).toBeNull();
+        expect(response.headers.get("x-upstream")).toBe("safe");
+        expect(receivedHeaders.accept).toBe("application/json");
+        expect(receivedHeaders.referer).toBeUndefined();
+        expect(receivedHeaders.forwarded).toBeUndefined();
+        expect(receivedHeaders["x-forwarded-for"]).toBeUndefined();
+        expect(receivedHeaders["x-real-ip"]).toBeUndefined();
+      } finally {
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
+    }
+  );
 
   it("sanitizes request and response headers while preserving the streamed body", async () => {
     let receivedAuthorization: string | undefined;
