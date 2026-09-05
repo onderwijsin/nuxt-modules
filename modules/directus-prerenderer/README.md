@@ -30,7 +30,7 @@ Collection configuration belongs in `directus.config.ts` when it uses functions:
 import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 
 export default defineDirectusConfig({
-  instance: { baseUrl: "https://cms.example.com", staticToken: "build-token" },
+  instance: { baseUrl: "https://cms.example.com", proxyToken: "build-token" },
   collections: [
     {
       collection: "pages",
@@ -64,7 +64,7 @@ Invalid mapped values are omitted.
 | Option                                         | Default         | Description                                                                  |
 | ---------------------------------------------- | --------------- | ---------------------------------------------------------------------------- |
 | `directusPrerenderer.enabled`                  | `true`          | Enables the module.                                                          |
-| `directusPrerenderer.instance`                 | `{}`            | Module-owned build-time Directus `baseUrl` and optional `staticToken`.       |
+| `directusPrerenderer.instance`                 | `{}`            | Module-owned build-time Directus `baseUrl` and optional `proxyToken`.        |
 | `directusPrerenderer.collections`              | `[]`            | Serializable collection overrides.                                           |
 | `directusPrerenderer.includeStaticSitemapUrls` | `false`         | Adds static URLs from `directusSitemaps.static` or shared `sitemaps.static`. |
 | `directusPrerenderer.queryLimit`               | `100`           | Page size for the default Directus fetcher.                                  |

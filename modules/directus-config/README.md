@@ -31,7 +31,7 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 export default defineDirectusConfig({
   instance: {
     baseUrl: "https://cms.example.com",
-    staticToken: process.env.DIRECTUS_STATIC_TOKEN
+    proxyToken: process.env.DIRECTUS_PROXY_TOKEN
   },
   client: {
     commands: ["readItem", "readItems"],
@@ -80,12 +80,14 @@ openssl rand -base64 32
 
 ### `instance`
 
-| Option        | Required | Description                                                              |
-| ------------- | -------- | ------------------------------------------------------------------------ |
-| `baseUrl`     | No       | Directus instance URL. Consumers that make Directus requests require it. |
-| `staticToken` | No       | Server-only static Directus credential.                                  |
+| Option       | Required | Description                                                                                          |
+| ------------ | -------- | ---------------------------------------------------------------------------------------------------- |
+| `baseUrl`    | No       | Directus instance URL. Consumers that make Directus requests require it.                             |
+| `proxyToken` | No       | Server-held credential delegated through the proxy; its permissions must be safe for public callers. |
 
-Both fields are sensitive and never appear in the client-safe virtual configuration.
+Both fields are sensitive and never appear in the client-safe virtual configuration. `proxyToken`
+may remain secret, but its permissions are not private: browser callers can exercise them through
+the application proxy.
 
 ### `client`
 

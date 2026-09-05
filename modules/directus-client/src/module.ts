@@ -172,7 +172,7 @@ export default defineNuxtModule<ModuleOptions>({
       directusClient: defu(
         {
           baseUrl,
-          ...(options.instance.staticToken ? { staticToken: options.instance.staticToken } : {}),
+          ...(options.instance.proxyToken ? { proxyToken: options.instance.proxyToken } : {}),
           auth: {
             ...options.client.auth,
             turnstile: {

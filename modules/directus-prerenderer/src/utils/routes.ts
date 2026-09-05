@@ -103,7 +103,7 @@ async function fetchItemsFromCollection(
   // directly rather than the request-scoped useDirectusServer composable.
   const client = createDirectusRestClient<GenericDirectusSchema>({
     baseUrl: instance.baseUrl,
-    accessToken: instance.staticToken
+    accessToken: instance.proxyToken
   });
   const records: unknown[] = [];
   let offset = 0;

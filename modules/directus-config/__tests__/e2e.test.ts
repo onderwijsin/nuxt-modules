@@ -57,7 +57,7 @@ describe("directus-config virtual aliases", () => {
     await expect($fetch("/api/server-config")).resolves.toMatchObject({
       instance: {
         baseUrl: "https://cms.example.test",
-        staticToken: "server-only-static-token"
+        proxyToken: "server-only-static-token"
       },
       client: {
         commands: ["readItems"],

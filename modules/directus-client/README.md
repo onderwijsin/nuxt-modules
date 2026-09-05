@@ -23,7 +23,7 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 export default defineDirectusConfig({
   instance: {
     baseUrl: process.env.DIRECTUS_URL,
-    staticToken: process.env.DIRECTUS_STATIC_TOKEN
+    proxyToken: process.env.DIRECTUS_PROXY_TOKEN
   },
   client: {
     commands: ["readItem", "readItems"]
@@ -40,7 +40,7 @@ export default defineNuxtConfig({
   directusClient: {
     instance: {
       baseUrl: process.env.DIRECTUS_URL,
-      staticToken: process.env.DIRECTUS_STATIC_TOKEN
+      proxyToken: process.env.DIRECTUS_PROXY_TOKEN
     },
     client: {
       commands: ["readItem", "readItems"]
@@ -51,8 +51,9 @@ export default defineNuxtConfig({
 
 Direct module options and `directus.config.ts` use the same `instance` and `client` shape. When both
 are present, direct module options take precedence. Keep `instance.baseUrl` and
-`instance.staticToken` server-only. Never put Directus credentials in `runtimeConfig.public` or
-browser code.
+`instance.proxyToken` is server-held but delegated through the public application proxy. Its
+permissions must be safe for public application callers to exercise; secrecy does not make those
+permissions private. Never put Directus credentials in `runtimeConfig.public` or browser code.
 
 `instance.baseUrl` is optional. The module skips setup during `nuxt prepare` and CI when it is not
 configured; any request made without it fails with a clear runtime error. Set
@@ -182,7 +183,7 @@ All options are configured under `directusClient`:
 | ------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `enabled`                             | `true`                              | Enables the module.                                                                                                                    |
 | `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                                                               |
-| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                                                                |
+| `instance.proxyToken`                 | —                                   | Server-held credential delegated through the proxy; its permissions must be safe for public callers.                                   |
 | `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths, auth-route collisions, and overlaps with `client.assets.path` are rejected. |
 | `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                                                         |
 | `client.assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.                                              |

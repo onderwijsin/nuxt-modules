@@ -7,7 +7,7 @@ import { getDirectusPreviewContext } from "./preview";
 /** A server-side credential selected for one Directus request. */
 export interface DirectusCredential {
   readonly accessToken?: string;
-  readonly source: "preview" | "session" | "static" | "none";
+  readonly source: "preview" | "session" | "proxy" | "none";
 }
 
 /**
@@ -22,7 +22,7 @@ export interface DirectusCredential {
 export function resolveDirectusCredential(options: {
   readonly previewAccessToken?: string;
   readonly sessionAccessToken?: string;
-  readonly staticToken?: string;
+  readonly proxyToken?: string;
 }): DirectusCredential {
   if (options.previewAccessToken) {
     return { accessToken: options.previewAccessToken, source: "preview" };
@@ -32,8 +32,8 @@ export function resolveDirectusCredential(options: {
     return { accessToken: options.sessionAccessToken, source: "session" };
   }
 
-  if (options.staticToken) {
-    return { accessToken: options.staticToken, source: "static" };
+  if (options.proxyToken) {
+    return { accessToken: options.proxyToken, source: "proxy" };
   }
 
   return { source: "none" };
@@ -55,7 +55,7 @@ export function resolveDirectusRequestContext(
   event: H3Event | undefined,
   options: {
     readonly preview: DirectusPreviewOptions;
-    readonly staticToken?: string;
+    readonly proxyToken?: string;
     readonly sessionAccessToken?: string;
   }
 ): DirectusRequestContext {
@@ -68,7 +68,7 @@ export function resolveDirectusRequestContext(
     credential: resolveDirectusCredential({
       previewAccessToken: preview.token,
       sessionAccessToken: options.sessionAccessToken,
-      staticToken: options.staticToken
+      proxyToken: options.proxyToken
     })
   };
 }
@@ -82,7 +82,7 @@ export function resolveDirectusRuntimeRequestContext(event?: H3Event): DirectusR
   const config = useRuntimeConfig(event);
   return resolveDirectusRequestContext(event, {
     preview: config.public.directusClient.preview,
-    staticToken: config.directusClient.staticToken
+    proxyToken: config.directusClient.proxyToken
   });
 }
 

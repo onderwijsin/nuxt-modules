@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
   }
   const { credential } = resolveDirectusRequestContext(event, {
     preview: config.public.directusClient.preview,
-    staticToken: config.directusClient.staticToken,
+    proxyToken: config.directusClient.proxyToken,
     sessionAccessToken
   });
   if (requiresDirectusProxySameOrigin(credential)) {

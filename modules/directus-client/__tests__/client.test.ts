@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({
   config: {
     directusClient: {
       baseUrl: "https://directus.example.test",
-      staticToken: "static-token",
+      proxyToken: "proxy-token",
       auth: { enabled: false }
     },
     public: {
@@ -39,7 +39,7 @@ afterEach(() => {
 describe("Directus server client authentication boundary", () => {
   it("does not load or select a session when auth is disabled", async () => {
     const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      expect(new Headers(init?.headers).get("authorization")).toBe("Bearer static-token");
+      expect(new Headers(init?.headers).get("authorization")).toBe("Bearer proxy-token");
       return new Response(JSON.stringify({ data: [] }), {
         headers: { "content-type": "application/json" }
       });
@@ -71,5 +71,17 @@ describe("Directus server client authentication boundary", () => {
       []
     );
     expect(resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the configured proxy credential without a request event", async () => {
+    const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      expect(new Headers(init?.headers).get("authorization")).toBe("Bearer proxy-token");
+      return new Response(JSON.stringify({ data: [] }), {
+        headers: { "content-type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(createServerDirectusClient().request(readItems("pages"))).resolves.toEqual([]);
   });
 });

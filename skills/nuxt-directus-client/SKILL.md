@@ -31,7 +31,7 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 export default defineDirectusConfig({
   instance: {
     baseUrl: process.env.DIRECTUS_URL,
-    staticToken: process.env.DIRECTUS_STATIC_TOKEN
+    proxyToken: process.env.DIRECTUS_PROXY_TOKEN
   },
   client: {
     commands: ["readItem", "readItems"]
@@ -48,7 +48,7 @@ export default defineNuxtConfig({
   directusClient: {
     instance: {
       baseUrl: process.env.DIRECTUS_URL,
-      staticToken: process.env.DIRECTUS_STATIC_TOKEN
+      proxyToken: process.env.DIRECTUS_PROXY_TOKEN
     },
     client: {
       commands: ["readItem", "readItems"]
@@ -58,8 +58,9 @@ export default defineNuxtConfig({
 ```
 
 When both sources are configured, direct module options take precedence. `instance.baseUrl`,
-`instance.staticToken`, and `client.typegen.introspectionToken` are server-only. Do not place them
-in `runtimeConfig.public` or browser code.
+`instance.proxyToken`, and `client.typegen.introspectionToken` are server-only. The proxy token's
+permissions must be safe for public application callers to exercise; secrecy does not make them
+private. Do not place these values in `runtimeConfig.public` or browser code.
 
 ### Complete option reference
 
@@ -69,7 +70,7 @@ All options are configured under `directusClient`.
 | ------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `enabled`                             | `true`                              | Enables the module.                                                                                                                    |
 | `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                                                               |
-| `instance.staticToken`                | —                                   | Optional server-only static credential.                                                                                                |
+| `instance.proxyToken`                 | —                                   | Server-held credential delegated through the proxy; its permissions must be safe for public callers.                                   |
 | `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths, auth-route collisions, and overlaps with `client.assets.path` are rejected. |
 | `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                                                         |
 | `client.assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.                                              |
@@ -131,8 +132,9 @@ useDirectus<Output>(command: RestCommand<Output, Schema>): Promise<Output>
 ```
 
 Executes a typed Directus REST command. Browser calls use the same-origin proxy; SSR calls use the
-direct server client. The module chooses preview, session (only with `client.auth.enabled`), static,
-or no credential on the server. Callers cannot override that credential with request headers.
+direct server client. The module chooses preview, session (only with `client.auth.enabled`), proxy,
+or no credential on the server. Without an event it still uses the configured proxy credential.
+Callers cannot override that credential with request headers.
 
 ### `useDirectusServer`
 
@@ -144,7 +146,8 @@ useDirectusServer<Output>(
 ```
 
 Executes a typed command directly from Nitro. Passing the current `H3Event` enables request-scoped
-preview and, when enabled, session credential resolution.
+preview and, when enabled, session credential resolution. Without an event, the configured proxy
+credential is used, which supports server tasks and utilities.
 
 For reusable server-side module code, import it from the published runtime entrypoint:
 

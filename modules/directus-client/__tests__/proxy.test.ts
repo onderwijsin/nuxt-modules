@@ -301,7 +301,7 @@ describe("Directus credential selection", () => {
   it("prefers a session token over a static token", () => {
     const credential = resolveDirectusCredential({
       sessionAccessToken: "session",
-      staticToken: "static"
+      proxyToken: "proxy"
     });
 
     expect(credential).toEqual({ accessToken: "session", source: "session" });
@@ -315,15 +315,15 @@ describe("Directus credential selection", () => {
       resolveDirectusCredential({
         previewAccessToken: "preview",
         sessionAccessToken: "session",
-        staticToken: "static"
+        proxyToken: "proxy"
       })
     ).toEqual({ accessToken: "preview", source: "preview" });
   });
 
   it("falls back to static and then unauthenticated requests", () => {
-    expect(resolveDirectusCredential({ staticToken: "static" })).toEqual({
-      accessToken: "static",
-      source: "static"
+    expect(resolveDirectusCredential({ proxyToken: "proxy" })).toEqual({
+      accessToken: "proxy",
+      source: "proxy"
     });
     expect(resolveDirectusCredential({})).toEqual({ source: "none" });
     expect(getDirectusAuthorizationHeader({ source: "none" })).toEqual({});
