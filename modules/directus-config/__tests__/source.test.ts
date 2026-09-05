@@ -25,7 +25,7 @@ describe("Directus config source discovery", () => {
     expect(directusConfigSchema.parse({ instance: { proxyToken: "proxy-token" } })).toMatchObject({
       instance: { proxyToken: "proxy-token" }
     });
-    expect(() => directusConfigSchema.parse({ instance: { staticToken: "static-token" } })).toThrow(
+    expect(() => directusConfigSchema.parse({ instance: { staticToken: "proxy-token" } })).toThrow(
       /Unrecognized key/
     );
   });

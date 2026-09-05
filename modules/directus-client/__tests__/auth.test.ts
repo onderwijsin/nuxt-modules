@@ -238,8 +238,7 @@ describe("Directus session refresh coordination", () => {
     state.current = expiringSession();
     state.session.seal.mockResolvedValue("boop1:opaque-ciphertext");
     const fetch = mockFetch(
-      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } }),
-      jsonResponse({ data: { id: "user-1", last_name: "User" } })
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
     );
 
     const session = await ensureFreshDirectusSession(createTestEvent());
@@ -251,11 +250,11 @@ describe("Directus session refresh coordination", () => {
         userId: "user-1",
         email: null,
         firstName: null,
-        lastName: "User",
+        lastName: null,
         requiresTfaSetup: false
       }
     });
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(state.storage.setItem).toHaveBeenCalledWith(
       expect.stringContaining("flight:"),
       expect.objectContaining({ status: "completed", sealedSession: expect.any(String) }),
@@ -265,6 +264,24 @@ describe("Directus session refresh coordination", () => {
     expect(stored).toEqual({ status: "completed", sealedSession: "boop1:opaque-ciphertext" });
     expect(JSON.stringify(stored)).not.toContain("new-access");
     expect(JSON.stringify(stored)).not.toContain("new-refresh");
+  });
+
+  it("clears the stale session when local persistence fails after rotation", async () => {
+    state.current = expiringSession();
+    state.session.seal.mockRejectedValue(new Error("session sealing failed"));
+    const fetch = mockFetch(
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
+    );
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toThrow(
+      "session sealing failed"
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.clear).toHaveBeenCalled();
+    expect([...state.storage.records.values()]).toContainEqual({
+      status: "failed",
+      outcome: "terminal"
+    });
   });
 
   it("makes exactly one refresh request and preserves the session on transport failure", async () => {
@@ -307,7 +324,10 @@ describe("Directus session refresh coordination", () => {
 
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
     expect(state.session.clear).toHaveBeenCalled();
-    expect([...state.storage.records.values()]).toContainEqual({ status: "failed" });
+    expect([...state.storage.records.values()]).toContainEqual({
+      status: "failed",
+      outcome: "terminal"
+    });
   });
 
   it.each([429, 500])("preserves the session for upstream status %s", async (status) => {
@@ -318,6 +338,10 @@ describe("Directus session refresh coordination", () => {
       statusCode: 503
     });
     expect(state.session.clear).not.toHaveBeenCalled();
+    expect([...state.storage.records.values()]).toContainEqual({
+      status: "failed",
+      outcome: "transient"
+    });
   });
 
   it("uses a completed refresh result already in storage", async () => {
@@ -354,7 +378,10 @@ describe("Directus session refresh coordination", () => {
 
   it("stops immediately when storage reports a failed refresh flight", async () => {
     state.current = expiringSession();
-    state.storage.records.set("flight:" + hash(state.current.refreshToken), { status: "failed" });
+    state.storage.records.set("flight:" + hash(state.current.refreshToken), {
+      status: "failed",
+      outcome: "terminal"
+    });
     const fetch = mockFetch(jsonResponse({}));
 
     await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();

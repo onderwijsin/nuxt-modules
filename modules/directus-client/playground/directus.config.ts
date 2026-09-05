@@ -4,7 +4,7 @@ import { ENV } from "varlock/env";
 export default defineDirectusConfig({
   instance: {
     baseUrl: ENV.DIRECTUS_URL,
-    proxyToken: ENV.DIRECTUS_STATIC_TOKEN
+    proxyToken: ENV.DIRECTUS_PROXY_TOKEN
   },
   client: {
     auth: {

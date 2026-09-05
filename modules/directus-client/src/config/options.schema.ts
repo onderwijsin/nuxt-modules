@@ -25,23 +25,35 @@ export const directusClientOptionsSchema = directusConfigSchema
     }
 
     const routes = [
-      ["client.proxy.path", options.client.proxy.path],
-      ["client.assets.path", options.client.assets.path],
-      ["reserved /_directus/auth", "/_directus/auth"]
+      {
+        label: "client.proxy.path",
+        path: options.client.proxy.path,
+        issuePath: ["client", "proxy", "path"]
+      },
+      {
+        label: "client.assets.path",
+        path: options.client.assets.path,
+        issuePath: ["client", "assets", "path"]
+      },
+      {
+        label: "reserved /_directus/auth",
+        path: "/_directus/auth",
+        issuePath: ["client", "proxy", "path"]
+      }
     ] as const;
-    for (const [index, [name, path]] of routes.entries()) {
-      for (const [otherName, otherPath] of routes.slice(index + 1)) {
-        if (
-          path === otherPath ||
-          path.startsWith(`${otherPath}/`) ||
-          otherPath.startsWith(`${path}/`)
-        ) {
-          context.addIssue({
-            code: "custom",
-            path: ["client", name.startsWith("client.proxy") ? "proxy" : "assets", "path"],
-            message: `${name} overlaps with ${otherName}`
-          });
-        }
+
+    function routesOverlap(left: string, right: string): boolean {
+      return left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
+    }
+
+    for (const [index, route] of routes.entries()) {
+      for (const otherRoute of routes.slice(index + 1)) {
+        if (!routesOverlap(route.path, otherRoute.path)) continue;
+        context.addIssue({
+          code: "custom",
+          path: [...route.issuePath],
+          message: `${route.label} overlaps with ${otherRoute.label}`
+        });
       }
     }
   });

@@ -1,7 +1,7 @@
 export default {
   instance: {
     baseUrl: "https://cms.example.test",
-    proxyToken: "server-only-static-token"
+    proxyToken: "server-only-proxy-token"
   },
   client: {
     proxy: { path: "/_cms" },

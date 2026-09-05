@@ -105,7 +105,7 @@ interface CompletedRefreshFlight {
 
 interface FailedRefreshFlight {
   readonly status: "failed";
-  readonly outcome?: "terminal" | "transient";
+  readonly outcome: "terminal" | "transient";
 }
 
 type RefreshFlight = PendingRefreshFlight | CompletedRefreshFlight | FailedRefreshFlight;
@@ -127,21 +127,33 @@ const terminalRefreshCodes = new Set([
  */
 function readRefreshFailure(error: unknown): { status?: number; code?: string } {
   if (!isRecord(error)) return {};
-  const status = isInteger(error.statusCode)
-    ? error.statusCode
-    : isRecord(error.response) && isInteger(error.response.status)
-      ? error.response.status
-      : undefined;
-  const data = isRecord(error.data)
-    ? error.data
-    : isRecord(error.response) && isRecord(error.response._data)
-      ? error.response._data
-      : undefined;
+  let status: number | undefined;
+  if (isInteger(error.statusCode)) {
+    status = error.statusCode;
+  } else if (isRecord(error.response) && isInteger(error.response.status)) {
+    status = error.response.status;
+  }
+
+  let data: Record<string, unknown> | undefined;
+  if (isRecord(error.data)) {
+    data = error.data;
+  } else if (isRecord(error.response) && isRecord(error.response._data)) {
+    data = error.response._data;
+  }
+
+  let code: string | undefined;
   const errors = data?.errors;
-  const first = isArray(errors) ? errors[0] : undefined;
-  const extensions = isRecord(first) && isRecord(first.extensions) ? first.extensions : undefined;
-  const code = extensions && isString(extensions.code) ? extensions.code : undefined;
-  return { ...(isDefined(status) ? { status } : {}), ...(isDefined(code) ? { code } : {}) };
+  if (isArray(errors)) {
+    const first = errors[0];
+    if (isRecord(first) && isRecord(first.extensions) && isString(first.extensions.code)) {
+      code = first.extensions.code;
+    }
+  }
+
+  return {
+    ...(isDefined(status) ? { status } : {}),
+    ...(isDefined(code) ? { code } : {})
+  };
 }
 
 /**
@@ -319,7 +331,7 @@ async function waitForRefreshFlight(
     }
     if (flight?.status === "failed") {
       if (flight.outcome === "transient") throw createTransientRefreshError(undefined);
-      return undefined;
+      if (flight.outcome === "terminal") return undefined;
     }
     await new Promise<void>((resolve) => setTimeout(resolve, 100));
   }
@@ -344,6 +356,48 @@ async function readSealedRefreshSession(
   if (!resolved) return undefined;
   if (resolved.matchedSecretSlot === "active") writeDirectusSessionCookie(event, sealedSession);
   return resolved.session;
+}
+
+/**
+ * Creates a rotated session without refetching the unchanged user snapshot.
+ *
+ * @param current - The session whose refresh token was rotated.
+ * @param authentication - The validated replacement tokens.
+ * @returns The server-only session with the replacement token pair.
+ */
+function createRotatedDirectusSession(
+  current: DirectusSession,
+  authentication: DirectusAuthenticationResult
+): DirectusSession {
+  return {
+    accessToken: authentication.accessToken,
+    refreshToken: authentication.refreshToken,
+    expiresAt: Date.now() + (authentication.expires ?? 900_000),
+    snapshot: {
+      ...current.snapshot,
+      requiresTfaSetup: decodeDirectusTfaSetupRequirement(authentication.accessToken)
+    }
+  };
+}
+
+/**
+ * Records a failed refresh flight after Directus has rotated the token pair.
+ *
+ * @param storage - Refresh coordination storage.
+ * @param key - Refresh-flight storage key.
+ * @param cause - The failure that made the rotated session unusable.
+ * @returns The original failure unless recording the failure itself fails.
+ */
+async function failAfterRefreshRotation(
+  storage: RefreshStorage,
+  key: string,
+  cause: unknown
+): Promise<never> {
+  const recorded = await attempt(() =>
+    storage.setItem(key, { status: "failed", outcome: "terminal" }, { ttl: REFRESH_RESULT_TTL })
+  );
+  if (recorded.error !== null) throw recorded.error;
+  throw cause;
 }
 
 /**
@@ -372,8 +426,10 @@ export async function ensureFreshDirectusSession(
   }
   if (existing?.status === "failed") {
     if (existing.outcome === "transient") throw createTransientRefreshError(undefined);
-    clearDirectusSession(event);
-    return undefined;
+    if (existing.outcome === "terminal") {
+      clearDirectusSession(event);
+      return undefined;
+    }
   }
   if (existing?.status === "pending" && existing.startedAt + REFRESH_FLIGHT_TTL > Date.now()) {
     return waitForRefreshFlight(event, key);
@@ -394,31 +450,43 @@ export async function ensureFreshDirectusSession(
   }
 
   const result = await attempt(async () => {
-    const response = await ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
+    return ofetch<unknown>(getDirectusEndpoint(event, "auth/refresh"), {
       method: "POST",
       body: { refresh_token: current.refreshToken, mode: "json" },
       retry: 0
     });
-    const session = await createDirectusSessionFromAuthentication(
-      event,
-      parseDirectusAuthenticationResponse(response)
-    );
-    const sealedSession = await sealDirectusSession(event, session);
-    await storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL });
-    writeDirectusSessionCookie(event, sealedSession);
-    return session;
   });
   if (result.error !== null || result.data === null) {
     const outcome = classifyRefreshFailure(result.error);
     if (outcome === "terminal") {
-      await storage.setItem(key, { status: "failed" }, { ttl: REFRESH_RESULT_TTL });
+      await storage.setItem(key, { status: "failed", outcome }, { ttl: REFRESH_RESULT_TTL });
       clearDirectusSession(event);
       return undefined;
     }
     await storage.setItem(key, { status: "failed", outcome }, { ttl: 100 });
     throw createTransientRefreshError(result.error);
   }
-  return result.data;
+
+  let authentication: DirectusAuthenticationResult;
+  try {
+    authentication = parseDirectusAuthenticationResponse(result.data);
+  } catch (error) {
+    clearDirectusSession(event);
+    return failAfterRefreshRotation(storage, key, error);
+  }
+
+  let session: DirectusSession;
+  let sealedSession: string;
+  try {
+    session = createRotatedDirectusSession(current, authentication);
+    sealedSession = await sealDirectusSession(event, session);
+    await storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL });
+    writeDirectusSessionCookie(event, sealedSession);
+  } catch (error) {
+    clearDirectusSession(event);
+    return failAfterRefreshRotation(storage, key, error);
+  }
+  return session;
 }
 
 /**

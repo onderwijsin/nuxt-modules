@@ -389,7 +389,7 @@ ask for an OTP and retry `auth.login` or `auth.redeemMagicLink`. Local redemptio
 uses `INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, Directus session cookies are ignored: they are not read,
-refreshed, forwarded upstream, or added to the SSR payload. Static, preview, and unauthenticated
+refreshed, forwarded upstream, or added to the SSR payload. Proxy, preview, and unauthenticated
 access remain available.
 
 Authentication routes are registered under `/_directus/auth/`: `login`, `refresh`, `logout`,
@@ -397,12 +397,15 @@ Authentication routes are registered under `/_directus/auth/`: `login`, `refresh
 route, and authenticated Directus requests refresh when the access token enters the configured
 safety window. They can also refresh an access token that has already expired; Directus decides
 whether the refresh token is still valid. The refresh request is attempted exactly once because
-Directus may rotate the refresh token even when a response is lost. Concurrent refreshes are
-coalesced through Nitro storage. Cross-instance coordination requires a shared, read-after-write
-consistent Nitro storage driver; the default in-memory driver cannot provide that guarantee, and
-deployment-level refresh races remain possible otherwise. Refresh results written to that storage
-are H3-sealed session values rather than plaintext token pairs; the configured Nitro storage backend
-must still be treated as sensitive infrastructure.
+Directus may rotate the refresh token even when a response is lost. The existing safe user snapshot
+is reused after rotation; only access-token-derived state such as `requiresTfaSetup` is
+recalculated. If a later local persistence step fails, the old session is cleared because its
+refresh token may already be invalid. Concurrent refreshes are coalesced through Nitro storage.
+Cross-instance coordination requires a shared, read-after-write consistent Nitro storage driver; the
+default in-memory driver cannot provide that guarantee, and deployment-level refresh races remain
+possible otherwise. Refresh results written to that storage are H3-sealed session values rather than
+plaintext token pairs; the configured Nitro storage backend must still be treated as sensitive
+infrastructure.
 
 When `client.auth.magicLinks.enabled` is true, the module additionally registers
 `POST /_directus/auth/magic-links/request` and `POST /_directus/auth/magic-links/redeem`. These
@@ -497,8 +500,8 @@ CI and production fail clearly instead.
 
 The browser endpoint at `proxy.path` (default `/_directus/proxy`) forwards REST requests to the
 configured Directus instance. This lets browser code use `useDirectus` without learning the Directus
-URL or receiving a static, preview, or session token. The server chooses credentials in this order:
-preview token, current session when authentication is enabled, static token, then no credential.
+URL or receiving a proxy, preview, or session token. The server chooses credentials in this order:
+preview token, current session when authentication is enabled, proxy token, then no credential.
 
 The proxy preserves the request method, body, query string, response status, and safe response
 headers. It forwards only REST headers needed for representation, caching, conditional requests,
@@ -523,7 +526,7 @@ automatically; the application decides how to react to iframe updates.
 ## Troubleshooting
 
 - A browser request failing with a Directus permission error is expected when the selected session,
-  static token, or unauthenticated role lacks access. The proxy is not an authorization layer.
+  proxy token, or unauthenticated role lacks access. The proxy is not an authorization layer.
 - A missing generated type in production usually means `DIRECTUS_URL` or
   `DIRECTUS_INTROSPECTION_TOKEN` was not available during `nuxt prepare`/build.
 - A local auth cookie normally needs `client.auth.cookie.secure: false` when the playground is

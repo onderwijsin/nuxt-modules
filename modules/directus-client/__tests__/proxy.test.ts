@@ -101,7 +101,7 @@ describe("Directus proxy boundary", () => {
     expect(requiresDirectusProxySameOrigin({ source: "session", accessToken: "session" })).toBe(
       true
     );
-    expect(requiresDirectusProxySameOrigin({ source: "static", accessToken: "static" })).toBe(true);
+    expect(requiresDirectusProxySameOrigin({ source: "proxy", accessToken: "proxy" })).toBe(true);
     expect(requiresDirectusProxySameOrigin({ source: "preview", accessToken: "preview" })).toBe(
       true
     );
@@ -195,7 +195,7 @@ describe("Directus proxy boundary", () => {
         if (!address || typeof address === "string")
           throw new Error("Test server did not expose a port");
         const response = await createSanitizedProxyFetch({
-          source: "static",
+          source: "proxy",
           accessToken: "server-token"
         })(`http://127.0.0.1:${address.port}`, {
           headers: {
@@ -250,7 +250,7 @@ describe("Directus proxy boundary", () => {
 
       const proxyFetch = createSanitizedProxyFetch({
         accessToken: "server-token",
-        source: "static"
+        source: "proxy"
       });
       const response = await proxyFetch(`http://127.0.0.1:${address.port}`, {
         headers: {
@@ -298,7 +298,7 @@ describe("Directus CSRF boundary", () => {
 });
 
 describe("Directus credential selection", () => {
-  it("prefers a session token over a static token", () => {
+  it("prefers a session token over a proxy token", () => {
     const credential = resolveDirectusCredential({
       sessionAccessToken: "session",
       proxyToken: "proxy"
@@ -320,7 +320,7 @@ describe("Directus credential selection", () => {
     ).toEqual({ accessToken: "preview", source: "preview" });
   });
 
-  it("falls back to static and then unauthenticated requests", () => {
+  it("falls back to a proxy token and then unauthenticated requests", () => {
     expect(resolveDirectusCredential({ proxyToken: "proxy" })).toEqual({
       accessToken: "proxy",
       source: "proxy"

@@ -1,7 +1,6 @@
 import { defineEventHandler, getRequestURL, proxyRequest } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
-import { attempt } from "@onderwijsin/nuxt-module-utils";
 
 import {
   type DirectusCredential,
@@ -77,11 +76,11 @@ export function createSanitizedProxyFetch(credential: DirectusCredential): typeo
     if (authorization) headers.set("authorization", authorization);
 
     const request = input instanceof URL ? input.toString() : input;
-    const { data: response, error } = await attempt(() =>
-      directusFetch.raw(request, { ...init, headers, ignoreResponseError: true })
-    );
-    if (error !== null || response === null)
-      throw error ?? new Error("Directus returned no response");
+    const response = await directusFetch.raw(request, {
+      ...init,
+      headers,
+      ignoreResponseError: true
+    });
     const safeHeaders = new Headers(response.headers);
     for (const header of [...safeHeaders.keys()]) {
       if (blockedResponseHeaders.has(header) || isCorsHeader(header)) safeHeaders.delete(header);
@@ -125,9 +124,6 @@ export default defineEventHandler(async (event) => {
 
   return proxyRequest(event, targetUrl.toString(), {
     streamRequest: true,
-    fetch: createSanitizedProxyFetch(credential),
-    fetchOptions: {
-      headers: getDirectusAuthorizationHeader(credential)
-    }
+    fetch: createSanitizedProxyFetch(credential)
   });
 });
