@@ -255,15 +255,15 @@ navigation remain the consuming application's responsibility.
 
 #### Methods
 
-| Method             | Signature                                                       | Behavior                                                                                                                                                                                                      |
-| ------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login`            | `login(input, meta?): Promise<void>`                            | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                        |
-| `refresh`          | `refresh(): Promise<void>`                                      | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. A failed refresh clears state and emits `directus:auth:invalidated` before rethrowing the request error. |
-| `logout`           | `logout(): Promise<void>`                                       | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                               |
-| `passwordRequest`  | `passwordRequest(email: string, meta?): Promise<void>`          | Requests a password-reset email using the configured `client.auth.passwordResetUrl`.                                                                                                                          |
-| `passwordReset`    | `passwordReset(token: string, password: string): Promise<void>` | Completes a Directus password reset.                                                                                                                                                                          |
-| `requestMagicLink` | `requestMagicLink(email: string, meta?): Promise<void>`         | Requests a passwordless login link when magic links are enabled.                                                                                                                                              |
-| `redeemMagicLink`  | `redeemMagicLink(token: string, otp?: string): Promise<void>`   | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                             |
+| Method             | Signature                                                       | Behavior                                                                                                                                                                                                                                                     |
+| ------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `login`            | `login(input, meta?): Promise<void>`                            | Authenticates with Directus, fetches the selected current-user fields, writes the session cookie, updates Nuxt state, and emits `directus:auth:login`.                                                                                                       |
+| `refresh`          | `refresh(): Promise<void>`                                      | Requests a refresh, rotates the cookie token pair, updates state, and emits `directus:auth:refresh`. Terminal session/auth rejection clears state and emits `directus:auth:invalidated`; transient refresh availability failures preserve state and rethrow. |
+| `logout`           | `logout(): Promise<void>`                                       | Attempts upstream logout, always clears local state/cookie, and emits `directus:auth:logout`. An upstream failure is still rethrown after cleanup and emission.                                                                                              |
+| `passwordRequest`  | `passwordRequest(email: string, meta?): Promise<void>`          | Requests a password-reset email using the configured `client.auth.passwordResetUrl`.                                                                                                                                                                         |
+| `passwordReset`    | `passwordReset(token: string, password: string): Promise<void>` | Completes a Directus password reset.                                                                                                                                                                                                                         |
+| `requestMagicLink` | `requestMagicLink(email: string, meta?): Promise<void>`         | Requests a passwordless login link when magic links are enabled.                                                                                                                                                                                             |
+| `redeemMagicLink`  | `redeemMagicLink(token: string, otp?: string): Promise<void>`   | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                                                                            |
 
 Nitro refreshes an expiring access token when possible before the SSR server plugin reads the
 token-free snapshot from the `httpOnly` cookie into Nuxt state. The session endpoint uses the same
@@ -309,7 +309,7 @@ When disabled, these methods perform no network request. Local invalid token inp
 `INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, the module does not read, refresh, forward, or serialize
-Directus session cookies. Static, preview, and unauthenticated access continue to work.
+Directus session cookies. Proxy, preview, and unauthenticated access continue to work.
 
 ### Turnstile protection
 

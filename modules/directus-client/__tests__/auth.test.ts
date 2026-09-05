@@ -284,6 +284,39 @@ describe("Directus session refresh coordination", () => {
     });
   });
 
+  it("keeps the committed session when coordination publication fails", async () => {
+    state.current = expiringSession();
+    state.session.seal.mockResolvedValue("boop1:rotated-session");
+    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "status" in value &&
+        value.status === "completed"
+      ) {
+        throw new Error("refresh storage unavailable");
+      }
+      state.storage.records.set(key, value);
+    });
+    const fetch = mockFetch(
+      jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
+    );
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toThrow(
+      "refresh storage unavailable"
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.writeCookie).toHaveBeenCalledWith(
+      expect.anything(),
+      "boop1:rotated-session"
+    );
+    expect(state.session.clear).not.toHaveBeenCalled();
+    expect([...state.storage.records.values()]).not.toContainEqual({
+      status: "failed",
+      outcome: "terminal"
+    });
+  });
+
   it("makes exactly one refresh request and preserves the session on transport failure", async () => {
     state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
     const fetch = mockFetch(new Error("temporary Directus failure"));

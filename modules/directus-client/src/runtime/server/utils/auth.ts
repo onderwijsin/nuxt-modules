@@ -480,12 +480,17 @@ export async function ensureFreshDirectusSession(
   try {
     session = createRotatedDirectusSession(current, authentication);
     sealedSession = await sealDirectusSession(event, session);
-    await storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL });
     writeDirectusSessionCookie(event, sealedSession);
   } catch (error) {
     clearDirectusSession(event);
     return failAfterRefreshRotation(storage, key, error);
   }
+
+  const published = await attempt(() =>
+    storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL })
+  );
+  if (published.error !== null) throw published.error;
+
   return session;
 }
 
