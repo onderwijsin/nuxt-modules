@@ -50,9 +50,9 @@ export default defineNuxtConfig({
 ```
 
 Direct module options and `directus.config.ts` use the same `instance` and `client` shape. When both
-are present, direct module options take precedence. Keep `instance.baseUrl` and
-`instance.proxyToken` is server-held but delegated through the public application proxy. Its
-permissions must be safe for public application callers to exercise; secrecy does not make those
+are present, direct module options take precedence. `instance.baseUrl` and `instance.proxyToken` are
+server-only. The proxy token is server-held but delegated through the public application proxy, so
+its permissions must be safe for public application callers to exercise; secrecy does not make those
 permissions private. Never put Directus credentials in `runtimeConfig.public` or browser code.
 
 `instance.baseUrl` is optional. The module skips setup during `nuxt prepare` and CI when it is not

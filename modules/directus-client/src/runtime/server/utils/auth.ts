@@ -248,8 +248,7 @@ export async function fetchDirectusCurrentUser(
  * Builds a server-only Directus session from a validated authentication result.
  *
  * The returned session includes the access and refresh tokens for server-side use and a safe,
- * token-free snapshot. This helper does not persist the session, allowing refresh coordination to
- * seal and publish the result before writing the response cookie.
+ * token-free snapshot. This helper constructs the server-only session without persisting it.
  *
  * @param event - Incoming request event.
  * @param authentication - Validated Directus access and refresh tokens.
@@ -393,10 +392,9 @@ async function failAfterRefreshRotation(
   key: string,
   cause: unknown
 ): Promise<never> {
-  const recorded = await attempt(() =>
+  await attempt(() =>
     storage.setItem(key, { status: "failed", outcome: "terminal" }, { ttl: REFRESH_RESULT_TTL })
   );
-  if (recorded.error !== null) throw recorded.error;
   throw cause;
 }
 
@@ -459,11 +457,13 @@ export async function ensureFreshDirectusSession(
   if (result.error !== null || result.data === null) {
     const outcome = classifyRefreshFailure(result.error);
     if (outcome === "terminal") {
-      await storage.setItem(key, { status: "failed", outcome }, { ttl: REFRESH_RESULT_TTL });
       clearDirectusSession(event);
+      await attempt(() =>
+        storage.setItem(key, { status: "failed", outcome }, { ttl: REFRESH_RESULT_TTL })
+      );
       return undefined;
     }
-    await storage.setItem(key, { status: "failed", outcome }, { ttl: 100 });
+    await attempt(() => storage.setItem(key, { status: "failed", outcome }, { ttl: 100 }));
     throw createTransientRefreshError(result.error);
   }
 
@@ -486,11 +486,9 @@ export async function ensureFreshDirectusSession(
     return failAfterRefreshRotation(storage, key, error);
   }
 
-  const published = await attempt(() =>
+  await attempt(() =>
     storage.setItem(key, { status: "completed", sealedSession }, { ttl: REFRESH_RESULT_TTL })
   );
-  if (published.error !== null) throw published.error;
-
   return session;
 }
 

@@ -302,9 +302,10 @@ describe("Directus session refresh coordination", () => {
       jsonResponse({ data: { access_token: "new-access", refresh_token: "new-refresh" } })
     );
 
-    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toThrow(
-      "refresh storage unavailable"
-    );
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toMatchObject({
+      accessToken: "new-access",
+      refreshToken: "new-refresh"
+    });
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(state.session.writeCookie).toHaveBeenCalledWith(
       expect.anything(),
@@ -319,6 +320,47 @@ describe("Directus session refresh coordination", () => {
 
   it("makes exactly one refresh request and preserves the session on transport failure", async () => {
     state.current = { ...expiringSession(), expiresAt: Date.now() - 1 };
+    const fetch = mockFetch(new Error("temporary Directus failure"));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
+      statusCode: 503
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.session.clear).not.toHaveBeenCalled();
+  });
+
+  it("clears the session when terminal-flight publication fails", async () => {
+    state.current = expiringSession();
+    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "status" in value &&
+        value.status === "failed"
+      ) {
+        throw new Error("refresh storage unavailable");
+      }
+      state.storage.records.set(key, value);
+    });
+    mockFetch(jsonResponse({ errors: [{ extensions: { code: "INVALID_TOKEN" } }] }, 401));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).resolves.toBeUndefined();
+    expect(state.session.clear).toHaveBeenCalled();
+  });
+
+  it("preserves the session and returns 503 when transient-flight publication fails", async () => {
+    state.current = expiringSession();
+    state.storage.setItem.mockImplementation(async (key: string, value: unknown) => {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "status" in value &&
+        value.status === "failed"
+      ) {
+        throw new Error("refresh storage unavailable");
+      }
+      state.storage.records.set(key, value);
+    });
     const fetch = mockFetch(new Error("temporary Directus failure"));
 
     await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toMatchObject({
