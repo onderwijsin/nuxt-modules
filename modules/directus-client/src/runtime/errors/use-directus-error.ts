@@ -1,6 +1,25 @@
 import { isArray, isInteger, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
+const normalizedErrorFlagDefaults = {
+  isDirectusError: false,
+  isNitroError: false,
+  isOtpError: false,
+  isInvalidCredentialError: false,
+  isForbiddenError: false,
+  isTokenExpiredError: false,
+  isInvalidTokenError: false,
+  isValidationError: false,
+  isRateLimitError: false,
+  isServiceUnavailableError: false,
+  isRouteNotFoundError: false,
+  isInvalidAuthInput: false,
+  isInvalidEmailInput: false,
+  isInvalidPasswordInput: false,
+  isInvalidOtpInput: false,
+  isInvalidPasswordResetTokenInput: false,
+  isInvalidMagicLinkTokenInput: false
+} as const;
+
 import {
-  normalizedErrorFlagDefaults,
   type DirectusErrorExtensions,
   type DirectusErrorResult,
   type NitroErrorCode,

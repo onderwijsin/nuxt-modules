@@ -1,6 +1,6 @@
 import { joinURL } from "ufo";
 
-import { resolveDirectusProxyUrl } from "../proxy/url";
+import { resolveDirectusUpstreamUrl } from "../core/upstream-url";
 
 /** Options used to resolve an asset proxy request to its upstream URL. */
 export interface DirectusAssetUrlOptions {
@@ -25,7 +25,7 @@ export interface DirectusAssetUrlOptions {
  * @returns Validated Directus asset URL.
  */
 export function resolveDirectusAssetUrl(options: DirectusAssetUrlOptions): string {
-  return resolveDirectusProxyUrl(
+  return resolveDirectusUpstreamUrl(
     options.assetUrl ?? joinURL(options.baseUrl, "assets"),
     options.proxyPath,
     options.requestUrl

@@ -1,6 +1,6 @@
 import { defineEventHandler, readValidatedBody } from "h3";
 
-import { assertDirectusEventSameOrigin } from "../../csrf";
+import { assertDirectusEventSameOrigin } from "../../../../core/same-origin";
 import { requestMagicLinkServer, requestMagicLinkServerSchema } from "../../actions";
 import { assertDirectusTurnstile } from "../../turnstile";
 

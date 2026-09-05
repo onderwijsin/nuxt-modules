@@ -1,6 +1,6 @@
 import { defineEventHandler, readValidatedBody } from "h3";
 import { loginServer, loginServerSchema } from "../actions";
-import { assertDirectusEventSameOrigin } from "../csrf";
+import { assertDirectusEventSameOrigin } from "../../../core/same-origin";
 import { assertDirectusTurnstile } from "../turnstile";
 
 export default defineEventHandler(async (event) => {

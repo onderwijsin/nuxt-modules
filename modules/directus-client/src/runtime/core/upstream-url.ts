@@ -10,7 +10,7 @@ import { hasProtocol, isScriptProtocol, joinURL } from "ufo";
  * @param requestUrl Incoming request URL.
  * @returns A validated upstream URL.
  */
-export function resolveDirectusProxyUrl(
+export function resolveDirectusUpstreamUrl(
   baseUrl: string,
   proxyPath: string,
   requestUrl: URL

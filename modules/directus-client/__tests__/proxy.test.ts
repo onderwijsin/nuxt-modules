@@ -8,8 +8,8 @@ import {
 } from "../src/runtime/proxy/transport";
 import { fetchDirectusAsset } from "../src/runtime/assets/transport";
 import { resolveDirectusAssetUrl } from "../src/runtime/assets/url";
-import { resolveDirectusProxyUrl } from "../src/runtime/proxy/url";
-import { assertDirectusSameOrigin } from "../src/runtime/auth/server/csrf";
+import { resolveDirectusUpstreamUrl } from "../src/runtime/core/upstream-url";
+import { assertDirectusSameOrigin } from "../src/runtime/core/same-origin";
 import {
   getDirectusAuthorizationHeader,
   resolveDirectusCredential
@@ -110,7 +110,7 @@ describe("Directus proxy boundary", () => {
 
   it("joins the configured Directus base path and preserves queries", () => {
     expect(
-      resolveDirectusProxyUrl(
+      resolveDirectusUpstreamUrl(
         "https://cms.example.test/directus/",
         "/_directus/proxy",
         new URL("https://app.example.test/_directus/proxy/items/articles?limit=1")
@@ -120,7 +120,7 @@ describe("Directus proxy boundary", () => {
 
   it("rejects malformed or traversing upstream paths", () => {
     expect(() =>
-      resolveDirectusProxyUrl(
+      resolveDirectusUpstreamUrl(
         "https://cms.example.test",
         "/_directus/proxy",
         new URL("https://app.example.test/_directus/proxy/%E0%A4%A")
@@ -128,7 +128,7 @@ describe("Directus proxy boundary", () => {
     ).toThrow(/Malformed/);
 
     expect(() =>
-      resolveDirectusProxyUrl(
+      resolveDirectusUpstreamUrl(
         "https://cms.example.test",
         "/_directus/proxy",
         new URL("https://app.example.test/_directus/proxy/../admin")
@@ -136,7 +136,7 @@ describe("Directus proxy boundary", () => {
     ).toThrow(/Invalid Directus proxy path/);
 
     expect(() =>
-      resolveDirectusProxyUrl(
+      resolveDirectusUpstreamUrl(
         "ftp://cms.example.test",
         "/_directus/proxy",
         new URL("https://app.example.test/_directus/proxy/items")
@@ -144,7 +144,7 @@ describe("Directus proxy boundary", () => {
     ).toThrow(/must use HTTP/);
 
     expect(() =>
-      resolveDirectusProxyUrl(
+      resolveDirectusUpstreamUrl(
         "not-a-url",
         "/_directus/proxy",
         new URL("https://app.example.test/_directus/proxy/items")
@@ -153,7 +153,7 @@ describe("Directus proxy boundary", () => {
 
     for (const path of ["%2e%2e/admin", "%2E%2E/admin", "%252e%252e/admin"]) {
       expect(() =>
-        resolveDirectusProxyUrl(
+        resolveDirectusUpstreamUrl(
           "https://cms.example.test/directus",
           "/_directus/proxy",
           new URL(`https://app.example.test/_directus/proxy/${path}`)

@@ -43,27 +43,25 @@ export interface NormalizedErrorEntry<TCode extends NormalizedErrorCode = Normal
   readonly extensions: DirectusErrorExtensions<TCode>;
 }
 
-export const normalizedErrorFlagDefaults = {
-  isDirectusError: false,
-  isNitroError: false,
-  isOtpError: false,
-  isInvalidCredentialError: false,
-  isForbiddenError: false,
-  isTokenExpiredError: false,
-  isInvalidTokenError: false,
-  isValidationError: false,
-  isRateLimitError: false,
-  isServiceUnavailableError: false,
-  isRouteNotFoundError: false,
-  isInvalidAuthInput: false,
-  isInvalidEmailInput: false,
-  isInvalidPasswordInput: false,
-  isInvalidOtpInput: false,
-  isInvalidPasswordResetTokenInput: false,
-  isInvalidMagicLinkTokenInput: false
-} as const;
-
-type NormalizedErrorFlagDefaults = typeof normalizedErrorFlagDefaults;
+type NormalizedErrorFlagDefaults = {
+  readonly isDirectusError: boolean;
+  readonly isNitroError: boolean;
+  readonly isOtpError: boolean;
+  readonly isInvalidCredentialError: boolean;
+  readonly isForbiddenError: boolean;
+  readonly isTokenExpiredError: boolean;
+  readonly isInvalidTokenError: boolean;
+  readonly isValidationError: boolean;
+  readonly isRateLimitError: boolean;
+  readonly isServiceUnavailableError: boolean;
+  readonly isRouteNotFoundError: boolean;
+  readonly isInvalidAuthInput: boolean;
+  readonly isInvalidEmailInput: boolean;
+  readonly isInvalidPasswordInput: boolean;
+  readonly isInvalidOtpInput: boolean;
+  readonly isInvalidPasswordResetTokenInput: boolean;
+  readonly isInvalidMagicLinkTokenInput: boolean;
+};
 type NormalizedErrorFlagName = keyof NormalizedErrorFlagDefaults;
 type NormalizedErrorFlagOverrides = Partial<Record<NormalizedErrorFlagName, boolean>>;
 type NormalizedErrorFlags<TOverrides extends NormalizedErrorFlagOverrides> = Readonly<

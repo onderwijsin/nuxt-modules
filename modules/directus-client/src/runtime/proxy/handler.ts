@@ -4,9 +4,9 @@ import {
   type DirectusCredential,
   resolveDirectusRequestContext
 } from "../client/server/request-context";
-import { assertDirectusEventSameOrigin } from "../auth/server/csrf";
+import { assertDirectusEventSameOrigin } from "../core/same-origin";
 import { createSanitizedProxyFetch } from "./transport";
-import { resolveDirectusProxyUrl } from "./url";
+import { resolveDirectusUpstreamUrl } from "../core/upstream-url";
 
 /**
  * Returns whether a proxy request using the selected credential must prove same-origin intent.
@@ -27,7 +27,7 @@ export function requiresDirectusProxySameOrigin(credential: DirectusCredential):
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
   const requestUrl = getRequestURL(event);
-  const target = resolveDirectusProxyUrl(
+  const target = resolveDirectusUpstreamUrl(
     config.directusClient.baseUrl,
     config.public.directusClient.proxy.path,
     requestUrl

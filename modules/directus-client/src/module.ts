@@ -227,7 +227,7 @@ export default defineNuxtModule<ModuleOptions>({
       },
       {
         name: "useDirectusServerAuth",
-        from: resolver.resolve(runtimeDir, "auth/server/context")
+        from: resolver.resolve(runtimeDir, "auth/server/use-directus-server-auth")
       },
       {
         name: "useDirectusServerItemByPath",

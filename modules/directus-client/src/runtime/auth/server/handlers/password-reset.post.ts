@@ -1,6 +1,6 @@
 import { defineEventHandler, readValidatedBody } from "h3";
 
-import { assertDirectusEventSameOrigin } from "../csrf";
+import { assertDirectusEventSameOrigin } from "../../../core/same-origin";
 import { resetPasswordServer, resetPasswordServerSchema } from "../actions";
 
 export default defineEventHandler(async (event) => {

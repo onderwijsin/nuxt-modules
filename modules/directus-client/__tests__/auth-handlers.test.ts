@@ -44,7 +44,7 @@ vi.mock("../src/runtime/auth/server/authentication", () => ({
 vi.mock("../src/runtime/auth/server/refresh", () => ({
   ensureFreshDirectusSession: vi.fn()
 }));
-vi.mock("../src/runtime/auth/server/csrf", () => ({ assertDirectusEventSameOrigin: vi.fn() }));
+vi.mock("../src/runtime/core/same-origin", () => ({ assertDirectusEventSameOrigin: vi.fn() }));
 vi.mock("../src/runtime/auth/server/turnstile", () => ({
   assertDirectusTurnstile: state.turnstile
 }));
