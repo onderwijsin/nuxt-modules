@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { useDirectusError } from "../src/runtime/app/composables/directus-error";
-import { parseDirectusPreviewContext } from "../src/runtime/utils/preview";
+import { useDirectusError } from "../src/runtime/errors/directus-error";
+import { parseDirectusPreviewContext } from "../src/runtime/preview/preview";
 
 const preview = {
   enabled: true,

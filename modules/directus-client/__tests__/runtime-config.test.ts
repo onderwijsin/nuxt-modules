@@ -10,7 +10,7 @@ vi.mock("#imports", () => ({
   }
 }));
 
-const { getDirectusRuntimeConfig } = await import("../src/runtime/server/utils/runtime-config");
+const { getDirectusRuntimeConfig } = await import("../src/runtime/core/runtime-config");
 
 describe("getDirectusRuntimeConfig", () => {
   it("reads configuration from the H3 event without Nuxt context", () => {

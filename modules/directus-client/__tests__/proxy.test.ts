@@ -5,14 +5,14 @@ import {
   createSanitizedProxyFetch,
   getForwardedProxyHeaders,
   requiresDirectusProxySameOrigin
-} from "../src/runtime/server/handlers/proxy";
-import { fetchDirectusAsset, resolveDirectusAssetUrl } from "../src/runtime/server/handlers/assets";
-import { resolveDirectusProxyUrl } from "../src/runtime/server/utils/proxy";
-import { assertDirectusSameOrigin } from "../src/runtime/server/utils/csrf";
+} from "../src/runtime/proxy/proxy";
+import { fetchDirectusAsset, resolveDirectusAssetUrl } from "../src/runtime/assets/assets";
+import { resolveDirectusProxyUrl } from "../src/runtime/proxy/url";
+import { assertDirectusSameOrigin } from "../src/runtime/auth/server/csrf";
 import {
   getDirectusAuthorizationHeader,
   resolveDirectusCredential
-} from "../src/runtime/server/utils/credentials";
+} from "../src/runtime/client/server/credentials";
 
 describe("Directus proxy boundary", () => {
   it("normalizes transport headers while preserving upstream HTTP errors", async () => {

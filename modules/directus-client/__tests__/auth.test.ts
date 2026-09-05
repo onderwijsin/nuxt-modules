@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hash } from "ohash";
 
 import { createTestEvent } from "../../../packages/test-utils/src";
-import type { DirectusSession } from "../src/runtime/server/utils/session";
+import type { DirectusSession } from "../src/runtime/auth/server/session";
 
 const state = vi.hoisted(() => ({
   config: {
@@ -35,7 +35,7 @@ vi.mock("#imports", () => ({
 vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("nitropack/runtime", () => ({ useStorage: () => state.storage }));
 
-vi.mock("../src/runtime/server/utils/session", () => ({
+vi.mock("../src/runtime/auth/server/session", () => ({
   clearDirectusSession: state.session.clear,
   getDirectusSession: vi.fn(() => state.current),
   getDirectusSessionDetails: state.session.readDetails,
@@ -49,7 +49,7 @@ const {
   destroyDirectusSession,
   ensureFreshDirectusSession,
   fetchDirectusCurrentUser
-} = await import("../src/runtime/server/utils/auth");
+} = await import("../src/runtime/auth/server/auth");
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

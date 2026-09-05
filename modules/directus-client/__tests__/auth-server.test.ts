@@ -25,7 +25,7 @@ vi.mock("#imports", () => ({
   useRuntimeConfig: () => state.config
 }));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
-vi.mock("../src/runtime/server/utils/auth", () => ({
+vi.mock("../src/runtime/auth/server/auth", () => ({
   createDirectusSession: state.createSession,
   destroyDirectusSession: state.destroySession,
   ensureFreshDirectusSession: state.ensureFreshSession,
@@ -41,7 +41,7 @@ const {
   resetPasswordServer,
   requestMagicLinkServer,
   redeemMagicLinkServer
-} = await import("../src/runtime/server/utils/auth-server");
+} = await import("../src/runtime/auth/server/auth-server");
 
 const snapshot = {
   userId: "user-1",

@@ -36,21 +36,21 @@ vi.mock("#imports", () => ({
 }));
 vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
-vi.mock("../src/runtime/server/utils/auth", () => ({
+vi.mock("../src/runtime/auth/server/auth", () => ({
   createDirectusSession: state.session,
   establishDirectusSession: state.establish,
   parseDirectusAuthenticationResponse: state.parse
 }));
-vi.mock("../src/runtime/server/utils/csrf", () => ({ assertDirectusEventSameOrigin: vi.fn() }));
-vi.mock("../src/runtime/server/utils/turnstile", () => ({
+vi.mock("../src/runtime/auth/server/csrf", () => ({ assertDirectusEventSameOrigin: vi.fn() }));
+vi.mock("../src/runtime/auth/server/turnstile", () => ({
   assertDirectusTurnstile: state.turnstile
 }));
 
-import loginHandler from "../src/runtime/server/handlers/auth/login.post";
-import passwordRequestHandler from "../src/runtime/server/handlers/auth/password-request.post";
-import passwordResetHandler from "../src/runtime/server/handlers/auth/password-reset.post";
-import magicLinkRequestHandler from "../src/runtime/server/handlers/auth/magic-links/request.post";
-import magicLinkRedeemHandler from "../src/runtime/server/handlers/auth/magic-links/redeem.post";
+import loginHandler from "../src/runtime/auth/server/handlers/auth/login.post";
+import passwordRequestHandler from "../src/runtime/auth/server/handlers/auth/password-request.post";
+import passwordResetHandler from "../src/runtime/auth/server/handlers/auth/password-reset.post";
+import magicLinkRequestHandler from "../src/runtime/auth/server/handlers/auth/magic-links/request.post";
+import magicLinkRedeemHandler from "../src/runtime/auth/server/handlers/auth/magic-links/redeem.post";
 
 function loadHandler(
   name: "login" | "password-request" | "password-reset" | "magic-link-request" | "magic-link-redeem"
