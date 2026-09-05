@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { fetchDirectusItemByPath } from "../src/runtime/utils/item";
+import { fetchDirectusItemByPath } from "../src/runtime/items/fetch-by-path";
 
 const normalPreview = {
   isPreview: false,

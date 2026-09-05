@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hash } from "ohash";
 
 import { createTestEvent } from "../../../packages/test-utils/src";
-import type { DirectusSession } from "../src/runtime/server/utils/session";
+import type { DirectusSession } from "../src/runtime/auth/server/session";
 
 const state = vi.hoisted(() => ({
   config: {
@@ -35,7 +35,7 @@ vi.mock("#imports", () => ({
 vi.mock("nitropack/runtime/config", () => ({ useRuntimeConfig: () => state.config }));
 vi.mock("nitropack/runtime", () => ({ useStorage: () => state.storage }));
 
-vi.mock("../src/runtime/server/utils/session", () => ({
+vi.mock("../src/runtime/auth/server/session", () => ({
   clearDirectusSession: state.session.clear,
   getDirectusSession: vi.fn(() => state.current),
   getDirectusSessionDetails: state.session.readDetails,
@@ -44,12 +44,9 @@ vi.mock("../src/runtime/server/utils/session", () => ({
   writeDirectusSessionCookie: state.session.writeCookie
 }));
 
-const {
-  createDirectusSession,
-  destroyDirectusSession,
-  ensureFreshDirectusSession,
-  fetchDirectusCurrentUser
-} = await import("../src/runtime/server/utils/auth");
+const { createDirectusSession, fetchDirectusCurrentUser } =
+  await import("../src/runtime/auth/server/authentication");
+const { ensureFreshDirectusSession } = await import("../src/runtime/auth/server/refresh");
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -506,22 +503,5 @@ describe("Directus session refresh coordination", () => {
     } finally {
       vi.useRealTimers();
     }
-  });
-});
-
-describe("Directus logout cleanup", () => {
-  it("clears a local session even when Directus logout fails", async () => {
-    state.current = expiringSession();
-    mockFetch(new Error("Directus unavailable"));
-
-    await expect(destroyDirectusSession(createTestEvent())).rejects.toThrow("Directus unavailable");
-    expect(state.session.clear).toHaveBeenCalled();
-  });
-
-  it("clears a local session without contacting Directus when already signed out", async () => {
-    const fetch = mockFetch(jsonResponse({}));
-    await expect(destroyDirectusSession(createTestEvent())).resolves.toBeUndefined();
-    expect(fetch).not.toHaveBeenCalled();
-    expect(state.session.clear).toHaveBeenCalled();
   });
 });

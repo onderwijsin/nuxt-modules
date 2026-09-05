@@ -1,4 +1,7 @@
-export { useDirectusServer } from "./composables/directus";
-export { useDirectusServerAuth } from "./composables/directus-auth";
-export { useDirectusServerItemByPath } from "./composables/directus-item";
-export type { DirectusSessionSnapshot } from "../types/auth";
+/**
+ * Preserves the public server runtime entrypoint while implementation is organized by capability.
+ */
+export { useDirectusServer } from "../client/server/use-directus-server";
+export { useDirectusServerAuth } from "../auth/server/use-directus-server-auth";
+export { useDirectusServerItemByPath } from "../items/server/use-directus-item-by-path";
+export type { DirectusSessionSnapshot } from "../auth/types";

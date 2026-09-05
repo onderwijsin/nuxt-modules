@@ -7,7 +7,7 @@ import {
   addPlugin,
   addServerPlugin,
   addServerHandler,
-  addServerImportsDir,
+  addServerImports,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -116,7 +116,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Add type template even if module is disbaled. This prevent typecheck failures in ci
     addTypeTemplate({
       filename: "types/directus-config.d.ts",
-      src: resolver.resolve(runtimeDir, "types/config.d.ts")
+      src: resolver.resolve(runtimeDir, "typegen/config.d.ts")
     });
     addTypeTemplate({
       filename: "types/directus-schema.d.ts",
@@ -213,25 +213,43 @@ export default defineNuxtModule<ModuleOptions>({
       ["useDirectusError", "directus-error"],
       ["useDirectusItemByPath", "directus-item"]
     ] as const) {
-      addImports({ name, from: resolver.resolve(runtimeDir, "app/composables", file) });
+      const composablePaths = {
+        directus: "client/app/use-directus",
+        "directus-error": "errors/use-directus-error",
+        "directus-item": "items/app/use-directus-item-by-path"
+      } as const;
+      addImports({ name, from: resolver.resolve(runtimeDir, composablePaths[file]) });
     }
-    addServerImportsDir(resolver.resolve(runtimeDir, "server/composables"));
-    addPlugin({ src: resolver.resolve(runtimeDir, "app/plugins/client"), mode: "client" });
+    addServerImports([
+      {
+        name: "useDirectusServer",
+        from: resolver.resolve(runtimeDir, "client/server/use-directus-server")
+      },
+      {
+        name: "useDirectusServerAuth",
+        from: resolver.resolve(runtimeDir, "auth/server/use-directus-server-auth")
+      },
+      {
+        name: "useDirectusServerItemByPath",
+        from: resolver.resolve(runtimeDir, "items/server/use-directus-item-by-path")
+      }
+    ]);
+    addPlugin({ src: resolver.resolve(runtimeDir, "client/app/browser-plugin"), mode: "client" });
     addPlugin({
       src: resolver.resolve(
         runtimeDir,
-        options.client.auth.enabled ? "app/plugins/server-auth" : "app/plugins/server"
+        options.client.auth.enabled ? "auth/app/ssr-session-plugin" : "client/app/ssr-plugin"
       ),
       mode: "server"
     });
     if (options.client.auth.enabled) {
-      addServerPlugin(resolver.resolve(runtimeDir, "server/plugins/directus-auth"));
+      addServerPlugin(resolver.resolve(runtimeDir, "auth/server/nitro-plugin"));
     }
 
     if (options.client.auth.enabled) {
       addImports({
         name: "useDirectusAuth",
-        from: resolver.resolve(runtimeDir, "app/composables/directus-auth")
+        from: resolver.resolve(runtimeDir, "auth/app/use-directus-auth")
       });
       const authRoutes = [
         ["login", "post"],
@@ -246,7 +264,7 @@ export default defineNuxtModule<ModuleOptions>({
         addServerHandler({
           route,
           method,
-          handler: resolver.resolve(runtimeDir, "server/handlers/auth/" + name + "." + method)
+          handler: resolver.resolve(runtimeDir, "auth/server/handlers/" + name + "." + method)
         });
       }
       if (options.client.auth.magicLinks.enabled) {
@@ -257,14 +275,14 @@ export default defineNuxtModule<ModuleOptions>({
           addServerHandler({
             route: "/_directus/auth/" + name,
             method,
-            handler: resolver.resolve(runtimeDir, "server/handlers/auth/" + name + "." + method)
+            handler: resolver.resolve(runtimeDir, "auth/server/handlers/" + name + "." + method)
           });
         }
       }
     }
     addServerHandler({
       route: `${options.client.proxy.path}/**`,
-      handler: resolver.resolve(runtimeDir, "server/handlers/proxy")
+      handler: resolver.resolve(runtimeDir, "proxy/handler")
     });
     nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
     nuxt.options.routeRules[`${options.client.proxy.path}/**`] = defu(
@@ -277,7 +295,7 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.client.assets.enabled) {
       addServerHandler({
         route: `${options.client.assets.path}/**`,
-        handler: resolver.resolve(runtimeDir, "server/handlers/assets")
+        handler: resolver.resolve(runtimeDir, "assets/handler")
       });
       nuxt.options.routeRules[`${options.client.assets.path}/**`] = defu(
         {

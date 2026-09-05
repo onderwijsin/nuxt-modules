@@ -30,7 +30,7 @@ const {
   getDirectusSessionDetails,
   setDirectusSession,
   DIRECTUS_SESSION_COOKIE_LIMIT
-} = await import("../src/runtime/server/utils/session");
+} = await import("../src/runtime/auth/server/session");
 
 const session = {
   accessToken: "access",

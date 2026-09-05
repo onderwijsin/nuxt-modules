@@ -1,7 +1,7 @@
 import { createError, getCookie, defineEventHandler } from "h3";
 import { useRuntimeConfig } from "#imports";
 
-import { getDirectusSessionDetails } from "../../../src/runtime/server/utils/session";
+import { getDirectusSessionDetails } from "../../../src/runtime/auth/server/session";
 
 function maskSecret(value: string): string {
   if (value.length < 8) return "••••••••";

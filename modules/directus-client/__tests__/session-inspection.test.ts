@@ -14,7 +14,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
-vi.mock("../src/runtime/server/utils/session", () => ({
+vi.mock("../src/runtime/auth/server/session", () => ({
   getDirectusSessionDetails: state.read
 }));
 

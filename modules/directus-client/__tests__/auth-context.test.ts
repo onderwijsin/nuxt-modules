@@ -13,11 +13,11 @@ vi.mock("nitropack/runtime", () => ({
     return plugin;
   }
 }));
-vi.mock("../src/runtime/server/utils/auth", () => ({
+vi.mock("../src/runtime/auth/server/refresh", () => ({
   ensureFreshDirectusSession: state.ensureFreshDirectusSession
 }));
 
-await import("../src/runtime/server/plugins/directus-auth");
+await import("../src/runtime/auth/server/nitro-plugin");
 
 beforeEach(() => {
   state.ensureFreshDirectusSession.mockReset();
