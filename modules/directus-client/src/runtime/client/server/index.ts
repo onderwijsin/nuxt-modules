@@ -1,4 +1,4 @@
-export { useDirectusServer } from "./composables/directus";
-export { useDirectusServerAuth } from "../../auth/server/composables/directus-auth";
-export { useDirectusServerItemByPath } from "../../items/server/composables/directus-item";
-export type { DirectusSessionSnapshot } from "../../auth/types/auth";
+export { useDirectusServer } from "./use-directus-server";
+export { useDirectusServerAuth } from "../../auth/server/context";
+export { useDirectusServerItemByPath } from "../../items/server/use-directus-item-by-path";
+export type { DirectusSessionSnapshot } from "../../auth/types";

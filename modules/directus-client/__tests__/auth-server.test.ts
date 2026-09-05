@@ -25,12 +25,17 @@ vi.mock("#imports", () => ({
   useRuntimeConfig: () => state.config
 }));
 vi.mock("ofetch", () => ({ ofetch: state.fetch }));
-vi.mock("../src/runtime/auth/server/auth", () => ({
+vi.mock("../src/runtime/auth/server/session", () => ({
+  clearDirectusSession: state.destroySession,
+  getDirectusSession: vi.fn(() => undefined)
+}));
+vi.mock("../src/runtime/auth/server/authentication", () => ({
   createDirectusSession: state.createSession,
-  destroyDirectusSession: state.destroySession,
-  ensureFreshDirectusSession: state.ensureFreshSession,
   establishDirectusSession: state.establishSession,
   parseDirectusAuthenticationResponse: state.parseResponse
+}));
+vi.mock("../src/runtime/auth/server/refresh", () => ({
+  ensureFreshDirectusSession: state.ensureFreshSession
 }));
 
 const {
@@ -41,7 +46,7 @@ const {
   resetPasswordServer,
   requestMagicLinkServer,
   redeemMagicLinkServer
-} = await import("../src/runtime/auth/server/auth-server");
+} = await import("../src/runtime/auth/server/actions");
 
 const snapshot = {
   userId: "user-1",

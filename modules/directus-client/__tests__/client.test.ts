@@ -26,7 +26,7 @@ vi.mock("#imports", () => ({
   useRuntimeConfig: () => state.config
 }));
 
-const { createServerDirectusClient } = await import("../src/runtime/client/server/client");
+const { createServerDirectusClient } = await import("../src/runtime/client/server/create-client");
 
 beforeEach(() => {
   state.config.directusClient.auth.enabled = false;

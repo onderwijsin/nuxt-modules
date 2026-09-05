@@ -1,18 +1,19 @@
 import { createServer } from "node:http";
 import { describe, expect, it } from "vitest";
 
+import { requiresDirectusProxySameOrigin } from "../src/runtime/proxy/handler";
 import {
   createSanitizedProxyFetch,
-  getForwardedProxyHeaders,
-  requiresDirectusProxySameOrigin
-} from "../src/runtime/proxy/proxy";
-import { fetchDirectusAsset, resolveDirectusAssetUrl } from "../src/runtime/assets/assets";
+  getForwardedProxyHeaders
+} from "../src/runtime/proxy/transport";
+import { fetchDirectusAsset } from "../src/runtime/assets/transport";
+import { resolveDirectusAssetUrl } from "../src/runtime/assets/url";
 import { resolveDirectusProxyUrl } from "../src/runtime/proxy/url";
 import { assertDirectusSameOrigin } from "../src/runtime/auth/server/csrf";
 import {
   getDirectusAuthorizationHeader,
   resolveDirectusCredential
-} from "../src/runtime/client/server/credentials";
+} from "../src/runtime/client/server/request-context";
 
 describe("Directus proxy boundary", () => {
   it("normalizes transport headers while preserving upstream HTTP errors", async () => {

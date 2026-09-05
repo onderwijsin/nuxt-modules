@@ -4,8 +4,7 @@ import { createTestEvent } from "../../../packages/test-utils/src";
 
 const resolve = vi.fn();
 
-const { useDirectusServerAuth } =
-  await import("../src/runtime/auth/server/composables/directus-auth");
+const { useDirectusServerAuth } = await import("../src/runtime/auth/server/context");
 
 describe("useDirectusServerAuth", () => {
   it("reads the token-free session snapshot for the request", async () => {

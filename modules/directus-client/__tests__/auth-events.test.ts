@@ -26,7 +26,7 @@ vi.mock("#app", () => ({
 
 vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
 
-const { useDirectusAuth } = await import("../src/runtime/auth/app/composables/directus-auth");
+const { useDirectusAuth } = await import("../src/runtime/auth/app/use-directus-auth");
 
 beforeEach(() => {
   state.session = null;

@@ -4,7 +4,7 @@ import {
   parseDirectusPreviewContext,
   type DirectusPreviewContext,
   type DirectusPreviewOptions
-} from "./preview";
+} from "./context";
 
 /** Reads and validates the preview context from a Nitro request.
  * @param event Nitro request event.

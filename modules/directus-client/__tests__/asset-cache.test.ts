@@ -25,7 +25,7 @@ vi.mock("nitropack/runtime", () => ({
 
 const { createAssetCacheStorage, getAssetCacheHandler } =
   await import("../src/runtime/assets/cache");
-const { fetchDirectusAsset } = await import("../src/runtime/assets/assets");
+const { fetchDirectusAsset } = await import("../src/runtime/assets/transport");
 
 let resolveAnonymous: (event: HTTPEvent) => Promise<Response> = async () =>
   new Response(new Uint8Array([1, 2, 3]), { headers: { "cache-control": "public" } });

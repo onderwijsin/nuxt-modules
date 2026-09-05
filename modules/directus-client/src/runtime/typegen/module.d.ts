@@ -1,6 +1,6 @@
-import type { DirectusSchemaClient } from "../client/server/client";
-import type { DirectusAuthHooks } from "../auth/app/composables/directus-auth";
-import type { DirectusRequestAuthContext } from "../auth/types/auth";
+import type { DirectusSchemaClient } from "../client/server/create-client";
+import type { DirectusAuthHooks } from "../auth/app/use-directus-auth";
+import type { DirectusRequestAuthContext } from "../auth/types";
 
 declare module "h3" {
   interface H3EventContext {

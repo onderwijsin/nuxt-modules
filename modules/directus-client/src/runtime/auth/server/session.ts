@@ -12,9 +12,9 @@ import { attempt, isNonBlankString, isString } from "@onderwijsin/nuxt-module-ut
 import { z } from "zod";
 
 import { getDirectusRuntimeConfig } from "../../core/runtime-config";
-import type { DirectusSessionSnapshot } from "../types/auth";
+import type { DirectusSessionSnapshot } from "../types";
 
-export type { DirectusSessionSnapshot } from "../types/auth";
+export type { DirectusSessionSnapshot } from "../types";
 
 /** Internal cookie payload. Tokens never leave server utilities. */
 export interface DirectusSession {

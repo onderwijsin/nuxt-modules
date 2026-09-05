@@ -44,12 +44,10 @@ vi.mock("../src/runtime/auth/server/session", () => ({
   writeDirectusSessionCookie: state.session.writeCookie
 }));
 
-const {
-  createDirectusSession,
-  destroyDirectusSession,
-  ensureFreshDirectusSession,
-  fetchDirectusCurrentUser
-} = await import("../src/runtime/auth/server/auth");
+const { createDirectusSession, fetchDirectusCurrentUser } =
+  await import("../src/runtime/auth/server/authentication");
+const { ensureFreshDirectusSession } = await import("../src/runtime/auth/server/refresh");
+const { destroyDirectusSession } = await import("../src/runtime/auth/server/actions");
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
