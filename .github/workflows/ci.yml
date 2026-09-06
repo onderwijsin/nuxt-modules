@@ -147,18 +147,7 @@ jobs:
         run: pnpm validate:docs
       - name: Start Valkey for Directus E2E tests
         if: needs.detect_changes.outputs.phase_test == 'true' && contains(env.TEST_PATHS, 'modules/directus-client/__tests__')
-        shell: bash
-        run: |
-          docker run --detach --publish 6379:6379 --name nuxt-modules-valkey-e2e valkey/valkey:8.1.10-alpine
-          for attempt in {1..30}; do
-            if docker exec nuxt-modules-valkey-e2e valkey-cli ping | grep -q '^PONG$'; then
-              echo 'DIRECTUS_E2E_REDIS_URL=redis://127.0.0.1:6379' >> "$GITHUB_ENV"
-              exit 0
-            fi
-            sleep 1
-          done
-          docker logs nuxt-modules-valkey-e2e
-          exit 1
+        run: VALKEY_E2E_PORT=6379 pnpm valkey:e2e:start
       - name: Run focused type checks
         if: needs.detect_changes.outputs.phase_typecheck == 'true'
         env:
@@ -179,7 +168,7 @@ jobs:
           pnpm exec vitest run "${test_paths[@]}"
       - name: Stop Valkey for Directus E2E tests
         if: always() && needs.detect_changes.outputs.phase_test == 'true' && contains(env.TEST_PATHS, 'modules/directus-client/__tests__')
-        run: docker rm --force nuxt-modules-valkey-e2e
+        run: pnpm valkey:e2e:stop
       - name: Build focused package artifacts
         if: needs.detect_changes.outputs.phase_pack == 'true' && needs.detect_changes.outputs.artifact_packages != ''
         shell: bash
@@ -244,24 +233,13 @@ jobs:
         run: pnpm typecheck
       - name: Start Valkey for Directus E2E tests
         if: needs.detect_changes.outputs.phase_test == 'true'
-        shell: bash
-        run: |
-          docker run --detach --publish 6379:6379 --name nuxt-modules-valkey-e2e valkey/valkey:8.1.10-alpine
-          for attempt in {1..30}; do
-            if docker exec nuxt-modules-valkey-e2e valkey-cli ping | grep -q '^PONG$'; then
-              echo 'DIRECTUS_E2E_REDIS_URL=redis://127.0.0.1:6379' >> "$GITHUB_ENV"
-              exit 0
-            fi
-            sleep 1
-          done
-          docker logs nuxt-modules-valkey-e2e
-          exit 1
+        run: VALKEY_E2E_PORT=6379 pnpm valkey:e2e:start
       - name: Run full tests
         if: needs.detect_changes.outputs.phase_test == 'true'
         run: pnpm test:coverage
       - name: Stop Valkey for Directus E2E tests
         if: always() && needs.detect_changes.outputs.phase_test == 'true'
-        run: docker rm --force nuxt-modules-valkey-e2e
+        run: pnpm valkey:e2e:stop
       - run: pnpm build:packages
         if: needs.detect_changes.outputs.phase_build == 'true'
       - run: pnpm validate:packages

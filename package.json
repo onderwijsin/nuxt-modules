@@ -24,6 +24,8 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "e2e": "pnpm --recursive --if-present run e2e",
+    "valkey:e2e:start": "node scripts/valkey-e2e.mjs start",
+    "valkey:e2e:stop": "node scripts/valkey-e2e.mjs stop",
     "pack:packages": "node scripts/pack-packages.mjs",
     "validate:external-consumer": "node integration/external-consumer/run.mjs",
     "ci:detect-changes": "node scripts/detect-changes.mjs",

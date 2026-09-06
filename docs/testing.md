@@ -186,15 +186,12 @@ two independent Nitro processes and coordinates them through real Redis storage.
 Valkey image, run the focused suite with `DIRECTUS_E2E_REDIS_URL`, then remove the container:
 
 ```sh
-docker run --rm -d \
-  --name nuxt-modules-valkey-e2e \
-  -p 16379:6379 \
-  valkey/valkey:8.1.10-alpine
+pnpm valkey:e2e:start
 
 DIRECTUS_E2E_REDIS_URL=redis://127.0.0.1:16379 \
   pnpm exec vitest run modules/directus-client/__tests__/e2e-valkey.test.ts
 
-docker rm -f nuxt-modules-valkey-e2e
+pnpm valkey:e2e:stop
 ```
 
 When `DIRECTUS_E2E_REDIS_URL` is not set, this suite is skipped during ordinary local test runs.
