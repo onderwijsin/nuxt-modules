@@ -39,15 +39,9 @@ const assetCacheSchema = z.discriminatedUnion("enabled", [
       .strictObject({
         enabled: z.boolean().default(false),
         onRequest: z.boolean().default(true),
-        interval: z.number().int().positive().default(3600),
-        task: z
-          .strictObject({
-            enabled: z.boolean().default(false),
-            schedule: z.string().trim().min(1).optional()
-          })
-          .default({ enabled: false })
+        interval: z.number().int().positive().default(3600)
       })
-      .default({ enabled: false, onRequest: true, interval: 3600, task: { enabled: false } })
+      .default({ enabled: false, onRequest: true, interval: 3600 })
   })
 ]);
 

@@ -53,7 +53,7 @@ function configure(baseUrl: string, cacheEnabled: boolean) {
           maxBodySize: 10 * 1024 * 1024,
           swr: false,
           staleMaxAge: undefined,
-          prune: { enabled: false, onRequest: true, interval: 3600, task: { enabled: false } }
+          prune: { enabled: false, onRequest: true, interval: 3600 }
         }
       }
     },

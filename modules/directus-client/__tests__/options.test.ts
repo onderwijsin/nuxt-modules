@@ -204,8 +204,40 @@ describe("Directus module options", () => {
       maxAge: 60,
       maxBodySize: 10 * 1024 * 1024,
       swr: false,
-      prune: { enabled: false, onRequest: true, interval: 3600, task: { enabled: false } }
+      prune: { enabled: false, onRequest: true, interval: 3600 }
     });
+    expect(
+      directusClientOptionsSchema.parse({
+        client: {
+          assets: {
+            cache: {
+              enabled: true,
+              storage: "assets",
+              maxAge: 60,
+              prune: { enabled: true }
+            }
+          }
+        }
+      }).client.assets.cache.prune
+    ).toEqual({ enabled: true, onRequest: true, interval: 3600 });
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: {
+          assets: {
+            cache: { enabled: true, storage: "assets", maxAge: 60, prune: { interval: 0 } }
+          }
+        }
+      })
+    ).toThrow();
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: {
+          assets: {
+            cache: { enabled: true, storage: "assets", maxAge: 60, prune: { interval: -1 } }
+          }
+        }
+      })
+    ).toThrow();
     expect(() =>
       directusClientOptionsSchema.parse({
         client: { assets: { cache: { enabled: true, storage: "   ", maxAge: 60 } } }

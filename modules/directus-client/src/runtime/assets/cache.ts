@@ -8,17 +8,10 @@ import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
 import { useNitroApp, useStorage } from "nitropack/runtime";
 
-type AssetCacheConfig = Omit<
-  Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>,
-  "prune"
-> & {
-  prune?: {
-    enabled: boolean;
-    onRequest: boolean;
-    interval: number;
-    task: { enabled: boolean; schedule?: string };
-  };
-};
+export type EnabledDirectusAssetCacheConfig = Extract<
+  ResolvedDirectusAssetCacheOptions,
+  { enabled: true }
+>;
 
 export const DIRECTUS_ASSET_CACHE_BASE = "/cache";
 export const DIRECTUS_ASSET_CACHE_GROUP = "handlers";
@@ -27,15 +20,12 @@ export const DIRECTUS_ASSET_CACHE_NAME = "directus-assets";
 /** Nitro-application-owned lazy state for one immutable asset cache handler. */
 export interface DirectusAssetCacheState {
   handler?: CachedEventHandler<HTTPEvent>;
-  lastPruneAttemptAt?: number;
-  prunePromise?: Promise<AssetCachePruneSummary>;
+  prune: DirectusAssetCachePruneState;
 }
 
-export interface AssetCachePruneSummary {
-  scanned: number;
-  removed: number;
-  retained: number;
-  skipped: number;
+export interface DirectusAssetCachePruneState {
+  lastAttemptAt?: number;
+  promise?: Promise<void>;
 }
 
 /**
@@ -91,7 +81,7 @@ export function createAssetCacheStorage(mount: string) {
  * @returns Empty application-owned cache state.
  */
 export function createAssetCacheState(): DirectusAssetCacheState {
-  return {};
+  return { prune: {} };
 }
 
 /**
@@ -104,7 +94,7 @@ export function createAssetCacheState(): DirectusAssetCacheState {
  */
 export function getOrCreateAssetCacheHandler(
   state: DirectusAssetCacheState,
-  config: AssetCacheConfig,
+  config: EnabledDirectusAssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
   state.handler ??= defineCachedHandler(fetchAnonymous, {
@@ -144,12 +134,22 @@ export function getOrCreateAssetCacheHandler(
  * @returns The application-scoped cached handler.
  */
 export function getAssetCacheHandler(
-  config: AssetCacheConfig,
+  config: EnabledDirectusAssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
   const state = useNitroApp().directusAssetCache;
   if (!state) throw new Error("Directus asset cache plugin is not registered");
   return getOrCreateAssetCacheHandler(state, config, fetchAnonymous);
+}
+
+/** Returns the application-owned asset-cache state used by runtime orchestration.
+ *
+ * @returns The current Nitro application's asset-cache state.
+ */
+export function getAssetCacheState(): DirectusAssetCacheState {
+  const state = useNitroApp().directusAssetCache;
+  if (!state) throw new Error("Directus asset cache plugin is not registered");
+  return state;
 }
 
 /**
