@@ -61,7 +61,7 @@ const assetsSchema = z
  * Default values for the previewSchema
  */
 const directusPreviewSchemaDefaults = {
-  enabled: true,
+  enabled: false,
   versioning: true,
   queryKeys: {
     preview: "preview",

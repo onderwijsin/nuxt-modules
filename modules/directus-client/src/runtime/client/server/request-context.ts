@@ -24,12 +24,12 @@ export function resolveDirectusCredential(options: {
   readonly sessionAccessToken?: string;
   readonly proxyToken?: string;
 }): DirectusCredential {
-  if (options.previewAccessToken) {
-    return { accessToken: options.previewAccessToken, source: "preview" };
-  }
-
   if (options.sessionAccessToken) {
     return { accessToken: options.sessionAccessToken, source: "session" };
+  }
+
+  if (options.previewAccessToken) {
+    return { accessToken: options.previewAccessToken, source: "preview" };
   }
 
   if (options.proxyToken) {

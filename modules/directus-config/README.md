@@ -107,7 +107,7 @@ the application proxy.
 | `assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                          |
 | `assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                  |
 | `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
-| `preview.enabled`              | `true`                              | Enables preview query parsing.                                                                    |
+| `preview.enabled`              | `false`                             | Enables preview query parsing; set to `true` to opt in.                                           |
 | `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |
 | `preview.queryKeys`            | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                    |
 | `auth.enabled`                 | `false`                             | Enables cookie-backed authentication.                                                             |

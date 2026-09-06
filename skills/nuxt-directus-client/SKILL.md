@@ -83,7 +83,7 @@ All options are configured under `directusClient`.
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
 | `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                                                      |
-| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                                  |
+| `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.                                              |
@@ -131,7 +131,7 @@ useDirectus<Output>(command: RestCommand<Output, Schema>): Promise<Output>
 ```
 
 Executes a typed Directus REST command. Browser calls use the same-origin proxy; SSR calls use the
-direct server client. The module chooses preview, session (only with `client.auth.enabled`), proxy,
+direct server client. The module chooses session (only with `client.auth.enabled`), preview, proxy,
 or no credential on the server. Without an event it still uses the configured proxy credential.
 Callers cannot override that credential with request headers.
 
@@ -375,7 +375,8 @@ Set up Directus for version previews:
    with `/preview/`. It appends `token`; if configured with another token key, set
    `client.preview.queryKeys.token` to match.
 
-Preview tokens are request-scoped and never enter public runtime config. The default query keys are
+Preview handling is disabled by default; set `client.preview.enabled: true` to opt in. Preview
+tokens are request-scoped and never enter public runtime config. The default query keys are
 `preview`, `token`, `version`, and `id`; rename them with `client.preview.queryKeys`. Set
 `client.preview.enabled: false` to ignore all preview parameters, or
 `client.preview.versioning: false` to ignore only the version. Version previews do not configure
@@ -473,7 +474,7 @@ receives the Directus URL or a server credential.
 - The proxy forwards only REST headers needed for representation, caching, conditional requests,
   range, and preference semantics. Incoming `Authorization`, `Cookie`, `Host`, `Origin`, `Referer`,
   connection, hop-by-hop, forwarding, client-IP, and platform identity headers are not forwarded.
-- Credential precedence is preview token, current session (when `client.auth.enabled`), static
+- Credential precedence is current session (when `client.auth.enabled`), preview token, static
   token, then unauthenticated.
 - Upstream `Set-Cookie` headers are not forwarded to the browser.
 - Upstream `Access-Control-*` headers are removed so the Nuxt application owns the browser-facing

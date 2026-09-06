@@ -197,7 +197,7 @@ All options are configured under `directusClient`:
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
 | `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                                                           |
-| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                                  |
+| `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication, authentication routes, and `useDirectusAuth`.                                                           |
@@ -257,7 +257,8 @@ For example, an extension-backed URL can be configured as:
 /preview/https://app.example.test/pages/{{slug}}?preview=true&id={{id}}&version={{version}}
 ```
 
-The default preview query keys are `preview`, `token`, `version`, and `id`; they can be renamed with
+Preview handling is disabled by default. Set `client.preview.enabled` to `true` to opt in. The
+default preview query keys are `preview`, `token`, `version`, and `id`; they can be renamed with
 `client.preview.queryKeys`. Tokens stay request-scoped and are never exposed through public runtime
 configuration. Set `client.preview.enabled` to `false` to ignore all preview parameters, or
 `client.preview.versioning` to `false` to ignore only the version. This section covers credentialed
@@ -515,7 +516,9 @@ CI and production fail clearly instead.
 The browser endpoint at `proxy.path` (default `/_directus/proxy`) forwards REST requests to the
 configured Directus instance. This lets browser code use `useDirectus` without learning the Directus
 URL or receiving a proxy, preview, or session token. The server chooses credentials in this order:
-preview token, current session when authentication is enabled, proxy token, then no credential.
+current session when authentication is enabled, preview token, proxy token, then no credential.
+Preview/version selection is independent from credential selection, so a preview URL does not
+replace an authenticated session credential.
 
 The proxy preserves the request method, body, query string, response status, and safe response
 headers. It forwards only REST headers needed for representation, caching, conditional requests,

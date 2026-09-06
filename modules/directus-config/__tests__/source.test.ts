@@ -56,7 +56,7 @@ describe("Directus config source discovery", () => {
 
     await expect(loadDirectusConfigSource(configFile)).resolves.toMatchObject({
       instance: { baseUrl: "https://cms.example.test" },
-      client: { proxy: { path: "/_directus/proxy" }, preview: { enabled: true } }
+      client: { proxy: { path: "/_directus/proxy" }, preview: { enabled: false } }
     });
     await expect(loadDirectusConfigSource()).resolves.toEqual({ collections: [] });
   });

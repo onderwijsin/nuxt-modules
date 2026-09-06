@@ -8,7 +8,10 @@ describe("Directus module options", () => {
     expect(directusClientOptionsSchema.parse({})).toMatchObject({
       enabled: true,
       instance: {},
-      client: { assets: { enabled: true, path: "/_directus/assets", publicOnly: false } }
+      client: {
+        assets: { enabled: true, path: "/_directus/assets", publicOnly: false },
+        preview: { enabled: false }
+      }
     });
     expect(
       directusClientOptionsSchema.parse({ client: { typegen: { enabled: false } } })
@@ -28,6 +31,14 @@ describe("Directus module options", () => {
         auth: { enabled: false }
       }
     });
+  });
+
+  it("requires explicit opt-in for preview handling", () => {
+    expect(directusClientOptionsSchema.parse({}).client.preview.enabled).toBe(false);
+    expect(
+      directusClientOptionsSchema.parse({ client: { preview: { enabled: true } } }).client.preview
+        .enabled
+    ).toBe(true);
   });
 
   it("defaults authentication Turnstile protection to disabled", () => {

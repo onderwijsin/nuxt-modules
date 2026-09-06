@@ -12,8 +12,10 @@ import { resolveDirectusUpstreamUrl } from "../src/runtime/core/upstream-url";
 import { assertDirectusSameOrigin } from "../src/runtime/core/same-origin";
 import {
   getDirectusAuthorizationHeader,
-  resolveDirectusCredential
+  resolveDirectusCredential,
+  resolveDirectusRequestContext
 } from "../src/runtime/client/server/request-context";
+import { createTestEvent } from "../../../packages/test-utils/src";
 
 describe("Directus proxy boundary", () => {
   it("normalizes transport headers while preserving upstream HTTP errors", async () => {
@@ -311,11 +313,20 @@ describe("Directus credential selection", () => {
     });
   });
 
-  it("gives a request-scoped preview token highest precedence", () => {
+  it("prefers the session token over a request-scoped preview token", () => {
     expect(
       resolveDirectusCredential({
         previewAccessToken: "preview",
         sessionAccessToken: "session",
+        proxyToken: "proxy"
+      })
+    ).toEqual({ accessToken: "session", source: "session" });
+  });
+
+  it("uses the preview token when no session token exists", () => {
+    expect(
+      resolveDirectusCredential({
+        previewAccessToken: "preview",
         proxyToken: "proxy"
       })
     ).toEqual({ accessToken: "preview", source: "preview" });
@@ -328,5 +339,27 @@ describe("Directus credential selection", () => {
     });
     expect(resolveDirectusCredential({})).toEqual({ source: "none" });
     expect(getDirectusAuthorizationHeader({ source: "none" })).toEqual({});
+  });
+
+  it("keeps preview version selection independent from session credentials", () => {
+    const event = createTestEvent();
+    event.node.req.url = "/?preview=true&token=preview&version=draft&id=page-1";
+    const context = resolveDirectusRequestContext(event, {
+      preview: {
+        enabled: true,
+        versioning: true,
+        queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
+      },
+      sessionAccessToken: "session",
+      proxyToken: "proxy"
+    });
+
+    expect(context.credential).toEqual({ accessToken: "session", source: "session" });
+    expect(context.preview).toEqual({
+      isPreview: true,
+      token: "preview",
+      version: "draft",
+      id: "page-1"
+    });
   });
 });
