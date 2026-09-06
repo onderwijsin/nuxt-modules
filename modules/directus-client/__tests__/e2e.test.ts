@@ -225,6 +225,128 @@ describe("Directus client and server composables", async () => {
     expect(response.headers.get("set-cookie")).toContain("directus_session=");
   });
 
+  it("uses one refresh and shares the rotated cookie for overlapping requests", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = upstream.refreshRequests;
+    upstream.refreshDelayMs = 250;
+
+    const [first, second] = await Promise.all([requestSession(cookie), requestSession(cookie)]);
+    expect(first.status, await first.clone().text()).toBe(200);
+    expect(second.status, await second.clone().text()).toBe(200);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+    await expect(first.json()).resolves.toMatchObject({ userId: "user-1" });
+    await expect(second.json()).resolves.toMatchObject({ userId: "user-1" });
+
+    const firstCookie = getSessionCookie(first);
+    const secondCookie = getSessionCookie(second);
+    expect(firstCookie).toBeTruthy();
+    expect(secondCookie).toBe(firstCookie);
+    expect(firstCookie).not.toBe(cookie);
+  });
+
+  it("reuses a completed refresh result for a stale-cookie request", async () => {
+    const staleCookie = await loginWithAccessToken(1);
+    const refreshCountBefore = upstream.refreshRequests;
+
+    const first = await requestSession(staleCookie);
+    expect(first.status, await first.clone().text()).toBe(200);
+    const firstCookie = getSessionCookie(first);
+    expect(firstCookie).toBeTruthy();
+
+    const second = await requestSession(staleCookie);
+    expect(second.status, await second.clone().text()).toBe(200);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+    await expect(second.json()).resolves.toMatchObject({ userId: "user-1" });
+    expect(getSessionCookie(second)).toBe(firstCookie);
+  });
+
+  it("caches transient refresh failures briefly and recovers afterward", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = upstream.refreshRequests;
+    upstream.refreshBehavior = "transient";
+
+    const first = await requestSession(cookie);
+    expect(first.status, await first.clone().text()).toBe(503);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+    expect(first.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+
+    upstream.refreshBehavior = "success";
+    const immediateRetry = await requestSession(cookie);
+    expect(immediateRetry.status, await immediateRetry.clone().text()).toBe(503);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 1_100));
+    const recovered = await requestSession(cookie);
+    expect(recovered.status, await recovered.clone().text()).toBe(200);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 2);
+    await expect(recovered.json()).resolves.toMatchObject({ userId: "user-1" });
+    expect(getSessionCookie(recovered)).toBeTruthy();
+  });
+
+  it("shares one transient failure between overlapping requests", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = upstream.refreshRequests;
+    upstream.refreshBehavior = "transient";
+    upstream.refreshDelayMs = 250;
+
+    const [first, second] = await Promise.all([requestSession(cookie), requestSession(cookie)]);
+    expect(first.status, await first.clone().text()).toBe(503);
+    expect(second.status, await second.clone().text()).toBe(503);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+    expect(first.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+    expect(second.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+  });
+
+  it("shares one terminal failure and clears both overlapping sessions", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = upstream.refreshRequests;
+    upstream.refreshBehavior = "terminal";
+    upstream.refreshDelayMs = 250;
+
+    const [first, second] = await Promise.all([requestSession(cookie), requestSession(cookie)]);
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+    for (const response of [first, second]) {
+      expect(response.status, await response.clone().text()).toBe(204);
+      await expect(response.text()).resolves.toBe("");
+      expect(response.headers.get("set-cookie")).toMatch(
+        /directus_session=;.*(?:Max-Age=0|Expires=Thu, 01 Jan 1970)/
+      );
+    }
+  });
+
+  it("clears the session cookie after a terminal refresh rejection", async () => {
+    const cookie = await loginWithAccessToken(1);
+    upstream.refreshBehavior = "terminal";
+
+    const response = await requestSession(cookie);
+    expect(response.status, await response.clone().text()).toBe(204);
+    await expect(response.text()).resolves.toBe("");
+    expect(response.headers.get("set-cookie")).toMatch(
+      /directus_session=;.*(?:Max-Age=0|Expires=Thu, 01 Jan 1970)/
+    );
+  });
+
+  it("does not refresh a session with a fresh access token", async () => {
+    const cookie = await loginWithAccessToken(120_000);
+    const refreshCountBefore = upstream.refreshRequests;
+
+    const response = await requestSession(cookie);
+    expect(response.status, await response.clone().text()).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ userId: "user-1" });
+    expect(upstream.refreshRequests).toBe(refreshCountBefore);
+  });
+
+  it("uses the refreshed access token for authenticated server requests", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = upstream.refreshRequests;
+
+    const response = await fetch(url("/api/directus-server"), { headers: { cookie } });
+    expect(response.status, await response.clone().text()).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ count: 1, firstId: "page-1" });
+    expect(upstream.refreshRequests).toBe(refreshCountBefore + 1);
+    expect(upstream.lastItemsAuthorization).toBe("Bearer refreshed-access");
+  });
+
   it.each([
     "/_directus/auth/login",
     "/_directus/auth/refresh",
