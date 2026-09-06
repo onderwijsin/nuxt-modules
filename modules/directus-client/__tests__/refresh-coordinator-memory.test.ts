@@ -66,6 +66,28 @@ describe("Directus memory refresh coordination", () => {
     expect(followerOperation).not.toHaveBeenCalled();
   });
 
+  it("discards a rejected owner promise so a later request can become owner", async () => {
+    const coordinator = createMemoryCoordinator();
+    const firstOperation = vi.fn(async () => {
+      throw new Error("unexpected owner failure");
+    });
+
+    await expect(coordinator.coordinate("rejected-owner", firstOperation)).rejects.toThrow(
+      "unexpected owner failure"
+    );
+
+    const secondOperation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
+      flight: { status: "completed", sealedSession: "boop1:recovered" },
+      value: "recovered"
+    }));
+    await expect(coordinator.coordinate("rejected-owner", secondOperation)).resolves.toEqual({
+      source: "owner",
+      flight: { status: "completed", sealedSession: "boop1:recovered" },
+      value: "recovered"
+    });
+    expect(secondOperation).toHaveBeenCalledOnce();
+  });
+
   it("expires transient results after one second and completed results after thirty seconds", async () => {
     vi.useFakeTimers();
     try {
@@ -97,6 +119,43 @@ describe("Directus memory refresh coordination", () => {
         flight: { sealedSession: "boop1:after-expiry" }
       });
       expect(operation).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("expires terminal results after five seconds", async () => {
+    vi.useFakeTimers();
+    try {
+      const coordinator = createMemoryCoordinator();
+      const operation = vi
+        .fn<() => Promise<RefreshOwnerResult<string>>>()
+        .mockResolvedValueOnce({
+          flight: { status: "failed", outcome: "terminal" }
+        })
+        .mockResolvedValueOnce({
+          flight: { status: "completed", sealedSession: "boop1:after-terminal-expiry" },
+          value: "recovered"
+        });
+
+      await expect(coordinator.coordinate("terminal-ttl", operation)).resolves.toMatchObject({
+        source: "owner",
+        flight: { status: "failed", outcome: "terminal" }
+      });
+      vi.advanceTimersByTime(4_999);
+      await expect(coordinator.coordinate("terminal-ttl", operation)).resolves.toEqual({
+        source: "shared",
+        flight: { status: "failed", outcome: "terminal" }
+      });
+      expect(operation).toHaveBeenCalledOnce();
+
+      vi.advanceTimersByTime(2);
+      await expect(coordinator.coordinate("terminal-ttl", operation)).resolves.toMatchObject({
+        source: "owner",
+        flight: { status: "completed", sealedSession: "boop1:after-terminal-expiry" },
+        value: "recovered"
+      });
+      expect(operation).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
     }

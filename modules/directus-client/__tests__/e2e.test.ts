@@ -260,6 +260,37 @@ describe("Directus client and server composables", async () => {
     expect(getSessionCookie(recovered)).toBeTruthy();
   });
 
+  it("shares one transient failure between overlapping requests", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = refreshRequests;
+    refreshBehavior = "transient";
+    refreshDelayMs = 250;
+
+    const [first, second] = await Promise.all([requestSession(cookie), requestSession(cookie)]);
+    expect(first.status, await first.clone().text()).toBe(503);
+    expect(second.status, await second.clone().text()).toBe(503);
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+    expect(first.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+    expect(second.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+  });
+
+  it("shares one terminal failure and clears both overlapping sessions", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = refreshRequests;
+    refreshBehavior = "terminal";
+    refreshDelayMs = 250;
+
+    const [first, second] = await Promise.all([requestSession(cookie), requestSession(cookie)]);
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+    for (const response of [first, second]) {
+      expect(response.status, await response.clone().text()).toBe(204);
+      await expect(response.text()).resolves.toBe("");
+      expect(response.headers.get("set-cookie")).toMatch(
+        /directus_session=;.*(?:Max-Age=0|Expires=Thu, 01 Jan 1970)/
+      );
+    }
+  });
+
   it("clears the session cookie after a terminal refresh rejection", async () => {
     const cookie = await loginWithAccessToken(1);
     refreshBehavior = "terminal";

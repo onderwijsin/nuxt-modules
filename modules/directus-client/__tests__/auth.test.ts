@@ -298,6 +298,15 @@ describe("Directus memory refresh coordination", () => {
     expect(state.session.clear).toHaveBeenCalled();
   });
 
+  it("treats a malformed successful refresh response as terminal", async () => {
+    state.current = expiringSession();
+    mockFetch(jsonResponse({ data: { access_token: "new-access" } }));
+
+    await expect(ensureFreshDirectusSession(createTestEvent())).rejects.toThrow();
+    expect(state.session.clear).toHaveBeenCalledOnce();
+    expect(state.session.writeCookie).not.toHaveBeenCalled();
+  });
+
   it("preserves the session for transient upstream failures", async () => {
     state.current = expiringSession();
     mockFetch(Object.assign(new Error("upstream failure"), { statusCode: 500 }));
