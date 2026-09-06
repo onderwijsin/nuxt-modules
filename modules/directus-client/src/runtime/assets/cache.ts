@@ -10,12 +10,9 @@ import { useNitroApp, useStorage } from "nitropack/runtime";
 
 type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
 
-/** Nitro-application-owned holder for a lazily created asset cache handler. */
-export interface DirectusAssetCacheContext {
-  readonly get: (
-    config: AssetCacheConfig,
-    fetchAnonymous: (event: HTTPEvent) => Promise<Response>
-  ) => CachedEventHandler<HTTPEvent>;
+/** Nitro-application-owned lazy state for one immutable asset cache handler. */
+export interface DirectusAssetCacheState {
+  handler?: CachedEventHandler<HTTPEvent>;
 }
 
 /**
@@ -33,7 +30,9 @@ function getCacheControlDirectives(value: string): Set<string> {
   );
 }
 
-/** Resolves a configured Nitro storage mount through Nitro's server-only storage runtime.
+/**
+ * Resolves a configured Nitro storage mount through Nitro's server-only storage runtime.
+ *
  * @param mount Nitro storage mount name.
  * @returns The configured Nitro storage mount.
  */
@@ -46,7 +45,9 @@ async function resolveAssetStorage(mount: string) {
   return useStorage(mount);
 }
 
-/** Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
+/**
+ * Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
+ *
  * @param mount Nitro storage mount name.
  * @returns An ocache storage interface backed by raw unstorage operations.
  */
@@ -61,43 +62,58 @@ export function createAssetCacheStorage(mount: string) {
   });
 }
 
-/** Creates a Nitro-application-owned lazy asset cache handler holder.
- * @returns A holder whose handler is created on first use.
+/**
+ * Creates empty state for one Nitro application's asset cache handler.
+ *
+ * @returns Empty application-owned cache state.
  */
-export function createAssetCacheContext(): DirectusAssetCacheContext {
-  let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
-  return {
-    get(config, fetchAnonymous) {
-      cachedHandler ??= defineCachedHandler(fetchAnonymous, {
-        name: "directus-assets",
-        storage: () => createAssetCacheStorage(config.storage),
-        maxAge: config.maxAge,
-        maxBodySize: config.maxBodySize,
-        swr: config.swr,
-        staleMaxAge: config.staleMaxAge,
-        varies: ["accept"],
-        allowQuery: true,
-        sendCacheControl: false,
-        cacheStatusHeader: "x-directus-asset-cache",
-        stream: true,
-        shouldBypassCache: (event) =>
-          event.req.headers.has("if-match") || event.req.headers.has("if-unmodified-since"),
-        shouldCache: (entry) => {
-          const directives = getCacheControlDirectives(entry.headers["cache-control"] ?? "");
-          return (
-            entry.status === 200 &&
-            directives.has("public") &&
-            !directives.has("private") &&
-            !directives.has("no-store")
-          );
-        }
-      });
-      return cachedHandler;
-    }
-  };
+export function createAssetCacheState(): DirectusAssetCacheState {
+  return {};
 }
 
-/** Lazily gets the anonymous-only cached Directus asset handler from the Nitro application.
+/**
+ * Gets or creates the immutable cached handler owned by an application state.
+ *
+ * @param state Application-owned cache state.
+ * @param config Cache settings used on first creation.
+ * @param fetchAnonymous Anonymous-only resolver used on first creation.
+ * @returns The application-scoped cached handler.
+ */
+export function getOrCreateAssetCacheHandler(
+  state: DirectusAssetCacheState,
+  config: AssetCacheConfig,
+  fetchAnonymous: (event: HTTPEvent) => Promise<Response>
+): CachedEventHandler<HTTPEvent> {
+  state.handler ??= defineCachedHandler(fetchAnonymous, {
+    name: "directus-assets",
+    storage: () => createAssetCacheStorage(config.storage),
+    maxAge: config.maxAge,
+    maxBodySize: config.maxBodySize,
+    swr: config.swr,
+    staleMaxAge: config.staleMaxAge,
+    varies: ["accept"],
+    allowQuery: true,
+    sendCacheControl: false,
+    cacheStatusHeader: "x-directus-asset-cache",
+    stream: true,
+    shouldBypassCache: (event) =>
+      event.req.headers.has("if-match") || event.req.headers.has("if-unmodified-since"),
+    shouldCache: (entry) => {
+      const directives = getCacheControlDirectives(entry.headers["cache-control"] ?? "");
+      return (
+        entry.status === 200 &&
+        directives.has("public") &&
+        !directives.has("private") &&
+        !directives.has("no-store")
+      );
+    }
+  });
+  return state.handler;
+}
+
+/**
+ * Lazily gets the anonymous-only cached Directus asset handler from the Nitro application.
+ *
  * @param config Cache settings.
  * @param fetchAnonymous Anonymous-only resolver.
  * @returns The application-scoped cached handler.
@@ -106,12 +122,14 @@ export function getAssetCacheHandler(
   config: AssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
-  const context = useNitroApp().directusAssetCache;
-  if (!context) throw new Error("Directus asset cache plugin is not registered");
-  return context.get(config, fetchAnonymous);
+  const state = useNitroApp().directusAssetCache;
+  if (!state) throw new Error("Directus asset cache plugin is not registered");
+  return getOrCreateAssetCacheHandler(state, config, fetchAnonymous);
 }
 
-/** Adapts the current H3 event to ocache's portable HTTP event shape.
+/**
+ * Adapts the current H3 event to ocache's portable HTTP event shape.
+ *
  * @param event Current H3 event.
  * @param target Directus request URL.
  * @param headers Sanitized request headers.

@@ -1,8 +1,8 @@
-import type { DirectusAssetCacheContext } from "../assets/cache";
+import type { DirectusAssetCacheState } from "../assets/cache";
 
 declare module "nitropack/types" {
   interface NitroApp {
-    directusAssetCache?: DirectusAssetCacheContext;
+    directusAssetCache?: DirectusAssetCacheState;
   }
 }
 

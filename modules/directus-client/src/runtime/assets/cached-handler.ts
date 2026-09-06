@@ -1,15 +1,13 @@
 import { assertMethod, defineEventHandler, getRequestHeaders, getRequestURL } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { getAssetCacheHandler, createAssetCacheEvent } from "./cache";
-import {
-  applyPrivateAssetCachePolicy,
-  retryAssetWithFreshSession,
-  type AssetAuthenticationOptions
-} from "./authentication";
+import { resolveAssetWithSessionFallback, type AssetAuthenticationOptions } from "./authentication";
 import { fetchDirectusAsset, getAssetRequestHeaders, type AssetRequestMethod } from "./transport";
 import { resolveDirectusAssetUrl } from "./url";
 
-/** Proxies an asset through the anonymous-only cache and applies auth outside it.
+/**
+ * Proxies an asset through the anonymous-only cache and applies auth outside it.
+ *
  * @param event Incoming request event.
  * @returns The cached or session-backed response.
  */
@@ -40,7 +38,7 @@ export default defineEventHandler(async (event) => {
     authEnabled: config.directusClient.auth.enabled,
     publicOnly: config.directusClient.assets.publicOnly
   };
-  const result = await retryAssetWithFreshSession(
+  return resolveAssetWithSessionFallback(
     event,
     target,
     method,
@@ -48,5 +46,4 @@ export default defineEventHandler(async (event) => {
     cachedResponse,
     authentication
   );
-  return result.authenticated ? applyPrivateAssetCachePolicy(result.response) : result.response;
 });

@@ -1,9 +1,11 @@
 import { defineNitroPlugin } from "nitropack/runtime";
-import { createAssetCacheContext } from "./cache";
+import { createAssetCacheState } from "./cache";
 
-/** Owns the lazy Directus asset cache handler for one Nitro application.
+/**
+ * Owns the lazy Directus asset cache handler for one Nitro application.
+ *
  * @param nitroApp Nitro application instance.
  */
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.directusAssetCache = createAssetCacheContext();
+  nitroApp.directusAssetCache = createAssetCacheState();
 });

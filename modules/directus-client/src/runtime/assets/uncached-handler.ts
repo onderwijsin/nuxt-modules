@@ -8,14 +8,12 @@ import {
 } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { fetchDirectusAsset, getAssetRequestHeaders, type AssetRequestMethod } from "./transport";
-import {
-  applyPrivateAssetCachePolicy,
-  retryAssetWithFreshSession,
-  type AssetAuthenticationOptions
-} from "./authentication";
+import { resolveAssetWithSessionFallback, type AssetAuthenticationOptions } from "./authentication";
 import { resolveDirectusAssetUrl } from "./url";
 
-/** Creates the Fetch adapter used by H3's streaming proxy.
+/**
+ * Creates the Fetch adapter used by H3's streaming proxy.
+ *
  * @param event Incoming request event.
  * @param options Authentication policy.
  * @returns A Fetch-compatible streaming adapter.
@@ -34,19 +32,13 @@ export function createDirectusAssetFetch(
       headers,
       ...(init?.signal ? { signal: init.signal } : {})
     });
-    const result = await retryAssetWithFreshSession(
-      event,
-      target,
-      method,
-      headers,
-      anonymous,
-      options
-    );
-    return result.authenticated ? applyPrivateAssetCachePolicy(result.response) : result.response;
+    return resolveAssetWithSessionFallback(event, target, method, headers, anonymous, options);
   };
 }
 
-/** Proxies uncached assets with H3 streaming and anonymous-first authentication.
+/**
+ * Proxies uncached assets with H3 streaming and anonymous-first authentication.
+ *
  * @param event Incoming request event.
  * @returns The proxied response.
  */
