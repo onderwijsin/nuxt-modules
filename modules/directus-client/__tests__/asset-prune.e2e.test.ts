@@ -65,12 +65,13 @@ describe("Directus asset-cache pruning end to end", () => {
     await new Promise((resolve) => setTimeout(resolve, 1_100));
     await expect($fetch<string>("/_directus/assets/asset-b")).resolves.toBe("asset-b");
 
-    let keysForB: string[] = [];
     await waitFor(async () => {
       const keys = (await getKeys()).filter((key) => key !== "foreign-key");
-      keysForB = keys.filter((key) => !keysAfterA.includes(key));
-      return keysForB.length > 0;
+      return keys.some((key) => !keysAfterA.includes(key));
     });
+    const keysForB = (await getKeys()).filter(
+      (key) => key !== "foreign-key" && !keysAfterA.includes(key)
+    );
 
     await waitFor(async () => {
       const keys = await getKeys();
