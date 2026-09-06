@@ -1,9 +1,18 @@
 import { assertMethod, defineEventHandler, getRequestHeaders, getRequestURL } from "h3";
 import { useRuntimeConfig } from "#imports";
+import type { HTTPEvent } from "ocache";
 import { getAssetCacheHandler, createAssetCacheEvent } from "./cache";
 import { resolveAssetWithSessionFallback, type AssetAuthenticationOptions } from "./authentication";
 import { fetchDirectusAsset, getAssetRequestHeaders, type AssetRequestMethod } from "./transport";
 import { resolveDirectusAssetUrl } from "./url";
+
+function fetchAnonymousAsset(cachedEvent: HTTPEvent): Promise<Response> {
+  return fetchDirectusAsset(cachedEvent.req.url, {
+    method: cachedEvent.req.method === "HEAD" ? "HEAD" : "GET",
+    headers: getAssetRequestHeaders(cachedEvent.req.headers),
+    signal: cachedEvent.req.signal
+  });
+}
 
 /**
  * Proxies an asset through the anonymous-only cache and applies auth outside it.
@@ -24,13 +33,9 @@ export default defineEventHandler(async (event) => {
   });
   const cache = config.directusClient.assets.cache;
   if (cache.enabled !== true) throw new Error("Directus asset cache is not enabled");
-  const cachedResponse = await getAssetCacheHandler(cache, (cachedEvent) =>
-    fetchDirectusAsset(cachedEvent.req.url, {
-      method: cachedEvent.req.method === "HEAD" ? "HEAD" : "GET",
-      headers: getAssetRequestHeaders(cachedEvent.req.headers),
-      signal: cachedEvent.req.signal
-    })
-  )(createAssetCacheEvent(event, target, headers));
+  const cacheHandler = getAssetCacheHandler(cache, fetchAnonymousAsset);
+  const cacheEvent = createAssetCacheEvent(event, target, headers);
+  const cachedResponse = await cacheHandler(cacheEvent);
   if (!(cachedResponse instanceof Response)) {
     throw new Error("Directus asset cache returned an invalid response");
   }

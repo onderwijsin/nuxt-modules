@@ -65,11 +65,16 @@ describe("Directus asset module registration", () => {
   });
 
   it.each([
-    [false, "assets/uncached-handler", false],
-    [true, "assets/cached-handler", true]
+    {
+      cacheEnabled: false,
+      handler: "assets/uncached-handler",
+      pluginEnabled: false,
+      name: "uncached"
+    },
+    { cacheEnabled: true, handler: "assets/cached-handler", pluginEnabled: true, name: "cached" }
   ])(
-    "registers the %s asset handler and matching cache plugin",
-    async (cacheEnabled, handler, pluginEnabled) => {
+    "registers the $name asset handler and matching cache plugin",
+    async ({ cacheEnabled, handler, pluginEnabled }) => {
       const module = (await import("../src/module")).default;
       const nuxt = createNuxt();
 
@@ -97,22 +102,4 @@ describe("Directus asset module registration", () => {
         expect(addServerPlugin).toHaveBeenCalledWith("./runtime/assets/nitro-plugin");
     }
   );
-
-  it("selects the asset handler during module setup", async () => {
-    const module = (await import("../src/module")).default;
-    const nuxt = createNuxt();
-
-    await Reflect.get(module, "setup")(
-      {
-        instance: { baseUrl: "https://cms.example.test" },
-        client: { assets: { cache: { enabled: false } } }
-      },
-      nuxt
-    );
-
-    const registration = addServerHandler.mock.calls.find(
-      ([value]) => value.route === "/_directus/assets/**"
-    );
-    expect(registration?.[0].handler).toBe("./runtime/assets/uncached-handler");
-  });
 });

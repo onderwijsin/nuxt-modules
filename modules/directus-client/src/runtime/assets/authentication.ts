@@ -6,6 +6,10 @@ export interface AssetAuthenticationOptions {
   readonly publicOnly: boolean;
 }
 
+function isAuthenticationFailure(response: Response): boolean {
+  return response.status === 401 || response.status === 403;
+}
+
 /**
  * Resolves an anonymous asset response with the request-scoped session fallback when required.
  *
@@ -25,13 +29,19 @@ export async function resolveAssetWithSessionFallback(
   response: Response,
   options: AssetAuthenticationOptions
 ): Promise<Response> {
-  if (![401, 403].includes(response.status) || options.publicOnly || !options.authEnabled) {
+  if (!isAuthenticationFailure(response) || options.publicOnly || !options.authEnabled) {
     return response;
   }
 
   const authState = await event.context.directusAuth?.resolve();
   if (!authState?.accessToken) return response;
-  if (response.body) await response.body.cancel().catch(() => undefined);
+  if (response.body) {
+    try {
+      await response.body.cancel();
+    } catch {
+      // Cancelling the anonymous response is best-effort.
+    }
+  }
 
   const authenticatedResponse = await fetchDirectusAsset(target, {
     method,

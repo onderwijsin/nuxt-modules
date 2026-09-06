@@ -18,7 +18,7 @@ import { resolveDirectusAssetUrl } from "./url";
  * @param options Authentication policy.
  * @returns A Fetch-compatible streaming adapter.
  */
-export function createDirectusAssetFetch(
+function createDirectusAssetFetch(
   event: H3Event,
   options: AssetAuthenticationOptions
 ): typeof fetch {
