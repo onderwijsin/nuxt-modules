@@ -1,6 +1,7 @@
 import {
   createBlobStorage,
   defineCachedHandler,
+  resolveCacheKeys,
   type CachedEventHandler,
   type HTTPEvent
 } from "ocache";
@@ -16,6 +17,7 @@ export type EnabledDirectusAssetCacheConfig = Extract<
 export const DIRECTUS_ASSET_CACHE_BASE = "/cache";
 export const DIRECTUS_ASSET_CACHE_GROUP = "handlers";
 export const DIRECTUS_ASSET_CACHE_NAME = "directus-assets";
+const ASSET_CACHE_NAMESPACE_PROBE = "__namespace_probe__";
 
 /** Nitro-application-owned lazy state for one immutable asset cache handler. */
 export interface DirectusAssetCacheState {
@@ -73,6 +75,33 @@ export function createAssetCacheStorage(mount: string) {
       await storage.setItemRaw(key, value, { ttl: options?.ttl });
     }
   });
+}
+
+/**
+ * Resolves the storage namespace used by ocache for Directus asset entries.
+ *
+ * @returns The ocache-owned storage prefix for Directus asset entries.
+ */
+export async function resolveAssetCacheStoragePrefix(): Promise<string> {
+  const [key] = await resolveCacheKeys({
+    options: {
+      base: DIRECTUS_ASSET_CACHE_BASE,
+      group: DIRECTUS_ASSET_CACHE_GROUP,
+      name: DIRECTUS_ASSET_CACHE_NAME,
+      getKey: () => ASSET_CACHE_NAMESPACE_PROBE
+    }
+  });
+
+  if (!key) {
+    throw new Error("Could not resolve Directus asset cache storage namespace");
+  }
+
+  const separator = key.lastIndexOf(":");
+  if (separator < 0) {
+    throw new Error("Could not resolve Directus asset cache storage namespace");
+  }
+
+  return key.slice(0, separator + 1);
 }
 
 /**

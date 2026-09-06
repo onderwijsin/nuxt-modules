@@ -36,9 +36,10 @@ vi.mock("nitropack/runtime", () => ({
   useStorage: (mount?: string) => (mount ? runtime.storage : runtime.rootStorage)
 }));
 
-const { createAssetCacheStorage } = await import("../src/runtime/assets/cache");
+const { createAssetCacheStorage, resolveAssetCacheStoragePrefix } =
+  await import("../src/runtime/assets/cache");
 const { pruneAssetCache } = await import("../src/runtime/assets/prune");
-const { DIRECTUS_ASSET_CACHE_PREFIX } = await import("../src/runtime/assets/prune");
+const assetCachePrefix = await resolveAssetCacheStoragePrefix();
 
 const now = 10_000_000;
 const config = {
@@ -76,17 +77,17 @@ describe("Directus asset-cache pruning", () => {
     ["at the expiry boundary", 60_000, false],
     ["one millisecond after expiry", 60_001, true]
   ])("uses strict ocache expiry semantics %s", async (_label, age, removed) => {
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}entry.json`, { mtime: now - age });
+    await put(`${assetCachePrefix}entry.json`, { mtime: now - age });
     const result = await pruneAssetCache(config, now);
     expect(result.removed).toBe(removed ? 1 : 0);
   });
 
   it("supports finite and unbounded SWR lifetimes", async () => {
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}finite.json`, {
+    await put(`${assetCachePrefix}finite.json`, {
       mtime: now - 91_000,
       staleMaxAge: 30
     });
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}unbounded.json`, {
+    await put(`${assetCachePrefix}unbounded.json`, {
       mtime: now - 1_000_000
     });
     const finite = await pruneAssetCache({ ...config, swr: true, staleMaxAge: undefined }, now);
@@ -95,11 +96,11 @@ describe("Directus asset-cache pruning", () => {
   });
 
   it("honors stored lifetime overrides, including zero", async () => {
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}max-age.json`, {
+    await put(`${assetCachePrefix}max-age.json`, {
       mtime: now - 61_000,
       maxAge: 120
     });
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}stale-zero.json`, {
+    await put(`${assetCachePrefix}stale-zero.json`, {
       mtime: now - 61_000,
       staleMaxAge: 0
     });
@@ -114,18 +115,18 @@ describe("Directus asset-cache pruning", () => {
     ["missing headers", { mtime: now, value: { status: 200, body: "asset" } }],
     ["invalid body", { mtime: now, value: { status: 200, headers: {}, body: {} } }]
   ])("removes decoded entries with %s", async (_label, entry) => {
-    const key = `${DIRECTUS_ASSET_CACHE_PREFIX}malformed.json`;
+    const key = `${assetCachePrefix}malformed.json`;
     await putRaw(key, entry);
     const result = await pruneAssetCache({ ...config, swr: true, staleMaxAge: undefined }, now);
     expect(result).toMatchObject({ scanned: 1, removed: 1, retained: 0, skipped: 0 });
   });
 
   it("retains string and binary cached response bodies", async () => {
-    await putRaw(`${DIRECTUS_ASSET_CACHE_PREFIX}string.json`, {
+    await putRaw(`${assetCachePrefix}string.json`, {
       mtime: now,
       value: { status: 200, headers: {}, body: "asset" }
     });
-    await putRaw(`${DIRECTUS_ASSET_CACHE_PREFIX}binary.json`, {
+    await putRaw(`${assetCachePrefix}binary.json`, {
       mtime: now,
       value: { status: 200, headers: {}, body: new Uint8Array([1, 2, 3]) },
       payload: "value.body"
@@ -135,23 +136,23 @@ describe("Directus asset-cache pruning", () => {
   });
 
   it("expires a stored maxAge of zero immediately", async () => {
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}zero.json`, { mtime: now, maxAge: 0 });
+    await put(`${assetCachePrefix}zero.json`, { mtime: now, maxAge: 0 });
     const result = await pruneAssetCache(config, now);
     expect(result.removed).toBe(1);
   });
 
   it("removes malformed frames and decoded metadata but skips backend failures", async () => {
-    const malformedFrame = `${DIRECTUS_ASSET_CACHE_PREFIX}frame.json`;
+    const malformedFrame = `${assetCachePrefix}frame.json`;
     runtime.values.set(malformedFrame, new Uint8Array([1, 2, 3]));
-    const invalidMtime = `${DIRECTUS_ASSET_CACHE_PREFIX}mtime.json`;
+    const invalidMtime = `${assetCachePrefix}mtime.json`;
     await put(invalidMtime, { mtime: -1 });
-    const readFailure = `${DIRECTUS_ASSET_CACHE_PREFIX}read.json`;
+    const readFailure = `${assetCachePrefix}read.json`;
     await put(readFailure, { mtime: now - 100_000 });
     runtime.failures.add(readFailure);
-    const deleteFailure = `${DIRECTUS_ASSET_CACHE_PREFIX}delete.json`;
+    const deleteFailure = `${assetCachePrefix}delete.json`;
     await put(deleteFailure, { mtime: now - 100_000 });
     runtime.deleteFailures.add(deleteFailure);
-    const later = `${DIRECTUS_ASSET_CACHE_PREFIX}later.json`;
+    const later = `${assetCachePrefix}later.json`;
     await put(later, { mtime: now - 100_000 });
 
     const result = await pruneAssetCache(config, now);
@@ -162,8 +163,8 @@ describe("Directus asset-cache pruning", () => {
   });
 
   it("removes entries with invalid present lifetime metadata", async () => {
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}max-age.json`, { mtime: now, maxAge: -1 });
-    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}stale-age.json`, {
+    await put(`${assetCachePrefix}max-age.json`, { mtime: now, maxAge: -1 });
+    await put(`${assetCachePrefix}stale-age.json`, {
       mtime: now,
       staleMaxAge: "invalid"
     });

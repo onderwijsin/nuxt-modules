@@ -7,12 +7,7 @@ import {
 } from "@onderwijsin/nuxt-module-utils/shared";
 import { useStorage } from "nitropack/runtime";
 import type { EnabledDirectusAssetCacheConfig } from "./cache";
-import {
-  createAssetCacheStorage,
-  DIRECTUS_ASSET_CACHE_BASE,
-  DIRECTUS_ASSET_CACHE_GROUP,
-  DIRECTUS_ASSET_CACHE_NAME
-} from "./cache";
+import { createAssetCacheStorage, resolveAssetCacheStoragePrefix } from "./cache";
 
 export interface AssetCachePruneSummary {
   scanned: number;
@@ -20,9 +15,6 @@ export interface AssetCachePruneSummary {
   retained: number;
   skipped: number;
 }
-
-export const DIRECTUS_ASSET_CACHE_PREFIX = `${DIRECTUS_ASSET_CACHE_BASE}:${DIRECTUS_ASSET_CACHE_GROUP}:${DIRECTUS_ASSET_CACHE_NAME}:`;
-const DIRECTUS_ASSET_CACHE_NORMALIZED_PREFIX = `${DIRECTUS_ASSET_CACHE_BASE.replaceAll("/", "")}:${DIRECTUS_ASSET_CACHE_GROUP}:${DIRECTUS_ASSET_CACHE_NAME.replace(/\W/g, "")}.`;
 
 type AssetCacheEntryDisposition = "retain" | "expired" | "malformed";
 
@@ -83,14 +75,8 @@ export async function pruneAssetCache(
   }
 
   const storage = useStorage(config.storage);
-  const scopedKeys = await storage.getKeys(DIRECTUS_ASSET_CACHE_PREFIX);
-  const normalizedKeys =
-    scopedKeys.length === 0 ? await storage.getKeys(DIRECTUS_ASSET_CACHE_NORMALIZED_PREFIX) : [];
-  const keys = [...new Set([...scopedKeys, ...normalizedKeys])].filter(
-    (key) =>
-      key.startsWith(DIRECTUS_ASSET_CACHE_PREFIX) ||
-      key.startsWith(DIRECTUS_ASSET_CACHE_NORMALIZED_PREFIX)
-  );
+  const prefix = await resolveAssetCacheStoragePrefix();
+  const keys = await storage.getKeys(prefix);
   const cacheStorage = createAssetCacheStorage(config.storage);
   const summary: AssetCachePruneSummary = {
     scanned: keys.length,

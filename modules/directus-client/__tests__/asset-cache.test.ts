@@ -26,8 +26,12 @@ vi.mock("nitropack/runtime", () => ({
   useStorage: (mount?: string) => (mount ? state.storage : state.rootStorage)
 }));
 
-const { createAssetCacheState, createAssetCacheStorage, getOrCreateAssetCacheHandler } =
-  await import("../src/runtime/assets/cache");
+const {
+  createAssetCacheState,
+  createAssetCacheStorage,
+  getOrCreateAssetCacheHandler,
+  resolveAssetCacheStoragePrefix
+} = await import("../src/runtime/assets/cache");
 const { fetchDirectusAsset } = await import("../src/runtime/assets/transport");
 
 let resolveAnonymous: (event: HTTPEvent) => Promise<Response>;
@@ -51,6 +55,15 @@ describe("Directus asset cache", () => {
     handler = getOrCreateAssetCacheHandler(stateForTest, cacheConfig, (event) =>
       resolveAnonymous(event)
     );
+  });
+
+  it("resolves the escaped ocache storage namespace", async () => {
+    const prefix = await resolveAssetCacheStoragePrefix();
+
+    expect(prefix).toContain("handlers:");
+    expect(prefix).not.toContain("directus-assets");
+    expect(prefix).toContain("directusassets.");
+    expect(prefix.endsWith(":")).toBe(true);
   });
 
   it("reuses a handler within state and isolates different application state", () => {

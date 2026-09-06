@@ -54,6 +54,7 @@ describe("Directus asset-cache pruning end to end", () => {
 
   it("removes stale entries while retaining fresh and foreign storage data", async () => {
     await expect($fetch<string>("/_directus/assets/asset-a")).resolves.toBe("asset-a");
+    await waitFor(async () => (await getKeys()).some((key) => key !== "foreign-key"));
     const keysAfterA = await getKeys();
     expect(keysAfterA.length, keysAfterA.join(", ")).toBeGreaterThan(0);
 
@@ -64,9 +65,12 @@ describe("Directus asset-cache pruning end to end", () => {
     await new Promise((resolve) => setTimeout(resolve, 1_100));
     await expect($fetch<string>("/_directus/assets/asset-b")).resolves.toBe("asset-b");
 
-    const keysAfterB = (await getKeys()).filter((key) => key !== "foreign-key");
-    const keysForB = keysAfterB.filter((key) => !keysAfterA.includes(key));
-    expect(keysForB.length).toBeGreaterThan(0);
+    let keysForB: string[] = [];
+    await waitFor(async () => {
+      const keys = (await getKeys()).filter((key) => key !== "foreign-key");
+      keysForB = keys.filter((key) => !keysAfterA.includes(key));
+      return keysForB.length > 0;
+    });
 
     await waitFor(async () => {
       const keys = await getKeys();
