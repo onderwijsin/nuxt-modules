@@ -61,6 +61,7 @@
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
     "@nuxt/test-utils": "catalog:",
+    "ioredis": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"

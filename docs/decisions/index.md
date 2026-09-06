@@ -10,6 +10,7 @@ They are binding for the feature they cover until explicitly revisited.
 | [Compatibility testing policy](compatibility-testing.md)                    | Accepted | 2026-08-15 | Supported Node, Nuxt, and deployment-runtime validation               |
 | [Shared Directus configuration](directus-config.md)                         | Accepted | 2026-08-12 | Directus configuration discovery, schemas, and module composition     |
 | [Directus and Nitro error normalization](directus-error-normalization.md)   | Accepted | 2026-08-13 | Directus client error boundary and Nitro validation errors            |
+| [Directus refresh coordinator](directus-refresh-coordinator.md)             | Accepted | 2026-09-05 | Directus refresh single-flight coordination and reusable results      |
 | [Directus sealed session](directus-sealed-session.md)                       | Accepted | 2026-08-13 | Session sealing, rotation, cookies, and runtime boundaries            |
 | [Directus session authentication](directus-session-auth.md)                 | Accepted | 2026-08-13 | Directus login, refresh, logout, and session facade                   |
 | [Sentry config reads `NITRO_PRESET`](sentry-config-nitro-preset.md)         | Accepted | 2026-08-11 | Sentry module setup and Nitro runtime selection                       |

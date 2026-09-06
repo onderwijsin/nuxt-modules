@@ -181,6 +181,21 @@ pnpm exec vitest run modules/ui-form-extensions/__tests__
 pnpm exec vitest run packages/module-utils/__tests__
 ```
 
+The Directus client Valkey E2E suite requires a local ephemeral Valkey instance because it starts
+two independent Nitro processes and coordinates them through real Redis storage. Start the pinned
+Valkey image, run the focused suite with `DIRECTUS_E2E_REDIS_URL`, then remove the container:
+
+```sh
+pnpm valkey:e2e:start
+
+DIRECTUS_E2E_REDIS_URL=redis://127.0.0.1:16379 \
+  pnpm exec vitest run modules/directus-client/__tests__/e2e-valkey.test.ts
+
+pnpm valkey:e2e:stop
+```
+
+When `DIRECTUS_E2E_REDIS_URL` is not set, this suite is skipped during ordinary local test runs.
+
 Package-level type checks run recursively with:
 
 ```sh

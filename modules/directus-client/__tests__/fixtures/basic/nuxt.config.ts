@@ -1,8 +1,23 @@
 import directusModule from "../../../src/module";
 
+const refreshRedisUrl = process.env.DIRECTUS_E2E_REDIS_URL;
+
 export default defineNuxtConfig({
   modules: [directusModule],
   turnstile: { siteKey: "fixture-site-key", secretKey: "fixture-secret-key" },
+  nitro: {
+    storage: {
+      "directus-auth-refresh": {
+        driver: refreshRedisUrl ? "redis" : "memory",
+        ...(refreshRedisUrl
+          ? {
+              url: refreshRedisUrl,
+              base: process.env.DIRECTUS_E2E_REDIS_BASE ?? "directus-e2e"
+            }
+          : {})
+      }
+    }
+  },
   directusClient: {
     instance: {
       baseUrl: process.env.DIRECTUS_E2E_URL ?? "https://sandbox.directus.com"

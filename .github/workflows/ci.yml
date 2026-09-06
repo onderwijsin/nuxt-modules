@@ -145,6 +145,9 @@ jobs:
           if [[ "${{ needs.detect_changes.outputs.phase_lint }}" == "true" ]]; then pnpm lint; fi
       - name: Validate module documentation
         run: pnpm validate:docs
+      - name: Start Valkey for Directus E2E tests
+        if: needs.detect_changes.outputs.phase_test == 'true' && contains(env.TEST_PATHS, 'modules/directus-client/__tests__')
+        run: VALKEY_E2E_PORT=6379 pnpm valkey:e2e:start
       - name: Run focused type checks
         if: needs.detect_changes.outputs.phase_typecheck == 'true'
         env:
@@ -163,6 +166,9 @@ jobs:
             test_paths+=("$path")
           done
           pnpm exec vitest run "${test_paths[@]}"
+      - name: Stop Valkey for Directus E2E tests
+        if: always() && needs.detect_changes.outputs.phase_test == 'true' && contains(env.TEST_PATHS, 'modules/directus-client/__tests__')
+        run: pnpm valkey:e2e:stop
       - name: Build focused package artifacts
         if: needs.detect_changes.outputs.phase_pack == 'true' && needs.detect_changes.outputs.artifact_packages != ''
         shell: bash
@@ -225,9 +231,15 @@ jobs:
         env:
           PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
         run: pnpm typecheck
+      - name: Start Valkey for Directus E2E tests
+        if: needs.detect_changes.outputs.phase_test == 'true'
+        run: VALKEY_E2E_PORT=6379 pnpm valkey:e2e:start
       - name: Run full tests
         if: needs.detect_changes.outputs.phase_test == 'true'
         run: pnpm test:coverage
+      - name: Stop Valkey for Directus E2E tests
+        if: always() && needs.detect_changes.outputs.phase_test == 'true'
+        run: pnpm valkey:e2e:stop
       - run: pnpm build:packages
         if: needs.detect_changes.outputs.phase_build == 'true'
       - run: pnpm validate:packages
