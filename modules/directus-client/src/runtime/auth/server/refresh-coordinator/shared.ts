@@ -1,6 +1,6 @@
 export const REFRESH_LEASE_TTL_SECONDS = 30;
 export const REFRESH_COMPLETED_RESULT_TTL_SECONDS = 30;
-export const REFRESH_RESULT_TTL_SECONDS = 5;
+export const REFRESH_TERMINAL_RESULT_TTL_SECONDS = 5;
 export const REFRESH_TRANSIENT_RESULT_TTL_SECONDS = 1;
 export const REFRESH_WAIT_TIMEOUT_MS = 12_000;
 export const REFRESH_POLL_INTERVAL_MS = 100;
@@ -58,5 +58,5 @@ export function getRefreshFlightTtlSeconds(flight: RefreshFlight): number {
   if (flight.status === "failed" && flight.outcome === "transient") {
     return REFRESH_TRANSIENT_RESULT_TTL_SECONDS;
   }
-  return REFRESH_RESULT_TTL_SECONDS;
+  return REFRESH_TERMINAL_RESULT_TTL_SECONDS;
 }
