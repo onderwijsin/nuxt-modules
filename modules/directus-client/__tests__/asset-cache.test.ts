@@ -11,10 +11,13 @@ const state = vi.hoisted(() => {
     },
     setItemRaw: async (key: string, value: Uint8Array) => {
       values.set(key, value);
-    }
+    },
+    getKeys: async (base?: string) =>
+      [...values.keys()].filter((key) => !base || key.startsWith(base))
   };
   const rootStorage = {
-    getMount: (mount: string) => (mount === "directus-assets" ? { base: "/configured" } : {})
+    getMount: (mount: string) =>
+      mount === "directus-assets" ? { base: "/configured", driver: {} } : {}
   };
   return { rootStorage, storage, values };
 });
@@ -25,6 +28,7 @@ vi.mock("nitropack/runtime", () => ({
 
 const { createAssetCacheState, createAssetCacheStorage, getOrCreateAssetCacheHandler } =
   await import("../src/runtime/assets/cache");
+const { pruneAssetCache } = await import("../src/runtime/assets/prune");
 const { fetchDirectusAsset } = await import("../src/runtime/assets/transport");
 
 let resolveAnonymous: (event: HTTPEvent) => Promise<Response>;
@@ -35,7 +39,8 @@ const cacheConfig = {
   storage: "directus-assets",
   maxAge: 60,
   maxBodySize: 10 * 1024 * 1024,
-  swr: false
+  swr: false,
+  prune: { enabled: false, onRequest: true, interval: 3600, task: { enabled: false } }
 };
 
 describe("Directus asset cache", () => {
@@ -147,5 +152,39 @@ describe("Directus asset cache", () => {
         server.close((error) => (error ? reject(error) : resolve()))
       );
     }
+  });
+
+  it("prunes only expired entries in the asset namespace", async () => {
+    const storage = createAssetCacheStorage("directus-assets");
+    const now = 10_000_000;
+    await storage.set("/cache:handlers:directus-assets:expired.json", {
+      mtime: now - 61_000,
+      maxAge: 60
+    });
+    await storage.set("/cache:handlers:directus-assets:fresh.json", {
+      mtime: now - 59_000,
+      maxAge: 60
+    });
+    await storage.set("/cache:other:unrelated.json", { mtime: now - 100_000, maxAge: 1 });
+
+    const result = await pruneAssetCache(
+      {
+        ...cacheConfig,
+        prune: {
+          enabled: true,
+          onRequest: true,
+          interval: 1,
+          task: { enabled: false }
+        }
+      },
+      now
+    );
+
+    expect(result).toEqual({ scanned: 2, removed: 1, retained: 1, skipped: 0 });
+    expect(await storage.get("/cache:handlers:directus-assets:expired.json")).toBeNull();
+    expect(await storage.get("/cache:other:unrelated.json")).toEqual({
+      mtime: now - 100_000,
+      maxAge: 1
+    });
   });
 });

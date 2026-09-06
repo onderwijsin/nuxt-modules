@@ -5,6 +5,7 @@ import { getAssetCacheHandler, createAssetCacheEvent } from "./cache";
 import { resolveAssetWithSessionFallback, type AssetAuthenticationOptions } from "./authentication";
 import { fetchDirectusAsset, getAssetRequestHeaders, type AssetRequestMethod } from "./transport";
 import { resolveDirectusAssetUrl } from "./url";
+import { getAssetCacheState, maybePruneAssetCache } from "./prune";
 
 function fetchAnonymousAsset(cachedEvent: HTTPEvent): Promise<Response> {
   return fetchDirectusAsset(cachedEvent.req.url, {
@@ -39,6 +40,8 @@ export default defineEventHandler(async (event) => {
   if (!(cachedResponse instanceof Response)) {
     throw new Error("Directus asset cache returned an invalid response");
   }
+  const prunePromise = maybePruneAssetCache(getAssetCacheState(), cache);
+  if (prunePromise) event.waitUntil(prunePromise);
   const authentication: AssetAuthenticationOptions = {
     authEnabled: config.directusClient.auth.enabled,
     publicOnly: config.directusClient.assets.publicOnly

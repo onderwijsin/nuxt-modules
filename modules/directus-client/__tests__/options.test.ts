@@ -203,7 +203,8 @@ describe("Directus module options", () => {
       storage: "assets",
       maxAge: 60,
       maxBodySize: 10 * 1024 * 1024,
-      swr: false
+      swr: false,
+      prune: { enabled: false, onRequest: true, interval: 3600, task: { enabled: false } }
     });
     expect(() =>
       directusClientOptionsSchema.parse({

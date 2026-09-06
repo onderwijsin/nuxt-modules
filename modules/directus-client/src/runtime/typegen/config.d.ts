@@ -36,6 +36,12 @@ declare module "nuxt/schema" {
               maxBodySize: number;
               swr: boolean;
               staleMaxAge?: number;
+              prune?: {
+                enabled: boolean;
+                onRequest: boolean;
+                interval: number;
+                task: { enabled: boolean; schedule?: string };
+              };
             };
       };
     };

@@ -106,6 +106,10 @@ the application proxy.
 | `assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                  |
 | `assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                          |
 | `assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                  |
+| `assets.cache.prune.enabled`   | `false`                             | Opts into best-effort pruning of expired entries in storage without a native TTL guarantee.       |
+| `assets.cache.prune.onRequest` | `true`                              | Runs throttled pruning in the background after cached asset requests.                             |
+| `assets.cache.prune.interval`  | `3600`                              | Minimum request-triggered prune interval in seconds.                                              |
+| `assets.cache.prune.task.enabled` | `false`                          | Enables a consumer-registered Nitro prune task.                                                   |
 | `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
 | `preview.enabled`              | `false`                             | Enables preview query parsing; set to `true` to opt in.                                           |
 | `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |

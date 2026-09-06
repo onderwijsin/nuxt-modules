@@ -8,11 +8,34 @@ import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
 import { useNitroApp, useStorage } from "nitropack/runtime";
 
-type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
+type AssetCacheConfig = Omit<
+  Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>,
+  "prune"
+> & {
+  prune?: {
+    enabled: boolean;
+    onRequest: boolean;
+    interval: number;
+    task: { enabled: boolean; schedule?: string };
+  };
+};
+
+export const DIRECTUS_ASSET_CACHE_BASE = "/cache";
+export const DIRECTUS_ASSET_CACHE_GROUP = "handlers";
+export const DIRECTUS_ASSET_CACHE_NAME = "directus-assets";
 
 /** Nitro-application-owned lazy state for one immutable asset cache handler. */
 export interface DirectusAssetCacheState {
   handler?: CachedEventHandler<HTTPEvent>;
+  lastPruneAttemptAt?: number;
+  prunePromise?: Promise<AssetCachePruneSummary>;
+}
+
+export interface AssetCachePruneSummary {
+  scanned: number;
+  removed: number;
+  retained: number;
+  skipped: number;
 }
 
 /**
@@ -85,7 +108,9 @@ export function getOrCreateAssetCacheHandler(
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
   state.handler ??= defineCachedHandler(fetchAnonymous, {
-    name: "directus-assets",
+    name: DIRECTUS_ASSET_CACHE_NAME,
+    base: DIRECTUS_ASSET_CACHE_BASE,
+    group: DIRECTUS_ASSET_CACHE_GROUP,
     storage: () => createAssetCacheStorage(config.storage),
     maxAge: config.maxAge,
     maxBodySize: config.maxBodySize,
