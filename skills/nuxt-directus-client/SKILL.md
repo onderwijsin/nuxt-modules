@@ -83,7 +83,7 @@ All options are configured under `directusClient`.
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
 | `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                                                      |
-| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                                  |
+| `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.                                              |
@@ -131,7 +131,7 @@ useDirectus<Output>(command: RestCommand<Output, Schema>): Promise<Output>
 ```
 
 Executes a typed Directus REST command. Browser calls use the same-origin proxy; SSR calls use the
-direct server client. The module chooses preview, session (only with `client.auth.enabled`), proxy,
+direct server client. The module chooses session (only with `client.auth.enabled`), preview, proxy,
 or no credential on the server. Without an event it still uses the configured proxy credential.
 Callers cannot override that credential with request headers.
 
@@ -163,10 +163,10 @@ import {
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session from a Nitro request. It refreshes an expiring or
-expired access token while Directus accepts the refresh token, and returns `null` for an
-unauthenticated, invalid, refresh-rejected, or disabled session. Access and refresh tokens are never
-returned.
+Resolves the current token-free Directus session snapshot through the request-scoped, refresh-aware
+authentication boundary. It returns `null` for an unauthenticated, invalid, or disabled session.
+Transient refresh failures propagate; this helper does not silently fall back to stale local state.
+Access and refresh tokens are never returned.
 
 ```ts
 export default defineEventHandler(async (event) => {
@@ -266,12 +266,19 @@ navigation remain the consuming application's responsibility.
 | `redeemMagicLink`  | `redeemMagicLink(token: string, otp?: string): Promise<void>`   | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                                                                            |
 
 Nitro refreshes an expiring access token when possible before the SSR server plugin reads the
-token-free snapshot from the `httpOnly` cookie into Nuxt state. The session endpoint uses the same
-refresh-aware path, and hydration does not require a separate session request. Authentication
-mutations use Nuxt's request-aware fetch against the same-origin routes; they are not executed
-directly through a Nitro utility. Reading authentication state remains SSR-safe, while login,
-refresh, logout, and magic-link redemption may require explicit outer-response cookie propagation
-when invoked during SSR. Initial SSR POST mutations may also be subject to the same-origin and CSRF
+token-free snapshot from the `httpOnly` cookie into Nuxt state. If refresh is temporarily
+unavailable, SSR falls back to the trusted local snapshot; terminal refresh failures clear the
+session and hydrate as unauthenticated. The session endpoint uses the same refresh-aware path, and
+hydration does not require a separate session request. Authentication mutations use Nuxt's
+request-aware fetch against the same-origin routes; they are not executed directly through a Nitro
+utility. Reading authentication state remains SSR-safe, while login, refresh, logout, and magic-link
+redemption may require explicit outer-response cookie propagation when invoked during SSR. The
+authentication boundaries remain distinct: `getDirectusSessionSnapshot(event)` reads trusted local
+session state without refreshing and is an internal server primitive; `useDirectusServerAuth(event)`
+represents current server authentication state and is refresh-aware; and `directusAuth.resolve()`
+resolves request-scoped usable credentials and authentication state. SSR normally uses refresh-aware
+resolution, falling back to `getDirectusSessionSnapshot(event)` only for an explicitly classified
+transient refresh failure. SSR POST mutations may also be subject to the same-origin and CSRF
 requirements. Server-side refresh coordination resolves the root `directus-auth-refresh` mount:
 `memory` is process-local, while `redis` uses the configured Redis client for atomic cross-process
 leases and short-lived H3-sealed results. Configure Redis for multiple processes, containers,
@@ -368,7 +375,8 @@ Set up Directus for version previews:
    with `/preview/`. It appends `token`; if configured with another token key, set
    `client.preview.queryKeys.token` to match.
 
-Preview tokens are request-scoped and never enter public runtime config. The default query keys are
+Preview handling is disabled by default; set `client.preview.enabled: true` to opt in. Preview
+tokens are request-scoped and never enter public runtime config. The default query keys are
 `preview`, `token`, `version`, and `id`; rename them with `client.preview.queryKeys`. Set
 `client.preview.enabled: false` to ignore all preview parameters, or
 `client.preview.versioning: false` to ignore only the version. Version previews do not configure
@@ -466,7 +474,7 @@ receives the Directus URL or a server credential.
 - The proxy forwards only REST headers needed for representation, caching, conditional requests,
   range, and preference semantics. Incoming `Authorization`, `Cookie`, `Host`, `Origin`, `Referer`,
   connection, hop-by-hop, forwarding, client-IP, and platform identity headers are not forwarded.
-- Credential precedence is preview token, current session (when `client.auth.enabled`), static
+- Credential precedence is current session (when `client.auth.enabled`), preview token, static
   token, then unauthenticated.
 - Upstream `Set-Cookie` headers are not forwarded to the browser.
 - Upstream `Access-Control-*` headers are removed so the Nuxt application owns the browser-facing

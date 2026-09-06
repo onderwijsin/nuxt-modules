@@ -1,6 +1,8 @@
 import { defineNuxtPlugin, useRequestEvent, useState } from "#app";
 
 import { createServerDirectusClient } from "../../client/server/create-client";
+import { isTransientDirectusRefreshError } from "../server/refresh";
+import { getDirectusSessionSnapshot } from "../server/session";
 import type { DirectusSessionSnapshot } from "../types";
 
 /**
@@ -14,8 +16,15 @@ import type { DirectusSessionSnapshot } from "../types";
 export default defineNuxtPlugin(async () => {
   const event = useRequestEvent();
   const session = useState<DirectusSessionSnapshot | null>("directus:session", () => null);
-  const authState = event ? await event.context.directusAuth?.resolve() : undefined;
-  session.value = authState?.snapshot ?? null;
+  if (event) {
+    try {
+      const authState = await event.context.directusAuth?.resolve();
+      session.value = authState?.snapshot ?? null;
+    } catch (error) {
+      if (!isTransientDirectusRefreshError(error)) throw error;
+      session.value = await getDirectusSessionSnapshot(event);
+    }
+  }
 
   return {
     provide: {

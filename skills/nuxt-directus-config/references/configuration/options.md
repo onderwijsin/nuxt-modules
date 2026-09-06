@@ -34,7 +34,7 @@ Use this reference for configuration changes involving `@onderwijsin/nuxt-direct
 | `client.assets.cache.swr`           | `false`                             | Enables stale-while-revalidate behavior.                                                         |
 | `client.assets.cache.staleMaxAge`   | —                                   | Optional non-negative stale lifetime in seconds.                                                 |
 | `client.commands`                   | `readItem`, `readItems`             | SDK command names to auto-import.                                                                |
-| `client.preview.enabled`            | `true`                              | Enables preview query parsing and request-scoped preview credentials.                            |
+| `client.preview.enabled`            | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.   |
 | `client.preview.versioning`         | `true`                              | Enables versioned preview lookup.                                                                |
 | `client.preview.queryKeys`          | `preview`, `token`, `version`, `id` | Query parameter names for preview context.                                                       |
 | `client.auth.enabled`               | `false`                             | Enables cookie authentication, routes, and `useDirectusAuth`.                                    |

@@ -28,6 +28,7 @@ const {
   clearDirectusSession,
   getDirectusSession,
   getDirectusSessionDetails,
+  getDirectusSessionSnapshot,
   setDirectusSession,
   DIRECTUS_SESSION_COOKIE_LIMIT
 } = await import("../src/runtime/auth/server/session");
@@ -115,6 +116,16 @@ describe("Directus sealed session state", () => {
       session: expiredSession
     });
     await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toEqual(expiredSession);
+  });
+
+  it("reads a snapshot without filtering an expired access token", async () => {
+    const writeEvent = createTestEvent();
+    await setDirectusSession(writeEvent, { ...session, expiresAt: Date.now() - 1 });
+    const cookie = cookieFromEvent(writeEvent);
+
+    await expect(getDirectusSessionSnapshot(eventWithCookie(cookie))).resolves.toEqual(
+      session.snapshot
+    );
   });
 
   it("non-destructively rejects expired access tokens when explicitly requested", async () => {

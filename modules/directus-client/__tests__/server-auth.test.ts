@@ -2,33 +2,43 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTestEvent } from "../../../packages/test-utils/src";
 
-const resolve = vi.fn();
-
 const { useDirectusServerAuth } =
   await import("../src/runtime/auth/server/use-directus-server-auth");
 
 describe("useDirectusServerAuth", () => {
-  it("reads the token-free session snapshot for the request", async () => {
+  it("uses the refresh-aware resolver for the request", async () => {
     const event = createTestEvent();
+    const resolve = vi.fn();
     event.context.directusAuth = { resolve };
-    const snapshot = {
+    const sessionSnapshot = {
       userId: "user-1",
       email: "user@example.test",
       firstName: "User",
       lastName: "One",
       requiresTfaSetup: false
     };
-    resolve.mockResolvedValue({ accessToken: "access-token", snapshot });
+    resolve.mockResolvedValue({ accessToken: "access-token", snapshot: sessionSnapshot });
 
-    await expect(useDirectusServerAuth(event)).resolves.toEqual(snapshot);
+    await expect(useDirectusServerAuth(event)).resolves.toEqual(sessionSnapshot);
     expect(resolve).toHaveBeenCalledTimes(1);
   });
 
   it("returns null for an unauthenticated request", async () => {
     const event = createTestEvent();
+    const resolve = vi.fn().mockResolvedValue({ accessToken: undefined, snapshot: null });
     event.context.directusAuth = { resolve };
-    resolve.mockResolvedValue({ snapshot: null });
 
     await expect(useDirectusServerAuth(event)).resolves.toBeNull();
+  });
+
+  it("propagates transient refresh failures", async () => {
+    const error = new Error("refresh unavailable");
+    const resolve = vi.fn().mockRejectedValue(error);
+    const event = createTestEvent();
+    event.context.directusAuth = { resolve };
+
+    await expect(useDirectusServerAuth(event)).rejects.toBe(error);
+
+    expect(resolve).toHaveBeenCalledTimes(1);
   });
 });

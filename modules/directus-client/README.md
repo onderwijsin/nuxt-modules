@@ -119,10 +119,11 @@ authentication is enabled, its session.
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session from a Nitro request. It refreshes an expiring or
-expired access token while Directus still accepts the refresh token, and returns `null` when the
-request is unauthenticated, the sealed session is invalid, refresh is rejected, or authentication is
-disabled. Access and refresh tokens are never returned.
+Resolves the current token-free Directus session snapshot using the request-scoped, refresh-aware
+authentication boundary. It returns `null` when the request is unauthenticated, the sealed session
+is invalid, or authentication is disabled. Transient refresh failures propagate to the caller; this
+helper does not silently fall back to stale local state. Access and refresh tokens are never
+returned.
 
 ```ts
 export default defineEventHandler(async (event) => {
@@ -196,7 +197,7 @@ All options are configured under `directusClient`:
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
 | `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                                                           |
-| `client.preview.enabled`              | `true`                              | Enables preview query parsing and request-scoped preview credentials.                                                                  |
+| `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
 | `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
 | `client.auth.enabled`                 | `false`                             | Enables cookie authentication, authentication routes, and `useDirectusAuth`.                                                           |
@@ -256,7 +257,8 @@ For example, an extension-backed URL can be configured as:
 /preview/https://app.example.test/pages/{{slug}}?preview=true&id={{id}}&version={{version}}
 ```
 
-The default preview query keys are `preview`, `token`, `version`, and `id`; they can be renamed with
+Preview handling is disabled by default. Set `client.preview.enabled` to `true` to opt in. The
+default preview query keys are `preview`, `token`, `version`, and `id`; they can be renamed with
 `client.preview.queryKeys`. Tokens stay request-scoped and are never exposed through public runtime
 configuration. Set `client.preview.enabled` to `false` to ignore all preview parameters, or
 `client.preview.versioning` to `false` to ignore only the version. This section covers credentialed
@@ -283,14 +285,24 @@ if (auth.isAuthenticated.value) {
 
 The session snapshot is persisted with the access and rotating refresh token in a bounded sealed
 `httpOnly` cookie. SSR refreshes an expiring access token when possible before projecting the
-snapshot into Nuxt state, so hydration does not require a session fetch. Access and refresh tokens
-never enter client state or application code. H3 authenticated encryption protects the cookie's
-confidentiality and integrity; Directus remains the authorization boundary.
+snapshot into Nuxt state, so hydration does not require a session fetch. If refresh is temporarily
+unavailable, SSR falls back to the trusted local snapshot; terminal authentication failures still
+clear the session. Access and refresh tokens never enter client state or application code. H3
+authenticated encryption protects the cookie's confidentiality and integrity; Directus remains the
+authorization boundary.
 
 Authentication mutations use Nuxt's request-aware fetch against the same-origin `/_directus/auth/`
 endpoints. The composable remains SSR-safe: reading `isAuthenticated`, `userId`, and the session
 state works during SSR. Automatic SSR session refresh happens directly through the Nitro request
-boundary, not through an internal HTTP refresh call.
+boundary, not through an internal HTTP refresh call. Authenticated upstream requests remain strict:
+they do not send an expired or unusable credential when refresh is temporarily unavailable.
+
+The authentication boundaries have distinct responsibilities: `getDirectusSessionSnapshot(event)`
+reads trusted local session state without refreshing and is an internal server primitive;
+`useDirectusServerAuth(event)` represents current server authentication state and is refresh-aware;
+and `directusAuth.resolve()` resolves request-scoped usable credentials and authentication state.
+SSR normally uses refresh-aware resolution, but falls back to `getDirectusSessionSnapshot(event)`
+only for an explicitly classified transient refresh failure.
 
 Mutations that do not depend on writing a new browser cookie can work naturally through the internal
 route. Login, refresh, logout, and magic-link redemption may require response-cookie propagation
@@ -504,7 +516,9 @@ CI and production fail clearly instead.
 The browser endpoint at `proxy.path` (default `/_directus/proxy`) forwards REST requests to the
 configured Directus instance. This lets browser code use `useDirectus` without learning the Directus
 URL or receiving a proxy, preview, or session token. The server chooses credentials in this order:
-preview token, current session when authentication is enabled, proxy token, then no credential.
+current session when authentication is enabled, preview token, proxy token, then no credential.
+Preview/version selection is independent from credential selection, so a preview URL does not
+replace an authenticated session credential.
 
 The proxy preserves the request method, body, query string, response status, and safe response
 headers. It forwards only REST headers needed for representation, caching, conditional requests,

@@ -246,6 +246,21 @@ export async function getDirectusSession(
 }
 
 /**
+ * Reads the token-free snapshot from the local sealed session without refreshing its credentials.
+ *
+ * Expired access tokens remain readable so a still-refreshable session is not discarded by a
+ * snapshot-only caller.
+ *
+ * @param event - Incoming request event.
+ * @returns The local session snapshot or `null` when no valid sealed session exists.
+ */
+export async function getDirectusSessionSnapshot(
+  event: H3Event
+): Promise<DirectusSessionSnapshot | null> {
+  return (await getDirectusSession(event))?.snapshot ?? null;
+}
+
+/**
  * Clears a local session regardless of upstream logout outcome.
  *
  * @param event - Incoming request event.

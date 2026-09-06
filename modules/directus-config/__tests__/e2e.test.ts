@@ -39,7 +39,7 @@ describe("directus-config virtual aliases", () => {
         proxy: { path: "/_cms" },
         assets: { enabled: true, path: "/_directus/assets" },
         preview: {
-          enabled: true,
+          enabled: false,
           versioning: true,
           queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
         },

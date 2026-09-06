@@ -13,8 +13,7 @@ export interface DirectusCredential {
 /**
  * Selects the credential for a request without allowing caller-provided headers to win.
  *
- * Session credentials are accepted here before session auth is implemented so the later auth
- * stage can share this boundary with the proxy and server client.
+ * Credential precedence is session, then preview, then proxy, then no credential.
  *
  * @param options Candidate credentials ordered by precedence.
  * @returns The single credential that may be sent upstream.
@@ -24,12 +23,12 @@ export function resolveDirectusCredential(options: {
   readonly sessionAccessToken?: string;
   readonly proxyToken?: string;
 }): DirectusCredential {
-  if (options.previewAccessToken) {
-    return { accessToken: options.previewAccessToken, source: "preview" };
-  }
-
   if (options.sessionAccessToken) {
     return { accessToken: options.sessionAccessToken, source: "session" };
+  }
+
+  if (options.previewAccessToken) {
+    return { accessToken: options.previewAccessToken, source: "preview" };
   }
 
   if (options.proxyToken) {
