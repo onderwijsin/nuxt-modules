@@ -4,8 +4,7 @@ import { createTestEvent } from "../../../packages/test-utils/src";
 
 const state = vi.hoisted(() => ({
   register: vi.fn(),
-  ensureFreshDirectusSession: vi.fn(),
-  getDirectusSessionSnapshot: vi.fn()
+  ensureFreshDirectusSession: vi.fn()
 }));
 
 vi.mock("nitropack/runtime", () => ({
@@ -17,15 +16,11 @@ vi.mock("nitropack/runtime", () => ({
 vi.mock("../src/runtime/auth/server/refresh", () => ({
   ensureFreshDirectusSession: state.ensureFreshDirectusSession
 }));
-vi.mock("../src/runtime/auth/server/session", () => ({
-  getDirectusSessionSnapshot: state.getDirectusSessionSnapshot
-}));
 
 await import("../src/runtime/auth/server/nitro-plugin");
 
 beforeEach(() => {
   state.ensureFreshDirectusSession.mockReset();
-  state.getDirectusSessionSnapshot.mockReset();
 });
 
 describe("Directus request authentication boundary", () => {
@@ -63,21 +58,5 @@ describe("Directus request authentication boundary", () => {
     await event.context.directusAuth?.resolve();
 
     expect(state.ensureFreshDirectusSession).toHaveBeenCalledTimes(1);
-  });
-
-  it("reads and memoizes a local snapshot without refreshing", async () => {
-    const event = createTestEvent();
-    const snapshot = { userId: "user-1" };
-    state.getDirectusSessionSnapshot.mockResolvedValue(snapshot);
-
-    const requestHook = state.register.mock.calls[0]?.[1];
-    requestHook(event);
-    const first = event.context.directusAuth?.snapshot();
-    const second = event.context.directusAuth?.snapshot();
-
-    expect(first).toBe(second);
-    await expect(first).resolves.toEqual(snapshot);
-    expect(state.getDirectusSessionSnapshot).toHaveBeenCalledTimes(1);
-    expect(state.ensureFreshDirectusSession).not.toHaveBeenCalled();
   });
 });

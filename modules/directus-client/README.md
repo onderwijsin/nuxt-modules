@@ -119,11 +119,11 @@ authentication is enabled, its session.
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session snapshot from the local sealed session without
-refreshing its access token. It returns `null` when the request is unauthenticated, the sealed
-session is invalid, or authentication is disabled. Access and refresh tokens are never returned. Use
-an authenticated Directus request or the session endpoint when a currently usable access token is
-required.
+Resolves the current token-free Directus session snapshot using the request-scoped, refresh-aware
+authentication boundary. It returns `null` when the request is unauthenticated, the sealed session
+is invalid, or authentication is disabled. Transient refresh failures propagate to the caller; this
+helper does not silently fall back to stale local state. Access and refresh tokens are never
+returned.
 
 ```ts
 export default defineEventHandler(async (event) => {
@@ -295,6 +295,13 @@ endpoints. The composable remains SSR-safe: reading `isAuthenticated`, `userId`,
 state works during SSR. Automatic SSR session refresh happens directly through the Nitro request
 boundary, not through an internal HTTP refresh call. Authenticated upstream requests remain strict:
 they do not send an expired or unusable credential when refresh is temporarily unavailable.
+
+The authentication boundaries have distinct responsibilities: `getDirectusSessionSnapshot(event)`
+reads trusted local session state without refreshing and is an internal server primitive;
+`useDirectusServerAuth(event)` represents current server authentication state and is refresh-aware;
+and `directusAuth.resolve()` resolves request-scoped usable credentials and authentication state.
+SSR normally uses refresh-aware resolution, but falls back to `getDirectusSessionSnapshot(event)`
+only for an explicitly classified transient refresh failure.
 
 Mutations that do not depend on writing a new browser cookie can work naturally through the internal
 route. Login, refresh, logout, and magic-link redemption may require response-cookie propagation

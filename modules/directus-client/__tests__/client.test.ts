@@ -58,7 +58,7 @@ describe("Directus server client authentication boundary", () => {
       accessToken: "session-token",
       snapshot: null
     });
-    event.context.directusAuth = { resolve, snapshot: vi.fn().mockResolvedValue(null) };
+    event.context.directusAuth = { resolve };
     const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       expect(new Headers(init?.headers).get("authorization")).toBe("Bearer session-token");
       return new Response(JSON.stringify({ data: [] }), {
