@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- a369c8a: Allow configuring a custom upstream base URL for Directus asset proxy requests.
+- 1673d1c: Add opt-in pruning for stale Directus asset-cache entries, with throttled request cleanup and an exported consumer-owned Nitro task.
+- 1f5e6f5: Disable Directus preview query handling by default; applications must explicitly enable the preview option.
+- e09f2ae: Remove the project-specific `CandidateStatuse` type-name override and the unused `applyTypeNameOverrides` configuration option from Directus type generation.
+- a369c8a: Rename the shared Directus instance credential from `staticToken` to `proxyToken` and document its delegated public-proxy permissions.
+
+### Patch Changes
+
+- a369c8a: Make Directus refresh requests single-attempt and preserve sessions during transient refresh failures.
+
 ## 0.7.0
 
 ### Minor Changes

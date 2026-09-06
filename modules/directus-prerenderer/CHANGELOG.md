@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- a369c8a: Rename the shared Directus instance credential from `staticToken` to `proxyToken` and document its delegated public-proxy permissions.
+
+### Patch Changes
+
+- Updated dependencies [a369c8a]
+- Updated dependencies [1673d1c]
+- Updated dependencies [1f5e6f5]
+- Updated dependencies [a369c8a]
+- Updated dependencies [e09f2ae]
+- Updated dependencies [a369c8a]
+  - @onderwijsin/nuxt-directus-config@0.8.0
+
 ## 0.2.3
 
 ### Patch Changes

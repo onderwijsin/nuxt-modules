@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- a369c8a: Allow configuring a custom upstream base URL for Directus asset proxy requests.
+- 1673d1c: Add opt-in pruning for stale Directus asset-cache entries, with throttled request cleanup and an exported consumer-owned Nitro task.
+- 1f5e6f5: Disable Directus preview query handling by default; applications must explicitly enable the preview option.
+- e09f2ae: Remove the project-specific `CandidateStatuse` type-name override and the unused `applyTypeNameOverrides` configuration option from Directus type generation.
+- a369c8a: Rename the shared Directus instance credential from `staticToken` to `proxyToken` and document its delegated public-proxy permissions.
+
+### Patch Changes
+
+- e09f2ae: Own the lazy Directus asset cache handler in the Nitro application lifecycle.
+- 20ada0c: Use process-local or atomic Redis refresh coordination with explicit, short-lived result expiry.
+- 1f5e6f5: Keep SSR authentication hydration available during transient Directus refresh outages by falling
+  back to the trusted local session snapshot.
+- 1f5e6f5: Prefer authenticated session credentials over preview tokens for Directus requests while keeping preview version selection request-scoped.
+- a369c8a: Use ephemeral cryptographic session secrets during CI and prepare instead of the development fallback.
+- a369c8a: Use the configured proxy credential for event-less server Directus requests.
+- a369c8a: Make Directus refresh requests single-attempt and preserve sessions during transient refresh failures.
+- a369c8a: Reject overlapping Directus proxy namespaces and enforce canonical upstream path boundaries.
+- a369c8a: Harden the REST proxy's request and response header policies and preserve upstream HTTP errors.
+- e09f2ae: Mark session-backed Directus asset responses as private and non-cacheable for downstream clients.
+- e09f2ae: Split cached and uncached Directus asset handlers and restore streaming proxy delivery when caching is disabled.
+- Updated dependencies [a369c8a]
+- Updated dependencies [1673d1c]
+- Updated dependencies [1f5e6f5]
+- Updated dependencies [a369c8a]
+- Updated dependencies [e09f2ae]
+- Updated dependencies [a369c8a]
+  - @onderwijsin/nuxt-directus-config@0.8.0
+
 ## 0.10.0
 
 ### Minor Changes
