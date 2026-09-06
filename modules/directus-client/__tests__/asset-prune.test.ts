@@ -51,7 +51,15 @@ const config = {
   prune: { enabled: true, onRequest: true, interval: 3600 }
 };
 
-async function put(key: string, value: unknown) {
+async function put(key: string, value: Record<string, unknown>) {
+  await createAssetCacheStorage("directus-assets").set(key, {
+    value: { status: 200, headers: {}, body: "asset" },
+    payload: "value.body",
+    ...value
+  });
+}
+
+async function putRaw(key: string, value: unknown) {
   await createAssetCacheStorage("directus-assets").set(key, value);
 }
 
@@ -97,6 +105,39 @@ describe("Directus asset-cache pruning", () => {
     });
     const result = await pruneAssetCache({ ...config, swr: true, staleMaxAge: 120 }, now);
     expect(result).toEqual({ scanned: 2, removed: 1, retained: 1, skipped: 0 });
+  });
+
+  it.each([
+    ["missing value", { mtime: now }],
+    ["empty value", { mtime: now, value: {} }],
+    ["unsuccessful status", { mtime: now, value: { status: 404, headers: {}, body: "asset" } }],
+    ["missing headers", { mtime: now, value: { status: 200, body: "asset" } }],
+    ["invalid body", { mtime: now, value: { status: 200, headers: {}, body: {} } }]
+  ])("removes decoded entries with %s", async (_label, entry) => {
+    const key = `${DIRECTUS_ASSET_CACHE_PREFIX}malformed.json`;
+    await putRaw(key, entry);
+    const result = await pruneAssetCache({ ...config, swr: true, staleMaxAge: undefined }, now);
+    expect(result).toMatchObject({ scanned: 1, removed: 1, retained: 0, skipped: 0 });
+  });
+
+  it("retains string and binary cached response bodies", async () => {
+    await putRaw(`${DIRECTUS_ASSET_CACHE_PREFIX}string.json`, {
+      mtime: now,
+      value: { status: 200, headers: {}, body: "asset" }
+    });
+    await putRaw(`${DIRECTUS_ASSET_CACHE_PREFIX}binary.json`, {
+      mtime: now,
+      value: { status: 200, headers: {}, body: new Uint8Array([1, 2, 3]) },
+      payload: "value.body"
+    });
+    const result = await pruneAssetCache({ ...config, swr: true, staleMaxAge: undefined }, now);
+    expect(result).toMatchObject({ scanned: 2, removed: 0, retained: 2, skipped: 0 });
+  });
+
+  it("expires a stored maxAge of zero immediately", async () => {
+    await put(`${DIRECTUS_ASSET_CACHE_PREFIX}zero.json`, { mtime: now, maxAge: 0 });
+    const result = await pruneAssetCache(config, now);
+    expect(result.removed).toBe(1);
   });
 
   it("removes malformed frames and decoded metadata but skips backend failures", async () => {

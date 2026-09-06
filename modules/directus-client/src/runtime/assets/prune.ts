@@ -2,7 +2,8 @@ import {
   attempt,
   isDefined,
   isFiniteNumber,
-  isRecord
+  isRecord,
+  isString
 } from "@onderwijsin/nuxt-module-utils/shared";
 import { useStorage } from "nitropack/runtime";
 import type { EnabledDirectusAssetCacheConfig } from "./cache";
@@ -21,8 +22,14 @@ export interface AssetCachePruneSummary {
 }
 
 export const DIRECTUS_ASSET_CACHE_PREFIX = `${DIRECTUS_ASSET_CACHE_BASE}:${DIRECTUS_ASSET_CACHE_GROUP}:${DIRECTUS_ASSET_CACHE_NAME}:`;
+const DIRECTUS_ASSET_CACHE_NORMALIZED_PREFIX = `${DIRECTUS_ASSET_CACHE_BASE.replaceAll("/", "")}:${DIRECTUS_ASSET_CACHE_GROUP}:${DIRECTUS_ASSET_CACHE_NAME.replace(/\W/g, "")}.`;
 
 type AssetCacheEntryDisposition = "retain" | "expired" | "malformed";
+
+function isUsableAssetCacheValue(value: unknown): boolean {
+  if (!isRecord(value) || value.status !== 200 || !isRecord(value.headers)) return false;
+  return isString(value.body) || ArrayBuffer.isView(value.body);
+}
 
 function resolveDuration(
   entry: Record<string, unknown>,
@@ -48,7 +55,9 @@ function classifyEntry(
   ) {
     return "malformed";
   }
+  if (!isUsableAssetCacheValue(entry.value)) return "malformed";
   const age = now - entry.mtime;
+  if (maxAge === 0) return "expired";
   if (config.swr !== true) return age > maxAge * 1000 ? "expired" : "retain";
   if (!isDefined(staleMaxAge)) return "retain";
   return age > (maxAge + staleMaxAge) * 1000 ? "expired" : "retain";
@@ -74,7 +83,14 @@ export async function pruneAssetCache(
   }
 
   const storage = useStorage(config.storage);
-  const keys = await storage.getKeys(DIRECTUS_ASSET_CACHE_PREFIX);
+  const scopedKeys = await storage.getKeys(DIRECTUS_ASSET_CACHE_PREFIX);
+  const normalizedKeys =
+    scopedKeys.length === 0 ? await storage.getKeys(DIRECTUS_ASSET_CACHE_NORMALIZED_PREFIX) : [];
+  const keys = [...new Set([...scopedKeys, ...normalizedKeys])].filter(
+    (key) =>
+      key.startsWith(DIRECTUS_ASSET_CACHE_PREFIX) ||
+      key.startsWith(DIRECTUS_ASSET_CACHE_NORMALIZED_PREFIX)
+  );
   const cacheStorage = createAssetCacheStorage(config.storage);
   const summary: AssetCachePruneSummary = {
     scanned: keys.length,
