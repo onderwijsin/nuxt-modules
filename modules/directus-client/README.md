@@ -196,6 +196,9 @@ All options are configured under `directusClient`:
 | `client.assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                                                       |
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
+| `client.assets.cache.prune.enabled`   | `false`                             | Opts into pruning expired entries when storage does not enforce physical TTLs.                                                         |
+| `client.assets.cache.prune.onRequest` | `true`                              | Enables throttled background pruning after cached asset requests.                                                                      |
+| `client.assets.cache.prune.interval`  | `3600`                              | Minimum interval between request-triggered prune attempts, in seconds.                                                                 |
 | `client.commands`                     | `[readItem, readItems]`             | SDK commands to auto-import. Unsupported names are rejected.                                                                           |
 | `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
@@ -233,6 +236,38 @@ Asset delivery uses a streaming proxy when caching is disabled. When caching is 
 anonymous public responses participate in the application-scoped asset cache. If an asset requires
 the current session, its response is marked `Cache-Control: private, no-store` for downstream
 clients.
+
+Pruning is opt-in for storage backends that do not reliably expire entries. Request-triggered
+pruning runs in the background and is throttled by `client.assets.cache.prune.interval`; it never
+blocks asset delivery. The package also exports an optional Nitro task for consumers to register
+manually:
+
+```ts
+client: {
+  assets: {
+    cache: {
+      prune: { enabled: false, onRequest: true, interval: 3600 }
+    }
+  }
+}
+```
+
+```ts
+// server/tasks/directus-assets/prune.ts
+export { default } from "@onderwijsin/nuxt-directus-client/runtime/prune-task";
+```
+
+Enable Nitro's experimental tasks and optionally schedule `directus-assets:prune` in the consumer
+application. The module does not enable task infrastructure or add a schedule automatically:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    experimental: { tasks: true },
+    scheduledTasks: { "0 * * * *": ["directus-assets:prune"] }
+  }
+});
+```
 
 ## Version previews
 

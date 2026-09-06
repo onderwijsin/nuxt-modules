@@ -34,7 +34,14 @@ const assetCacheSchema = z.discriminatedUnion("enabled", [
       .positive()
       .default(10 * 1024 * 1024),
     swr: z.boolean().default(false),
-    staleMaxAge: z.number().int().nonnegative().optional()
+    staleMaxAge: z.number().int().nonnegative().optional(),
+    prune: z
+      .strictObject({
+        enabled: z.boolean().default(false),
+        onRequest: z.boolean().default(true),
+        interval: z.number().int().positive().default(3600)
+      })
+      .default({ enabled: false, onRequest: true, interval: 3600 })
   })
 ]);
 

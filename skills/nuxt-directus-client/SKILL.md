@@ -82,6 +82,9 @@ All options are configured under `directusClient`.
 | `client.assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                                                       |
 | `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
 | `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
+| `client.assets.cache.prune.enabled`   | `false`                             | Opts into pruning expired entries when storage does not enforce physical TTLs.                                                         |
+| `client.assets.cache.prune.onRequest` | `true`                              | Enables throttled background pruning after cached asset requests.                                                                      |
+| `client.assets.cache.prune.interval`  | `3600`                              | Minimum interval between request-triggered prune attempts, in seconds.                                                                 |
 | `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                                                      |
 | `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
 | `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
@@ -119,6 +122,14 @@ that the proxy exposes and the optional asset cache keys. It does not vary on `O
 
 Cache-disabled asset requests use a streaming proxy. Cached delivery is application-scoped and
 anonymous-only; session-backed asset responses always receive `Cache-Control: private, no-store`.
+
+Asset-cache pruning is disabled by default. Enable `client.assets.cache.prune.enabled` for backends
+without reliable physical TTLs; request-triggered cleanup is backgrounded and throttled. For the
+resolved configuration is `{ enabled: false, onRequest: true, interval: 3600 }`. For scheduled
+cleanup, create `server/tasks/directus-assets/prune.ts` that re-exports
+`@onderwijsin/nuxt-directus-client/runtime/prune-task`, then explicitly enable Nitro experimental
+tasks and optionally configure `nitro.scheduledTasks`. Task registration and scheduling remain
+consumer-owned; `prune.enabled` only enables the pruning logic.
 
 When authentication is enabled without an explicit session secret, local development uses a fixed
 convenience value, while `nuxt prepare` and CI generate a fresh ephemeral cryptographic value.

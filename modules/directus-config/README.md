@@ -106,6 +106,9 @@ the application proxy.
 | `assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                  |
 | `assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                          |
 | `assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                  |
+| `assets.cache.prune.enabled`   | `false`                             | Opts into best-effort pruning of expired entries in storage without a native TTL guarantee.       |
+| `assets.cache.prune.onRequest` | `true`                              | Runs throttled pruning in the background after cached asset requests.                             |
+| `assets.cache.prune.interval`  | `3600`                              | Minimum request-triggered prune interval in seconds.                                              |
 | `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
 | `preview.enabled`              | `false`                             | Enables preview query parsing; set to `true` to opt in.                                           |
 | `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |
@@ -132,6 +135,11 @@ the application; the module does not create or choose its driver. Use filesystem
 deployments and a raw-byte-capable mount such as Cloudflare R2 for Cloudflare deployments.
 Cloudflare KV's text-only storage is not recommended. Authenticated or private assets are never
 cached.
+
+The resolved prune configuration is `{ enabled: false, onRequest: true, interval: 3600 }`. Pruning
+is opt-in and does not enable Nitro tasks. To use scheduled or manual pruning, the consumer creates
+its own task file re-exporting `@onderwijsin/nuxt-directus-client/runtime/prune-task`, explicitly
+enables Nitro experimental tasks, and optionally configures `nitro.scheduledTasks`.
 
 Magic links require the `directus-magic-links-bundle` extension in Directus. The configured callback
 URL is server-only and is not included in the client-safe configuration.

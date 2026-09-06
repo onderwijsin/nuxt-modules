@@ -52,7 +52,8 @@ function configure(baseUrl: string, cacheEnabled: boolean) {
           maxAge: 60,
           maxBodySize: 10 * 1024 * 1024,
           swr: false,
-          staleMaxAge: undefined
+          staleMaxAge: undefined,
+          prune: { enabled: false, onRequest: true, interval: 3600 }
         }
       }
     },

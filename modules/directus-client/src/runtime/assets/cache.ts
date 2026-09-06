@@ -1,6 +1,7 @@
 import {
   createBlobStorage,
   defineCachedHandler,
+  resolveCacheKeys,
   type CachedEventHandler,
   type HTTPEvent
 } from "ocache";
@@ -8,11 +9,25 @@ import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
 import { useNitroApp, useStorage } from "nitropack/runtime";
 
-type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
+export type EnabledDirectusAssetCacheConfig = Extract<
+  ResolvedDirectusAssetCacheOptions,
+  { enabled: true }
+>;
+
+export const DIRECTUS_ASSET_CACHE_BASE = "/cache";
+export const DIRECTUS_ASSET_CACHE_GROUP = "handlers";
+export const DIRECTUS_ASSET_CACHE_NAME = "directus-assets";
+const ASSET_CACHE_NAMESPACE_PROBE = "__namespace_probe__";
 
 /** Nitro-application-owned lazy state for one immutable asset cache handler. */
 export interface DirectusAssetCacheState {
   handler?: CachedEventHandler<HTTPEvent>;
+  prune: DirectusAssetCachePruneState;
+}
+
+export interface DirectusAssetCachePruneState {
+  lastAttemptAt?: number;
+  promise?: Promise<void>;
 }
 
 /**
@@ -63,12 +78,39 @@ export function createAssetCacheStorage(mount: string) {
 }
 
 /**
+ * Resolves the storage namespace used by ocache for Directus asset entries.
+ *
+ * @returns The ocache-owned storage prefix for Directus asset entries.
+ */
+export async function resolveAssetCacheStoragePrefix(): Promise<string> {
+  const [key] = await resolveCacheKeys({
+    options: {
+      base: DIRECTUS_ASSET_CACHE_BASE,
+      group: DIRECTUS_ASSET_CACHE_GROUP,
+      name: DIRECTUS_ASSET_CACHE_NAME,
+      getKey: () => ASSET_CACHE_NAMESPACE_PROBE
+    }
+  });
+
+  if (!key) {
+    throw new Error("Could not resolve Directus asset cache storage namespace");
+  }
+
+  const separator = key.lastIndexOf(":");
+  if (separator < 0) {
+    throw new Error("Could not resolve Directus asset cache storage namespace");
+  }
+
+  return key.slice(0, separator + 1);
+}
+
+/**
  * Creates empty state for one Nitro application's asset cache handler.
  *
  * @returns Empty application-owned cache state.
  */
 export function createAssetCacheState(): DirectusAssetCacheState {
-  return {};
+  return { prune: {} };
 }
 
 /**
@@ -81,11 +123,13 @@ export function createAssetCacheState(): DirectusAssetCacheState {
  */
 export function getOrCreateAssetCacheHandler(
   state: DirectusAssetCacheState,
-  config: AssetCacheConfig,
+  config: EnabledDirectusAssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
   state.handler ??= defineCachedHandler(fetchAnonymous, {
-    name: "directus-assets",
+    name: DIRECTUS_ASSET_CACHE_NAME,
+    base: DIRECTUS_ASSET_CACHE_BASE,
+    group: DIRECTUS_ASSET_CACHE_GROUP,
     storage: () => createAssetCacheStorage(config.storage),
     maxAge: config.maxAge,
     maxBodySize: config.maxBodySize,
@@ -119,12 +163,22 @@ export function getOrCreateAssetCacheHandler(
  * @returns The application-scoped cached handler.
  */
 export function getAssetCacheHandler(
-  config: AssetCacheConfig,
+  config: EnabledDirectusAssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
   const state = useNitroApp().directusAssetCache;
   if (!state) throw new Error("Directus asset cache plugin is not registered");
   return getOrCreateAssetCacheHandler(state, config, fetchAnonymous);
+}
+
+/** Returns the application-owned asset-cache state used by runtime orchestration.
+ *
+ * @returns The current Nitro application's asset-cache state.
+ */
+export function getAssetCacheState(): DirectusAssetCacheState {
+  const state = useNitroApp().directusAssetCache;
+  if (!state) throw new Error("Directus asset cache plugin is not registered");
+  return state;
 }
 
 /**
