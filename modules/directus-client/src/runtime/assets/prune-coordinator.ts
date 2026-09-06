@@ -1,3 +1,4 @@
+import { isDefined } from "@onderwijsin/nuxt-module-utils/shared";
 import type { EnabledDirectusAssetCacheConfig, DirectusAssetCacheState } from "./cache";
 import { pruneAssetCache } from "./prune";
 
@@ -15,7 +16,7 @@ export function scheduleAssetCachePrune(
   const now = Date.now();
   if (state.prune.promise) return state.prune.promise;
   if (
-    state.prune.lastAttemptAt !== undefined &&
+    isDefined(state.prune.lastAttemptAt) &&
     now - state.prune.lastAttemptAt < config.prune.interval * 1000
   ) {
     return undefined;

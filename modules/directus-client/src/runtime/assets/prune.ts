@@ -1,4 +1,9 @@
-import { attempt, isFiniteNumber, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
+import {
+  attempt,
+  isDefined,
+  isFiniteNumber,
+  isRecord
+} from "@onderwijsin/nuxt-module-utils/shared";
 import { useStorage } from "nitropack/runtime";
 import type { EnabledDirectusAssetCacheConfig } from "./cache";
 import {
@@ -25,7 +30,7 @@ function resolveDuration(
   fallback: number | undefined
 ): number | undefined {
   const value = entry[key];
-  if (value === undefined || value === null) return fallback;
+  if (!isDefined(value) || value === null) return fallback;
   return isFiniteNumber(value) && value >= 0 ? value : undefined;
 }
 
@@ -38,14 +43,14 @@ function classifyEntry(
   const maxAge = resolveDuration(entry, "maxAge", config.maxAge);
   const staleMaxAge = resolveDuration(entry, "staleMaxAge", config.staleMaxAge);
   if (
-    maxAge === undefined ||
-    (entry.staleMaxAge !== null && entry.staleMaxAge !== undefined && staleMaxAge === undefined)
+    !isDefined(maxAge) ||
+    (isDefined(entry.staleMaxAge) && entry.staleMaxAge !== null && !isDefined(staleMaxAge))
   ) {
     return "malformed";
   }
   const age = now - entry.mtime;
   if (config.swr !== true) return age > maxAge * 1000 ? "expired" : "retain";
-  if (staleMaxAge === undefined) return "retain";
+  if (!isDefined(staleMaxAge)) return "retain";
   return age > (maxAge + staleMaxAge) * 1000 ? "expired" : "retain";
 }
 
