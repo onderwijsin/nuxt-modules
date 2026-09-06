@@ -32,6 +32,6 @@ jobs:
       pull-requests: write
     steps:
       - name: Comment Changeset status
-        uses: changesets/action/pr-comment@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
+        uses: changesets/action/pr-comment@8488615a623b1b9c987934bb89eae8af6a946ac1 # v1
         with:
           body: ${{ needs.changeset_status.outputs.comment-body }}
