@@ -20,7 +20,7 @@ function resultKey(refreshKey: string): string {
 }
 
 describe("Directus Redis refresh coordination", () => {
-  it("executes one owner, publishes with a five-second TTL, and releases safely", async () => {
+  it("executes one owner, publishes with a thirty-second TTL, and releases safely", async () => {
     const redis = new FakeRedis();
     const coordinator = createCoordinator(redis);
     const operation = vi.fn(async (): Promise<RefreshOwnerResult<string>> => ({
@@ -34,11 +34,11 @@ describe("Directus Redis refresh coordination", () => {
       value: "owner-session"
     });
     expect(operation).toHaveBeenCalledOnce();
-    expect(redis.setCalls[1]).toMatchObject({ key: resultKey("basic"), arguments_: ["EX", 5] });
+    expect(redis.setCalls[1]).toMatchObject({ key: resultKey("basic"), arguments_: ["EX", 30] });
     expect(redis.has(leaseKey("basic"))).toBe(false);
-    expect(redis.records.get(resultKey("basic"))?.expiresAt).toBeGreaterThan(Date.now() + 4_900);
+    expect(redis.records.get(resultKey("basic"))?.expiresAt).toBeGreaterThan(Date.now() + 29_900);
     expect(redis.records.get(resultKey("basic"))?.expiresAt).toBeLessThanOrEqual(
-      Date.now() + 5_000
+      Date.now() + 30_000
     );
   });
 
@@ -285,7 +285,7 @@ describe("Directus Redis refresh coordination", () => {
     expect(operation).toHaveBeenCalledOnce();
   });
 
-  it("expires completed results after five seconds", async () => {
+  it("expires completed results after thirty seconds", async () => {
     vi.useFakeTimers();
     try {
       const redis = new FakeRedis();
@@ -302,7 +302,7 @@ describe("Directus Redis refresh coordination", () => {
         });
 
       await coordinator.coordinate("completed", operation);
-      vi.advanceTimersByTime(5_001);
+      vi.advanceTimersByTime(30_001);
       await expect(coordinator.coordinate("completed", operation)).resolves.toMatchObject({
         source: "owner",
         flight: { sealedSession: "boop1:second" }

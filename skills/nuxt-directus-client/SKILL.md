@@ -283,8 +283,9 @@ access-token-derived state such as `requiresTfaSetup` is recalculated. If a late
 step fails, the old session is cleared because its refresh token may already be invalid. Terminal
 Directus authentication rejections clear the local session; transport failures, HTTP 429, and HTTP
 5xx responses preserve it and surface a temporary service error. The configured Redis backend
-remains sensitive infrastructure. Completed and terminal coordination results are reusable for five
-seconds; transient failures are shared for one second only.
+remains sensitive infrastructure. Completed coordination results are reusable for thirty seconds,
+terminal results for five seconds, and transient failures for one second only. This bounded window
+protects overlapping and near-concurrent refreshes; it is not permanent consumed-token tracking.
 
 ### Magic links
 

@@ -1,4 +1,5 @@
 export const REFRESH_LEASE_TTL_SECONDS = 30;
+export const REFRESH_COMPLETED_RESULT_TTL_SECONDS = 30;
 export const REFRESH_RESULT_TTL_SECONDS = 5;
 export const REFRESH_TRANSIENT_RESULT_TTL_SECONDS = 1;
 export const REFRESH_WAIT_TIMEOUT_MS = 12_000;
@@ -53,6 +54,7 @@ export interface RefreshCoordinator {
  * @returns The result lifetime in seconds.
  */
 export function getRefreshFlightTtlSeconds(flight: RefreshFlight): number {
+  if (flight.status === "completed") return REFRESH_COMPLETED_RESULT_TTL_SECONDS;
   if (flight.status === "failed" && flight.outcome === "transient") {
     return REFRESH_TRANSIENT_RESULT_TTL_SECONDS;
   }

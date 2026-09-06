@@ -7,12 +7,12 @@
 ## Context
 
 Directus may rotate a refresh token when a refresh request succeeds, including when the response is
-lost. Concurrent requests must therefore not submit the same refresh token more than once. The
-module supports both single-process deployments and deployments with multiple processes, replicas,
-or Cloudflare isolates.
+lost. Overlapping and near-concurrent requests should therefore not submit the same refresh token
+more than once. The module supports both single-process deployments and deployments with multiple
+processes, replicas, or Cloudflare isolates.
 
-The coordinator must protect that refresh-token invariant without owning authentication policy. It
-must coordinate execution and share only state that another request can safely reuse. Session
+The coordinator must provide bounded single-flight protection without owning authentication policy.
+It must coordinate execution and share only state that another request can safely reuse. Session
 interpretation, sealing, cookie handling, and terminal-versus-transient error policy remain owned by
 `refresh.ts`.
 
@@ -30,8 +30,10 @@ Use a small internal coordinator with interchangeable process-local memory and R
   Directus.
 - A follower waits for a published result, lease disappearance, or a bounded deadline. The wait is
   longer than the Directus request timeout and shorter than the lease lifetime.
-- A completed refresh or terminal failure is reusable for five seconds. A transient failure is
-  reusable for one second to suppress an immediate burst without extending the outage window.
+- A completed refresh is reusable for thirty seconds. A terminal failure is reusable for five
+  seconds, and a transient failure for one second to suppress an immediate burst without extending
+  the outage window. The completed-result window is deliberately bounded; the coordinator does not
+  maintain permanent consumed-token history.
 - If a refresh succeeds locally but Redis result publication fails, the owner still uses its local
   result and retains the lease until its natural expiry. Releasing it early could allow a stale
   caller to submit an already-rotated refresh token.
@@ -58,8 +60,8 @@ sessions from the sealed value and adopt the resulting cookie for their own resp
 
 Memory deployments get lightweight single-flight behavior but must use Redis when refresh
 coordination needs to span runtime instances. Redis adds an operational dependency and bounded
-polling, but prevents duplicate refresh submissions across instances and keeps follower behavior
-consistent with memory coordination.
+polling, but prevents duplicate refresh submissions across overlapping and near-concurrent requests
+on different instances and keeps follower behavior consistent with memory coordination.
 
 Only sealed sessions cross the coordination boundary. Redis coordination data is sensitive
 infrastructure and has short lifetimes; malformed published data is treated as absent and backend
@@ -73,5 +75,6 @@ cleanup while ensuring a legitimate refresh is not abandoned too early by follow
 
 Revisit this decision if Directus changes refresh-token rotation guarantees, if the module adopts a
 different shared-storage contract, or if production evidence shows that the fixed lease and result
-windows cannot safely cover supported runtime latency. Any replacement must preserve the invariant
-that a stale refresh token is not submitted concurrently or immediately after a successful rotation.
+windows cannot safely cover supported runtime latency. Any replacement should preserve bounded
+single-flight protection for overlapping and near-concurrent refresh requests without implying
+permanent consumed-token tracking.

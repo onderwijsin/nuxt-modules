@@ -66,7 +66,7 @@ describe("Directus memory refresh coordination", () => {
     expect(followerOperation).not.toHaveBeenCalled();
   });
 
-  it("expires transient results after one second and completed results after five seconds", async () => {
+  it("expires transient results after one second and completed results after thirty seconds", async () => {
     vi.useFakeTimers();
     try {
       const coordinator = createMemoryCoordinator();
@@ -91,7 +91,7 @@ describe("Directus memory refresh coordination", () => {
         source: "shared",
         flight: { sealedSession: "boop1:completed" }
       });
-      vi.advanceTimersByTime(5_001);
+      vi.advanceTimersByTime(30_001);
       await expect(coordinator.coordinate("memory-ttl", operation)).resolves.toMatchObject({
         source: "owner",
         flight: { sealedSession: "boop1:after-expiry" }

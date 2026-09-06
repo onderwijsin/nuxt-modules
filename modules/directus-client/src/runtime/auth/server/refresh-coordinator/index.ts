@@ -6,6 +6,7 @@ import type { RefreshCoordinator } from "./shared";
 
 export {
   getRefreshFlightTtlSeconds,
+  REFRESH_COMPLETED_RESULT_TTL_SECONDS,
   REFRESH_LEASE_TTL_SECONDS,
   REFRESH_POLL_INTERVAL_MS,
   REFRESH_RESULT_TTL_SECONDS,
