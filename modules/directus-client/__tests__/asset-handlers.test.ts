@@ -125,11 +125,11 @@ describe("Directus asset handler boundaries", () => {
     }
   );
 
-  it("retries an uncached forbidden response once with session auth and strips unsafe headers", async () => {
+  it.each([401, 403])("retries an uncached %s response once with session auth", async (status) => {
     let calls = 0;
     const { server, baseUrl } = await listen((request, response) => {
       calls += 1;
-      response.writeHead(request.headers.authorization ? 200 : 403, {
+      response.writeHead(request.headers.authorization ? 200 : status, {
         "cache-control": "public",
         "content-type": "image/svg+xml",
         "content-length": "5",
