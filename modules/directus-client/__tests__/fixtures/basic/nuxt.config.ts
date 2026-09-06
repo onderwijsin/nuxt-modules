@@ -3,6 +3,13 @@ import directusModule from "../../../src/module";
 export default defineNuxtConfig({
   modules: [directusModule],
   turnstile: { siteKey: "fixture-site-key", secretKey: "fixture-secret-key" },
+  nitro: {
+    storage: {
+      "directus-auth-refresh": {
+        driver: "memory"
+      }
+    }
+  },
   directusClient: {
     instance: {
       baseUrl: process.env.DIRECTUS_E2E_URL ?? "https://sandbox.directus.com"

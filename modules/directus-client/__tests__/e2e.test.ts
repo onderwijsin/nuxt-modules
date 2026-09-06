@@ -1,12 +1,19 @@
 import { createServer } from "node:http";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { $fetch, fetch, setupFixture, url } from "../../../packages/test-utils/src";
 
 describe("Directus client and server composables", async () => {
+  type RefreshBehavior = "success" | "transient" | "terminal";
+
   let loginRequests = 0;
   let refreshRequests = 0;
-  const upstream = createServer((request, response) => {
+  let refreshBehavior: RefreshBehavior = "success";
+  let refreshDelayMs = 0;
+  let loginExpires = 1;
+  let lastItemsAuthorization: string | undefined;
+  const upstream = createServer(async (request, response) => {
     if (request.url?.startsWith("/items/pages")) {
+      lastItemsAuthorization = request.headers.authorization;
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ data: [{ id: "page-1" }] }));
       return;
@@ -20,7 +27,7 @@ describe("Directus client and server composables", async () => {
           data: {
             access_token: `access-${loginRequests}`,
             refresh_token: `refresh-${loginRequests}`,
-            expires: 1
+            expires: loginExpires
           }
         })
       );
@@ -29,6 +36,29 @@ describe("Directus client and server composables", async () => {
 
     if (request.url?.startsWith("/auth/refresh")) {
       refreshRequests += 1;
+      if (refreshDelayMs > 0) {
+        await new Promise<void>((resolve) => setTimeout(resolve, refreshDelayMs));
+      }
+      if (refreshBehavior === "transient") {
+        response.writeHead(500, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify({
+            errors: [
+              { message: "Refresh unavailable", extensions: { code: "SERVICE_UNAVAILABLE" } }
+            ]
+          })
+        );
+        return;
+      }
+      if (refreshBehavior === "terminal") {
+        response.writeHead(401, { "content-type": "application/json" });
+        response.end(
+          JSON.stringify({
+            errors: [{ message: "Invalid token", extensions: { code: "INVALID_TOKEN" } }]
+          })
+        );
+        return;
+      }
       response.writeHead(200, { "content-type": "application/json" });
       response.end(
         JSON.stringify({
@@ -103,7 +133,16 @@ describe("Directus client and server composables", async () => {
 
   await setupFixture(import.meta.url, "basic", { dev: false });
 
-  async function loginWithExpiringAccessToken(): Promise<string> {
+  function getSessionCookie(response: Response): string | undefined {
+    return response.headers.get("set-cookie")?.split(";", 1)[0];
+  }
+
+  function requestSession(cookie: string): Promise<Response> {
+    return fetch(url("/_directus/auth/session"), { headers: { cookie } });
+  }
+
+  async function loginWithAccessToken(expires = 1): Promise<string> {
+    loginExpires = expires;
     const response = await fetch(url("/_directus/auth/login"), {
       method: "POST",
       headers: {
@@ -114,11 +153,18 @@ describe("Directus client and server composables", async () => {
       body: JSON.stringify({ email: "user@example.test", password: "password" })
     });
     expect(response.status, await response.clone().text()).toBe(200);
-    const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+    const cookie = getSessionCookie(response);
     if (!cookie) throw new Error("Login did not write a Directus session cookie");
     await new Promise<void>((resolve) => setTimeout(resolve, 5));
     return cookie;
   }
+
+  beforeEach(() => {
+    refreshBehavior = "success";
+    refreshDelayMs = 0;
+    loginExpires = 1;
+    lastItemsAuthorization = undefined;
+  });
 
   afterAll(async () => {
     if (originalUrl === undefined) delete process.env.DIRECTUS_E2E_URL;
@@ -141,7 +187,7 @@ describe("Directus client and server composables", async () => {
   });
 
   it("refreshes an expired access token during initial SSR bootstrap", async () => {
-    const cookie = await loginWithExpiringAccessToken();
+    const cookie = await loginWithAccessToken();
     const refreshCount = refreshRequests;
 
     const response = await fetch(url("/auth-state"), { headers: { cookie } });
@@ -151,9 +197,100 @@ describe("Directus client and server composables", async () => {
     await expect(response.text()).resolves.toContain(
       '<p data-testid="authenticated-user">user-1</p>'
     );
-    const rotatedCookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+    const rotatedCookie = getSessionCookie(response);
     expect(rotatedCookie).toBeTruthy();
     expect(rotatedCookie).not.toBe(cookie);
+  });
+
+  it("uses one refresh and shares the rotated cookie for overlapping requests", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = refreshRequests;
+    refreshDelayMs = 250;
+
+    const [first, second] = await Promise.all([requestSession(cookie), requestSession(cookie)]);
+    expect(first.status, await first.clone().text()).toBe(200);
+    expect(second.status, await second.clone().text()).toBe(200);
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+    await expect(first.json()).resolves.toMatchObject({ userId: "user-1" });
+    await expect(second.json()).resolves.toMatchObject({ userId: "user-1" });
+
+    const firstCookie = getSessionCookie(first);
+    const secondCookie = getSessionCookie(second);
+    expect(firstCookie).toBeTruthy();
+    expect(secondCookie).toBe(firstCookie);
+    expect(firstCookie).not.toBe(cookie);
+  });
+
+  it("reuses a completed refresh result for a stale-cookie request", async () => {
+    const staleCookie = await loginWithAccessToken(1);
+    const refreshCountBefore = refreshRequests;
+
+    const first = await requestSession(staleCookie);
+    expect(first.status, await first.clone().text()).toBe(200);
+    const firstCookie = getSessionCookie(first);
+    expect(firstCookie).toBeTruthy();
+
+    const second = await requestSession(staleCookie);
+    expect(second.status, await second.clone().text()).toBe(200);
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+    await expect(second.json()).resolves.toMatchObject({ userId: "user-1" });
+    expect(getSessionCookie(second)).toBe(firstCookie);
+  });
+
+  it("caches transient refresh failures briefly and recovers afterward", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = refreshRequests;
+    refreshBehavior = "transient";
+
+    const first = await requestSession(cookie);
+    expect(first.status, await first.clone().text()).toBe(503);
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+    expect(first.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+
+    refreshBehavior = "success";
+    const immediateRetry = await requestSession(cookie);
+    expect(immediateRetry.status, await immediateRetry.clone().text()).toBe(503);
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 1_100));
+    const recovered = await requestSession(cookie);
+    expect(recovered.status, await recovered.clone().text()).toBe(200);
+    expect(refreshRequests).toBe(refreshCountBefore + 2);
+    await expect(recovered.json()).resolves.toMatchObject({ userId: "user-1" });
+    expect(getSessionCookie(recovered)).toBeTruthy();
+  });
+
+  it("clears the session cookie after a terminal refresh rejection", async () => {
+    const cookie = await loginWithAccessToken(1);
+    refreshBehavior = "terminal";
+
+    const response = await requestSession(cookie);
+    expect(response.status, await response.clone().text()).toBe(204);
+    await expect(response.text()).resolves.toBe("");
+    expect(response.headers.get("set-cookie")).toMatch(
+      /directus_session=;.*(?:Max-Age=0|Expires=Thu, 01 Jan 1970)/
+    );
+  });
+
+  it("does not refresh a session with a fresh access token", async () => {
+    const cookie = await loginWithAccessToken(120_000);
+    const refreshCountBefore = refreshRequests;
+
+    const response = await requestSession(cookie);
+    expect(response.status, await response.clone().text()).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ userId: "user-1" });
+    expect(refreshRequests).toBe(refreshCountBefore);
+  });
+
+  it("uses the refreshed access token for authenticated server requests", async () => {
+    const cookie = await loginWithAccessToken(1);
+    const refreshCountBefore = refreshRequests;
+
+    const response = await fetch(url("/api/directus-server"), { headers: { cookie } });
+    expect(response.status, await response.clone().text()).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ count: 1, firstId: "page-1" });
+    expect(refreshRequests).toBe(refreshCountBefore + 1);
+    expect(lastItemsAuthorization).toBe("Bearer refreshed-access");
   });
 
   it.each([
