@@ -6,10 +6,17 @@ import {
 } from "ocache";
 import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
-import { useStorage } from "nitropack/runtime";
+import { useNitroApp, useStorage } from "nitropack/runtime";
 
 type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
-let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
+
+/** Nitro-application-owned holder for a lazily created asset cache handler. */
+export interface DirectusAssetCacheContext {
+  readonly get: (
+    config: AssetCacheConfig,
+    fetchAnonymous: (event: HTTPEvent) => Promise<Response>
+  ) => CachedEventHandler<HTTPEvent>;
+}
 
 /**
  * Parses directive names from a Cache-Control header, ignoring directive values.
@@ -54,40 +61,54 @@ export function createAssetCacheStorage(mount: string) {
   });
 }
 
-/** Lazily creates the anonymous-only cached Directus asset handler.
+/** Creates a Nitro-application-owned lazy asset cache handler holder.
+ * @returns A holder whose handler is created on first use.
+ */
+export function createAssetCacheContext(): DirectusAssetCacheContext {
+  let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
+  return {
+    get(config, fetchAnonymous) {
+      cachedHandler ??= defineCachedHandler(fetchAnonymous, {
+        name: "directus-assets",
+        storage: () => createAssetCacheStorage(config.storage),
+        maxAge: config.maxAge,
+        maxBodySize: config.maxBodySize,
+        swr: config.swr,
+        staleMaxAge: config.staleMaxAge,
+        varies: ["accept"],
+        allowQuery: true,
+        sendCacheControl: false,
+        cacheStatusHeader: "x-directus-asset-cache",
+        stream: true,
+        shouldBypassCache: (event) =>
+          event.req.headers.has("if-match") || event.req.headers.has("if-unmodified-since"),
+        shouldCache: (entry) => {
+          const directives = getCacheControlDirectives(entry.headers["cache-control"] ?? "");
+          return (
+            entry.status === 200 &&
+            directives.has("public") &&
+            !directives.has("private") &&
+            !directives.has("no-store")
+          );
+        }
+      });
+      return cachedHandler;
+    }
+  };
+}
+
+/** Lazily gets the anonymous-only cached Directus asset handler from the Nitro application.
  * @param config Cache settings.
  * @param fetchAnonymous Anonymous-only resolver.
- * @returns The process-local cached handler.
+ * @returns The application-scoped cached handler.
  */
 export function getAssetCacheHandler(
   config: AssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
-  cachedHandler ??= defineCachedHandler(fetchAnonymous, {
-    name: "directus-assets",
-    storage: () => createAssetCacheStorage(config.storage),
-    maxAge: config.maxAge,
-    maxBodySize: config.maxBodySize,
-    swr: config.swr,
-    staleMaxAge: config.staleMaxAge,
-    varies: ["accept"],
-    allowQuery: true,
-    sendCacheControl: false,
-    cacheStatusHeader: "x-directus-asset-cache",
-    stream: true,
-    shouldBypassCache: (event) =>
-      event.req.headers.has("if-match") || event.req.headers.has("if-unmodified-since"),
-    shouldCache: (entry) => {
-      const directives = getCacheControlDirectives(entry.headers["cache-control"] ?? "");
-      return (
-        entry.status === 200 &&
-        directives.has("public") &&
-        !directives.has("private") &&
-        !directives.has("no-store")
-      );
-    }
-  });
-  return cachedHandler;
+  const context = useNitroApp().directusAssetCache;
+  if (!context) throw new Error("Directus asset cache plugin is not registered");
+  return context.get(config, fetchAnonymous);
 }
 
 /** Adapts the current H3 event to ocache's portable HTTP event shape.

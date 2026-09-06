@@ -22,7 +22,6 @@ const directusTypegenSchemaDefaults = {
     removeEnums: true,
     replaceAnyWithUnknown: true,
     replaceJsonWithJSON: true,
-    applyTypeNameOverrides: true,
     makeNonNullableOptionalsRequired: true,
     mergeJsDocs: true
   },
@@ -56,9 +55,6 @@ export const directusTypegenSchema = z
         replaceJsonWithJSON: z
           .boolean()
           .default(directusTypegenSchemaDefaults.augmentations.replaceJsonWithJSON),
-        applyTypeNameOverrides: z
-          .boolean()
-          .default(directusTypegenSchemaDefaults.augmentations.applyTypeNameOverrides),
         makeNonNullableOptionalsRequired: z
           .boolean()
           .default(directusTypegenSchemaDefaults.augmentations.makeNonNullableOptionalsRequired),

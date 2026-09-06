@@ -7,6 +7,7 @@ import {
   getForwardedProxyHeaders
 } from "../src/runtime/proxy/transport";
 import { fetchDirectusAsset } from "../src/runtime/assets/transport";
+import { createDirectusAssetFetch } from "../src/runtime/assets/uncached-handler";
 import { resolveDirectusAssetUrl } from "../src/runtime/assets/url";
 import { resolveDirectusUpstreamUrl } from "../src/runtime/core/upstream-url";
 import { assertDirectusSameOrigin } from "../src/runtime/core/same-origin";
@@ -18,6 +19,50 @@ import {
 import { createTestEvent } from "../../../packages/test-utils/src";
 
 describe("Directus proxy boundary", () => {
+  it("streams uncached assets and makes authenticated fallbacks private", async () => {
+    let authenticated = false;
+    const server = createServer((request, response) => {
+      authenticated = request.headers.authorization === "Bearer session-token";
+      response.writeHead(authenticated ? 200 : 403, {
+        "cache-control": "public, max-age=3600",
+        "content-type": "image/svg+xml"
+      });
+      response.end(authenticated ? "private-asset" : "denied");
+    });
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Test server has no address");
+      const event = createTestEvent();
+      event.context.directusAuth = {
+        resolve: async () => ({
+          accessToken: "session-token",
+          snapshot: null
+        })
+      };
+      const response = await createDirectusAssetFetch(event, {
+        authEnabled: true,
+        publicOnly: false
+      })(`http://127.0.0.1:${address.port}/assets/logo`, {
+        method: "GET",
+        headers: { accept: "image/svg+xml" }
+      });
+
+      expect(await response.text()).toBe("private-asset");
+      expect(authenticated).toBe(true);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(response.headers.get("content-type")).toBe("image/svg+xml");
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve()))
+      );
+    }
+  });
+
   it("normalizes transport headers while preserving upstream HTTP errors", async () => {
     const server = createServer((_request, response) => {
       response.writeHead(500, {

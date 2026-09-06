@@ -229,6 +229,11 @@ The asset proxy normalizes upstream `Vary` headers to `Accept`, matching the req
 that the proxy exposes and the optional asset cache keys. It does not vary on `Origin`, request
 `Cache-Control`, or `Accept-Encoding`.
 
+Asset delivery uses a streaming proxy when caching is disabled. When caching is enabled, only
+anonymous public responses participate in the application-scoped asset cache. If an asset requires
+the current session, its response is marked `Cache-Control: private, no-store` for downstream
+clients.
+
 ## Version previews
 
 Directus Content Versions are independent, unpublished changes to a main item. A version has a
@@ -503,7 +508,6 @@ Configure it under `directusClient.client.typegen`:
 | `removeEnums`                      | Removes generated `export enum` declarations.                                  |
 | `replaceAnyWithUnknown`            | Rewrites generated `Record<…, any>` values to `Record<…, unknown>`.            |
 | `replaceJsonWithJSON`              | Rewrites quoted `"json"` field types to `JSON`.                                |
-| `applyTypeNameOverrides`           | Applies the module's reviewed generated type-name corrections.                 |
 | `makeNonNullableOptionalsRequired` | Makes simple optional fields required when their type does not include `null`. |
 | `mergeJsDocs`                      | Merges adjacent generated JSDoc tag blocks and removes duplicate tags.         |
 

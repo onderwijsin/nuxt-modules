@@ -245,6 +245,9 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.client.auth.enabled) {
       addServerPlugin(resolver.resolve(runtimeDir, "auth/server/nitro-plugin"));
     }
+    if (options.client.assets.enabled && options.client.assets.cache.enabled) {
+      addServerPlugin(resolver.resolve(runtimeDir, "assets/nitro-plugin"));
+    }
 
     if (options.client.auth.enabled) {
       addImports({
@@ -295,7 +298,10 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.client.assets.enabled) {
       addServerHandler({
         route: `${options.client.assets.path}/**`,
-        handler: resolver.resolve(runtimeDir, "assets/handler")
+        handler: resolver.resolve(
+          runtimeDir,
+          options.client.assets.cache.enabled ? "assets/cached-handler" : "assets/uncached-handler"
+        )
       });
       nuxt.options.routeRules[`${options.client.assets.path}/**`] = defu(
         {

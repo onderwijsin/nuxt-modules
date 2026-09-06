@@ -23,13 +23,14 @@ vi.mock("nitropack/runtime", () => ({
   useStorage: (mount?: string) => (mount ? state.storage : state.rootStorage)
 }));
 
-const { createAssetCacheStorage, getAssetCacheHandler } =
+const { createAssetCacheContext, createAssetCacheStorage } =
   await import("../src/runtime/assets/cache");
 const { fetchDirectusAsset } = await import("../src/runtime/assets/transport");
 
 let resolveAnonymous: (event: HTTPEvent) => Promise<Response> = async () =>
   new Response(new Uint8Array([1, 2, 3]), { headers: { "cache-control": "public" } });
-const handler = getAssetCacheHandler(
+const cacheContext = createAssetCacheContext();
+const handler = cacheContext.get(
   { storage: "directus-assets", maxAge: 60, maxBodySize: 10 * 1024 * 1024, swr: false },
   (event) => resolveAnonymous(event)
 );
@@ -37,6 +38,15 @@ const handler = getAssetCacheHandler(
 describe("Directus asset cache", () => {
   beforeEach(() => {
     state.values.clear();
+  });
+
+  it("reuses one lazy handler within an application context", () => {
+    expect(
+      cacheContext.get(
+        { storage: "different-mount", maxAge: 120, maxBodySize: 10 * 1024 * 1024, swr: false },
+        (event) => resolveAnonymous(event)
+      )
+    ).toBe(handler);
   });
 
   it("fails when the configured Nitro storage mount is missing", async () => {

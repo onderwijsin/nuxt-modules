@@ -60,8 +60,11 @@ parameters. Responses also vary by `Accept` to support content negotiation such 
 
 Binary responses are stored with `ocache.createBlobStorage()` over raw Nitro/unstorage operations.
 
-The cached handler is created once per runtime instance and reused so concurrent cold requests for
-the same asset can be deduplicated.
+The cached handler is created lazily once per Nitro application and reused so concurrent cold
+requests for the same asset can be deduplicated without unscoped module-global state.
+
+Responses obtained after a session-backed retry are returned with `Cache-Control: private, no-store`
+so downstream caches cannot treat an authenticated asset as public.
 
 Nitro route caching remains disabled for the asset proxy. Cache invalidation is not implemented yet;
 entries expire according to their configured lifetime.
