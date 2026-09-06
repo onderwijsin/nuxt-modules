@@ -4,7 +4,8 @@ import type { DirectusSessionSnapshot } from "../types";
 
 /**
  * Resolves the current token-free Directus session snapshot for a server request.
- * Authentication is refreshed when the current access token is not usable.
+ * Authentication is refreshed when the access token is expired or inside the configured refresh
+ * safety window.
  *
  * @param event The current request event containing the Directus session cookie.
  * @returns The current session snapshot, or `null` when the request is unauthenticated.
