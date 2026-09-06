@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.8
+
+### Patch Changes
+
+- Updated dependencies [a369c8a]
+- Updated dependencies [e09f2ae]
+- Updated dependencies [1673d1c]
+- Updated dependencies [1f5e6f5]
+- Updated dependencies [20ada0c]
+- Updated dependencies [1f5e6f5]
+- Updated dependencies [1f5e6f5]
+- Updated dependencies [a369c8a]
+- Updated dependencies [a369c8a]
+- Updated dependencies [a369c8a]
+- Updated dependencies [a369c8a]
+- Updated dependencies [a369c8a]
+- Updated dependencies [e09f2ae]
+- Updated dependencies [e09f2ae]
+- Updated dependencies [a369c8a]
+- Updated dependencies [e09f2ae]
+  - @onderwijsin/nuxt-directus-client@0.11.0
+  - @onderwijsin/nuxt-directus-config@0.8.0
+
 ## 0.3.7
 
 ### Patch Changes
