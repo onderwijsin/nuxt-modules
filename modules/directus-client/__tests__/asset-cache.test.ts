@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { HTTPEvent } from "ocache";
+import type { CachedEventHandler, HTTPEvent } from "ocache";
 
 const state = vi.hoisted(() => {
   const values = new Map<string, Uint8Array>();
@@ -23,20 +23,37 @@ vi.mock("nitropack/runtime", () => ({
   useStorage: (mount?: string) => (mount ? state.storage : state.rootStorage)
 }));
 
-const { createAssetCacheStorage, getAssetCacheHandler } =
+const { createAssetCacheState, createAssetCacheStorage, getOrCreateAssetCacheHandler } =
   await import("../src/runtime/assets/cache");
 const { fetchDirectusAsset } = await import("../src/runtime/assets/transport");
 
-let resolveAnonymous: (event: HTTPEvent) => Promise<Response> = async () =>
-  new Response(new Uint8Array([1, 2, 3]), { headers: { "cache-control": "public" } });
-const handler = getAssetCacheHandler(
-  { storage: "directus-assets", maxAge: 60, maxBodySize: 10 * 1024 * 1024, swr: false },
-  (event) => resolveAnonymous(event)
-);
+let resolveAnonymous: (event: HTTPEvent) => Promise<Response>;
+let stateForTest: ReturnType<typeof createAssetCacheState>;
+let handler: CachedEventHandler<HTTPEvent>;
+const cacheConfig = {
+  enabled: true,
+  storage: "directus-assets",
+  maxAge: 60,
+  maxBodySize: 10 * 1024 * 1024,
+  swr: false
+};
 
 describe("Directus asset cache", () => {
   beforeEach(() => {
     state.values.clear();
+    resolveAnonymous = async () =>
+      new Response(new Uint8Array([1, 2, 3]), { headers: { "cache-control": "public" } });
+    stateForTest = createAssetCacheState();
+    handler = getOrCreateAssetCacheHandler(stateForTest, cacheConfig, (event) =>
+      resolveAnonymous(event)
+    );
+  });
+
+  it("reuses a handler within state and isolates different application state", () => {
+    expect(getOrCreateAssetCacheHandler(stateForTest, cacheConfig, resolveAnonymous)).toBe(handler);
+    expect(
+      getOrCreateAssetCacheHandler(createAssetCacheState(), cacheConfig, resolveAnonymous)
+    ).not.toBe(handler);
   });
 
   it("fails when the configured Nitro storage mount is missing", async () => {

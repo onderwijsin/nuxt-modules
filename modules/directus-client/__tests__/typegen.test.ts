@@ -40,7 +40,6 @@ const disabledAugmentations = {
   removeEnums: false,
   replaceAnyWithUnknown: false,
   replaceJsonWithJSON: false,
-  applyTypeNameOverrides: false,
   makeNonNullableOptionalsRequired: false,
   mergeJsDocs: false
 };
@@ -54,7 +53,6 @@ const augmentationCases: ReadonlyArray<[keyof typeof disabledAugmentations, stri
   ["removeEnums", "export enum RemoveMe"],
   ["replaceAnyWithUnknown", "Record<string, unknown>"],
   ["replaceJsonWithJSON", "json: JSON | null;"],
-  ["applyTypeNameOverrides", "candidate: CandidateStatus;"],
   ["makeNonNullableOptionalsRequired", "title: string;"],
   ["mergeJsDocs", "* @required"]
 ];
@@ -71,6 +69,7 @@ describe("Directus typegen transforms", () => {
     expect(source).toContain("export enum RemoveMe");
     expect(source).toContain("Record<string, any>");
     expect(source).toContain('"json" | null');
+    expect(source).toContain("candidate: CandidateStatuse;");
   });
 
   it.each(augmentationCases)("applies the %s augmentation independently", (name, expected) => {

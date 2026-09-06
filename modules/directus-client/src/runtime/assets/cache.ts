@@ -6,10 +6,14 @@ import {
 } from "ocache";
 import type { H3Event } from "h3";
 import type { ResolvedDirectusAssetCacheOptions } from "@onderwijsin/nuxt-directus-config/schema";
-import { useStorage } from "nitropack/runtime";
+import { useNitroApp, useStorage } from "nitropack/runtime";
 
 type AssetCacheConfig = Extract<ResolvedDirectusAssetCacheOptions, { enabled: true }>;
-let cachedHandler: CachedEventHandler<HTTPEvent> | undefined;
+
+/** Nitro-application-owned lazy state for one immutable asset cache handler. */
+export interface DirectusAssetCacheState {
+  handler?: CachedEventHandler<HTTPEvent>;
+}
 
 /**
  * Parses directive names from a Cache-Control header, ignoring directive values.
@@ -26,7 +30,9 @@ function getCacheControlDirectives(value: string): Set<string> {
   );
 }
 
-/** Resolves a configured Nitro storage mount through Nitro's server-only storage runtime.
+/**
+ * Resolves a configured Nitro storage mount through Nitro's server-only storage runtime.
+ *
  * @param mount Nitro storage mount name.
  * @returns The configured Nitro storage mount.
  */
@@ -39,7 +45,9 @@ async function resolveAssetStorage(mount: string) {
   return useStorage(mount);
 }
 
-/** Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
+/**
+ * Creates the one raw-byte ocache adapter for a configured Nitro storage mount.
+ *
  * @param mount Nitro storage mount name.
  * @returns An ocache storage interface backed by raw unstorage operations.
  */
@@ -54,16 +62,29 @@ export function createAssetCacheStorage(mount: string) {
   });
 }
 
-/** Lazily creates the anonymous-only cached Directus asset handler.
- * @param config Cache settings.
- * @param fetchAnonymous Anonymous-only resolver.
- * @returns The process-local cached handler.
+/**
+ * Creates empty state for one Nitro application's asset cache handler.
+ *
+ * @returns Empty application-owned cache state.
  */
-export function getAssetCacheHandler(
+export function createAssetCacheState(): DirectusAssetCacheState {
+  return {};
+}
+
+/**
+ * Gets or creates the immutable cached handler owned by an application state.
+ *
+ * @param state Application-owned cache state.
+ * @param config Cache settings used on first creation.
+ * @param fetchAnonymous Anonymous-only resolver used on first creation.
+ * @returns The application-scoped cached handler.
+ */
+export function getOrCreateAssetCacheHandler(
+  state: DirectusAssetCacheState,
   config: AssetCacheConfig,
   fetchAnonymous: (event: HTTPEvent) => Promise<Response>
 ): CachedEventHandler<HTTPEvent> {
-  cachedHandler ??= defineCachedHandler(fetchAnonymous, {
+  state.handler ??= defineCachedHandler(fetchAnonymous, {
     name: "directus-assets",
     storage: () => createAssetCacheStorage(config.storage),
     maxAge: config.maxAge,
@@ -87,10 +108,28 @@ export function getAssetCacheHandler(
       );
     }
   });
-  return cachedHandler;
+  return state.handler;
 }
 
-/** Adapts the current H3 event to ocache's portable HTTP event shape.
+/**
+ * Lazily gets the anonymous-only cached Directus asset handler from the Nitro application.
+ *
+ * @param config Cache settings.
+ * @param fetchAnonymous Anonymous-only resolver.
+ * @returns The application-scoped cached handler.
+ */
+export function getAssetCacheHandler(
+  config: AssetCacheConfig,
+  fetchAnonymous: (event: HTTPEvent) => Promise<Response>
+): CachedEventHandler<HTTPEvent> {
+  const state = useNitroApp().directusAssetCache;
+  if (!state) throw new Error("Directus asset cache plugin is not registered");
+  return getOrCreateAssetCacheHandler(state, config, fetchAnonymous);
+}
+
+/**
+ * Adapts the current H3 event to ocache's portable HTTP event shape.
+ *
  * @param event Current H3 event.
  * @param target Directus request URL.
  * @param headers Sanitized request headers.

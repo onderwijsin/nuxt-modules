@@ -117,6 +117,9 @@ The asset proxy normalizes upstream `Vary` headers to `Accept`, matching the req
 that the proxy exposes and the optional asset cache keys. It does not vary on `Origin`, request
 `Cache-Control`, or `Accept-Encoding`.
 
+Cache-disabled asset requests use a streaming proxy. Cached delivery is application-scoped and
+anonymous-only; session-backed asset responses always receive `Cache-Control: private, no-store`.
+
 When authentication is enabled without an explicit session secret, local development uses a fixed
 convenience value, while `nuxt prepare` and CI generate a fresh ephemeral cryptographic value.
 Production has no fallback; configure `client.auth.sessionSecret` from a server-only deployment
@@ -457,7 +460,6 @@ generate collection interfaces and `Schema`. Configure it under `directusClient.
 | `removeEnums`                      | Removes generated `export enum` declarations.                                  |
 | `replaceAnyWithUnknown`            | Rewrites generated `Record<…, any>` values to `Record<…, unknown>`.            |
 | `replaceJsonWithJSON`              | Rewrites quoted `"json"` field types to `JSON`.                                |
-| `applyTypeNameOverrides`           | Applies the module's reviewed generated type-name corrections.                 |
 | `makeNonNullableOptionalsRequired` | Makes simple optional fields required when their type does not include `null`. |
 | `mergeJsDocs`                      | Merges adjacent generated JSDoc tag blocks and removes duplicate tags.         |
 

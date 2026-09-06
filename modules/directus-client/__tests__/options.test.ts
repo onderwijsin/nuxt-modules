@@ -131,7 +131,6 @@ describe("Directus module options", () => {
             removeEnums: true,
             replaceAnyWithUnknown: true,
             replaceJsonWithJSON: true,
-            applyTypeNameOverrides: true,
             makeNonNullableOptionalsRequired: true,
             mergeJsDocs: true
           }

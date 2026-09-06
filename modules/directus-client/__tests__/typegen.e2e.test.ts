@@ -16,7 +16,6 @@ describe("Directus production-schema typegen contract", () => {
         removeEnums: true,
         replaceAnyWithUnknown: true,
         replaceJsonWithJSON: true,
-        applyTypeNameOverrides: true,
         makeNonNullableOptionalsRequired: true,
         mergeJsDocs: true
       },
