@@ -93,43 +93,43 @@ the application proxy.
 
 `client` contains Directus client module settings. Its nested schemas provide defaults.
 
-| Option                         | Default                             | Description                                                                                       |
-| ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `proxy.path`                   | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.   |
-| `assets.enabled`               | `true`                              | Enables the dedicated Directus `/assets` proxy route.                                             |
-| `assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.         |
-| `assets.path`                  | `/_directus/assets`                 | Local asset proxy route using the same safe path validation as `proxy.path`.                      |
-| `assets.publicOnly`            | `false`                             | Uses anonymous asset requests only and never attempts session authentication when enabled.        |
-| `assets.cache.enabled`         | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                      |
-| `assets.cache.storage`         | —                                   | Nitro storage mount name; required when caching is enabled and must support raw binary values.    |
-| `assets.cache.maxAge`          | —                                   | Fresh cache lifetime in seconds; required to be a positive integer when caching is enabled.       |
-| `assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                  |
-| `assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                          |
-| `assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                  |
-| `assets.cache.prune.enabled`   | `false`                             | Opts into best-effort pruning of expired entries in storage without a native TTL guarantee.       |
-| `assets.cache.prune.onRequest` | `true`                              | Runs throttled pruning in the background after cached asset requests.                             |
-| `assets.cache.prune.interval`  | `3600`                              | Minimum request-triggered prune interval in seconds.                                              |
-| `assets.cache.prune.task.enabled` | `false`                          | Enables a consumer-registered Nitro prune task.                                                   |
-| `commands`                     | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
-| `preview.enabled`              | `false`                             | Enables preview query parsing; set to `true` to opt in.                                           |
-| `preview.versioning`           | `true`                              | Enables Content Version preview lookup.                                                           |
-| `preview.queryKeys`            | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                    |
-| `auth.enabled`                 | `false`                             | Enables cookie-backed authentication.                                                             |
-| `auth.turnstile.enabled`       | `false`                             | Enables Turnstile protection for authentication requests.                                         |
-| `auth.magicLinks.enabled`      | `false`                             | Enables optional Directus magic-link authentication routes; requires `auth.enabled`.              |
-| `auth.magicLinks.redirectUrl`  | —                                   | Absolute, server-only callback URL required when magic links are enabled.                         |
-| `auth.cookie`                  | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.   |
-| `auth.refreshSafetyWindow`     | `30000`                             | Milliseconds before expiry when a session is refreshed.                                           |
-| `auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters. |
-| `auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                            |
-| `auth.maskSecretsInPlayground` | `true`                              | Masks access and refresh tokens in the local session inspection playground.                       |
-| `auth.passwordResetUrl`        | —                                   | URL sent to Directus for password-reset requests.                                                 |
-| `typegen.enabled`              | `true`                              | Enables generated `#directus` schema declarations.                                                |
-| `typegen.introspectionToken`   | —                                   | Server-only schema-introspection token.                                                           |
-| `typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
-| `typegen.augmentations`        | All `true`                          | Generated-source transforms.                                                                      |
-| `typegen.rules`                | `{}`                                | Collection and field type-expression overrides.                                                   |
-| `typegen.transform`            | —                                   | Final executable source transform.                                                                |
+| Option                            | Default                             | Description                                                                                       |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `proxy.path`                      | `/_directus/proxy`                  | Local proxy route. It cannot be root, contain traversal segments, or overlap `/_directus/auth`.   |
+| `assets.enabled`                  | `true`                              | Enables the dedicated Directus `/assets` proxy route.                                             |
+| `assets.url`                      | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.         |
+| `assets.path`                     | `/_directus/assets`                 | Local asset proxy route using the same safe path validation as `proxy.path`.                      |
+| `assets.publicOnly`               | `false`                             | Uses anonymous asset requests only and never attempts session authentication when enabled.        |
+| `assets.cache.enabled`            | `false`                             | Enables server-side caching for explicitly public anonymous asset responses.                      |
+| `assets.cache.storage`            | —                                   | Nitro storage mount name; required when caching is enabled and must support raw binary values.    |
+| `assets.cache.maxAge`             | —                                   | Fresh cache lifetime in seconds; required to be a positive integer when caching is enabled.       |
+| `assets.cache.maxBodySize`        | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                  |
+| `assets.cache.swr`                | `false`                             | Enables stale-while-revalidate behavior.                                                          |
+| `assets.cache.staleMaxAge`        | —                                   | Optional non-negative stale lifetime in seconds.                                                  |
+| `assets.cache.prune.enabled`      | `false`                             | Opts into best-effort pruning of expired entries in storage without a native TTL guarantee.       |
+| `assets.cache.prune.onRequest`    | `true`                              | Runs throttled pruning in the background after cached asset requests.                             |
+| `assets.cache.prune.interval`     | `3600`                              | Minimum request-triggered prune interval in seconds.                                              |
+| `assets.cache.prune.task.enabled` | `false`                             | Enables a consumer-registered Nitro prune task.                                                   |
+| `commands`                        | `readItem`, `readItems`             | SDK commands that the Directus client module auto-imports.                                        |
+| `preview.enabled`                 | `false`                             | Enables preview query parsing; set to `true` to opt in.                                           |
+| `preview.versioning`              | `true`                              | Enables Content Version preview lookup.                                                           |
+| `preview.queryKeys`               | `preview`, `token`, `version`, `id` | Preview query parameter names.                                                                    |
+| `auth.enabled`                    | `false`                             | Enables cookie-backed authentication.                                                             |
+| `auth.turnstile.enabled`          | `false`                             | Enables Turnstile protection for authentication requests.                                         |
+| `auth.magicLinks.enabled`         | `false`                             | Enables optional Directus magic-link authentication routes; requires `auth.enabled`.              |
+| `auth.magicLinks.redirectUrl`     | —                                   | Absolute, server-only callback URL required when magic links are enabled.                         |
+| `auth.cookie`                     | See below                           | Session-cookie settings: `name`, `secure`, `sameSite`, `path`, `maxAge`, and optional `domain`.   |
+| `auth.refreshSafetyWindow`        | `30000`                             | Milliseconds before expiry when a session is refreshed.                                           |
+| `auth.sessionSecret`              | —                                   | Server-only H3 sealing secret; required for enabled auth and must contain at least 32 characters. |
+| `auth.previousSessionSecrets`     | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                            |
+| `auth.maskSecretsInPlayground`    | `true`                              | Masks access and refresh tokens in the local session inspection playground.                       |
+| `auth.passwordResetUrl`           | —                                   | URL sent to Directus for password-reset requests.                                                 |
+| `typegen.enabled`                 | `true`                              | Enables generated `#directus` schema declarations.                                                |
+| `typegen.introspectionToken`      | —                                   | Server-only schema-introspection token.                                                           |
+| `typegen.cache.maxAge`            | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
+| `typegen.augmentations`           | All `true`                          | Generated-source transforms.                                                                      |
+| `typegen.rules`                   | `{}`                                | Collection and field type-expression overrides.                                                   |
+| `typegen.transform`               | —                                   | Final executable source transform.                                                                |
 
 Asset caching is disabled by default. `assets.cache.storage` names a Nitro storage mount supplied by
 the application; the module does not create or choose its driver. Use filesystem storage for Node

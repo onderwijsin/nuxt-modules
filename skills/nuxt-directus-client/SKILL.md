@@ -66,51 +66,51 @@ private. Do not place these values in `runtimeConfig.public` or browser code.
 
 All options are configured under `directusClient`.
 
-| Option                                | Default                             | Contract                                                                                                                               |
-| ------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                             | `true`                              | Enables the module.                                                                                                                    |
-| `instance.baseUrl`                    | —                                   | Optional Directus URL. Required before requests can run.                                                                               |
-| `instance.proxyToken`                 | —                                   | Server-held credential delegated through the proxy; its permissions must be safe for public callers.                                   |
-| `client.proxy.path`                   | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths, auth-route collisions, and overlaps with `client.assets.path` are rejected. |
-| `client.assets.enabled`               | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                                                         |
-| `client.assets.url`                   | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.                                              |
-| `client.assets.path`                  | `/_directus/assets`                 | Absolute local asset-proxy path using the same safe validation; it cannot overlap the REST proxy or reserved auth routes.              |
-| `client.assets.publicOnly`            | `false`                             | Keeps asset requests anonymous and never escalates to the current session when enabled.                                                |
-| `client.assets.cache.enabled`         | `false`                             | Enables server-side caching of explicitly public anonymous assets.                                                                     |
-| `client.assets.cache.storage`         | —                                   | Name of an application-provided Nitro raw-byte storage mount; required when enabled.                                                   |
-| `client.assets.cache.maxAge`          | —                                   | Positive cache lifetime in seconds; required when enabled.                                                                             |
-| `client.assets.cache.maxBodySize`     | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                                                       |
-| `client.assets.cache.swr`             | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
-| `client.assets.cache.staleMaxAge`     | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
-| `client.assets.cache.prune.enabled`   | `false`                             | Opts into pruning expired entries when storage does not enforce physical TTLs.                                                         |
-| `client.assets.cache.prune.onRequest` | `true`                              | Enables throttled background pruning after cached asset requests.                                                                      |
-| `client.assets.cache.prune.interval`  | `3600`                              | Minimum interval between request-triggered prune attempts, in seconds.                                                                  |
-| `client.assets.cache.prune.task.enabled` | `false`                          | Enables the exported Nitro prune task; task registration and scheduling remain consumer-owned.                                         |
-| `client.commands`                     | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                                                      |
-| `client.preview.enabled`              | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
-| `client.preview.versioning`           | `true`                              | Enables versioned preview lookup.                                                                                                      |
-| `client.preview.queryKeys`            | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
-| `client.auth.enabled`                 | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.                                              |
-| `client.auth.turnstile.enabled`       | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                                                             |
-| `client.auth.magicLinks.enabled`      | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.                                              |
-| `client.auth.magicLinks.redirectUrl`  | —                                   | Fixed absolute server-only callback URL; required when magic links are enabled.                                                        |
-| `client.auth.cookie.name`             | `directus_session`                  | Session cookie name.                                                                                                                   |
-| `client.auth.cookie.secure`           | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                                                         |
-| `client.auth.cookie.sameSite`         | `lax`                               | Cookie `SameSite` policy.                                                                                                              |
-| `client.auth.cookie.path`             | `/`                                 | Cookie path.                                                                                                                           |
-| `client.auth.cookie.maxAge`           | `2592000`                           | Cookie lifetime in seconds.                                                                                                            |
-| `client.auth.cookie.domain`           | —                                   | Optional cookie domain.                                                                                                                |
-| `client.auth.refreshSafetyWindow`     | `30000`                             | Refreshes a session this many milliseconds before expiry.                                                                              |
-| `client.auth.sessionSecret`           | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters.                                  |
-| `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                                                              |
-| `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                                                   |
-| `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent as Directus `reset_url`.                                                                   |
-| `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                                                            |
-| `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                                                       |
-| `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                                            |
-| `client.typegen.augmentations`        | all `true`                          | Optional generated-output transforms.                                                                                                  |
-| `client.typegen.rules`                | `{}`                                | Generated field type overrides keyed by collection and field.                                                                          |
-| `client.typegen.transform`            | —                                   | Final build-time source transform.                                                                                                     |
+| Option                                   | Default                             | Contract                                                                                                                               |
+| ---------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                                | `true`                              | Enables the module.                                                                                                                    |
+| `instance.baseUrl`                       | —                                   | Optional Directus URL. Required before requests can run.                                                                               |
+| `instance.proxyToken`                    | —                                   | Server-held credential delegated through the proxy; its permissions must be safe for public callers.                                   |
+| `client.proxy.path`                      | `/_directus/proxy`                  | Absolute local same-origin browser proxy path. Root paths, auth-route collisions, and overlaps with `client.assets.path` are rejected. |
+| `client.assets.enabled`                  | `true`                              | Registers the dedicated Directus `/assets` proxy when enabled.                                                                         |
+| `client.assets.url`                      | —                                   | Optional absolute upstream asset base URL; defaults to `instance.baseUrl` with `/assets`.                                              |
+| `client.assets.path`                     | `/_directus/assets`                 | Absolute local asset-proxy path using the same safe validation; it cannot overlap the REST proxy or reserved auth routes.              |
+| `client.assets.publicOnly`               | `false`                             | Keeps asset requests anonymous and never escalates to the current session when enabled.                                                |
+| `client.assets.cache.enabled`            | `false`                             | Enables server-side caching of explicitly public anonymous assets.                                                                     |
+| `client.assets.cache.storage`            | —                                   | Name of an application-provided Nitro raw-byte storage mount; required when enabled.                                                   |
+| `client.assets.cache.maxAge`             | —                                   | Positive cache lifetime in seconds; required when enabled.                                                                             |
+| `client.assets.cache.maxBodySize`        | `10485760`                          | Maximum response size in bytes that may be buffered for caching.                                                                       |
+| `client.assets.cache.swr`                | `false`                             | Enables stale-while-revalidate behavior.                                                                                               |
+| `client.assets.cache.staleMaxAge`        | —                                   | Optional non-negative stale lifetime in seconds.                                                                                       |
+| `client.assets.cache.prune.enabled`      | `false`                             | Opts into pruning expired entries when storage does not enforce physical TTLs.                                                         |
+| `client.assets.cache.prune.onRequest`    | `true`                              | Enables throttled background pruning after cached asset requests.                                                                      |
+| `client.assets.cache.prune.interval`     | `3600`                              | Minimum interval between request-triggered prune attempts, in seconds.                                                                 |
+| `client.assets.cache.prune.task.enabled` | `false`                             | Enables the exported Nitro prune task; task registration and scheduling remain consumer-owned.                                         |
+| `client.commands`                        | `[readItem, readItems]`             | SDK command names to auto-import. Unsupported names are rejected.                                                                      |
+| `client.preview.enabled`                 | `false`                             | Enables preview query parsing and request-scoped preview credentials; set to `true` to opt in.                                         |
+| `client.preview.versioning`              | `true`                              | Enables versioned preview lookup.                                                                                                      |
+| `client.preview.queryKeys`               | `preview`, `token`, `version`, `id` | Query parameter names used for preview context.                                                                                        |
+| `client.auth.enabled`                    | `false`                             | Enables cookie authentication and registers authentication routes plus `useDirectusAuth`.                                              |
+| `client.auth.turnstile.enabled`          | `false`                             | Registers Turnstile and protects login plus password-reset-email requests.                                                             |
+| `client.auth.magicLinks.enabled`         | `false`                             | Registers optional magic-link request and redemption routes; requires auth to be enabled.                                              |
+| `client.auth.magicLinks.redirectUrl`     | —                                   | Fixed absolute server-only callback URL; required when magic links are enabled.                                                        |
+| `client.auth.cookie.name`                | `directus_session`                  | Session cookie name.                                                                                                                   |
+| `client.auth.cookie.secure`              | `true`                              | Sends the cookie only over HTTPS. Use `false` only for local HTTP development.                                                         |
+| `client.auth.cookie.sameSite`            | `lax`                               | Cookie `SameSite` policy.                                                                                                              |
+| `client.auth.cookie.path`                | `/`                                 | Cookie path.                                                                                                                           |
+| `client.auth.cookie.maxAge`              | `2592000`                           | Cookie lifetime in seconds.                                                                                                            |
+| `client.auth.cookie.domain`              | —                                   | Optional cookie domain.                                                                                                                |
+| `client.auth.refreshSafetyWindow`        | `30000`                             | Refreshes a session this many milliseconds before expiry.                                                                              |
+| `client.auth.sessionSecret`              | —                                   | Server-only H3 sealing secret; required when auth is enabled and must contain at least 32 characters.                                  |
+| `client.auth.previousSessionSecrets`     | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                                                              |
+| `client.auth.maskSecretsInPlayground`    | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                                                   |
+| `client.auth.passwordResetUrl`           | —                                   | Required for password-request support; sent as Directus `reset_url`.                                                                   |
+| `client.typegen.enabled`                 | `true`                              | Enables generated `#directus` declarations.                                                                                            |
+| `client.typegen.introspectionToken`      | —                                   | Server-only Directus schema introspection token.                                                                                       |
+| `client.typegen.cache.maxAge`            | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                                            |
+| `client.typegen.augmentations`           | all `true`                          | Optional generated-output transforms.                                                                                                  |
+| `client.typegen.rules`                   | `{}`                                | Generated field type overrides keyed by collection and field.                                                                          |
+| `client.typegen.transform`               | —                                   | Final build-time source transform.                                                                                                     |
 
 The module validates option values during Nuxt configuration. `instance.baseUrl` is optional, but
 requests cannot run without it; the module skips setup during `nuxt prepare` and CI when it is
@@ -124,12 +124,12 @@ that the proxy exposes and the optional asset cache keys. It does not vary on `O
 Cache-disabled asset requests use a streaming proxy. Cached delivery is application-scoped and
 anonymous-only; session-backed asset responses always receive `Cache-Control: private, no-store`.
 
-Asset-cache pruning is disabled by default. Enable `client.assets.cache.prune.enabled` for
-backends without reliable physical TTLs; request-triggered cleanup is backgrounded and throttled.
-For scheduled cleanup, also enable `prune.task.enabled`, create
-`server/tasks/directus-assets/prune.ts` that re-exports
-`@onderwijsin/nuxt-directus-client/runtime/prune-task`, then explicitly enable Nitro experimental
-tasks and schedule `directus-assets:prune`. Task registration and scheduling remain consumer-owned.
+Asset-cache pruning is disabled by default. Enable `client.assets.cache.prune.enabled` for backends
+without reliable physical TTLs; request-triggered cleanup is backgrounded and throttled. For
+scheduled cleanup, also enable `prune.task.enabled`, create `server/tasks/directus-assets/prune.ts`
+that re-exports `@onderwijsin/nuxt-directus-client/runtime/prune-task`, then explicitly enable Nitro
+experimental tasks and schedule `directus-assets:prune`. Task registration and scheduling remain
+consumer-owned.
 
 When authentication is enabled without an explicit session secret, local development uses a fixed
 convenience value, while `nuxt prepare` and CI generate a fresh ephemeral cryptographic value.
