@@ -163,10 +163,10 @@ import {
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session from a Nitro request. It refreshes an expiring or
-expired access token while Directus accepts the refresh token, and returns `null` for an
-unauthenticated, invalid, refresh-rejected, or disabled session. Access and refresh tokens are never
-returned.
+Reads the current token-free Directus session snapshot from the local sealed session without
+refreshing its access token. It returns `null` for an unauthenticated, invalid, or disabled session.
+Use an authenticated Directus request or the session endpoint when a currently usable access token
+is required. Access and refresh tokens are never returned.
 
 ```ts
 export default defineEventHandler(async (event) => {

@@ -119,10 +119,11 @@ authentication is enabled, its session.
 useDirectusServerAuth(event: H3Event): Promise<DirectusSessionSnapshot | null>
 ```
 
-Reads the current token-free Directus session from a Nitro request. It refreshes an expiring or
-expired access token while Directus still accepts the refresh token, and returns `null` when the
-request is unauthenticated, the sealed session is invalid, refresh is rejected, or authentication is
-disabled. Access and refresh tokens are never returned.
+Reads the current token-free Directus session snapshot from the local sealed session without
+refreshing its access token. It returns `null` when the request is unauthenticated, the sealed
+session is invalid, or authentication is disabled. Access and refresh tokens are never returned. Use
+an authenticated Directus request or the session endpoint when a currently usable access token is
+required.
 
 ```ts
 export default defineEventHandler(async (event) => {
@@ -283,14 +284,17 @@ if (auth.isAuthenticated.value) {
 
 The session snapshot is persisted with the access and rotating refresh token in a bounded sealed
 `httpOnly` cookie. SSR refreshes an expiring access token when possible before projecting the
-snapshot into Nuxt state, so hydration does not require a session fetch. Access and refresh tokens
-never enter client state or application code. H3 authenticated encryption protects the cookie's
-confidentiality and integrity; Directus remains the authorization boundary.
+snapshot into Nuxt state, so hydration does not require a session fetch. If refresh is temporarily
+unavailable, SSR falls back to the trusted local snapshot; terminal authentication failures still
+clear the session. Access and refresh tokens never enter client state or application code. H3
+authenticated encryption protects the cookie's confidentiality and integrity; Directus remains the
+authorization boundary.
 
 Authentication mutations use Nuxt's request-aware fetch against the same-origin `/_directus/auth/`
 endpoints. The composable remains SSR-safe: reading `isAuthenticated`, `userId`, and the session
 state works during SSR. Automatic SSR session refresh happens directly through the Nitro request
-boundary, not through an internal HTTP refresh call.
+boundary, not through an internal HTTP refresh call. Authenticated upstream requests remain strict:
+they do not send an expired or unusable credential when refresh is temporarily unavailable.
 
 Mutations that do not depend on writing a new browser cookie can work naturally through the internal
 route. Login, refresh, logout, and magic-link redemption may require response-cookie propagation

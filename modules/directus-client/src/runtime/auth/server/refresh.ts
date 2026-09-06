@@ -45,6 +45,7 @@ const terminalRefreshCodes = new Set([
 ]);
 
 const REFRESH_REQUEST_TIMEOUT_MS = 10_000;
+const TRANSIENT_REFRESH_ERROR_CODE = "DIRECTUS_TRANSIENT_REFRESH";
 
 /**
  * Reads the HTTP status and Directus error code from an unknown upstream failure.
@@ -104,8 +105,20 @@ function createTransientRefreshError(cause: unknown) {
   return createError({
     statusCode: 503,
     statusMessage: "Directus refresh temporarily unavailable",
+    data: { code: TRANSIENT_REFRESH_ERROR_CODE },
     cause
   });
+}
+
+/**
+ * Identifies the refresh availability error created by this module.
+ * @param error - Unknown caught value.
+ * @returns Whether the error is an explicitly classified transient refresh failure.
+ */
+export function isTransientDirectusRefreshError(error: unknown): boolean {
+  return (
+    isRecord(error) && isRecord(error.data) && error.data.code === TRANSIENT_REFRESH_ERROR_CODE
+  );
 }
 
 /**

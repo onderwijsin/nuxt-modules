@@ -197,6 +197,34 @@ describe("Directus client and server composables", async () => {
     expect(upstream.lastItemsAuthorization).toBe("Bearer refreshed-access");
   });
 
+  it("falls back to the sealed snapshot when SSR refresh is temporarily unavailable", async () => {
+    upstream.refreshBehavior = "transient";
+    const cookie = await loginWithAccessToken();
+    const refreshCount = upstream.refreshRequests;
+
+    const response = await fetch(url("/auth-state"), { headers: { cookie } });
+
+    expect(response.status, await response.clone().text()).toBe(200);
+    expect(upstream.refreshRequests).toBe(refreshCount + 1);
+    await expect(response.text()).resolves.toContain(
+      '<p data-testid="authenticated-user">user-1</p>'
+    );
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("hydrates as unauthenticated after a terminal SSR refresh failure", async () => {
+    upstream.refreshBehavior = "terminal";
+    const cookie = await loginWithAccessToken();
+
+    const response = await fetch(url("/auth-state"), { headers: { cookie } });
+
+    expect(response.status, await response.clone().text()).toBe(200);
+    await expect(response.text()).resolves.not.toContain(
+      '<p data-testid="authenticated-user">user-1</p>'
+    );
+    expect(response.headers.get("set-cookie")).toContain("directus_session=");
+  });
+
   it.each([
     "/_directus/auth/login",
     "/_directus/auth/refresh",

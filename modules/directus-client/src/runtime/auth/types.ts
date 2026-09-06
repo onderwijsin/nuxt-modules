@@ -16,5 +16,7 @@ export interface DirectusRequestAuthState {
 
 /** Lazy request-local Directus authentication boundary exposed by Nitro. */
 export interface DirectusRequestAuthContext {
+  /** Reads the token-free local session snapshot without refreshing credentials. */
+  readonly snapshot: () => Promise<DirectusSessionSnapshot | null>;
   readonly resolve: () => Promise<DirectusRequestAuthState>;
 }
