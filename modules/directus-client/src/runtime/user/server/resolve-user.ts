@@ -18,15 +18,19 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Resolves the authenticated, configured current-user projection for one request.
  * @param event Incoming H3 request event.
+ * @param runtimeConfig Optional Nuxt runtime configuration captured by the SSR plugin.
  * @returns The validated raw or mapped current-user projection.
  */
-export async function resolveDirectusUser(event: H3Event): Promise<DirectusUserProjection> {
+export async function resolveDirectusUser(
+  event: H3Event,
+  runtimeConfig?: ReturnType<typeof useRuntimeConfig>
+): Promise<DirectusUserProjection> {
   const authState = await event.context.directusAuth?.resolve();
   if (!authState?.accessToken) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
   }
 
-  const runtime = useRuntimeConfig(event).directusClient;
+  const runtime = (runtimeConfig ?? useRuntimeConfig(event)).directusClient;
   const runtimeUserConfig =
     isRecord(runtime.auth) && hasKey(runtime.auth, "user") && isRecord(runtime.auth.user)
       ? runtime.auth.user

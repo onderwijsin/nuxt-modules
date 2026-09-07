@@ -282,7 +282,9 @@ async function runFocusedAssertions(port, profile, directusMock) {
     const authenticatedBody = await authenticatedResponse.text();
     if (!authenticatedBody.includes("authenticated:external-user"))
       throw new Error(`Packed Directus authenticated SSR assertion failed: ${authenticatedBody}`);
-    if (directusMock.state.userRequests !== userRequestsBeforeLogin + 2)
+    if (!authenticatedBody.includes("external@example.test"))
+      throw new Error(`Packed Directus mapped user SSR assertion failed: ${authenticatedBody}`);
+    if (directusMock.state.userRequests !== userRequestsBeforeLogin + 3)
       throw new Error(
         `Packed Directus current-user request count changed unexpectedly: ${directusMock.state.userRequests}`
       );

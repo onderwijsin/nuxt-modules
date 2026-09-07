@@ -3,7 +3,10 @@ import {
   getResolvedDirectusConfigFromSource,
   resolveDirectusConfigFile
 } from "@onderwijsin/nuxt-directus-config/config";
-import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
+import {
+  directusSerializableUserProjectionSchema,
+  getResolvedDirectusConfig
+} from "@onderwijsin/nuxt-directus-config/schema";
 import { join } from "node:path";
 import {
   addImports,
@@ -34,10 +37,7 @@ import {
 } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { parseDirectusCommands } from "./config/commands";
-import {
-  directusClientOptionsSchema,
-  directusResolvedClientOptionsSchema
-} from "./config/options.schema";
+import { directusResolvedClientOptionsSchema } from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { resolveDirectusSessionSecret } from "./config/session-secret";
 import {
@@ -130,6 +130,8 @@ export default defineNuxtModule<ModuleOptions>({
         }
       }
     };
+    if (rawUserProjection !== undefined)
+      directusSerializableUserProjectionSchema.parse(rawUserProjection);
     const sessionSecret = resolveDirectusSessionSecret({
       configured:
         rawOptions.client?.auth?.sessionSecret ?? sharedConfig?.client?.auth?.sessionSecret,
@@ -143,13 +145,6 @@ export default defineNuxtModule<ModuleOptions>({
       authenticationEnabled && sessionSecret
         ? defu({ client: { auth: { sessionSecret } } }, input)
         : input;
-    validateModuleOptions(
-      authenticationEnabled && sessionSecret
-        ? defu({ client: { auth: { sessionSecret } } }, rawOptions)
-        : rawOptions,
-      directusClientOptionsSchema,
-      log
-    );
     const options: ResolvedExecutableModuleOptions = validateModuleOptions(
       validationOptions,
       directusResolvedClientOptionsSchema,

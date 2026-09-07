@@ -1,4 +1,5 @@
 import { defineNuxtPlugin, useRequestEvent } from "#app";
+import { useRuntimeConfig } from "#imports";
 import { resolveDirectusUser } from "../server/resolve-user";
 
 /**
@@ -8,5 +9,8 @@ import { resolveDirectusUser } from "../server/resolve-user";
 export default defineNuxtPlugin(() => {
   const event = useRequestEvent();
   if (!event) throw new Error("Directus current-user SSR plugin requires an H3 event.");
-  return { provide: { directusUser: () => resolveDirectusUser(event) } };
+  const runtimeConfig = useRuntimeConfig();
+  return {
+    provide: { directusUser: () => resolveDirectusUser(event, runtimeConfig) }
+  };
 });

@@ -1,10 +1,17 @@
 import type { UserFieldSelection } from "@onderwijsin/nuxt-directus-config/schema";
 
+function generateUserFieldObjectType(field: Record<string, readonly UserFieldSelection[]>): string {
+  const members = Object.entries(field).map(
+    ([key, nestedFields]) =>
+      `readonly ${JSON.stringify(key)}: ${generateUserFieldsType(nestedFields)};`
+  );
+  return `{ ${members.join(" ")} }`;
+}
+
 function generateUserFieldsType(fields: readonly UserFieldSelection[]): string {
   const values = fields.map((field) => {
     if (typeof field === "string") return JSON.stringify(field);
-    const [key, nestedFields] = Object.entries(field)[0] ?? [];
-    return `{ readonly ${JSON.stringify(key)}: ${generateUserFieldsType(nestedFields ?? [])} }`;
+    return generateUserFieldObjectType(field);
   });
   return `readonly [${values.join(", ")}]`;
 }

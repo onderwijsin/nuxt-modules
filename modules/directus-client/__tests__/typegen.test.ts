@@ -62,12 +62,13 @@ const augmentationCases: ReadonlyArray<[keyof typeof disabledAugmentations, stri
 describe("Directus typegen transforms", () => {
   it("generates a literal current-user projection declaration", () => {
     const declaration = generateDirectusUserTypeDeclaration(
-      ["id", { role: ["id", "name"] }],
+      ["id", { role: ["id", "name"], avatar: ["id"] }],
       "/project/directus.config.ts"
     );
 
     expect(declaration).toContain("import type { DirectusUser, Query, ReadUserOutput }");
     expect(declaration).toContain('readonly "role": readonly [');
+    expect(declaration).toContain('readonly "avatar": readonly ["id"];');
     expect(declaration).toContain('"name"');
     expect(declaration).toContain('typeof import("/project/directus.config.ts")');
     expect(declaration).not.toContain("const directusUserFields");
@@ -84,7 +85,7 @@ describe("Directus typegen transforms", () => {
     writeFileSync(
       join(directory, "generated.d.ts"),
       generateDirectusUserTypeDeclaration(
-        ["id", { role: ["id", "name"] }],
+        ["id", { role: ["id", "name"], avatar: ["id"] }],
         join(directory, "directus.config.ts")
       )
     );

@@ -95,7 +95,7 @@ describe("Directus config helpers", () => {
           enabled: true,
           user: {
             enabled: true,
-            fields: ["id", { role: ["id", "name"] }],
+            fields: ["id", { role: ["id", "name"], avatar: ["id"] }],
             mapper
           }
         }
@@ -104,12 +104,15 @@ describe("Directus config helpers", () => {
 
     expect(config.client?.auth.user).toMatchObject({
       enabled: true,
-      fields: ["id", { role: ["id", "name"] }],
+      fields: ["id", { role: ["id", "name"], avatar: ["id"] }],
       mapper
     });
     expect(directusPublicConfigSchema.parse(config)).not.toHaveProperty("client.auth.user");
     expect(() =>
       validateDirectusConfig({ client: { auth: { user: { enabled: true, fields: [] } } } })
+    ).toThrow();
+    expect(() =>
+      validateDirectusConfig({ client: { auth: { user: { enabled: true, fields: [{}] } } } })
     ).toThrow();
     expect(() =>
       validateDirectusConfig({

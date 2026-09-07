@@ -12,7 +12,9 @@ type DirectusUserFieldSelection =
 export const directusUserFieldSelectionSchema: z.ZodType<DirectusUserFieldSelection> = z.lazy(() =>
   z.union([
     z.string().trim().min(1),
-    z.record(z.string().trim().min(1), z.array(directusUserFieldSelectionSchema).min(1))
+    z
+      .record(z.string().trim().min(1), z.array(directusUserFieldSelectionSchema).min(1))
+      .refine((value) => Object.keys(value).length > 0, "must contain at least one relation")
   ])
 );
 

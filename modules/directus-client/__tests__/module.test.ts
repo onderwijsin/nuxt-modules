@@ -104,6 +104,21 @@ describe("directus-client module setup", () => {
     ).toThrow();
   });
 
+  it("allows raw user options to compose with shared authentication settings", async () => {
+    const sharedUser = state.sharedConfig.client.auth.user;
+    state.sharedConfig.client.auth.user = undefined;
+    try {
+      expect(() =>
+        module.setup(
+          { client: { auth: { user: { enabled: true, fields: ["email"] } } } },
+          createNuxt()
+        )
+      ).not.toThrow();
+    } finally {
+      state.sharedConfig.client.auth.user = sharedUser;
+    }
+  });
+
   it("does not expose a shared mapper when raw auth.user wins atomically", async () => {
     const nuxt = createNuxt();
     await module.setup(
