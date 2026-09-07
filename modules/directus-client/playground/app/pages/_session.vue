@@ -41,6 +41,7 @@ async function logout(): Promise<void> {
 }
 
 const session = auth._session;
+const user = useDirectusUser().user;
 </script>
 
 <template>
@@ -80,7 +81,7 @@ const session = auth._session;
           </div>
           <div class="rounded-lg bg-muted/30 p-4">
             <dt class="text-xs font-medium uppercase tracking-wide text-muted">Email</dt>
-            <dd class="mt-1 text-sm text-highlighted">{{ session.email ?? "Not returned" }}</dd>
+            <dd class="mt-1 text-sm text-highlighted">{{ user?.email ?? "Not returned" }}</dd>
           </div>
         </dl>
 

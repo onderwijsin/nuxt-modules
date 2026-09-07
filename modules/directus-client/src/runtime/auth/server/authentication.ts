@@ -8,8 +8,6 @@ import { z } from "zod";
 
 import { setDirectusSession, type DirectusSession, type DirectusSessionSnapshot } from "./session";
 
-const currentUserFields = ["id", "email", "first_name", "last_name"] as const;
-
 const directusTokenResponseSchema = z.object({
   data: z.object({
     access_token: z.string().min(1),
@@ -18,12 +16,7 @@ const directusTokenResponseSchema = z.object({
   })
 });
 const directusCurrentUserResponseSchema = z.object({
-  data: z.object({
-    id: z.string().min(1),
-    email: z.string().nullable().optional(),
-    first_name: z.string().nullable().optional(),
-    last_name: z.string().nullable().optional()
-  })
+  data: z.object({ id: z.string().min(1) })
 });
 
 export interface DirectusAuthenticationResult {
@@ -88,32 +81,21 @@ export function getDirectusEndpoint(event: H3Event, path: string): string {
 }
 
 /**
- * Fetches the selected current-user fields with a one-request access token.
- *
- * Keep this field list synchronized with DirectusSessionSnapshot. Add a field here before adding
- * it to the snapshot so the cookie remains intentionally compact.
+ * Fetches the stable current-user identity with a one-request access token.
  *
  * @param event - Incoming request event.
  * @param accessToken - Request-scoped Directus access token.
- * @returns The validated session snapshot derived from the current-user payload.
+ * @returns The validated stable identity derived from the current-user payload.
  */
-export async function fetchDirectusCurrentUser(
+export async function fetchDirectusSessionIdentity(
   event: H3Event,
   accessToken: string
-): Promise<DirectusSessionSnapshot> {
+): Promise<Pick<DirectusSessionSnapshot, "userId">> {
   const response = await ofetch<unknown>(getDirectusEndpoint(event, "users/me"), {
     headers: { authorization: "Bearer " + accessToken },
-    query: { fields: currentUserFields.join(",") }
+    query: { fields: "id" }
   });
-  const { id, email, first_name, last_name } =
-    directusCurrentUserResponseSchema.parse(response).data;
-  return {
-    userId: id,
-    email: email ?? null,
-    firstName: first_name ?? null,
-    lastName: last_name ?? null,
-    requiresTfaSetup: false
-  };
+  return { userId: directusCurrentUserResponseSchema.parse(response).data.id };
 }
 
 /**
@@ -136,7 +118,7 @@ async function createDirectusSessionFromAuthentication(
     refreshToken: authentication.refreshToken,
     expiresAt: now + (authentication.expires ?? 900_000),
     snapshot: {
-      ...(await fetchDirectusCurrentUser(event, authentication.accessToken)),
+      ...(await fetchDirectusSessionIdentity(event, authentication.accessToken)),
       requiresTfaSetup: decodeDirectusTfaSetupRequirement(authentication.accessToken)
     }
   };

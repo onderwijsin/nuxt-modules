@@ -4,6 +4,49 @@ import { directusCommandsSchema } from "./commands";
 import "./sensitive";
 import { directusTypegenSchema } from "./typegen";
 
+type DirectusUserFieldSelection =
+  | string
+  | { readonly [relation: string]: readonly DirectusUserFieldSelection[] };
+
+/** Recursive Directus field selection used by the current-user projection. */
+export const directusUserFieldSelectionSchema: z.ZodType<DirectusUserFieldSelection> = z.lazy(() =>
+  z.union([
+    z.string().trim().min(1),
+    z.record(z.string().trim().min(1), z.array(directusUserFieldSelectionSchema).min(1))
+  ])
+);
+
+/** Public type for a recursive Directus current-user field selection. */
+export type UserFieldSelection = DirectusUserFieldSelection;
+
+type DirectusUserMapper = (user: Record<string, unknown>) => Record<string, unknown>;
+
+const directusUserProjectionFields = z.array(directusUserFieldSelectionSchema).min(1);
+
+const directusUserProjectionEnabledSchema = z.strictObject({
+  enabled: z.literal(true),
+  fields: directusUserProjectionFields,
+  mapper: z.custom<DirectusUserMapper>((value) => typeof value === "function").optional()
+});
+
+const directusUserProjectionDisabledSchema = z.strictObject({ enabled: z.literal(false) });
+
+/** Executable current-user projection configuration, including its server-only mapper. */
+export const directusUserProjectionSchema = z
+  .discriminatedUnion("enabled", [
+    directusUserProjectionDisabledSchema,
+    directusUserProjectionEnabledSchema
+  ])
+  .sensitive();
+
+/** Serializable current-user projection accepted by raw Nuxt module options. */
+export const directusSerializableUserProjectionSchema = z
+  .discriminatedUnion("enabled", [
+    directusUserProjectionDisabledSchema,
+    directusUserProjectionEnabledSchema.omit({ mapper: true })
+  ])
+  .sensitive();
+
 const localPath = z
   .string()
   .regex(/^\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/)
@@ -135,13 +178,14 @@ const directusAuthSchemaDefaults = {
   cookie: directusCookieSchemaDefaults,
   refreshSafetyWindow: 30_000,
   previousSessionSecrets: [] as string[],
-  maskSecretsInPlayground: true
+  maskSecretsInPlayground: true,
+  user: { enabled: false }
 } as const;
 
 /**
  * Zod schema for Directus authentication configuration.
  */
-const directusAuthSchema = z
+export const directusAuthSchema = z
   .strictObject({
     enabled: z.boolean().default(directusAuthSchemaDefaults.enabled),
     turnstile: z
@@ -165,7 +209,8 @@ const directusAuthSchema = z
     maskSecretsInPlayground: z
       .boolean()
       .default(directusAuthSchemaDefaults.maskSecretsInPlayground),
-    passwordResetUrl: z.url().optional().sensitive()
+    passwordResetUrl: z.url().optional().sensitive(),
+    user: directusUserProjectionSchema.default({ enabled: false })
   })
   .default(directusAuthSchemaDefaults)
   .superRefine((options, context) => {
@@ -183,6 +228,13 @@ const directusAuthSchema = z
         message: "client.auth.magicLinks.redirectUrl is required when magic links are enabled"
       });
     }
+    if (options.user.enabled && !options.enabled) {
+      context.addIssue({
+        code: "custom",
+        path: ["user", "enabled"],
+        message: "client.auth.user.enabled requires client.auth.enabled"
+      });
+    }
   });
 
 /** Shared Directus client settings excluding instance credentials. */
@@ -193,6 +245,38 @@ export const directusClientSchema = z.strictObject({
   preview: directusPreviewSchema,
   auth: directusAuthSchema,
   typegen: directusTypegenSchema.sensitive()
+});
+
+/** Directus client schema with the serializable raw-module auth user boundary. */
+export const directusSerializableClientSchema = directusClientSchema.safeExtend({
+  auth: directusAuthSchema
+    .unwrap()
+    .omit({ user: true })
+    .extend({ user: directusSerializableUserProjectionSchema.default({ enabled: false }) })
+    .default(directusAuthSchemaDefaults)
+    .superRefine((options, context) => {
+      if (options.magicLinks.enabled && !options.enabled) {
+        context.addIssue({
+          code: "custom",
+          path: ["magicLinks", "enabled"],
+          message: "client.auth.magicLinks.enabled requires client.auth.enabled"
+        });
+      }
+      if (options.magicLinks.enabled && !options.magicLinks.redirectUrl) {
+        context.addIssue({
+          code: "custom",
+          path: ["magicLinks", "redirectUrl"],
+          message: "client.auth.magicLinks.redirectUrl is required when magic links are enabled"
+        });
+      }
+      if (options.user.enabled && !options.enabled) {
+        context.addIssue({
+          code: "custom",
+          path: ["user", "enabled"],
+          message: "client.auth.user.enabled requires client.auth.enabled"
+        });
+      }
+    })
 });
 
 /** Input type accepted by the shared client schema. */

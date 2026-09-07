@@ -2,7 +2,7 @@ import { directusConfigSchema } from "../schema";
 import type { DirectusConfig, ResolvedDirectusConfig } from "../schema";
 
 export type { DirectusConfig, ResolvedDirectusConfig } from "../schema";
-export { getResolvedDirectusConfigFromSource } from "./source";
+export { getResolvedDirectusConfigFromSource, resolveDirectusConfigFile } from "./source";
 export { applyOverridesToCollectionConfig } from "./override";
 
 // type NoUnknownKeys<Value, Shape> = Value & Record<Exclude<keyof Value, keyof Shape>, never>;
@@ -13,7 +13,7 @@ export { applyOverridesToCollectionConfig } from "./override";
  * @param config Directus configuration object.
  * @returns The unchanged typed configuration.
  */
-export function defineDirectusConfig(config: DirectusConfig): DirectusConfig {
+export function defineDirectusConfig<const Config extends DirectusConfig>(config: Config): Config {
   return config;
 }
 

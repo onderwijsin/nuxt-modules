@@ -39,9 +39,11 @@ persistence failure clears the old session because its refresh token may already
 Transient refresh-flight poisoning after the storage record expires remains unresolved here and is
 tracked by #257/#258; this decision does not define a logical expiry workaround for that state.
 
-The initial snapshot exposes only the identity fields needed by the playground and facade. Roles,
-policies, and permission helpers are intentionally not part of this release. Sealing and rotation
-are defined separately in [directus-sealed-session.md](directus-sealed-session.md).
+The session snapshot exposes only `userId` and `requiresTfaSetup`, the stable facts needed by the
+authentication facade. Mutable profile/application data is owned by the optional `useDirectusUser()`
+projection and is never sealed into the auth cookie. Roles, policies, and permission helpers are
+intentionally not part of this release. Sealing and rotation are defined separately in
+[directus-sealed-session.md](directus-sealed-session.md).
 
 ## Alternatives considered
 
@@ -55,7 +57,9 @@ are defined separately in [directus-sealed-session.md](directus-sealed-session.m
 
 The facade is reactive and server-controlled, but refresh coordination depends on the configured
 storage topology. Applications must provide shared storage when horizontal consistency matters.
-Permission decisions remain in Directus rather than in client-visible session state.
+Permission decisions remain in Directus rather than in client-visible session state. Consumers that
+need profile data must opt into `client.auth.user` and explicitly refresh it after profile
+mutations; credential refresh does not refresh profile data.
 
 ## Reconsideration criteria
 

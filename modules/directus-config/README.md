@@ -37,7 +37,16 @@ export default defineDirectusConfig({
     commands: ["readItem", "readItems"],
     auth: {
       enabled: true,
-      sessionSecret: process.env.DIRECTUS_SESSION_SECRET
+      sessionSecret: process.env.DIRECTUS_SESSION_SECRET,
+      user: {
+        enabled: true,
+        fields: ["id", "email", "first_name", "last_name", { role: ["id", "name"] }],
+        mapper: (user) => ({
+          id: user.id,
+          name: [user.first_name, user.last_name].filter(Boolean).join(" "),
+          role: user.role?.name ?? null
+        })
+      }
     }
   },
   collections: [
@@ -123,6 +132,9 @@ the application proxy.
 | `auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during staged key rotation.                            |
 | `auth.maskSecretsInPlayground` | `true`                              | Masks access and refresh tokens in the local session inspection playground.                       |
 | `auth.passwordResetUrl`        | —                                   | URL sent to Directus for password-reset requests.                                                 |
+| `auth.user.enabled`            | `false`                             | Enables the opt-in current-user projection; requires `auth.enabled`.                              |
+| `auth.user.fields`             | —                                   | Required non-empty recursive Directus QueryFields selection when enabled.                         |
+| `auth.user.mapper`             | —                                   | Optional synchronous server-only mapper; accepted only in executable `directus.config.ts`.        |
 | `typegen.enabled`              | `true`                              | Enables generated `#directus` schema declarations.                                                |
 | `typegen.introspectionToken`   | —                                   | Server-only schema-introspection token.                                                           |
 | `typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                       |
@@ -260,6 +272,8 @@ project. This keeps ambient declarations from tools such as Varlock available in
 - `validateDirectusConfig(config)` — validates unknown input and returns `ResolvedDirectusConfig`.
 - `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a consumer source
   during Nuxt module dependency discovery.
+- `resolveDirectusConfigFile(rootDir, configFile)` — resolves an optional consumer config source
+  path.
 - `applyOverridesToCollectionConfig(collections, overrides, property)` — merges module-specific
   collection overrides while preserving unrelated collection behavior.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.

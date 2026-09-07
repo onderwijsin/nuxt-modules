@@ -59,6 +59,15 @@ describe("Directus client and server composables", async () => {
     expect(html).toContain('<p data-testid="client-ssr-error"></p>');
   });
 
+  it("resolves the opt-in current-user projection through its private route", async () => {
+    const cookie = await loginWithAccessToken(60_000);
+    const response = await fetch(url("/_directus/auth/user"), { headers: { cookie } });
+
+    expect(response.status, await response.clone().text()).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    await expect(response.json()).resolves.toEqual({ id: "user-1", email: "user@example.test" });
+  });
+
   it("refreshes an expired access token during initial SSR bootstrap", async () => {
     const cookie = await loginWithAccessToken();
     const refreshCount = upstream.refreshRequests;

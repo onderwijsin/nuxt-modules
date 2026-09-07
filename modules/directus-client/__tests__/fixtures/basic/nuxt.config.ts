@@ -27,6 +27,10 @@ export default defineNuxtConfig({
       auth: {
         enabled: true,
         sessionSecret: "fixture-directus-session-secret-32-chars",
+        user: {
+          enabled: true,
+          fields: ["id", "email", { role: ["id", "name"] }]
+        },
         turnstile: { enabled: true },
         magicLinks: {
           enabled: true,

@@ -62,6 +62,24 @@ When both sources are configured, direct module options take precedence. `instan
 permissions must be safe for public application callers to exercise; secrecy does not make them
 private. Do not place these values in `runtimeConfig.public` or browser code.
 
+Authentication owns only stable session facts. Mutable current-user data is opt-in under
+`client.auth.user` and is exposed through `useDirectusUser()`:
+
+```ts
+client: {
+  auth: {
+    enabled: true,
+    user: { enabled: true, fields: ["id", "email", { role: ["id", "name"] }] }
+  }
+}
+```
+
+The composable returns shared `user`, `status`, `error`, and `refresh` async-data state. Browsers
+use `GET /_directus/auth/user`; SSR calls the resolver directly. Profile edits require explicit
+`refresh()`, and auth token refresh does not refetch profile data. A mapper is synchronous,
+server-only, and accepted only in executable `directus.config.ts`; register the Directus config
+module when using one.
+
 ### Complete option reference
 
 All options are configured under `directusClient`.

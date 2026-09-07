@@ -87,6 +87,43 @@ describe("Directus config helpers", () => {
     ).toThrow();
   });
 
+  it("validates the opt-in current-user projection and nested fields", () => {
+    const mapper = (user: Record<string, unknown>) => ({ id: user.id });
+    const config = validateDirectusConfig({
+      client: {
+        auth: {
+          enabled: true,
+          user: {
+            enabled: true,
+            fields: ["id", { role: ["id", "name"] }],
+            mapper
+          }
+        }
+      }
+    });
+
+    expect(config.client?.auth.user).toMatchObject({
+      enabled: true,
+      fields: ["id", { role: ["id", "name"] }],
+      mapper
+    });
+    expect(directusPublicConfigSchema.parse(config)).not.toHaveProperty("client.auth.user");
+    expect(() =>
+      validateDirectusConfig({ client: { auth: { user: { enabled: true, fields: [] } } } })
+    ).toThrow();
+    expect(() =>
+      validateDirectusConfig({
+        client: { auth: { user: { enabled: true, fields: [{ " ": ["id"] }] } } }
+      })
+    ).toThrow();
+    expect(() =>
+      validateDirectusConfig({ client: { auth: { user: { enabled: true, fields: [" "] } } } })
+    ).toThrow();
+    expect(() =>
+      validateDirectusConfig({ client: { auth: { user: { enabled: true, fields: ["id"] } } } })
+    ).toThrow();
+  });
+
   it("drops unknown values from the public projection", () => {
     expect(directusPublicConfigSchema.parse({ unknown: true })).toEqual({});
   });

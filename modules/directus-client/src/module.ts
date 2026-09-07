@@ -1,5 +1,8 @@
 import { defu } from "defu";
-import { getResolvedDirectusConfigFromSource } from "@onderwijsin/nuxt-directus-config/config";
+import {
+  getResolvedDirectusConfigFromSource,
+  resolveDirectusConfigFile
+} from "@onderwijsin/nuxt-directus-config/config";
 import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
 import { join } from "node:path";
 import {
@@ -29,11 +32,13 @@ import {
 } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { parseDirectusCommands } from "./config/commands";
-import { directusClientOptionsSchema } from "./config/options.schema";
+import { directusResolvedClientOptionsSchema } from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { resolveDirectusSessionSecret } from "./config/session-secret";
+import { generateDirectusUserTypeDeclaration } from "./config/user-typegen";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./config/options.schema";
+import type { ResolvedExecutableModuleOptions } from "./config/options.schema";
 
 const MODULE_KEY = "directusClient";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
@@ -42,6 +47,13 @@ const DIRECTUS_TURNSTILE_ACTIONS = {
   passwordRequest: "directus-password-request",
   magicLinkRequest: "directus-magic-link-request"
 };
+
+function isDirectusConfigModule(module: unknown): boolean {
+  if (module === "@onderwijsin/nuxt-directus-config") return true;
+  if (typeof module !== "function" && !isRecord(module)) return false;
+  if (!("meta" in module) || !isRecord(module.meta)) return false;
+  return module.meta.name === "@onderwijsin/nuxt-directus-config";
+}
 
 /** Registers the server-safe Directus module foundation and its validated proxy boundary. */
 export default defineNuxtModule<ModuleOptions>({
@@ -57,10 +69,7 @@ export default defineNuxtModule<ModuleOptions>({
     client: {}
   },
   moduleDependencies: async (nuxt): Promise<ModuleDependencies> => {
-    const directusConfigModuleRegistered = nuxt.options.modules.some(
-      (module) => module === "@onderwijsin/nuxt-directus-config"
-    );
-
+    const directusConfigModuleRegistered = nuxt.options.modules.some(isDirectusConfigModule);
     const dependencies: ModuleDependencies = {};
 
     if (directusConfigModuleRegistered) {
@@ -94,24 +103,61 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
-    const input = defu(rawOptions, sharedConfig);
+    const mergedInput = defu(rawOptions, sharedConfig);
+    const rawUserProjection = rawOptions.client?.auth?.user;
+    const sharedUserProjection = sharedConfig?.client?.auth?.user;
+    const userProjection =
+      rawUserProjection ?? sharedUserProjection ?? ({ enabled: false } as const);
+    const input = {
+      ...mergedInput,
+      client: {
+        ...mergedInput.client,
+        auth: {
+          ...mergedInput.client?.auth,
+          user: userProjection
+        }
+      }
+    };
     const sessionSecret = resolveDirectusSessionSecret({
-      configured: input.client?.auth?.sessionSecret ?? undefined,
+      configured:
+        rawOptions.client?.auth?.sessionSecret ?? sharedConfig?.client?.auth?.sessionSecret,
       isCI: process.env.CI === "true",
       isPrepare: nuxt.options._prepare,
       isDevelopment: nuxt.options.dev
     });
-    const validationOptions =
-      input.client?.auth?.enabled && sessionSecret
+    const authenticationEnabled =
+      rawOptions.client?.auth?.enabled ?? sharedConfig?.client?.auth?.enabled;
+    const validationOptions: unknown =
+      authenticationEnabled && sessionSecret
         ? defu({ client: { auth: { sessionSecret } } }, input)
         : input;
-    const options = validateModuleOptions(validationOptions, directusClientOptionsSchema, log);
+    const options: ResolvedExecutableModuleOptions = validateModuleOptions(
+      validationOptions,
+      directusResolvedClientOptionsSchema,
+      log
+    );
 
     const baseUrl = options.instance.baseUrl ?? "";
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
+    const directusConfigAvailable = sharedConfig !== undefined;
+    if (!directusConfigAvailable) {
+      nuxt.options.alias = defu(nuxt.options.alias, {});
+      nuxt.options.alias["#directus-config-server"] = resolver.resolve(
+        runtimeDir,
+        "user/server/empty-config"
+      );
+    }
 
     const isCI = process.env.CI === "true";
+    const { user: _user, ...serializableAuthOptions } = options.client.auth;
+    const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
+    const directusConfigFile =
+      directusConfigAvailable &&
+      isRecord(directusConfigOptions) &&
+      isString(directusConfigOptions.configFile)
+        ? resolveDirectusConfigFile(nuxt.options.rootDir, directusConfigOptions.configFile)
+        : undefined;
 
     // Add type template even if module is disbaled. This prevent typecheck failures in ci
     addTypeTemplate({
@@ -144,6 +190,14 @@ export default defineNuxtModule<ModuleOptions>({
         throw result.error;
       }
     });
+    const userTypeTemplate = addTypeTemplate({
+      filename: "types/directus-user.d.ts",
+      getContents: () =>
+        generateDirectusUserTypeDeclaration(
+          options.client.auth.user.enabled ? options.client.auth.user.fields : [],
+          directusConfigFile
+        )
+    });
     nuxt.options.alias = defu(nuxt.options.alias, {});
     nuxt.options.alias["#directus"] = resolver.resolve(
       nuxt.options.buildDir,
@@ -156,6 +210,9 @@ export default defineNuxtModule<ModuleOptions>({
     nodeTsConfig.compilerOptions = defu(nodeTsConfig.compilerOptions, {});
     nodeTsConfig.compilerOptions.paths = defu(nodeTsConfig.compilerOptions.paths, {});
     nodeTsConfig.compilerOptions.paths["#directus"] = ["./types/directus-schema"];
+    nodeTsConfig.compilerOptions.paths["#directus-user"] = [
+      userTypeTemplate?.dst ?? "./types/directus-user"
+    ];
 
     if (!isEnabled()) return;
 
@@ -174,7 +231,13 @@ export default defineNuxtModule<ModuleOptions>({
           baseUrl,
           ...(options.instance.proxyToken ? { proxyToken: options.instance.proxyToken } : {}),
           auth: {
-            ...options.client.auth,
+            ...serializableAuthOptions,
+            user: {
+              enabled: options.client.auth.user.enabled,
+              ...(options.client.auth.user.enabled
+                ? { fields: options.client.auth.user.fields }
+                : {})
+            },
             turnstile: {
               ...options.client.auth.turnstile,
               actions: DIRECTUS_TURNSTILE_ACTIONS
@@ -196,6 +259,7 @@ export default defineNuxtModule<ModuleOptions>({
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,
+          user: { enabled: options.client.auth.user.enabled },
           magicLinks: { enabled: options.client.auth.magicLinks.enabled },
           maskSecretsInPlayground: options.client.auth.maskSecretsInPlayground,
           turnstile: {
@@ -281,6 +345,30 @@ export default defineNuxtModule<ModuleOptions>({
             handler: resolver.resolve(runtimeDir, "auth/server/handlers/" + name + "." + method)
           });
         }
+      }
+      if (options.client.auth.user.enabled) {
+        addImports({
+          name: "useDirectusUser",
+          from: resolver.resolve(runtimeDir, "user/app/use-directus-user")
+        });
+        addServerHandler({
+          route: "/_directus/auth/user",
+          method: "get",
+          handler: resolver.resolve(runtimeDir, "user/server/handlers/user.get")
+        });
+        nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
+        nuxt.options.routeRules["/_directus/auth/user"] = defu(
+          { cache: false, prerender: false },
+          nuxt.options.routeRules["/_directus/auth/user"]
+        );
+        addPlugin({
+          src: resolver.resolve(runtimeDir, "user/app/browser-plugin"),
+          mode: "client"
+        });
+        addPlugin({
+          src: resolver.resolve(runtimeDir, "user/app/ssr-plugin"),
+          mode: "server"
+        });
       }
     }
     addServerHandler({

@@ -44,7 +44,6 @@ describe("Directus authentication hooks", () => {
   it("exposes magic-link support and the TFA setup state", () => {
     state.session = {
       userId: "user-1",
-      email: "user@example.test",
       requiresTfaSetup: true
     };
     const auth = useDirectusAuth();
@@ -55,10 +54,10 @@ describe("Directus authentication hooks", () => {
 
   it("emits a token-free login payload after the session request succeeds", async () => {
     const auth = useDirectusAuth();
-    const snapshot = { userId: "user-1", email: "user@example.test" };
+    const snapshot = { userId: "user-1", requiresTfaSetup: false };
     state.fetch.mockResolvedValue(snapshot);
 
-    await auth.login({ email: snapshot.email, password: "secret" });
+    await auth.login({ email: "user@example.test", password: "secret" });
 
     expect(state.callHook).toHaveBeenCalledWith("directus:auth:login", snapshot);
     const payload = state.callHook.mock.calls[0]?.[1];
@@ -121,9 +120,6 @@ describe("Directus authentication hooks", () => {
     const auth = useDirectusAuth();
     const snapshot = {
       userId: "user-1",
-      email: "user@example.test",
-      firstName: null,
-      lastName: null,
       requiresTfaSetup: false
     };
     state.fetch.mockResolvedValue(snapshot);

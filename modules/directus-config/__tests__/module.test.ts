@@ -58,7 +58,9 @@ describe("directus-config module setup", () => {
     vi.resetModules();
     addServerTemplate.mockReset();
     addTemplate.mockReset();
-    addTemplate.mockReturnValue({ dst: "/project/.nuxt/directus-config.mjs" });
+    addTemplate.mockImplementation(({ filename }: { filename: string }) => ({
+      dst: `/project/.nuxt/${filename}`
+    }));
     addTypeTemplate.mockReset();
     addTypeTemplate.mockReturnValue({ dst: "./types/directus-config-server.d.ts" });
     loadDirectusConfigSource.mockReset();
@@ -92,6 +94,9 @@ describe("directus-config module setup", () => {
       expect.objectContaining({ filename: "#directus-config-server" })
     );
     expect(nuxt.options.alias["#directus-config"]).toBe("/project/.nuxt/directus-config.mjs");
+    expect(nuxt.options.alias["#directus-config-server"]).toBe(
+      "/project/.nuxt/directus-config-server.mjs"
+    );
     expect(
       nuxt.options.typescript.tsConfig.compilerOptions.paths["#directus-config-server"]
     ).toEqual(["./types/directus-config-server.d.ts"]);
@@ -113,7 +118,7 @@ describe("directus-config module setup", () => {
     );
     expect(loadDirectusConfigSource).toHaveBeenCalledWith(undefined);
     expect(nuxt.options.typescript.nodeTsConfig.include).toEqual([]);
-    expect(addTemplate).toHaveBeenCalledTimes(1);
+    expect(addTemplate).toHaveBeenCalledTimes(3);
     expect(addServerTemplate).toHaveBeenCalledTimes(1);
   });
 

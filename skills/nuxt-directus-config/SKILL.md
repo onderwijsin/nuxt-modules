@@ -102,6 +102,29 @@ export default defineDirectusConfig({
 });
 ```
 
+## Current-user projection
+
+The executable config can opt into a typed current-user projection owned by the Directus client:
+
+```ts
+client: {
+  auth: {
+    enabled: true,
+    user: {
+      enabled: true,
+      fields: ["id", "email", "first_name", { role: ["id", "name"] }],
+      mapper: (user) => ({ id: user.id, name: user.first_name })
+    }
+  }
+}
+```
+
+The projection is disabled by default. `fields` must be non-empty and supports nested QueryFields.
+The mapper is synchronous, server-only, and must return a plain object. Register this config module
+before `@onderwijsin/nuxt-directus-client` when using a mapper; raw Nuxt module options do not
+accept one. `useDirectusUser().refresh()` is explicit after profile mutations, and auth token
+refresh does not refresh this projection.
+
 ## Complete option reference
 
 For authentication, cookies, sealing, and secret rotation details, read the
@@ -147,6 +170,8 @@ declarations from tools such as Varlock remain available in IDEs.
 - `validateDirectusConfig(value)` — runtime validation returning `ResolvedDirectusConfig`.
 - `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a source for
   dependent module dependency discovery.
+- `resolveDirectusConfigFile(rootDir, configFile)` — resolves an optional consumer config source
+  path.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.
 
 `@onderwijsin/nuxt-directus-config/schema` exports the config, instance, client, typegen, command,

@@ -2,7 +2,21 @@ import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 
 export default defineDirectusConfig({
   instance: { baseUrl: "https://directus.invalid" },
-  client: { typegen: { enabled: false } },
+  client: {
+    typegen: { enabled: false },
+    auth: {
+      enabled: true,
+      user: {
+        enabled: true,
+        fields: ["id", "email"],
+        mapper: (user) => ({
+          id: user.id,
+          email: user.email,
+          displayName: user.email
+        })
+      }
+    }
+  },
   collections: [
     {
       collection: "synthetic_prerender_routes",

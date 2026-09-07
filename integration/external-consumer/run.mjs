@@ -202,6 +202,8 @@ async function runFocusedAssertions(port, profile) {
       throw new Error(`Packed Directus auth SSR returned ${response.status}: ${body}`);
     if (!body.includes('data-testid="external-directus-auth-state"'))
       throw new Error(`Packed Directus auth SSR assertion failed: ${body}`);
+    if (!body.includes('data-testid="external-directus-user-mapper"'))
+      throw new Error(`Packed Directus user mapper SSR assertion failed: ${body}`);
   }
 }
 

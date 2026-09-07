@@ -13,6 +13,7 @@ import {
   resolveDirectusTypegenDeclaration,
   writeTypegenCache
 } from "../src/config/typegen";
+import { generateDirectusUserTypeDeclaration } from "../src/config/user-typegen";
 
 vi.mock("directus-sdk-typegen", () => ({
   generateDirectusTypes: vi.fn(
@@ -58,6 +59,17 @@ const augmentationCases: ReadonlyArray<[keyof typeof disabledAugmentations, stri
 ];
 
 describe("Directus typegen transforms", () => {
+  it("generates a literal current-user projection declaration", () => {
+    const declaration = generateDirectusUserTypeDeclaration(
+      ["id", { role: ["id", "name"] }],
+      "/project/directus.config.ts"
+    );
+
+    expect(declaration).toContain("import type { DirectusUser, Query, ReadUserOutput }");
+    expect(declaration).toContain('"role": [');
+    expect(declaration).toContain('"name"');
+    expect(declaration).toContain('typeof import("/project/directus.config.ts")');
+  });
   it("keeps the base generator output unchanged when augmentations are disabled", async () => {
     const source = await generateDirectusTypesFile({
       directusUrl: "https://directus.example.test",

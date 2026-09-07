@@ -87,8 +87,19 @@ export default defineNuxtModule<ModuleOptions>({
       filename: "#directus-config-server",
       getContents: () => generateDirectusServerConfigSource(configFile)
     });
+    const serverConfig = addTemplate({
+      filename: "directus-config-server.mjs",
+      write: true,
+      getContents: () => generateDirectusServerConfigSource(configFile)
+    });
+    addTemplate({
+      filename: "directus-config-server.d.mts",
+      write: true,
+      getContents: generateDirectusServerConfigDeclarationSource
+    });
 
     nuxt.options.alias = defu(nuxt.options.alias, {});
+    nuxt.options.alias["#directus-config-server"] = serverConfig.dst;
     nuxt.options.alias["#directus-config"] = clientConfig.dst;
 
     end();
