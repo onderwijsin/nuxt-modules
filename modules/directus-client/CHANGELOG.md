@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.1
+
+### Patch Changes
+
+- 1d5281e: Restore the Nuxt/Nitro authentication runtime boundary for SSR session hydration.
+
 ## 0.11.0
 
 ### Minor Changes
