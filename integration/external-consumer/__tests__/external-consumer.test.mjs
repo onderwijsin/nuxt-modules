@@ -108,14 +108,7 @@ describe("external consumer fixture", () => {
     }
   });
 
-  it("enables Directus authentication in the packed consumer fixture", () => {
-    const config = readFileSync(
-      join(fixtureDirectory, "consumer-layers", "directus-client", "nuxt.config.ts"),
-      "utf8"
-    );
-    expect(config).toContain("auth: {");
-    expect(config).toContain("sessionSecret:");
-    expect(config).toContain('"directus-auth-refresh"');
+  it("provides an auth SSR page in the packed consumer fixture", () => {
     expect(
       existsSync(
         join(

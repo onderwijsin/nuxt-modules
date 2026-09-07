@@ -89,6 +89,19 @@ describe("Directus request authentication boundary", () => {
     expect(state.getDirectusSessionSnapshot).toHaveBeenCalledWith(event);
   });
 
+  it("keeps strict resolution rejected after snapshot fallback", async () => {
+    const event = createTestEvent();
+    const snapshot = { userId: "user-1" };
+    state.ensureFreshDirectusSession.mockRejectedValue("transient");
+    state.getDirectusSessionSnapshot.mockResolvedValue(snapshot);
+
+    state.register.mock.calls[0]?.[1](event);
+
+    await expect(event.context.directusAuth?.resolveSnapshot()).resolves.toEqual(snapshot);
+    await expect(event.context.directusAuth?.resolve()).rejects.toBe("transient");
+    expect(state.getDirectusSessionSnapshot).toHaveBeenCalledTimes(1);
+  });
+
   it("propagates non-transient snapshot resolution failures", async () => {
     const event = createTestEvent();
     const error = new Error("unexpected");

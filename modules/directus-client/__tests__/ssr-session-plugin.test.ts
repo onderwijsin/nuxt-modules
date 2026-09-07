@@ -43,7 +43,7 @@ describe("SSR session plugin", () => {
     expect(state.resolve).not.toHaveBeenCalled();
   });
 
-  it("falls back to the local snapshot only for a classified transient failure", async () => {
+  it("hydrates the snapshot exposed by the request auth context", async () => {
     const snapshot = { userId: "local-user" };
     state.event!.context.directusAuth = {
       resolve: state.resolve,

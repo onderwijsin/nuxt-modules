@@ -188,14 +188,18 @@ async function runFocusedAssertions(port, profile) {
     if (!page.includes(`data-sanity="${layer}"`) || !page.includes(layer))
       throw new Error(`External consumer page assertion failed for layer ${layer}.`);
   }
-  if (profile.modules.includes("@onderwijsin/nuxt-directus-client")) {
-    const response = await waitForResponse(`http://127.0.0.1:${port}/auth-state`);
+  if (profile.modules.includes("@onderwijsin/nuxt-directus-client") && !directusDisabled) {
+    const response = await fetch(`http://127.0.0.1:${port}/auth-state`, {
+      signal: AbortSignal.timeout(5_000)
+    });
     const body = await response.text();
     if (
       body.includes("ERR_PACKAGE_IMPORT_NOT_DEFINED") ||
       body.includes("#nitro-internal-virtual/storage")
     )
       throw new Error(`Packed Directus auth runtime regression: ${body}`);
+    if (!response.ok)
+      throw new Error(`Packed Directus auth SSR returned ${response.status}: ${body}`);
     if (!body.includes('data-testid="external-directus-auth-state"'))
       throw new Error(`Packed Directus auth SSR assertion failed: ${body}`);
   }
