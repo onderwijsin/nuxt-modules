@@ -22,10 +22,10 @@ export const directusUserFieldSelectionSchema: z.ZodType<DirectusUserFieldSelect
 export type UserFieldSelection = DirectusUserFieldSelection;
 
 /** Broad, strongly typed input exposed to executable current-user mappers. */
-export type DirectusUserMapperInput = Record<string, string | number | boolean | null | object> & {
-  id: string;
-  email: string;
-  role?: { id: string; name: string } | null;
+export type DirectusUserMapperInput = {
+  readonly email?: string | null;
+  readonly role?: { readonly name?: string; readonly id?: string } | null;
+  readonly [key: string]: unknown;
 };
 type DirectusUserMapper = (user: DirectusUserMapperInput) => Record<string, unknown>;
 

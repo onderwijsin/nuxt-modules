@@ -120,6 +120,37 @@ describe("Directus current-user resolver", () => {
     await expect(resolveDirectusUserResponse(event)).resolves.toEqual({ id: "user-1" });
   });
 
+  it("maps a projection without id or email", async () => {
+    state.runtimeConfig.directusClient.auth.user.fields = ["first_name"];
+    state.config.client.auth.user.mapper = (user: Record<string, unknown>) => ({
+      name: user.first_name
+    });
+    state.request.mockResolvedValue({ first_name: "Alice" });
+    const event = createTestEvent();
+    event.context.directusAuth = {
+      resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
+      resolveSnapshot: vi.fn()
+    };
+
+    await expect(resolveDirectusUserResponse(event)).resolves.toEqual({ name: "Alice" });
+  });
+
+  it("maps a nested relation without a relation id", async () => {
+    state.runtimeConfig.directusClient.auth.user.fields = [{ role: ["name"] }];
+    state.config.client.auth.user.mapper = (user: Record<string, unknown>) => ({
+      role:
+        user.role && typeof user.role === "object" && "name" in user.role ? user.role.name : null
+    });
+    state.request.mockResolvedValue({ role: { name: "Editor" } });
+    const event = createTestEvent();
+    event.context.directusAuth = {
+      resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
+      resolveSnapshot: vi.fn()
+    };
+
+    await expect(resolveDirectusUserResponse(event)).resolves.toEqual({ role: "Editor" });
+  });
+
   it("propagates mapper exceptions unchanged", async () => {
     const event = createTestEvent();
     event.context.directusAuth = {

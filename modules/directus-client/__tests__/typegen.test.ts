@@ -83,27 +83,11 @@ describe("Directus typegen transforms", () => {
         'import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";',
         "",
         "export default defineDirectusConfig({",
-        "  client: {",
-        "    auth: {",
-        "      user: {",
-        "        mapper: (user) => ({ id: user.id, email: user.email, displayName: user.email, role: user.role?.name ?? null })",
-        "      }",
-        "    }",
-        "  }",
+        "  client: { auth: { enabled: true, user: {",
+        '    enabled: true, fields: ["email", { role: ["name"] }],',
+        "    mapper: (user) => ({ displayName: user.email, role: user.role?.name ?? null })",
+        "  } } },",
         "});",
-        ""
-      ].join("\n")
-    );
-    writeFileSync(
-      join(directory, "config.d.ts"),
-      [
-        'declare module "@onderwijsin/nuxt-directus-config/config" {',
-        "  type MapperInput = { id: string; email: string; role?: { name: string } | null };",
-        "  type MapperOutput = { [key: string]: string | null | object };",
-        "  export function defineDirectusConfig<const Config extends {",
-        "    client?: { auth?: { user?: { mapper?: (user: MapperInput) => MapperOutput } } };",
-        "  }>(config: Config): Config;",
-        "}",
         ""
       ].join("\n")
     );
@@ -111,7 +95,7 @@ describe("Directus typegen transforms", () => {
     writeFileSync(
       join(directory, "generated.d.ts"),
       generateDirectusUserTypeDeclaration(
-        ["id", { role: ["id", "name"], avatar: ["id"] }],
+        ["email", { role: ["name"] }],
         join(directory, "directus.config.ts")
       )
     );
@@ -120,9 +104,7 @@ describe("Directus typegen transforms", () => {
       [
         'import type { DirectusUserProjection } from "#directus-user";',
         "declare const user: DirectusUserProjection;",
-        "user.id satisfies string;",
-        "user.email satisfies string;",
-        "user.displayName satisfies string;",
+        "user.displayName satisfies string | null | undefined;",
         "user.role satisfies string | null;",
         ""
       ].join("\n")
@@ -134,14 +116,18 @@ describe("Directus typegen transforms", () => {
           strict: true,
           noEmit: true,
           skipLibCheck: true,
-          module: "NodeNext",
-          moduleResolution: "NodeNext",
+          target: "ES2022",
+          module: "ESNext",
+          moduleResolution: "Bundler",
           paths: {
-            "#directus": ["./schema.d.ts"],
-            "#directus-user": ["./generated.d.ts"]
+            "#directus": [join(directory, "schema.d.ts")],
+            "#directus-user": [join(directory, "generated.d.ts")],
+            "@onderwijsin/nuxt-directus-config/config": [
+              resolve(process.cwd(), "modules/directus-config/src/config/index.ts")
+            ]
           }
         },
-        files: ["./config.d.ts", "./consumer.ts", "./generated.d.ts"]
+        files: [join(directory, "consumer.ts"), join(directory, "generated.d.ts")]
       })
     );
 

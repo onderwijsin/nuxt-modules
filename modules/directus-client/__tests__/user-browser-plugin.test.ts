@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ofetch } from "ofetch";
 
 const state = vi.hoisted(() => ({
   hooks: new Map<string, () => unknown>(),
@@ -46,6 +47,37 @@ describe("Directus current-user browser lifecycle", () => {
       await state.hooks.get(hookName)?.();
 
       expect(state.clearNuxtData).toHaveBeenCalledWith("directus:user");
+    }
+  );
+
+  it.each(["directus:auth:logout", "directus:auth:invalidated"])(
+    "does not let a late current-user response repopulate data after %s",
+    async (hookName) => {
+      let currentPromise: Promise<unknown> | undefined;
+      let currentData: unknown = null;
+      const response = Promise.resolve({ id: "stale-user" });
+      vi.mocked(ofetch).mockReturnValue(response);
+
+      state.clearNuxtData.mockImplementation(() => {
+        currentPromise = undefined;
+        currentData = null;
+      });
+
+      const app = {
+        hook: (name: string, callback: () => unknown) => state.hooks.set(name, callback)
+      };
+      const result = plugin(app) as {
+        provide: { directusUser: () => Promise<unknown> };
+      };
+      const requestPromise = result.provide.directusUser();
+      currentPromise = requestPromise;
+
+      await state.hooks.get(hookName)?.();
+
+      const payload = await requestPromise;
+      if (currentPromise === requestPromise) currentData = payload;
+
+      expect(currentData).toBeNull();
     }
   );
 

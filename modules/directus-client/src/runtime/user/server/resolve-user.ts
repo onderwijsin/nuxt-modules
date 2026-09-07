@@ -3,8 +3,8 @@ import type { H3Event } from "h3";
 import { createError, setResponseHeader } from "h3";
 import { useRuntimeConfig } from "#imports";
 import directusConfig from "#directus-config-server";
-import type { DirectusUserMapperInput } from "@onderwijsin/nuxt-directus-config/schema";
 import type { Schema } from "#directus";
+import type { DirectusUserMapperInput } from "@onderwijsin/nuxt-directus-config/schema";
 import { createDirectusRestClient } from "@onderwijsin/nuxt-module-utils/shared";
 import { hasKey, isArray, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { ofetch } from "ofetch";
@@ -14,16 +14,6 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   if (!isRecord(value) || isArray(value)) return false;
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
-}
-
-function isDirectusUserMapperInput(value: unknown): value is DirectusUserMapperInput {
-  if (!isRecord(value) || typeof value.id !== "string" || typeof value.email !== "string") {
-    return false;
-  }
-  if (!hasKey(value, "role") || value.role === undefined || value.role === null) return true;
-  return (
-    isRecord(value.role) && typeof value.role.id === "string" && typeof value.role.name === "string"
-  );
 }
 
 /**
@@ -77,10 +67,7 @@ export async function resolveDirectusUser(
   const sharedUserConfig = directusConfig.client?.auth?.user;
   const mapper = mapperEnabled && sharedUserConfig?.enabled ? sharedUserConfig.mapper : undefined;
   if (typeof mapper === "function") {
-    if (!isDirectusUserMapperInput(raw)) {
-      throw createError({ statusCode: 502, statusMessage: "Invalid Directus user response" });
-    }
-    mapped = mapper(raw);
+    mapped = mapper(raw as unknown as DirectusUserMapperInput);
   }
   if (!isPlainRecord(mapped)) {
     throw createError({ statusCode: 502, statusMessage: "Invalid mapped Directus user response" });
