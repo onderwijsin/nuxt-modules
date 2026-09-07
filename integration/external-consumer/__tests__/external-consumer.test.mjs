@@ -107,4 +107,19 @@ describe("external consumer fixture", () => {
       expect(readFileSync(pagePath, "utf8")).toContain(`:data-sanity="layerName"`);
     }
   });
+
+  it("provides an auth SSR page in the packed consumer fixture", () => {
+    expect(
+      existsSync(
+        join(
+          fixtureDirectory,
+          "consumer-layers",
+          "directus-client",
+          "app",
+          "pages",
+          "auth-state.vue"
+        )
+      )
+    ).toBe(true);
+  });
 });

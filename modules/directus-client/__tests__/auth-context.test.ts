@@ -4,7 +4,8 @@ import { createTestEvent } from "../../../packages/test-utils/src";
 
 const state = vi.hoisted(() => ({
   register: vi.fn(),
-  ensureFreshDirectusSession: vi.fn()
+  ensureFreshDirectusSession: vi.fn(),
+  getDirectusSessionSnapshot: vi.fn()
 }));
 
 vi.mock("nitropack/runtime", () => ({
@@ -14,13 +15,18 @@ vi.mock("nitropack/runtime", () => ({
   }
 }));
 vi.mock("../src/runtime/auth/server/refresh", () => ({
-  ensureFreshDirectusSession: state.ensureFreshDirectusSession
+  ensureFreshDirectusSession: state.ensureFreshDirectusSession,
+  isTransientDirectusRefreshError: (error: unknown) => error === "transient"
+}));
+vi.mock("../src/runtime/auth/server/session", () => ({
+  getDirectusSessionSnapshot: state.getDirectusSessionSnapshot
 }));
 
 await import("../src/runtime/auth/server/nitro-plugin");
 
 beforeEach(() => {
   state.ensureFreshDirectusSession.mockReset();
+  state.getDirectusSessionSnapshot.mockReset();
 });
 
 describe("Directus request authentication boundary", () => {
@@ -58,5 +64,52 @@ describe("Directus request authentication boundary", () => {
     await event.context.directusAuth?.resolve();
 
     expect(state.ensureFreshDirectusSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the refreshed snapshot through the hydration resolver", async () => {
+    const event = createTestEvent();
+    const snapshot = { userId: "user-1" };
+    state.ensureFreshDirectusSession.mockResolvedValue({ accessToken: "access-token", snapshot });
+
+    state.register.mock.calls[0]?.[1](event);
+
+    await expect(event.context.directusAuth?.resolveSnapshot()).resolves.toEqual(snapshot);
+    expect(state.getDirectusSessionSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the local snapshot only for transient refresh failures", async () => {
+    const event = createTestEvent();
+    const snapshot = { userId: "user-1" };
+    state.ensureFreshDirectusSession.mockRejectedValue("transient");
+    state.getDirectusSessionSnapshot.mockResolvedValue(snapshot);
+
+    state.register.mock.calls[0]?.[1](event);
+
+    await expect(event.context.directusAuth?.resolveSnapshot()).resolves.toEqual(snapshot);
+    expect(state.getDirectusSessionSnapshot).toHaveBeenCalledWith(event);
+  });
+
+  it("keeps strict resolution rejected after snapshot fallback", async () => {
+    const event = createTestEvent();
+    const snapshot = { userId: "user-1" };
+    state.ensureFreshDirectusSession.mockRejectedValue("transient");
+    state.getDirectusSessionSnapshot.mockResolvedValue(snapshot);
+
+    state.register.mock.calls[0]?.[1](event);
+
+    await expect(event.context.directusAuth?.resolveSnapshot()).resolves.toEqual(snapshot);
+    await expect(event.context.directusAuth?.resolve()).rejects.toBe("transient");
+    expect(state.getDirectusSessionSnapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates non-transient snapshot resolution failures", async () => {
+    const event = createTestEvent();
+    const error = new Error("unexpected");
+    state.ensureFreshDirectusSession.mockRejectedValue(error);
+
+    state.register.mock.calls[0]?.[1](event);
+
+    await expect(event.context.directusAuth?.resolveSnapshot()).rejects.toBe(error);
+    expect(state.getDirectusSessionSnapshot).not.toHaveBeenCalled();
   });
 });
