@@ -7,7 +7,11 @@ declare module "nuxt/schema" {
         enabled: boolean;
         user:
           | { enabled: false }
-          | { enabled: true; fields: readonly (string | Record<string, unknown>)[] };
+          | {
+              enabled: true;
+              mapperEnabled: boolean;
+              fields: readonly (string | Record<string, unknown>)[];
+            };
         turnstile: {
           enabled: boolean;
           actions: { login: string; passwordRequest: string; magicLinkRequest: string };

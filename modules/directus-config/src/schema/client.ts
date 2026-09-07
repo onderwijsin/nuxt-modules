@@ -21,7 +21,13 @@ export const directusUserFieldSelectionSchema: z.ZodType<DirectusUserFieldSelect
 /** Public type for a recursive Directus current-user field selection. */
 export type UserFieldSelection = DirectusUserFieldSelection;
 
-type DirectusUserMapper = (user: Record<string, unknown>) => Record<string, unknown>;
+/** Broad, strongly typed input exposed to executable current-user mappers. */
+export type DirectusUserMapperInput = Record<string, string | number | boolean | null | object> & {
+  id: string;
+  email: string;
+  role?: { id: string; name: string } | null;
+};
+type DirectusUserMapper = (user: DirectusUserMapperInput) => Record<string, unknown>;
 
 const directusUserProjectionFields = z.array(directusUserFieldSelectionSchema).min(1);
 

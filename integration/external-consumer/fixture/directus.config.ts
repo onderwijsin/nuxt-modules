@@ -8,11 +8,12 @@ export default defineDirectusConfig({
       enabled: true,
       user: {
         enabled: true,
-        fields: ["id", "email"],
+        fields: ["id", "email", { role: ["id", "name"] }],
         mapper: (user) => ({
           id: user.id,
           email: user.email,
-          displayName: user.email
+          displayName: user.email,
+          role: user.role?.name ?? null
         })
       }
     }

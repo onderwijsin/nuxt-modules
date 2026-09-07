@@ -171,7 +171,13 @@ async function startDirectusMock() {
       state.userRequests += 1;
       response.writeHead(200, { "content-type": "application/json" });
       response.end(
-        JSON.stringify({ data: { id: "external-user", email: "external@example.test" } })
+        JSON.stringify({
+          data: {
+            id: "external-user",
+            email: "external@example.test",
+            role: { id: "external-role", name: "Editor" }
+          }
+        })
       );
       return;
     }
@@ -275,6 +281,8 @@ async function runFocusedAssertions(port, profile, directusMock) {
     const userBody = await userResponse.text();
     if (!userBody.includes('"displayName":"external@example.test"'))
       throw new Error(`Packed Directus mapped user endpoint assertion failed: ${userBody}`);
+    if (!userBody.includes('"role":"Editor"'))
+      throw new Error(`Packed Directus nested mapper endpoint assertion failed: ${userBody}`);
 
     const authenticatedResponse = await waitForResponse(`http://127.0.0.1:${port}/auth-state`, {
       headers: { cookie: sessionCookie }
@@ -284,6 +292,8 @@ async function runFocusedAssertions(port, profile, directusMock) {
       throw new Error(`Packed Directus authenticated SSR assertion failed: ${authenticatedBody}`);
     if (!authenticatedBody.includes("external@example.test"))
       throw new Error(`Packed Directus mapped user SSR assertion failed: ${authenticatedBody}`);
+    if (!authenticatedBody.includes("Editor"))
+      throw new Error(`Packed Directus nested mapper SSR assertion failed: ${authenticatedBody}`);
     if (directusMock.state.userRequests !== userRequestsBeforeLogin + 3)
       throw new Error(
         `Packed Directus current-user request count changed unexpectedly: ${directusMock.state.userRequests}`

@@ -3,23 +3,7 @@ declare module "#directus-user" {
 }
 
 declare module "#directus-config-server" {
-  const config: {
-    client?: {
-      auth?: {
-        user?: {
-          mapper?: (user: Record<string, unknown>) => Record<string, unknown>;
-        };
-      };
-    };
-  };
-  export default config;
-}
-
-declare module "#directus-user-config-server" {
-  const config:
-    | {
-        mapper?: (user: Record<string, unknown>) => Record<string, unknown>;
-      }
-    | undefined;
+  import type { ResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
+  const config: ResolvedDirectusConfig;
   export default config;
 }

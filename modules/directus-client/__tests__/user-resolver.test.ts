@@ -3,19 +3,30 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestEvent } from "../../../packages/test-utils/src";
 
 const state = vi.hoisted(() => ({
-  config: {
+  runtimeConfig: {
     directusClient: {
       baseUrl: "https://directus.example.test",
-      auth: { user: { enabled: true, fields: ["id", { role: ["id", "name"] }] } }
+      auth: {
+        user: { enabled: true, mapperEnabled: true, fields: ["id", { role: ["id", "name"] }] }
+      }
     }
   },
-  shared: { mapper: undefined as ((user: Record<string, unknown>) => unknown) | undefined },
+  config: {
+    client: {
+      auth: {
+        user: {
+          enabled: true,
+          mapper: undefined as ((user: Record<string, unknown>) => unknown) | undefined
+        }
+      }
+    }
+  },
   request: vi.fn(),
   createClient: vi.fn()
 }));
 
-vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
-vi.mock("#directus-user-config-server", () => ({ default: state.shared }));
+vi.mock("#imports", () => ({ useRuntimeConfig: () => state.runtimeConfig }));
+vi.mock("#directus-config-server", () => ({ default: state.config }));
 vi.mock("#directus", () => ({}));
 vi.mock("@directus/sdk", () => ({ readMe: vi.fn((query) => ({ query })) }));
 vi.mock("@onderwijsin/nuxt-module-utils/shared", async (importOriginal) => ({
@@ -27,10 +38,14 @@ const { resolveDirectusUserResponse } = await import("../src/runtime/user/server
 
 beforeEach(() => {
   state.request.mockReset();
-  state.request.mockResolvedValue({ id: "user-1", role: { id: "role-1", name: "Editor" } });
+  state.request.mockResolvedValue({
+    id: "user-1",
+    email: "user@example.test",
+    role: { id: "role-1", name: "Editor" }
+  });
   state.createClient.mockReset();
   state.createClient.mockReturnValue({ request: state.request });
-  state.shared.mapper = undefined;
+  state.config.client.auth.user.mapper = undefined;
 });
 
 describe("Directus current-user resolver", () => {
@@ -43,6 +58,7 @@ describe("Directus current-user resolver", () => {
 
     await expect(resolveDirectusUserResponse(event)).resolves.toEqual({
       id: "user-1",
+      email: "user@example.test",
       role: { id: "role-1", name: "Editor" }
     });
     expect(state.createClient).toHaveBeenCalledWith(
@@ -65,7 +81,10 @@ describe("Directus current-user resolver", () => {
     };
     await expect(resolveDirectusUserResponse(event)).rejects.toMatchObject({ statusCode: 401 });
 
-    state.shared.mapper = (user: Record<string, unknown>) => ({ id: user.id, mapped: true });
+    state.config.client.auth.user.mapper = (user: Record<string, unknown>) => ({
+      id: user.id,
+      mapped: true
+    });
     event.context.directusAuth.resolve = vi
       .fn()
       .mockResolvedValue({ accessToken: "session-token", snapshot: null });
@@ -83,7 +102,7 @@ describe("Directus current-user resolver", () => {
         resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
         resolveSnapshot: vi.fn()
       };
-      state.shared.mapper = () => value;
+      state.config.client.auth.user.mapper = () => value;
 
       await expect(resolveDirectusUserResponse(event)).rejects.toMatchObject({ statusCode: 502 });
     }
@@ -95,8 +114,23 @@ describe("Directus current-user resolver", () => {
       resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
       resolveSnapshot: vi.fn()
     };
-    state.shared.mapper = () => Object.assign(Object.create(null), { id: "user-1" });
+    state.config.client.auth.user.mapper = () =>
+      Object.assign(Object.create(null), { id: "user-1" });
 
     await expect(resolveDirectusUserResponse(event)).resolves.toEqual({ id: "user-1" });
+  });
+
+  it("propagates mapper exceptions unchanged", async () => {
+    const event = createTestEvent();
+    event.context.directusAuth = {
+      resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
+      resolveSnapshot: vi.fn()
+    };
+    const failure = new Error("mapper exploded");
+    state.config.client.auth.user.mapper = () => {
+      throw failure;
+    };
+
+    await expect(resolveDirectusUserResponse(event)).rejects.toBe(failure);
   });
 });

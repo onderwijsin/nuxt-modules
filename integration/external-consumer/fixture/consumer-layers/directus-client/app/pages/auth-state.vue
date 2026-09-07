@@ -5,6 +5,9 @@
   <p data-testid="external-directus-user-mapper">
     {{ user?.displayName ?? "no-user" }}
   </p>
+  <p data-testid="external-directus-user-role">
+    {{ user?.role ?? "no-role" }}
+  </p>
 </template>
 
 <script setup lang="ts">

@@ -134,17 +134,14 @@ describe("directus-client module setup", () => {
       nuxt
     );
 
-    const userConfigTemplate = state.addTemplate.mock.calls.find(
-      ([template]) => template.filename === "directus-user-config-server.mjs"
-    )?.[0] as { getContents: () => string } | undefined;
-    expect(userConfigTemplate?.getContents()).toBe("export default undefined;\n");
-
     const userTypeTemplate = state.addTypeTemplate.mock.calls.find(
       ([template]) => template.filename === "types/directus-user.d.ts"
     )?.[0] as { getContents: () => string } | undefined;
     expect(userTypeTemplate?.getContents()).not.toContain("DirectusConfigSource");
+    expect(nuxt.options.runtimeConfig.directusClient.auth.user.mapperEnabled).toBe(false);
     expect(nuxt.options.runtimeConfig.directusClient.auth.user).toEqual({
       enabled: true,
+      mapperEnabled: false,
       fields: ["email"]
     });
   });

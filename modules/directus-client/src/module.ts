@@ -14,8 +14,6 @@ import {
   addServerPlugin,
   addServerHandler,
   addServerImports,
-  addServerTemplate,
-  addTemplate,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -40,10 +38,7 @@ import { parseDirectusCommands } from "./config/commands";
 import { directusResolvedClientOptionsSchema } from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { resolveDirectusSessionSecret } from "./config/session-secret";
-import {
-  generateDirectusUserConfigSource,
-  generateDirectusUserTypeDeclaration
-} from "./config/user-typegen";
+import { generateDirectusUserTypeDeclaration } from "./config/user-typegen";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./config/options.schema";
 import type { ResolvedExecutableModuleOptions } from "./config/options.schema";
@@ -208,25 +203,6 @@ export default defineNuxtModule<ModuleOptions>({
         throw result.error;
       }
     });
-    const userConfigServer = addTemplate({
-      filename: "directus-user-config-server.mjs",
-      write: true,
-      getContents: () =>
-        generateDirectusUserConfigSource(
-          directusConfigFile,
-          effectiveUserProjection.source === "shared" && options.client.auth.user.enabled
-        )
-    });
-    addServerTemplate({
-      filename: "#directus-user-config-server",
-      getContents: () =>
-        generateDirectusUserConfigSource(
-          directusConfigFile,
-          effectiveUserProjection.source === "shared" && options.client.auth.user.enabled
-        )
-    });
-    nuxt.options.alias = defu(nuxt.options.alias, {});
-    nuxt.options.alias["#directus-user-config-server"] = userConfigServer.dst;
     const userTypeTemplate = addTypeTemplate({
       filename: "types/directus-user.d.ts",
       getContents: () =>
@@ -271,6 +247,8 @@ export default defineNuxtModule<ModuleOptions>({
             ...serializableAuthOptions,
             user: {
               enabled: options.client.auth.user.enabled,
+              mapperEnabled:
+                effectiveUserProjection.source === "shared" && options.client.auth.user.enabled,
               ...(options.client.auth.user.enabled
                 ? { fields: options.client.auth.user.fields }
                 : {})

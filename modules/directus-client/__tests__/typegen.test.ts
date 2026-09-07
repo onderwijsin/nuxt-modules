@@ -79,7 +79,33 @@ describe("Directus typegen transforms", () => {
     const directory = mkdtempSync(join(tmpdir(), "directus-user-types-"));
     writeFileSync(
       join(directory, "directus.config.ts"),
-      'export default { client: { auth: { user: { mapper: () => ({ displayName: "name" }) } } } };\n'
+      [
+        'import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";',
+        "",
+        "export default defineDirectusConfig({",
+        "  client: {",
+        "    auth: {",
+        "      user: {",
+        "        mapper: (user) => ({ id: user.id, email: user.email, displayName: user.email, role: user.role?.name ?? null })",
+        "      }",
+        "    }",
+        "  }",
+        "});",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      join(directory, "config.d.ts"),
+      [
+        'declare module "@onderwijsin/nuxt-directus-config/config" {',
+        "  type MapperInput = { id: string; email: string; role?: { name: string } | null };",
+        "  type MapperOutput = { [key: string]: string | null | object };",
+        "  export function defineDirectusConfig<const Config extends {",
+        "    client?: { auth?: { user?: { mapper?: (user: MapperInput) => MapperOutput } } };",
+        "  }>(config: Config): Config;",
+        "}",
+        ""
+      ].join("\n")
     );
     writeFileSync(join(directory, "schema.d.ts"), "export interface Schema {}\n");
     writeFileSync(
@@ -93,8 +119,11 @@ describe("Directus typegen transforms", () => {
       join(directory, "consumer.ts"),
       [
         'import type { DirectusUserProjection } from "#directus-user";',
-        'const user: DirectusUserProjection = { displayName: "name" };',
+        "declare const user: DirectusUserProjection;",
+        "user.id satisfies string;",
+        "user.email satisfies string;",
         "user.displayName satisfies string;",
+        "user.role satisfies string | null;",
         ""
       ].join("\n")
     );
@@ -112,7 +141,7 @@ describe("Directus typegen transforms", () => {
             "#directus-user": ["./generated.d.ts"]
           }
         },
-        files: ["./consumer.ts", "./generated.d.ts"]
+        files: ["./config.d.ts", "./consumer.ts", "./generated.d.ts"]
       })
     );
 

@@ -54,21 +54,3 @@ export function generateDirectusUserTypeDeclaration(
     ""
   ].join("\n");
 }
-
-/**
- * Generates the server-only executable mapper source for the effective user projection.
- * @param configFile Shared executable config source path.
- * @param enabled Whether the shared user projection is effective.
- * @returns Virtual module source.
- */
-export function generateDirectusUserConfigSource(
-  configFile: string | undefined,
-  enabled: boolean
-): string {
-  if (!configFile || !enabled) return "export default undefined;\n";
-  return [
-    `import config from ${JSON.stringify(configFile)};`,
-    "export default config.client?.auth?.user;",
-    ""
-  ].join("\n");
-}

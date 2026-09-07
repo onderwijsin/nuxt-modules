@@ -14,6 +14,7 @@ export class MockDirectus {
 
   refreshBehavior: RefreshBehavior = "success";
   refreshDelayMs = 0;
+  userDelayMs = 0;
   loginExpires = 1;
 
   /** Returns the number of login requests received by the mock.
@@ -58,6 +59,7 @@ export class MockDirectus {
   reset(): void {
     this.refreshBehavior = "success";
     this.refreshDelayMs = 0;
+    this.userDelayMs = 0;
     this.loginExpires = 1;
     this._lastItemsAuthorization = undefined;
     this._userRequests = 0;
@@ -77,12 +79,19 @@ export class MockDirectus {
 
       if (request.url?.startsWith("/auth/login")) {
         this._loginRequests += 1;
+        const body = await new Promise<string>((resolve) => {
+          let value = "";
+          request.on("data", (chunk: Buffer) => (value += chunk.toString()));
+          request.on("end", () => resolve(value));
+        });
+        const email = (JSON.parse(body) as { email?: string }).email ?? "user@example.test";
+        const tokenSuffix = email === "user@example.test" ? String(this._loginRequests) : email;
         response.writeHead(200, { "content-type": "application/json" });
         response.end(
           JSON.stringify({
             data: {
-              access_token: `access-${this._loginRequests}`,
-              refresh_token: `refresh-${this._loginRequests}`,
+              access_token: `access-${tokenSuffix}`,
+              refresh_token: `refresh-${tokenSuffix}`,
               expires: this.loginExpires
             }
           })
@@ -135,8 +144,19 @@ export class MockDirectus {
 
       if (request.url?.startsWith("/users/me")) {
         this._userRequests += 1;
+        if (this.userDelayMs > 0)
+          await new Promise<void>((resolve) => setTimeout(resolve, this.userDelayMs));
+        const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
+        const tokenValue = token?.replace(/^access-/, "") ?? "user@example.test";
+        const email = tokenValue.includes("@") ? tokenValue : "user@example.test";
+        const user =
+          tokenValue === "user-a@example.test"
+            ? { id: "user-a", email }
+            : tokenValue === "user-b@example.test"
+              ? { id: "user-b", email }
+              : { id: "user-1", email: "user@example.test" };
         response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify({ data: { id: "user-1", email: "user@example.test" } }));
+        response.end(JSON.stringify({ data: { ...user, role: { id: "role-1", name: "Editor" } } }));
         return;
       }
 
