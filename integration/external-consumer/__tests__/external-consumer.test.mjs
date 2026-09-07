@@ -107,4 +107,26 @@ describe("external consumer fixture", () => {
       expect(readFileSync(pagePath, "utf8")).toContain(`:data-sanity="layerName"`);
     }
   });
+
+  it("enables Directus authentication in the packed consumer fixture", () => {
+    const config = readFileSync(
+      join(fixtureDirectory, "consumer-layers", "directus-client", "nuxt.config.ts"),
+      "utf8"
+    );
+    expect(config).toContain("auth: {");
+    expect(config).toContain("sessionSecret:");
+    expect(config).toContain('"directus-auth-refresh"');
+    expect(
+      existsSync(
+        join(
+          fixtureDirectory,
+          "consumer-layers",
+          "directus-client",
+          "app",
+          "pages",
+          "auth-state.vue"
+        )
+      )
+    ).toBe(true);
+  });
 });

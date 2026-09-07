@@ -9,7 +9,7 @@ describe("useDirectusServerAuth", () => {
   it("uses the refresh-aware resolver for the request", async () => {
     const event = createTestEvent();
     const resolve = vi.fn();
-    event.context.directusAuth = { resolve };
+    event.context.directusAuth = { resolve, resolveSnapshot: vi.fn() };
     const sessionSnapshot = {
       userId: "user-1",
       email: "user@example.test",
@@ -26,7 +26,7 @@ describe("useDirectusServerAuth", () => {
   it("returns null for an unauthenticated request", async () => {
     const event = createTestEvent();
     const resolve = vi.fn().mockResolvedValue({ accessToken: undefined, snapshot: null });
-    event.context.directusAuth = { resolve };
+    event.context.directusAuth = { resolve, resolveSnapshot: vi.fn() };
 
     await expect(useDirectusServerAuth(event)).resolves.toBeNull();
   });
@@ -35,7 +35,7 @@ describe("useDirectusServerAuth", () => {
     const error = new Error("refresh unavailable");
     const resolve = vi.fn().mockRejectedValue(error);
     const event = createTestEvent();
-    event.context.directusAuth = { resolve };
+    event.context.directusAuth = { resolve, resolveSnapshot: vi.fn() };
 
     await expect(useDirectusServerAuth(event)).rejects.toBe(error);
 

@@ -142,7 +142,8 @@ describe("Directus asset handler boundaries", () => {
     configure(baseUrl, false);
     const event = prepareEvent("GET");
     event.context.directusAuth = {
-      resolve: async () => ({ accessToken: "session-token", snapshot: null })
+      resolve: async () => ({ accessToken: "session-token", snapshot: null }),
+      resolveSnapshot: async () => null
     };
     try {
       const response = await uncachedHandler(event);
@@ -177,7 +178,8 @@ describe("Directus asset handler boundaries", () => {
         for (let index = 0; index < 2; index += 1) {
           const event = prepareEvent(method);
           event.context.directusAuth = {
-            resolve: async () => ({ accessToken: "session-token", snapshot: null })
+            resolve: async () => ({ accessToken: "session-token", snapshot: null }),
+            resolveSnapshot: async () => null
           };
           const response = await cachedHandler(event);
           expect(response.headers.get("cache-control")).toBe("private, no-store");
