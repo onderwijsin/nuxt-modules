@@ -1,5 +1,14 @@
 import type { UserFieldSelection } from "@onderwijsin/nuxt-directus-config/schema";
 
+function generateUserFieldsType(fields: readonly UserFieldSelection[]): string {
+  const values = fields.map((field) => {
+    if (typeof field === "string") return JSON.stringify(field);
+    const [key, nestedFields] = Object.entries(field)[0] ?? [];
+    return `{ readonly ${JSON.stringify(key)}: ${generateUserFieldsType(nestedFields ?? [])} }`;
+  });
+  return `readonly [${values.join(", ")}]`;
+}
+
 /**
  * Generates the declaration for the configured current-user projection.
  * @param fields Resolved Directus field selection.
@@ -10,7 +19,7 @@ export function generateDirectusUserTypeDeclaration(
   fields: readonly UserFieldSelection[],
   configFile?: string
 ): string {
-  const fieldsSource = JSON.stringify(fields, null, 2);
+  const fieldsType = generateUserFieldsType(fields);
   const mappedType = configFile
     ? [
         `type DirectusConfigSource = typeof import(${JSON.stringify(configFile)})["default"];`,
@@ -28,13 +37,31 @@ export function generateDirectusUserTypeDeclaration(
     'import type { DirectusUser, Query, ReadUserOutput } from "@directus/sdk";',
     'import type { Schema } from "#directus";',
     "",
-    `const directusUserFields = ${fieldsSource} as const;`,
-    "type DirectusUserFields = ReadUserOutput<Schema, { fields: typeof directusUserFields }, DirectusUser<Schema>>;",
+    `type DirectusUserFieldsQuery = { fields: ${fieldsType} };`,
+    "type DirectusUserFields = ReadUserOutput<Schema, DirectusUserFieldsQuery, DirectusUser<Schema>>;",
     mappedType,
     'declare module "#directus-user" {',
     `  export type DirectusUserProjection = ${projection};`,
     "}",
     "export {};",
+    ""
+  ].join("\n");
+}
+
+/**
+ * Generates the server-only executable mapper source for the effective user projection.
+ * @param configFile Shared executable config source path.
+ * @param enabled Whether the shared user projection is effective.
+ * @returns Virtual module source.
+ */
+export function generateDirectusUserConfigSource(
+  configFile: string | undefined,
+  enabled: boolean
+): string {
+  if (!configFile || !enabled) return "export default undefined;\n";
+  return [
+    `import config from ${JSON.stringify(configFile)};`,
+    "export default config.client?.auth?.user;",
     ""
   ].join("\n");
 }

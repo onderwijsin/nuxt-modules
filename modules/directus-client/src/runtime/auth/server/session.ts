@@ -34,7 +34,7 @@ const DIRECTUS_SESSION_DATA_PREFIX = "boop1:";
 
 const directusSessionSnapshotSchema = z.object({
   userId: z.string().min(1),
-  requiresTfaSetup: z.boolean()
+  requiresTfaSetup: z.boolean().default(false)
 });
 
 const directusSessionSchema = z.object({

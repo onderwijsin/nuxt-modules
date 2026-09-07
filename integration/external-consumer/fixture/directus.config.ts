@@ -1,7 +1,7 @@
 import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 
 export default defineDirectusConfig({
-  instance: { baseUrl: "https://directus.invalid" },
+  instance: { baseUrl: process.env.DIRECTUS_EXTERNAL_URL ?? "https://directus.invalid" },
   client: {
     typegen: { enabled: false },
     auth: {

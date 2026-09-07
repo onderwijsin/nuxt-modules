@@ -1,9 +1,10 @@
 import directusModule from "../../../src/module";
+import directusConfigModule from "@onderwijsin/nuxt-directus-config";
 
 const refreshRedisUrl = process.env.DIRECTUS_E2E_REDIS_URL;
 
 export default defineNuxtConfig({
-  modules: [directusModule],
+  modules: [directusConfigModule, directusModule],
   turnstile: { siteKey: "fixture-site-key", secretKey: "fixture-secret-key" },
   nitro: {
     storage: {
@@ -27,10 +28,6 @@ export default defineNuxtConfig({
       auth: {
         enabled: true,
         sessionSecret: "fixture-directus-session-secret-32-chars",
-        user: {
-          enabled: true,
-          fields: ["id", "email", { role: ["id", "name"] }]
-        },
         turnstile: { enabled: true },
         magicLinks: {
           enabled: true,

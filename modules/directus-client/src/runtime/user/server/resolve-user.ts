@@ -2,12 +2,18 @@ import { readMe, type DirectusUser, type Query } from "@directus/sdk";
 import type { H3Event } from "h3";
 import { createError, setResponseHeader } from "h3";
 import { useRuntimeConfig } from "#imports";
-import config from "#directus-config-server";
+import userConfig from "#directus-user-config-server";
 import type { Schema } from "#directus";
 import { createDirectusRestClient } from "@onderwijsin/nuxt-module-utils/shared";
 import { hasKey, isArray, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { ofetch } from "ofetch";
 import type { DirectusUserProjection } from "#directus-user";
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (!isRecord(value) || isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
 
 /**
  * Resolves the authenticated, configured current-user projection for one request.
@@ -21,18 +27,18 @@ export async function resolveDirectusUser(event: H3Event): Promise<DirectusUserP
   }
 
   const runtime = useRuntimeConfig(event).directusClient;
-  const userConfig =
+  const runtimeUserConfig =
     isRecord(runtime.auth) && hasKey(runtime.auth, "user") && isRecord(runtime.auth.user)
       ? runtime.auth.user
       : undefined;
   const fields =
-    userConfig &&
-    hasKey(userConfig, "enabled") &&
-    isBoolean(userConfig.enabled) &&
-    userConfig.enabled &&
-    hasKey(userConfig, "fields") &&
-    isArray(userConfig.fields)
-      ? userConfig.fields
+    runtimeUserConfig &&
+    hasKey(runtimeUserConfig, "enabled") &&
+    isBoolean(runtimeUserConfig.enabled) &&
+    runtimeUserConfig.enabled &&
+    hasKey(runtimeUserConfig, "fields") &&
+    isArray(runtimeUserConfig.fields)
+      ? runtimeUserConfig.fields
       : [];
   const client = createDirectusRestClient<Schema>({
     baseUrl: runtime.baseUrl,
@@ -44,16 +50,23 @@ export async function resolveDirectusUser(event: H3Event): Promise<DirectusUserP
       fields: fields as Query<Schema, DirectusUser<Schema>>["fields"]
     })
   );
-  if (!isRecord(raw)) {
+  if (!isPlainRecord(raw)) {
     throw createError({ statusCode: 502, statusMessage: "Invalid Directus user response" });
   }
 
-  const sharedUserConfig = config.client?.auth?.user;
-  const mapped =
-    sharedUserConfig && "mapper" in sharedUserConfig && sharedUserConfig.mapper
-      ? sharedUserConfig.mapper(raw)
-      : raw;
-  if (!isRecord(mapped)) {
+  let mapped: unknown = raw;
+  const mapper = userConfig?.mapper;
+  if (typeof mapper === "function") {
+    try {
+      mapped = mapper(raw);
+    } catch {
+      throw createError({
+        statusCode: 502,
+        statusMessage: "Invalid mapped Directus user response"
+      });
+    }
+  }
+  if (!isPlainRecord(mapped)) {
     throw createError({ statusCode: 502, statusMessage: "Invalid mapped Directus user response" });
   }
   return mapped as DirectusUserProjection;

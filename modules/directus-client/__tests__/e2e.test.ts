@@ -65,17 +65,23 @@ describe("Directus client and server composables", async () => {
 
     expect(response.status, await response.clone().text()).toBe(200);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    await expect(response.json()).resolves.toEqual({ id: "user-1", email: "user@example.test" });
+    await expect(response.json()).resolves.toEqual({
+      id: "user-1",
+      email: "user@example.test",
+      displayName: "user@example.test"
+    });
   });
 
   it("refreshes an expired access token during initial SSR bootstrap", async () => {
     const cookie = await loginWithAccessToken();
     const refreshCount = upstream.refreshRequests;
+    const userRequestCount = upstream.userRequests;
 
     const response = await fetch(url("/auth-state"), { headers: { cookie } });
 
     expect(response.status, await response.clone().text()).toBe(200);
     expect(upstream.refreshRequests).toBe(refreshCount + 1);
+    expect(upstream.userRequests).toBe(userRequestCount);
     await expect(response.text()).resolves.toContain(
       '<p data-testid="authenticated-user">user-1</p>'
     );

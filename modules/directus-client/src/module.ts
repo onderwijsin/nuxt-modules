@@ -11,6 +11,8 @@ import {
   addServerPlugin,
   addServerHandler,
   addServerImports,
+  addServerTemplate,
+  addTemplate,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -32,10 +34,16 @@ import {
 } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { parseDirectusCommands } from "./config/commands";
-import { directusResolvedClientOptionsSchema } from "./config/options.schema";
+import {
+  directusClientOptionsSchema,
+  directusResolvedClientOptionsSchema
+} from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { resolveDirectusSessionSecret } from "./config/session-secret";
-import { generateDirectusUserTypeDeclaration } from "./config/user-typegen";
+import {
+  generateDirectusUserConfigSource,
+  generateDirectusUserTypeDeclaration
+} from "./config/user-typegen";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./config/options.schema";
 import type { ResolvedExecutableModuleOptions } from "./config/options.schema";
@@ -106,8 +114,12 @@ export default defineNuxtModule<ModuleOptions>({
     const mergedInput = defu(rawOptions, sharedConfig);
     const rawUserProjection = rawOptions.client?.auth?.user;
     const sharedUserProjection = sharedConfig?.client?.auth?.user;
-    const userProjection =
-      rawUserProjection ?? sharedUserProjection ?? ({ enabled: false } as const);
+    const effectiveUserProjection = rawUserProjection
+      ? { source: "raw" as const, config: rawUserProjection }
+      : sharedUserProjection
+        ? { source: "shared" as const, config: sharedUserProjection }
+        : { source: "disabled" as const, config: { enabled: false as const } };
+    const userProjection = effectiveUserProjection.config;
     const input = {
       ...mergedInput,
       client: {
@@ -131,6 +143,13 @@ export default defineNuxtModule<ModuleOptions>({
       authenticationEnabled && sessionSecret
         ? defu({ client: { auth: { sessionSecret } } }, input)
         : input;
+    validateModuleOptions(
+      authenticationEnabled && sessionSecret
+        ? defu({ client: { auth: { sessionSecret } } }, rawOptions)
+        : rawOptions,
+      directusClientOptionsSchema,
+      log
+    );
     const options: ResolvedExecutableModuleOptions = validateModuleOptions(
       validationOptions,
       directusResolvedClientOptionsSchema,
@@ -152,12 +171,16 @@ export default defineNuxtModule<ModuleOptions>({
     const isCI = process.env.CI === "true";
     const { user: _user, ...serializableAuthOptions } = options.client.auth;
     const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
-    const directusConfigFile =
-      directusConfigAvailable &&
-      isRecord(directusConfigOptions) &&
-      isString(directusConfigOptions.configFile)
-        ? resolveDirectusConfigFile(nuxt.options.rootDir, directusConfigOptions.configFile)
-        : undefined;
+    const directusConfigFile = directusConfigAvailable
+      ? resolveDirectusConfigFile(
+          nuxt.options.rootDir,
+          isRecord(directusConfigOptions) &&
+            (isString(directusConfigOptions.configFile) ||
+              directusConfigOptions.configFile === false)
+            ? directusConfigOptions.configFile
+            : "directus.config.ts"
+        )
+      : undefined;
 
     // Add type template even if module is disbaled. This prevent typecheck failures in ci
     addTypeTemplate({
@@ -190,12 +213,31 @@ export default defineNuxtModule<ModuleOptions>({
         throw result.error;
       }
     });
+    const userConfigServer = addTemplate({
+      filename: "directus-user-config-server.mjs",
+      write: true,
+      getContents: () =>
+        generateDirectusUserConfigSource(
+          directusConfigFile,
+          effectiveUserProjection.source === "shared" && options.client.auth.user.enabled
+        )
+    });
+    addServerTemplate({
+      filename: "#directus-user-config-server",
+      getContents: () =>
+        generateDirectusUserConfigSource(
+          directusConfigFile,
+          effectiveUserProjection.source === "shared" && options.client.auth.user.enabled
+        )
+    });
+    nuxt.options.alias = defu(nuxt.options.alias, {});
+    nuxt.options.alias["#directus-user-config-server"] = userConfigServer.dst;
     const userTypeTemplate = addTypeTemplate({
       filename: "types/directus-user.d.ts",
       getContents: () =>
         generateDirectusUserTypeDeclaration(
           options.client.auth.user.enabled ? options.client.auth.user.fields : [],
-          directusConfigFile
+          effectiveUserProjection.source === "shared" ? directusConfigFile : undefined
         )
     });
     nuxt.options.alias = defu(nuxt.options.alias, {});

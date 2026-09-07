@@ -7,15 +7,9 @@ import { ofetch } from "ofetch";
  * @returns Nuxt plugin setup with browser transport and lifecycle hooks.
  */
 export default defineNuxtPlugin((nuxtApp) => {
-  const hasUserData = () => nuxtApp.payload.data["directus:user"] !== undefined;
-  nuxtApp.hook("directus:auth:login", async () => {
-    if (hasUserData()) await refreshNuxtData("directus:user");
-  });
-  const clearUserData = () => {
-    if (hasUserData()) clearNuxtData("directus:user");
-  };
-  nuxtApp.hook("directus:auth:logout", clearUserData);
-  nuxtApp.hook("directus:auth:invalidated", clearUserData);
+  nuxtApp.hook("directus:auth:login", () => refreshNuxtData("directus:user"));
+  nuxtApp.hook("directus:auth:logout", () => clearNuxtData("directus:user"));
+  nuxtApp.hook("directus:auth:invalidated", () => clearNuxtData("directus:user"));
   return {
     provide: {
       directusUser: () => ofetch("/_directus/auth/user", { credentials: "same-origin" })

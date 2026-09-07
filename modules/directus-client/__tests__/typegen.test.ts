@@ -1,6 +1,7 @@
+import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -66,9 +67,60 @@ describe("Directus typegen transforms", () => {
     );
 
     expect(declaration).toContain("import type { DirectusUser, Query, ReadUserOutput }");
-    expect(declaration).toContain('"role": [');
+    expect(declaration).toContain('readonly "role": readonly [');
     expect(declaration).toContain('"name"');
     expect(declaration).toContain('typeof import("/project/directus.config.ts")');
+    expect(declaration).not.toContain("const directusUserFields");
+    expect(declaration).toContain('readonly "role"');
+  });
+
+  it("emits a declaration that typechecks with mapper and nested field inference", () => {
+    const directory = mkdtempSync(join(tmpdir(), "directus-user-types-"));
+    writeFileSync(
+      join(directory, "directus.config.ts"),
+      'export default { client: { auth: { user: { mapper: () => ({ displayName: "name" }) } } } };\n'
+    );
+    writeFileSync(join(directory, "schema.d.ts"), "export interface Schema {}\n");
+    writeFileSync(
+      join(directory, "generated.d.ts"),
+      generateDirectusUserTypeDeclaration(
+        ["id", { role: ["id", "name"] }],
+        join(directory, "directus.config.ts")
+      )
+    );
+    writeFileSync(
+      join(directory, "consumer.ts"),
+      [
+        'import type { DirectusUserProjection } from "#directus-user";',
+        'const user: DirectusUserProjection = { displayName: "name" };',
+        "user.displayName satisfies string;",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          skipLibCheck: true,
+          module: "NodeNext",
+          moduleResolution: "NodeNext",
+          paths: {
+            "#directus": ["./schema.d.ts"],
+            "#directus-user": ["./generated.d.ts"]
+          }
+        },
+        files: ["./consumer.ts", "./generated.d.ts"]
+      })
+    );
+
+    expect(() =>
+      execFileSync(resolve(process.cwd(), "node_modules/.bin/tsc"), [
+        "--project",
+        join(directory, "tsconfig.json")
+      ])
+    ).not.toThrow();
   });
   it("keeps the base generator output unchanged when augmentations are disabled", async () => {
     const source = await generateDirectusTypesFile({

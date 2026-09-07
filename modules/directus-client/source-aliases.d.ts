@@ -14,3 +14,12 @@ declare module "#directus-config-server" {
   };
   export default config;
 }
+
+declare module "#directus-user-config-server" {
+  const config:
+    | {
+        mapper?: (user: Record<string, unknown>) => Record<string, unknown>;
+      }
+    | undefined;
+  export default config;
+}

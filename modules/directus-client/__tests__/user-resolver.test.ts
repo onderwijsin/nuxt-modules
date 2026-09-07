@@ -9,13 +9,13 @@ const state = vi.hoisted(() => ({
       auth: { user: { enabled: true, fields: ["id", { role: ["id", "name"] }] } }
     }
   },
-  shared: { client: { auth: { user: { enabled: true, fields: ["id"] } } } },
+  shared: { mapper: undefined as ((user: Record<string, unknown>) => unknown) | undefined },
   request: vi.fn(),
   createClient: vi.fn()
 }));
 
 vi.mock("#imports", () => ({ useRuntimeConfig: () => state.config }));
-vi.mock("#directus-config-server", () => ({ default: state.shared }));
+vi.mock("#directus-user-config-server", () => ({ default: state.shared }));
 vi.mock("#directus", () => ({}));
 vi.mock("@directus/sdk", () => ({ readMe: vi.fn((query) => ({ query })) }));
 vi.mock("@onderwijsin/nuxt-module-utils/shared", async (importOriginal) => ({
@@ -30,7 +30,7 @@ beforeEach(() => {
   state.request.mockResolvedValue({ id: "user-1", role: { id: "role-1", name: "Editor" } });
   state.createClient.mockReset();
   state.createClient.mockReturnValue({ request: state.request });
-  state.shared.client.auth.user = { enabled: true, fields: ["id"] };
+  state.shared.mapper = undefined;
 });
 
 describe("Directus current-user resolver", () => {
@@ -65,11 +65,7 @@ describe("Directus current-user resolver", () => {
     };
     await expect(resolveDirectusUserResponse(event)).rejects.toMatchObject({ statusCode: 401 });
 
-    state.shared.client.auth.user = {
-      enabled: true,
-      fields: ["id"],
-      mapper: (user: Record<string, unknown>) => ({ id: user.id, mapped: true })
-    };
+    state.shared.mapper = (user: Record<string, unknown>) => ({ id: user.id, mapped: true });
     event.context.directusAuth.resolve = vi
       .fn()
       .mockResolvedValue({ accessToken: "session-token", snapshot: null });
@@ -77,5 +73,30 @@ describe("Directus current-user resolver", () => {
       id: "user-1",
       mapped: true
     });
+  });
+
+  it.each([[], "invalid", Promise.resolve({ id: "late" }), new Date()])(
+    "rejects non-plain mapper output: %s",
+    async (value) => {
+      const event = createTestEvent();
+      event.context.directusAuth = {
+        resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
+        resolveSnapshot: vi.fn()
+      };
+      state.shared.mapper = () => value;
+
+      await expect(resolveDirectusUserResponse(event)).rejects.toMatchObject({ statusCode: 502 });
+    }
+  );
+
+  it("accepts a null-prototype plain mapper output", async () => {
+    const event = createTestEvent();
+    event.context.directusAuth = {
+      resolve: vi.fn().mockResolvedValue({ accessToken: "session-token", snapshot: null }),
+      resolveSnapshot: vi.fn()
+    };
+    state.shared.mapper = () => Object.assign(Object.create(null), { id: "user-1" });
+
+    await expect(resolveDirectusUserResponse(event)).resolves.toEqual({ id: "user-1" });
   });
 });

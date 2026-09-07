@@ -9,6 +9,7 @@ export class MockDirectus {
   private server: Server | undefined;
   private _loginRequests = 0;
   private _refreshRequests = 0;
+  private _userRequests = 0;
   private _lastItemsAuthorization: string | undefined;
 
   refreshBehavior: RefreshBehavior = "success";
@@ -27,6 +28,13 @@ export class MockDirectus {
    */
   get refreshRequests(): number {
     return this._refreshRequests;
+  }
+
+  /** Returns the number of current-user requests received by the mock.
+   * @returns The current-user request count.
+   */
+  get userRequests(): number {
+    return this._userRequests;
   }
 
   /** Returns the last authorization header received by the items endpoint.
@@ -52,6 +60,7 @@ export class MockDirectus {
     this.refreshDelayMs = 0;
     this.loginExpires = 1;
     this._lastItemsAuthorization = undefined;
+    this._userRequests = 0;
   }
 
   /** Starts the mock Directus server on an ephemeral localhost port. */
@@ -125,6 +134,7 @@ export class MockDirectus {
       }
 
       if (request.url?.startsWith("/users/me")) {
+        this._userRequests += 1;
         response.writeHead(200, { "content-type": "application/json" });
         response.end(JSON.stringify({ data: { id: "user-1", email: "user@example.test" } }));
         return;
