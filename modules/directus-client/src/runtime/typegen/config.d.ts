@@ -9,7 +9,6 @@ declare module "nuxt/schema" {
           | { enabled: false }
           | {
               enabled: true;
-              mapperEnabled: boolean;
               fields: readonly (string | Record<string, unknown>)[];
             };
         turnstile: {

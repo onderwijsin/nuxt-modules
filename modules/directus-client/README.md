@@ -218,7 +218,7 @@ All options are configured under `directusClient`:
 | `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                                                              |
 | `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                                                   |
 | `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent to Directus as `reset_url`.                                                                |
-| `client.auth.user.enabled`            | `false`                             | Enables the opt-in current-user projection; requires authentication.                                                                   |
+| `client.auth.user.enabled`            | `false`                             | Enables the opt-in current-user fetch; requires authentication.                                                                        |
 | `client.auth.user.fields`             | —                                   | Required non-empty recursive Directus QueryFields selection when enabled.                                                              |
 | `client.auth.user.mapper`             | —                                   | Server-only synchronous mapper from executable shared config; not accepted in raw Nuxt options.                                        |
 | `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                                                            |
@@ -376,7 +376,7 @@ builds and deployments.
 
 ### `useDirectusAuth` API
 
-The composable exposes a token-free, reactive session projection:
+The composable exposes a token-free, reactive session snapshot:
 
 | State                    | Type                                                 | Contract                                                              |
 | ------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------- |
@@ -403,7 +403,7 @@ navigation.
 
 `meta` may be `{ turnstileToken?: string }` when Turnstile protection is enabled.
 
-### Current-user projection
+### Current user
 
 Current-user data is opt-in and separate from authentication:
 
@@ -432,10 +432,11 @@ await useDirectus(updateMe(payload));
 await refresh();
 ```
 
-The composable shares the stable `directus:user` async-data key. SSR calls the resolver directly on
-the outer request; the browser uses `GET /_directus/auth/user` with `private, no-store` semantics.
-Unauthenticated state is `user === null` without a fabricated 401. Login refreshes existing user
-state, logout and invalidation clear it, and token refresh does not refetch it.
+The composable shares the stable `directus:user` async-data key and uses `GET /_directus/auth/user`
+in both browser and SSR. The route has `private, no-store` semantics and preserves rotated session
+cookies during SSR. Unauthenticated state is `user === null` without a fabricated 401. Login
+refreshes existing user state, logout and invalidation clear it, and token refresh does not refetch
+it.
 
 An executable `directus.config.ts` may add a synchronous server-only `mapper` that returns a plain
 object. Register `@onderwijsin/nuxt-directus-config` when using a mapper. Profile mutations require

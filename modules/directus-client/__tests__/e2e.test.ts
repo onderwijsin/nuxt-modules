@@ -59,7 +59,7 @@ describe("Directus client and server composables", async () => {
     expect(html).toContain('<p data-testid="client-ssr-error"></p>');
   });
 
-  it("resolves the opt-in current-user projection through its private route", async () => {
+  it("resolves the opt-in current user through its private route", async () => {
     const cookie = await loginWithAccessToken(60_000);
     const response = await fetch(url("/_directus/auth/user"), { headers: { cookie } });
 
@@ -73,7 +73,7 @@ describe("Directus client and server composables", async () => {
     });
   });
 
-  it("isolates concurrent authenticated SSR user projections", async () => {
+  it("isolates concurrent authenticated SSR user requests", async () => {
     const cookieA = await loginWithAccessToken(60_000, "user-a@example.test");
     const cookieB = await loginWithAccessToken(60_000, "user-b@example.test");
     upstream.userDelayMs = 100;

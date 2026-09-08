@@ -104,7 +104,7 @@ describe("Directus module options", () => {
     ).toEqual({ enabled: true, redirectUrl: "https://app.example.test/auth/magic-link" });
   });
 
-  it("keeps the raw module user projection serializable", () => {
+  it("keeps the raw module user config serializable", () => {
     expect(
       directusClientOptionsSchema.parse({
         client: {

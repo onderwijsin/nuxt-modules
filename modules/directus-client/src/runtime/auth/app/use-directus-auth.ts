@@ -33,7 +33,7 @@ export interface DirectusAuthFacade {
 }
 
 /**
- * Provides a reactive projection of the server-owned Directus session.
+ * Provides a reactive view of the server-owned Directus session.
  * @returns The client-safe authentication facade.
  */
 export function useDirectusAuth(): DirectusAuthFacade {

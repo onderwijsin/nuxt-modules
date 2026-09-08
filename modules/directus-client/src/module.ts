@@ -14,6 +14,7 @@ import {
   addServerPlugin,
   addServerHandler,
   addServerImports,
+  addTemplate,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -38,7 +39,6 @@ import { parseDirectusCommands } from "./config/commands";
 import { directusResolvedClientOptionsSchema } from "./config/options.schema";
 import { resolveDirectusTypegenDeclaration } from "./config/typegen";
 import { resolveDirectusSessionSecret } from "./config/session-secret";
-import { generateDirectusUserTypeDeclaration } from "./config/user-typegen";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./config/options.schema";
 import type { ResolvedExecutableModuleOptions } from "./config/options.schema";
@@ -107,26 +107,20 @@ export default defineNuxtModule<ModuleOptions>({
     // Validate with merged directus.config.ts
     const sharedConfig = getResolvedDirectusConfig(nuxt);
     const mergedInput = defu(rawOptions, sharedConfig);
-    const rawUserProjection = rawOptions.client?.auth?.user;
-    const sharedUserProjection = sharedConfig?.client?.auth?.user;
-    const effectiveUserProjection = rawUserProjection
-      ? { source: "raw" as const, config: rawUserProjection }
-      : sharedUserProjection
-        ? { source: "shared" as const, config: sharedUserProjection }
-        : { source: "disabled" as const, config: { enabled: false as const } };
-    const userProjection = effectiveUserProjection.config;
+    const rawUserConfig = rawOptions.client?.auth?.user;
+    const sharedUserConfig = sharedConfig?.client?.auth?.user;
+    const userConfig = rawUserConfig ?? sharedUserConfig ?? { enabled: false as const };
     const input = {
       ...mergedInput,
       client: {
         ...mergedInput.client,
         auth: {
           ...mergedInput.client?.auth,
-          user: userProjection
+          user: userConfig
         }
       }
     };
-    if (rawUserProjection !== undefined)
-      directusSerializableUserProjectionSchema.parse(rawUserProjection);
+    if (rawUserConfig !== undefined) directusSerializableUserProjectionSchema.parse(rawUserConfig);
     const sessionSecret = resolveDirectusSessionSecret({
       configured:
         rawOptions.client?.auth?.sessionSecret ?? sharedConfig?.client?.auth?.sessionSecret,
@@ -150,13 +144,6 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
     const directusConfigAvailable = sharedConfig !== undefined;
-    if (!directusConfigAvailable) {
-      nuxt.options.alias = defu(nuxt.options.alias, {});
-      nuxt.options.alias["#directus-config-server"] = resolver.resolve(
-        runtimeDir,
-        "user/server/empty-config"
-      );
-    }
 
     const isCI = process.env.CI === "true";
     const { user: _user, ...serializableAuthOptions } = options.client.auth;
@@ -203,14 +190,6 @@ export default defineNuxtModule<ModuleOptions>({
         throw result.error;
       }
     });
-    const userTypeTemplate = addTypeTemplate({
-      filename: "types/directus-user.d.ts",
-      getContents: () =>
-        generateDirectusUserTypeDeclaration(
-          options.client.auth.user.enabled ? options.client.auth.user.fields : [],
-          effectiveUserProjection.source === "shared" ? directusConfigFile : undefined
-        )
-    });
     nuxt.options.alias = defu(nuxt.options.alias, {});
     nuxt.options.alias["#directus"] = resolver.resolve(
       nuxt.options.buildDir,
@@ -223,9 +202,6 @@ export default defineNuxtModule<ModuleOptions>({
     nodeTsConfig.compilerOptions = defu(nodeTsConfig.compilerOptions, {});
     nodeTsConfig.compilerOptions.paths = defu(nodeTsConfig.compilerOptions.paths, {});
     nodeTsConfig.compilerOptions.paths["#directus"] = ["./types/directus-schema"];
-    nodeTsConfig.compilerOptions.paths["#directus-user"] = [
-      userTypeTemplate?.dst ?? "./types/directus-user"
-    ];
 
     if (!isEnabled()) return;
 
@@ -247,8 +223,6 @@ export default defineNuxtModule<ModuleOptions>({
             ...serializableAuthOptions,
             user: {
               enabled: options.client.auth.user.enabled,
-              mapperEnabled:
-                effectiveUserProjection.source === "shared" && options.client.auth.user.enabled,
               ...(options.client.auth.user.enabled
                 ? { fields: options.client.auth.user.fields }
                 : {})
@@ -366,10 +340,26 @@ export default defineNuxtModule<ModuleOptions>({
           name: "useDirectusUser",
           from: resolver.resolve(runtimeDir, "user/app/use-directus-user")
         });
+        const userHandler = addTemplate({
+          filename: "server/handlers/directus-user.get.mjs",
+          write: true,
+          getContents: () => {
+            const handler = resolver.resolve(runtimeDir, "user/server/create-handler");
+            if (
+              rawUserConfig !== undefined ||
+              !directusConfigFile ||
+              sharedUserConfig?.enabled !== true ||
+              !sharedUserConfig.mapper
+            ) {
+              return `import { createDirectusUserHandler } from ${JSON.stringify(handler)};\nexport default createDirectusUserHandler();\n`;
+            }
+            return `import directusConfig from ${JSON.stringify(directusConfigFile)};\nimport { createDirectusUserHandler } from ${JSON.stringify(handler)};\nconst userConfig = directusConfig.client?.auth?.user;\nexport default createDirectusUserHandler(userConfig?.enabled ? userConfig.mapper : undefined);\n`;
+          }
+        });
         addServerHandler({
           route: "/_directus/auth/user",
           method: "get",
-          handler: resolver.resolve(runtimeDir, "user/server/handlers/user.get")
+          handler: userHandler.dst
         });
         nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
         nuxt.options.routeRules["/_directus/auth/user"] = defu(
@@ -377,12 +367,8 @@ export default defineNuxtModule<ModuleOptions>({
           nuxt.options.routeRules["/_directus/auth/user"]
         );
         addPlugin({
-          src: resolver.resolve(runtimeDir, "user/app/browser-plugin"),
+          src: resolver.resolve(runtimeDir, "user/app/plugin.client"),
           mode: "client"
-        });
-        addPlugin({
-          src: resolver.resolve(runtimeDir, "user/app/ssr-plugin"),
-          mode: "server"
         });
       }
     }

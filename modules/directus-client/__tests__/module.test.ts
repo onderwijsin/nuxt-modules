@@ -18,7 +18,6 @@ const state = vi.hoisted(() => ({
     }
   },
   addTemplate: vi.fn(),
-  addServerTemplate: vi.fn(),
   addTypeTemplate: vi.fn()
 }));
 
@@ -28,7 +27,6 @@ vi.mock("@nuxt/kit", () => ({
   addServerHandler: vi.fn(),
   addServerImports: vi.fn(),
   addServerPlugin: vi.fn(),
-  addServerTemplate: state.addServerTemplate,
   addTemplate: state.addTemplate,
   addTypeTemplate: state.addTypeTemplate,
   createResolver: () => ({ resolve: (...parts: string[]) => join("/module", ...parts) }),
@@ -81,7 +79,6 @@ beforeEach(() => {
   state.addTemplate.mockImplementation(({ filename }: { filename: string }) => ({
     dst: `/project/.nuxt/${filename}`
   }));
-  state.addServerTemplate.mockReset();
   state.addTypeTemplate.mockReset();
   state.addTypeTemplate.mockReturnValue({ dst: "/project/.nuxt/types/generated.d.ts" });
 });
@@ -134,15 +131,13 @@ describe("directus-client module setup", () => {
       nuxt
     );
 
-    const userTypeTemplate = state.addTypeTemplate.mock.calls.find(
-      ([template]) => template.filename === "types/directus-user.d.ts"
-    )?.[0] as { getContents: () => string } | undefined;
-    expect(userTypeTemplate?.getContents()).not.toContain("DirectusConfigSource");
-    expect(nuxt.options.runtimeConfig.directusClient.auth.user.mapperEnabled).toBe(false);
     expect(nuxt.options.runtimeConfig.directusClient.auth.user).toEqual({
       enabled: true,
-      mapperEnabled: false,
       fields: ["email"]
     });
+    const userHandler = state.addTemplate.mock.calls.find(
+      ([template]) => template.filename === "server/handlers/directus-user.get.mjs"
+    )?.[0] as { getContents: () => string } | undefined;
+    expect(userHandler?.getContents()).not.toContain("directus.config.ts");
   });
 });

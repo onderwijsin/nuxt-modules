@@ -1,17 +1,18 @@
-import { useAsyncData, useNuxtApp } from "#app";
-import type { DirectusUserProjection } from "#directus-user";
+import { useAsyncData } from "#app";
+import type { DirectusUser } from "@directus/sdk";
 import { useDirectusAuth } from "../../auth/app/use-directus-auth";
+import { fetchDirectusUser } from "./fetch-user";
+import type { Schema } from "#directus";
 
 /**
- * Provides the opt-in mutable current-user projection independently of auth session state.
+ * Fetches the authenticated Directus user independently of auth session state.
  * @returns Shared current-user async-data state and its refresh operation.
  */
 export function useDirectusUser() {
   const auth = useDirectusAuth();
-  const nuxtApp = useNuxtApp();
-  const asyncData = useAsyncData<DirectusUserProjection | null>(
+  const asyncData = useAsyncData<DirectusUser<Schema> | Record<string, unknown> | null>(
     "directus:user",
-    () => nuxtApp.$directusUser(),
+    fetchDirectusUser,
     { default: () => null, immediate: auth.isAuthenticated.value }
   );
 
