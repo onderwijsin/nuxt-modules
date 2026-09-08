@@ -1,8 +1,5 @@
 import { defu } from "defu";
-import {
-  getResolvedDirectusConfigFromSource,
-  resolveDirectusConfigFile
-} from "@onderwijsin/nuxt-directus-config/config";
+import { resolveDirectusConfigFile } from "@onderwijsin/nuxt-directus-config/config";
 import {
   directusSerializableUserProjectionSchema,
   getResolvedDirectusConfig
@@ -20,7 +17,6 @@ import {
   defineNuxtModule,
   useLogger
 } from "@nuxt/kit";
-import type { ModuleDependencies } from "@nuxt/schema";
 import {
   moduleSetup,
   resolveLoggerScope,
@@ -42,21 +38,11 @@ import { resolveDirectusSessionSecret } from "./config/session-secret";
 import { version } from "../package.json";
 import type { ModuleOptions } from "./config/options.schema";
 import type { ResolvedExecutableModuleOptions } from "./config/options.schema";
+import { DIRECTUS_TURNSTILE_ACTIONS } from "./config/turnstile";
+import { resolveModuleDependencies } from "./config/dependencies";
 
 const MODULE_KEY = "directusClient";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
-const DIRECTUS_TURNSTILE_ACTIONS = {
-  login: "directus-login",
-  passwordRequest: "directus-password-request",
-  magicLinkRequest: "directus-magic-link-request"
-};
-
-function isDirectusConfigModule(module: unknown): boolean {
-  if (module === "@onderwijsin/nuxt-directus-config") return true;
-  if (typeof module !== "function" && !isRecord(module)) return false;
-  if (!("meta" in module) || !isRecord(module.meta)) return false;
-  return module.meta.name === "@onderwijsin/nuxt-directus-config";
-}
 
 /** Registers the server-safe Directus module foundation and its validated proxy boundary. */
 export default defineNuxtModule<ModuleOptions>({
@@ -71,34 +57,7 @@ export default defineNuxtModule<ModuleOptions>({
     instance: {},
     client: {}
   },
-  moduleDependencies: async (nuxt): Promise<ModuleDependencies> => {
-    const directusConfigModuleRegistered = nuxt.options.modules.some(isDirectusConfigModule);
-    const dependencies: ModuleDependencies = {};
-
-    if (directusConfigModuleRegistered) {
-      dependencies["@onderwijsin/nuxt-directus-config"] = { version: ">=0.3.0" };
-    }
-
-    const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
-    const configFile: string | false =
-      directusConfigModuleRegistered &&
-      isRecord(directusConfigOptions) &&
-      (isString(directusConfigOptions.configFile) || directusConfigOptions.configFile === false)
-        ? directusConfigOptions.configFile
-        : "directus.config.ts";
-    const sharedConfig =
-      getResolvedDirectusConfig(nuxt) ??
-      (directusConfigModuleRegistered
-        ? await getResolvedDirectusConfigFromSource(nuxt.options.rootDir, configFile)
-        : undefined);
-    const directusClientOptions = defu(nuxt.options.directusClient, sharedConfig);
-
-    if (directusClientOptions?.client?.auth?.turnstile?.enabled) {
-      dependencies["@onderwijsin/nuxt-turnstile"] = { version: ">=0.2.5" };
-    }
-
-    return dependencies;
-  },
+  moduleDependencies: resolveModuleDependencies,
   setup(rawOptions, nuxt) {
     const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
