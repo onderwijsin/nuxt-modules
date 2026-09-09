@@ -8,14 +8,10 @@ import { fetchDirectusUser } from "./fetch-user";
  */
 export function useDirectusUser() {
   const auth = useDirectusAuth();
-  const asyncData = useAsyncData<Record<string, unknown> | null>(
-    "directus:user",
-    fetchDirectusUser,
-    {
-      default: () => null,
-      immediate: auth.isAuthenticated.value
-    }
-  );
+  const asyncData = useAsyncData("directus:user", fetchDirectusUser, {
+    default: () => null,
+    immediate: auth.isAuthenticated.value
+  });
 
   return {
     user: asyncData.data,
