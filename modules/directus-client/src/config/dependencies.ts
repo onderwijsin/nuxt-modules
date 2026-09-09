@@ -1,3 +1,4 @@
+import { defu } from "defu";
 import { isRecord, isFunction, hasKey, isString } from "@onderwijsin/nuxt-module-utils/shared";
 import type { Nuxt, ModuleDependencies } from "@nuxt/schema";
 import { getResolvedDirectusConfig } from "@onderwijsin/nuxt-directus-config/schema";
@@ -30,44 +31,26 @@ export async function resolveModuleDependencies(nuxt: Nuxt): Promise<ModuleDepen
     dependencies["@onderwijsin/nuxt-directus-config"] = { version: ">=0.3.0" };
   }
 
-  function addTurnstileDependency(dependencies: ModuleDependencies) {
+  let sharedConfig;
+  if (isDirectusConfigModuleRegistered) {
+    const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
+    const configFile: string | false =
+      isRecord(directusConfigOptions) &&
+      (isString(directusConfigOptions.configFile) || directusConfigOptions.configFile === false)
+        ? directusConfigOptions.configFile
+        : "directus.config.ts";
+
+    if (configFile) {
+      sharedConfig =
+        getResolvedDirectusConfig(nuxt) ??
+        (await getResolvedDirectusConfigFromSource(nuxt.options.rootDir, configFile));
+    }
+  }
+
+  const effectiveConfig = defu(nuxt.options.directusClient, sharedConfig);
+
+  if (effectiveConfig?.client?.auth?.turnstile?.enabled) {
     dependencies["@onderwijsin/nuxt-turnstile"] = { version: ">=0.2.5" };
-  }
-
-  // Next, we need to know whether we need to add Turnstile as a dependency.
-  // For this, we need to check various configuration sources
-
-  // First, directly check the client options in the Nuxt configuration. Easy!
-  const directusClientOptions = nuxt.options.directusClient;
-  if (directusClientOptions && directusClientOptions?.client?.auth?.turnstile?.enabled) {
-    addTurnstileDependency(dependencies);
-    return dependencies;
-  }
-
-  // Next, we should check the directus.config.ts file
-  if (!isDirectusConfigModuleRegistered) {
-    return dependencies;
-  }
-
-  const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
-  const configFile: string | false =
-    isRecord(directusConfigOptions) &&
-    (isString(directusConfigOptions.configFile) || directusConfigOptions.configFile === false)
-      ? directusConfigOptions.configFile
-      : "directus.config.ts";
-
-  if (!configFile) {
-    return dependencies;
-  }
-
-  // Check the _directus config prop, or fall back to the resolved config from the source file (directus.config.ts).
-  // Eg _directus should be populated of the config module loads first.
-  const sharedConfig =
-    getResolvedDirectusConfig(nuxt) ??
-    (await getResolvedDirectusConfigFromSource(nuxt.options.rootDir, configFile));
-
-  if (sharedConfig?.client?.auth?.turnstile?.enabled) {
-    addTurnstileDependency(dependencies);
   }
   return dependencies;
 }
