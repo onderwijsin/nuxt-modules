@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+### Patch Changes
+
+- 0910b57: Restore cross-field validation for newsletter signup module options through the canonical schema.
+
 ## 1.2.0
 
 ### Minor Changes

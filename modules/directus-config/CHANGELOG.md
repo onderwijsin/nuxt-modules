@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- 0910b57: Separate stable authentication facts from mutable current-user data. The auth snapshot contains
+  only `userId` and `requiresTfaSetup`; configure `client.auth.user.fields` for profile data and use
+  `useDirectusUser()` to fetch it, optionally map it server-side, and refresh it after profile
+  mutations. The browser and SSR use the same current-user route, including SSR session-cookie
+  rotation.
+
+### Patch Changes
+
+- 0910b57: Generate the current-user response type from its selected fields or executable mapper, including
+  custom `directus_users` fields when schema type generation is enabled. Preserve the generated type
+  through the composable declaration, and type standard mapper input fields from the Directus SDK.
+
 ## 0.8.0
 
 ### Minor Changes

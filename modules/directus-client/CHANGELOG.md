@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- 0910b57: Separate stable authentication facts from mutable current-user data. The auth snapshot contains
+  only `userId` and `requiresTfaSetup`; configure `client.auth.user.fields` for profile data and use
+  `useDirectusUser()` to fetch it, optionally map it server-side, and refresh it after profile
+  mutations. The browser and SSR use the same current-user route, including SSR session-cookie
+  rotation.
+
+### Patch Changes
+
+- 0910b57: Refactor module setup into focused configuration and capability registration helpers.
+- 0910b57: Respect raw Nuxt configuration overrides when resolving the optional Turnstile module dependency.
+- 0910b57: Generate the current-user response type from its selected fields or executable mapper, including
+  custom `directus_users` fields when schema type generation is enabled. Preserve the generated type
+  through the composable declaration, and type standard mapper input fields from the Directus SDK.
+- Updated dependencies [0910b57]
+- Updated dependencies [0910b57]
+  - @onderwijsin/nuxt-directus-config@0.9.0
+
 ## 0.11.1
 
 ### Patch Changes
