@@ -3,6 +3,7 @@
  * The artifact manifest is the profile source of truth; internal workspace dependencies cannot
  * fall back to the registry.
  */
+import { createServer } from "node:http";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
@@ -147,6 +148,62 @@ async function waitForResponse(url, options = {}, expectedStatus = 200) {
 }
 
 /**
+ * Starts the local Directus double used by authenticated external-consumer checks.
+ * @returns The mock state, URL, and close function.
+ */
+async function startDirectusMock() {
+  const state = { userRequests: 0 };
+  const server = createServer((request, response) => {
+    if (request.url?.startsWith("/auth/login")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          data: {
+            access_token: "external-access",
+            refresh_token: "external-refresh",
+            expires: 60_000
+          }
+        })
+      );
+      return;
+    }
+    if (request.url?.startsWith("/users/me")) {
+      state.userRequests += 1;
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          data: {
+            id: "external-user",
+            email: "external@example.test",
+            role: { id: "external-role", name: "Editor" }
+          }
+        })
+      );
+      return;
+    }
+    if (request.url?.startsWith("/auth/logout")) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end("{}");
+      return;
+    }
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end(JSON.stringify({ errors: [{ message: "Not found" }] }));
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Directus mock did not start");
+  return {
+    state,
+    url: `http://127.0.0.1:${address.port}`,
+    close: () =>
+      new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  };
+}
+
+/**
  * Parses a JSON response and applies a focused assertion.
  *
  * @param {Response} response - Response to parse.
@@ -169,9 +226,10 @@ async function readJson(response, assertion) {
  *
  * @param {number} port - Nitro server port.
  * @param {{modules: string[], full: boolean}} profile - Selected consumer profile.
+ * @param {{state: {userRequests: number}}} directusMock - Directus mock state.
  * @returns {Promise<void>}
  */
-async function runFocusedAssertions(port, profile) {
+async function runFocusedAssertions(port, profile, directusMock) {
   await readJson(
     await waitForResponse(`http://127.0.0.1:${port}/api/consumer/profile`),
     (body) =>
@@ -202,6 +260,44 @@ async function runFocusedAssertions(port, profile) {
       throw new Error(`Packed Directus auth SSR returned ${response.status}: ${body}`);
     if (!body.includes('data-testid="external-directus-auth-state"'))
       throw new Error(`Packed Directus auth SSR assertion failed: ${body}`);
+    if (!body.includes('data-testid="external-directus-user-mapper"'))
+      throw new Error(`Packed Directus user mapper SSR assertion failed: ${body}`);
+
+    const userRequestsBeforeLogin = directusMock.state.userRequests;
+    const loginResponse = await waitForResponse(`http://127.0.0.1:${port}/_directus/auth/login`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: `http://127.0.0.1:${port}`
+      },
+      body: JSON.stringify({ email: "external@example.test", password: "password" })
+    });
+    const sessionCookie = loginResponse.headers.get("set-cookie")?.split(";", 1)[0];
+    if (!sessionCookie) throw new Error("Packed Directus login did not set a session cookie.");
+
+    const userResponse = await waitForResponse(`http://127.0.0.1:${port}/_directus/auth/user`, {
+      headers: { cookie: sessionCookie }
+    });
+    const userBody = await userResponse.text();
+    if (!userBody.includes('"displayName":"external@example.test"'))
+      throw new Error(`Packed Directus mapped user endpoint assertion failed: ${userBody}`);
+    if (!userBody.includes('"role":"Editor"'))
+      throw new Error(`Packed Directus nested mapper endpoint assertion failed: ${userBody}`);
+
+    const authenticatedResponse = await waitForResponse(`http://127.0.0.1:${port}/auth-state`, {
+      headers: { cookie: sessionCookie }
+    });
+    const authenticatedBody = await authenticatedResponse.text();
+    if (!authenticatedBody.includes("authenticated:external-user"))
+      throw new Error(`Packed Directus authenticated SSR assertion failed: ${authenticatedBody}`);
+    if (!authenticatedBody.includes("external@example.test"))
+      throw new Error(`Packed Directus mapped user SSR assertion failed: ${authenticatedBody}`);
+    if (!authenticatedBody.includes("Editor"))
+      throw new Error(`Packed Directus nested mapper SSR assertion failed: ${authenticatedBody}`);
+    if (directusMock.state.userRequests !== userRequestsBeforeLogin + 3)
+      throw new Error(
+        `Packed Directus current-user request count changed unexpectedly: ${directusMock.state.userRequests}`
+      );
   }
 }
 
@@ -223,7 +319,7 @@ async function runFullAssertions(port, profile) {
       body.includes("#nitro-internal-virtual/storage")
     )
       throw new Error(`Packed Directus storage regression: ${body}`);
-    if (response.status !== 502)
+    if (response.status !== 404)
       throw new Error(`Packed Directus asset storage path returned ${response.status}: ${body}`);
   }
   if (
@@ -270,6 +366,9 @@ export async function main() {
   const profile = getProfile(manifest);
   const packedDependencies = getPackedDependencies(manifest);
   const consumerDirectory = mkdtempSync(join(tmpdir(), "nuxt-external-consumer-"));
+  const directusMock = await startDirectusMock();
+  consumerEnvironment.DIRECTUS_EXTERNAL_URL = directusMock.url;
+  consumerEnvironment.NUXT_DIRECTUS_CLIENT_BASE_URL = directusMock.url;
   try {
     // The temporary directory is outside the workspace: this validates packed output rather
     // than accidentally resolving workspace symlinks or source files.
@@ -329,13 +428,14 @@ export async function main() {
     try {
       // Focused checks are the baseline for every profile. Full mode adds only
       // release-level behavior checks after this baseline has completed.
-      await runFocusedAssertions(port, profile);
+      await runFocusedAssertions(port, profile, directusMock);
       if (profile.full) await runFullAssertions(port, profile);
       console.log(`External consumer ${profile.full ? "full" : "focused"} checks passed.`);
     } finally {
       await stopServer(server);
     }
   } finally {
+    await directusMock.close();
     if (!keepConsumer) rmSync(consumerDirectory, { recursive: true, force: true });
     else console.log(`Consumer retained at ${consumerDirectory}`);
   }

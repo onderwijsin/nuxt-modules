@@ -50,6 +50,7 @@
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt-module-build build && nuxt prepare playground"
   },
   "dependencies": {
+    "@directus/sdk": "catalog:",
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",

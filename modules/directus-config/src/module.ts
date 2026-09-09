@@ -87,7 +87,6 @@ export default defineNuxtModule<ModuleOptions>({
       filename: "#directus-config-server",
       getContents: () => generateDirectusServerConfigSource(configFile)
     });
-
     nuxt.options.alias = defu(nuxt.options.alias, {});
     nuxt.options.alias["#directus-config"] = clientConfig.dst;
 

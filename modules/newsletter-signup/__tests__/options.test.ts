@@ -114,6 +114,28 @@ describe("newsletter signup option shape", () => {
     expect(result.success).toBe(false);
   });
 
+  it("requires an endpoint URL when local endpoint registration is disabled", () => {
+    const result = optionsSchema.safeParse({ endpoint: { enabled: false } });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("requires a default or selectable list when provider configuration is present", () => {
+    const result = optionsSchema.safeParse({ provider: "loops", apiKey: "loops-key" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("requires a Mailchimp server when no per-audience servers are configured", () => {
+    const result = optionsSchema.safeParse({
+      provider: "mailchimp",
+      apiKey: "mailchimp-key",
+      lists: { default: "audience" }
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects empty list options", () => {
     const result = optionsSchema.safeParse({ lists: { options: [] } });
 

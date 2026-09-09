@@ -19,7 +19,7 @@ describe("Directus client and server composables", async () => {
     return fetch(url("/_directus/auth/session"), { headers: { cookie } });
   }
 
-  async function loginWithAccessToken(expires = 1): Promise<string> {
+  async function loginWithAccessToken(expires = 1, email = "user@example.test"): Promise<string> {
     upstream.loginExpires = expires;
     const response = await fetch(url("/_directus/auth/login"), {
       method: "POST",
@@ -28,7 +28,7 @@ describe("Directus client and server composables", async () => {
         origin: new URL(url("/")).origin,
         "x-turnstile-token": "directus-login"
       },
-      body: JSON.stringify({ email: "user@example.test", password: "password" })
+      body: JSON.stringify({ email, password: "password" })
     });
     expect(response.status, await response.clone().text()).toBe(200);
     const cookie = getSessionCookie(response);
@@ -59,14 +59,49 @@ describe("Directus client and server composables", async () => {
     expect(html).toContain('<p data-testid="client-ssr-error"></p>');
   });
 
+  it("resolves the opt-in current user through its private route", async () => {
+    const cookie = await loginWithAccessToken(60_000);
+    const response = await fetch(url("/_directus/auth/user"), { headers: { cookie } });
+
+    expect(response.status, await response.clone().text()).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    await expect(response.json()).resolves.toEqual({
+      id: "user-1",
+      email: "user@example.test",
+      displayName: "user@example.test",
+      role: "Editor"
+    });
+  });
+
+  it("isolates concurrent authenticated SSR user requests", async () => {
+    const cookieA = await loginWithAccessToken(60_000, "user-a@example.test");
+    const cookieB = await loginWithAccessToken(60_000, "user-b@example.test");
+    upstream.userDelayMs = 100;
+
+    const [responseA, responseB] = await Promise.all([
+      fetch(url("/auth-state"), { headers: { cookie: cookieA } }),
+      fetch(url("/auth-state"), { headers: { cookie: cookieB } })
+    ]);
+    const [bodyA, bodyB] = await Promise.all([responseA.text(), responseB.text()]);
+
+    expect(bodyA).toContain("user-a</p>");
+    expect(bodyA).toContain("user-a@example.test");
+    expect(bodyA).not.toContain("user-b@example.test");
+    expect(bodyB).toContain("user-b</p>");
+    expect(bodyB).toContain("user-b@example.test");
+    expect(bodyB).not.toContain("user-a@example.test");
+  });
+
   it("refreshes an expired access token during initial SSR bootstrap", async () => {
     const cookie = await loginWithAccessToken();
     const refreshCount = upstream.refreshRequests;
+    const userRequestCount = upstream.userRequests;
 
     const response = await fetch(url("/auth-state"), { headers: { cookie } });
 
     expect(response.status, await response.clone().text()).toBe(200);
     expect(upstream.refreshRequests).toBe(refreshCount + 1);
+    expect(upstream.userRequests).toBe(userRequestCount + 1);
     await expect(response.text()).resolves.toContain(
       '<p data-testid="authenticated-user">user-1</p>'
     );

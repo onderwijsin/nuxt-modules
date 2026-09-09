@@ -51,9 +51,6 @@ function expiringSession(): DirectusSession {
     expiresAt: Date.now() + 1,
     snapshot: {
       userId: "user-1",
-      email: null,
-      firstName: null,
-      lastName: null,
       requiresTfaSetup: false
     }
   };

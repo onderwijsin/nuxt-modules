@@ -33,7 +33,7 @@ vi.mock("../src/runtime/auth/server/session", () => ({
   writeDirectusSessionCookie: state.session.writeCookie
 }));
 
-const { createDirectusSession, fetchDirectusCurrentUser } =
+const { createDirectusSession, fetchDirectusSessionIdentity } =
   await import("../src/runtime/auth/server/authentication");
 const { ensureFreshDirectusSession } = await import("../src/runtime/auth/server/refresh");
 
@@ -70,9 +70,6 @@ function expiringSession(): DirectusSession {
     expiresAt: Date.now() + 1,
     snapshot: {
       userId: "user-1",
-      email: null,
-      firstName: null,
-      lastName: null,
       requiresTfaSetup: false
     }
   };
@@ -96,9 +93,6 @@ beforeEach(() => {
           expiresAt: Date.now() + 60_000,
           snapshot: {
             userId: "user-1",
-            email: null,
-            firstName: null,
-            lastName: null,
             requiresTfaSetup: false
           }
         },
@@ -124,21 +118,19 @@ describe("Directus current-user and login boundaries", () => {
         }
       })
     );
-    await expect(fetchDirectusCurrentUser(createTestEvent(), "access-token")).resolves.toEqual({
-      userId: "user-1",
-      email: "user@example.test",
-      firstName: "Test",
-      lastName: "User",
-      requiresTfaSetup: false
+    await expect(fetchDirectusSessionIdentity(createTestEvent(), "access-token")).resolves.toEqual({
+      userId: "user-1"
     });
-    expect(fetch.mock.calls[0]?.[0]).toContain("fields=id,email,first_name,last_name");
+    expect(fetch.mock.calls[0]?.[0]).toContain("fields=id");
   });
 
   it.each([{ data: {} }, { data: { id: 42 } }, { id: "user-1" }])(
     "rejects malformed current-user response %#",
     async (body) => {
       mockFetch(jsonResponse(body));
-      await expect(fetchDirectusCurrentUser(createTestEvent(), "access-token")).rejects.toThrow();
+      await expect(
+        fetchDirectusSessionIdentity(createTestEvent(), "access-token")
+      ).rejects.toThrow();
     }
   );
 
@@ -158,9 +150,6 @@ describe("Directus current-user and login boundaries", () => {
       refreshToken: "refresh",
       snapshot: {
         userId: "user-1",
-        email: "user@example.test",
-        firstName: null,
-        lastName: null,
         requiresTfaSetup: false
       }
     });

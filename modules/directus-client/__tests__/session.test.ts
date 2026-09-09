@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { sealSession, useSession } from "h3";
 import { isArray } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { createTestEvent } from "../../../packages/test-utils/src";
@@ -39,9 +40,6 @@ const session = {
   expiresAt: Date.now() + 60_000,
   snapshot: {
     userId: "user-1",
-    email: null,
-    firstName: null,
-    lastName: null,
     requiresTfaSetup: false
   }
 };
@@ -68,6 +66,38 @@ describe("Directus sealed session state", () => {
     expect(decodeURIComponent(encodedValue)).toMatch(/^boop1:/);
 
     await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toEqual(session);
+  });
+
+  it("reads older sealed snapshots without a TFA setup field", async () => {
+    const writeEvent = createTestEvent();
+    const manager = await useSession(writeEvent, {
+      name: "directus_session",
+      password: state.config.directusClient.auth.sessionSecret,
+      maxAge: state.config.directusClient.auth.cookie.maxAge,
+      cookie: false,
+      sessionHeader: false
+    });
+    await manager.update({
+      directus: {
+        accessToken: "access",
+        refreshToken: "refresh",
+        expiresAt: Date.now() + 60_000,
+        snapshot: { userId: "user-1" }
+      },
+      formatVersion: 1,
+      matchedSecretSlot: "active"
+    });
+    const cookie = `directus_session=boop1:${await sealSession(writeEvent, {
+      name: "directus_session",
+      password: state.config.directusClient.auth.sessionSecret,
+      maxAge: state.config.directusClient.auth.cookie.maxAge,
+      cookie: false,
+      sessionHeader: false
+    })}`;
+
+    await expect(getDirectusSession(eventWithCookie(cookie))).resolves.toMatchObject({
+      snapshot: { userId: "user-1", requiresTfaSetup: false }
+    });
   });
 
   it("uses a fresh ciphertext for identical sessions", async () => {
@@ -180,11 +210,9 @@ describe("Directus sealed session state", () => {
     await expect(
       setDirectusSession(createTestEvent(), {
         ...session,
+        accessToken: "x".repeat(4000),
         snapshot: {
           userId: "user-1",
-          email: "x".repeat(4000),
-          firstName: null,
-          lastName: null,
           requiresTfaSetup: false
         }
       })

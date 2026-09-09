@@ -82,10 +82,42 @@ const noProviderOptionsSchema = z.strictObject({
     .optional()
 });
 
-export const newsletterSignupOptionsSchema = z.union([
-  providerOptionsSchema,
-  noProviderOptionsSchema
-]);
+export const newsletterSignupOptionsSchema = z
+  .union([providerOptionsSchema, noProviderOptionsSchema])
+  .superRefine((options, ctx) => {
+    if (options.endpoint?.enabled === false && !options.endpoint.url) {
+      ctx.addIssue({
+        code: "custom",
+        message: "endpoint.url is required when endpoint registration is disabled",
+        path: ["endpoint", "url"]
+      });
+    }
+
+    const hasProviderConfiguration = Boolean(
+      options.provider ||
+      options.apiKey ||
+      ("server" in options && options.server) ||
+      options.lists ||
+      options.fields
+    );
+    if (!hasProviderConfiguration) return;
+
+    if (!options.lists?.default && !options.lists?.options?.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Configure lists.default or lists.options",
+        path: ["lists"]
+      });
+    }
+
+    if (options.provider === "mailchimp" && !options.lists?.options?.length && !options.server) {
+      ctx.addIssue({
+        code: "custom",
+        message: "server is required for Mailchimp when no per-audience server is configured",
+        path: ["server"]
+      });
+    }
+  });
 
 /** Ergonomic consumer input shape accepted before provider-specific validation. */
 export const newsletterSignupModuleOptionsSchema = z.strictObject({

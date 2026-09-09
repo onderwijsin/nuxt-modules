@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { parseDirectusCommands } from "../src/config/commands";
-import { directusClientOptionsSchema } from "../src/config/options.schema";
+import {
+  directusClientOptionsSchema,
+  directusResolvedClientOptionsSchema
+} from "../src/config/options.schema";
 
 describe("Directus module options", () => {
   it("allows enabled modules without a baseUrl", () => {
@@ -99,6 +102,39 @@ describe("Directus module options", () => {
         }
       }).client.auth.magicLinks
     ).toEqual({ enabled: true, redirectUrl: "https://app.example.test/auth/magic-link" });
+  });
+
+  it("keeps the raw module user config serializable", () => {
+    expect(
+      directusClientOptionsSchema.parse({
+        client: {
+          auth: {
+            enabled: true,
+            sessionSecret: "a-valid-directus-session-secret-32-chars",
+            user: { enabled: true, fields: ["id"] }
+          }
+        }
+      }).client.auth.user
+    ).toEqual({ enabled: true, fields: ["id"] });
+    expect(() =>
+      directusClientOptionsSchema.parse({
+        client: {
+          auth: {
+            enabled: true,
+            sessionSecret: "a-valid-directus-session-secret-32-chars",
+            user: { enabled: true, fields: ["id"], mapper: () => ({}) }
+          }
+        }
+      })
+    ).toThrow(/Unrecognized key/);
+  });
+
+  it("keeps route collision validation on the executable merged boundary", () => {
+    expect(() =>
+      directusResolvedClientOptionsSchema.parse({
+        client: { proxy: { path: "/_directus" } }
+      })
+    ).toThrow(/reserved \/_directus\/auth/);
   });
 
   it("defaults playground masking on and validates sealing secrets", () => {

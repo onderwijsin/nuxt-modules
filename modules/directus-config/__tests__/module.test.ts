@@ -58,7 +58,9 @@ describe("directus-config module setup", () => {
     vi.resetModules();
     addServerTemplate.mockReset();
     addTemplate.mockReset();
-    addTemplate.mockReturnValue({ dst: "/project/.nuxt/directus-config.mjs" });
+    addTemplate.mockImplementation(({ filename }: { filename: string }) => ({
+      dst: `/project/.nuxt/${filename}`
+    }));
     addTypeTemplate.mockReset();
     addTypeTemplate.mockReturnValue({ dst: "./types/directus-config-server.d.ts" });
     loadDirectusConfigSource.mockReset();

@@ -12,9 +12,6 @@ describe("useDirectusServerAuth", () => {
     event.context.directusAuth = { resolve, resolveSnapshot: vi.fn() };
     const sessionSnapshot = {
       userId: "user-1",
-      email: "user@example.test",
-      firstName: "User",
-      lastName: "One",
       requiresTfaSetup: false
     };
     resolve.mockResolvedValue({ accessToken: "access-token", snapshot: sessionSnapshot });

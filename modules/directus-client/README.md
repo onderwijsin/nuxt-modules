@@ -218,6 +218,9 @@ All options are configured under `directusClient`:
 | `client.auth.previousSessionSecrets`  | `[]`                                | Server-only previous sealing secrets tried during key rotation, in order.                                                              |
 | `client.auth.maskSecretsInPlayground` | `true`                              | Masks tokens in the local sealed-session playground inspection page.                                                                   |
 | `client.auth.passwordResetUrl`        | —                                   | Required for password-request support; sent to Directus as `reset_url`.                                                                |
+| `client.auth.user.enabled`            | `false`                             | Enables the opt-in current-user fetch; requires authentication.                                                                        |
+| `client.auth.user.fields`             | —                                   | Required non-empty recursive Directus QueryFields selection when enabled.                                                              |
+| `client.auth.user.mapper`             | —                                   | Server-only synchronous mapper from executable shared config; not accepted in raw Nuxt options.                                        |
 | `client.typegen.enabled`              | `true`                              | Enables generated `#directus` declarations.                                                                                            |
 | `client.typegen.introspectionToken`   | —                                   | Server-only Directus schema introspection token.                                                                                       |
 | `client.typegen.cache.maxAge`         | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                                                            |
@@ -324,12 +327,13 @@ if (auth.isAuthenticated.value) {
 ```
 
 The session snapshot is persisted with the access and rotating refresh token in a bounded sealed
-`httpOnly` cookie. SSR refreshes an expiring access token when possible before projecting the
-snapshot into Nuxt state, so hydration does not require a session fetch. If refresh is temporarily
-unavailable, SSR falls back to the trusted local snapshot; terminal authentication failures still
-clear the session. Access and refresh tokens never enter client state or application code. H3
-authenticated encryption protects the cookie's confidentiality and integrity; Directus remains the
-authorization boundary.
+`httpOnly` cookie. The snapshot contains only stable authentication facts (`userId` and
+`requiresTfaSetup`); mutable profile data is never stored in the cookie. SSR refreshes an expiring
+access token when possible before projecting the snapshot into Nuxt state, so hydration does not
+require a session fetch. If refresh is temporarily unavailable, SSR falls back to the trusted local
+snapshot; terminal authentication failures still clear the session. Access and refresh tokens never
+enter client state or application code. H3 authenticated encryption protects the cookie's
+confidentiality and integrity; Directus remains the authorization boundary.
 
 Authentication mutations use Nuxt's request-aware fetch against the same-origin `/_directus/auth/`
 endpoints. The composable remains SSR-safe: reading `isAuthenticated`, `userId`, and the session
@@ -372,7 +376,7 @@ builds and deployments.
 
 ### `useDirectusAuth` API
 
-The composable exposes a token-free, reactive session projection:
+The composable exposes a token-free, reactive session snapshot:
 
 | State                    | Type                                                 | Contract                                                              |
 | ------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------- |
@@ -382,22 +386,65 @@ The composable exposes a token-free, reactive session projection:
 | `auth.magicLinksEnabled` | `boolean`                                            | Whether the magic-link facade is enabled.                             |
 | `auth.requiresTfaSetup`  | `DeepReadonly<ComputedRef<boolean>>`                 | Server-derived informational TFA setup requirement.                   |
 
-The snapshot contains nullable `email`, `firstName`, and `lastName` fields plus `requiresTfaSetup`,
-which reflects Directus' `enforce_tfa` claim. It deliberately contains no access or refresh token,
-role, policy, or permission helpers. `requiresTfaSetup` is informational; the consuming application
-owns any TFA setup UX or navigation.
+The snapshot contains `userId` and `requiresTfaSetup`, which reflects Directus' `enforce_tfa` claim.
+It deliberately contains no profile fields, access or refresh token, role, policy, or permission
+helpers. `requiresTfaSetup` is informational; the consuming application owns any TFA setup UX or
+navigation.
 
-| Method             | Signature                                                | Behavior                                                                                                                                                                                                                                        |
-| ------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login`            | `login({ email, password, otp? }, meta?): Promise<void>` | Authenticates, fetches the selected current-user fields, writes the session cookie, updates state, and emits `directus:auth:login`.                                                                                                             |
-| `refresh`          | `refresh(): Promise<void>`                               | Refreshes and rotates the token pair, updates state, and emits `directus:auth:refresh`. Terminal session/auth rejection clears state and emits `directus:auth:invalidated`; transient refresh availability failures preserve state and rethrow. |
-| `logout`           | `logout(): Promise<void>`                                | Attempts upstream logout, always clears local state and cookie, and emits `directus:auth:logout`. An upstream failure is rethrown after cleanup.                                                                                                |
-| `passwordRequest`  | `passwordRequest(email, meta?): Promise<void>`           | Requests a password-reset email using `client.auth.passwordResetUrl`.                                                                                                                                                                           |
-| `passwordReset`    | `passwordReset(token, password): Promise<void>`          | Completes a Directus password reset.                                                                                                                                                                                                            |
-| `requestMagicLink` | `requestMagicLink(email, meta?): Promise<void>`          | Requests a passwordless login link when magic links are enabled.                                                                                                                                                                                |
-| `redeemMagicLink`  | `redeemMagicLink(token, otp?): Promise<void>`            | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                                                               |
+| Method             | Signature                                                | Behavior                                                                                                                                                                                                                                                                        |
+| ------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login`            | `login({ email, password, otp? }, meta?): Promise<void>` | Authenticates, fetches only the stable user ID for the session, writes the session cookie, updates state, and emits `directus:auth:login`.                                                                                                                                      |
+| `refresh`          | `refresh(): Promise<void>`                               | Refreshes and rotates the token pair without refetching profile data, updates state, and emits `directus:auth:refresh`. Terminal session/auth rejection clears state and emits `directus:auth:invalidated`; transient refresh availability failures preserve state and rethrow. |
+| `logout`           | `logout(): Promise<void>`                                | Attempts upstream logout, always clears local state and cookie, and emits `directus:auth:logout`. An upstream failure is rethrown after cleanup.                                                                                                                                |
+| `passwordRequest`  | `passwordRequest(email, meta?): Promise<void>`           | Requests a password-reset email using `client.auth.passwordResetUrl`.                                                                                                                                                                                                           |
+| `passwordReset`    | `passwordReset(token, password): Promise<void>`          | Completes a Directus password reset.                                                                                                                                                                                                                                            |
+| `requestMagicLink` | `requestMagicLink(email, meta?): Promise<void>`          | Requests a passwordless login link when magic links are enabled.                                                                                                                                                                                                                |
+| `redeemMagicLink`  | `redeemMagicLink(token, otp?): Promise<void>`            | Redeems a token, establishes the normal session, and emits `directus:auth:login`.                                                                                                                                                                                               |
 
 `meta` may be `{ turnstileToken?: string }` when Turnstile protection is enabled.
+
+### Current user
+
+Current-user data is opt-in and separate from authentication:
+
+```ts
+export default defineDirectusConfig({
+  client: {
+    auth: {
+      enabled: true,
+      user: {
+        enabled: true,
+        fields: ["id", "email", "first_name", "last_name", { role: ["id", "name"] }]
+      }
+    }
+  }
+});
+```
+
+`fields` is required when enabled, must be non-empty, and supports nested Directus QueryFields. The
+default is `{ enabled: false }`; the module never expands it to `*` or adds `id` implicitly.
+
+Use `useDirectusUser()` for mutable profile/application data:
+
+```ts
+const { user, status, error, refresh } = useDirectusUser();
+await useDirectus(updateMe(payload));
+await refresh();
+```
+
+The composable shares the stable `directus:user` async-data key and uses `GET /_directus/auth/user`
+in both browser and SSR. The route has `private, no-store` semantics and preserves rotated session
+cookies during SSR. Unauthenticated state is `user === null` without a fabricated 401. Login
+refreshes existing user state, logout and invalidation clear it, and token refresh does not refetch
+it. The `user` ref is generated from the configured `fields`. With automated type generation it uses
+the generated `DirectusUser`, including custom system-collection fields; when type generation is
+disabled it falls back to the SDK user type. An executable mapper replaces either selection with its
+inferred return type.
+
+An executable `directus.config.ts` may add a synchronous server-only `mapper` that returns a plain
+object. Its parameter exposes selected SDK user fields as optional values, while custom fields
+remain `unknown` until narrowed. Register `@onderwijsin/nuxt-directus-config` when using a mapper.
+Profile mutations require an explicit `refresh()` when immediate local freshness is needed.
 
 ### Magic links
 

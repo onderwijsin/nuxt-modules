@@ -47,6 +47,9 @@ Use this reference for configuration changes involving `@onderwijsin/nuxt-direct
 | `client.auth.cookie.domain`         | —                                   | Optional cookie domain.                                                                          |
 | `client.auth.refreshSafetyWindow`   | `30000`                             | Refresh window in milliseconds before expiry.                                                    |
 | `client.auth.passwordResetUrl`      | —                                   | URL sent to Directus as `reset_url`.                                                             |
+| `client.auth.user.enabled`          | `false`                             | Enables the opt-in current-user fetch; requires `client.auth.enabled`.                           |
+| `client.auth.user.fields`           | —                                   | Required non-empty recursive QueryFields selection when enabled.                                 |
+| `client.auth.user.mapper`           | —                                   | Synchronous server-only mapper accepted only from executable shared config.                      |
 | `client.typegen.enabled`            | `true`                              | Enables generated `#directus` declarations.                                                      |
 | `client.typegen.introspectionToken` | —                                   | Server-only schema-introspection token.                                                          |
 | `client.typegen.cache.maxAge`       | `3600000`                           | Development type-generation cache lifetime in milliseconds.                                      |

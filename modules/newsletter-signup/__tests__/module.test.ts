@@ -184,7 +184,7 @@ describe("newsletter signup module setup", () => {
       "Invalid module options"
     );
     expect(logger.info).toHaveBeenCalledWith(
-      "endpoint.url is required when endpoint registration is disabled"
+      expect.stringContaining("endpoint.url is required when endpoint registration is disabled")
     );
   });
 
@@ -203,7 +203,9 @@ describe("newsletter signup module setup", () => {
       )
     ).toThrow("Invalid module options");
     expect(logger.info).toHaveBeenCalledWith(
-      "server is required for Mailchimp when no per-audience server is configured"
+      expect.stringContaining(
+        "server is required for Mailchimp when no per-audience server is configured"
+      )
     );
   });
 
@@ -226,9 +228,7 @@ describe("newsletter signup module setup", () => {
         createNuxt()
       )
     ).toThrow("Invalid module options");
-    expect(logger.info).toHaveBeenCalledWith(
-      "Each Mailchimp list option requires its server value"
-    );
+    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Invalid input"));
   });
 
   it("requires a default list or selectable list options", async () => {
@@ -237,7 +237,9 @@ describe("newsletter signup module setup", () => {
     expect(() => setupModule(module, { provider: "loops", apiKey: "key" }, createNuxt())).toThrow(
       "Invalid module options"
     );
-    expect(logger.info).toHaveBeenCalledWith("Configure lists.default or lists.options");
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("Configure lists.default or lists.options")
+    );
   });
 
   it("validates options before skipping a disabled module", async () => {

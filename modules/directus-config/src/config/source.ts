@@ -75,7 +75,7 @@ export function generateDirectusServerConfigSource(configFile?: string): string 
 }
 
 /**
- * Generates the Nitro-only declaration for the complete Directus configuration module.
+ * Generates the Nitro declaration for the server-only config module.
  *
  * @returns Source for Nuxt's generated Nitro type declaration.
  */

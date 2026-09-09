@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   generateDirectusServerConfigDeclarationSource,
@@ -11,6 +11,7 @@ import {
   generateDirectusRuntimeConfigSource,
   resolveDirectusConfigFile
 } from "../src/config/source";
+import { defineDirectusConfig } from "../src/config";
 import { directusConfigSchema } from "../src/schema";
 
 const directories: string[] = [];
@@ -21,6 +22,34 @@ afterEach(() => {
 });
 
 describe("Directus config source discovery", () => {
+  it("preserves concrete field selections and mapper response types", () => {
+    const config = defineDirectusConfig({
+      client: {
+        auth: {
+          enabled: true,
+          user: {
+            enabled: true,
+            fields: ["id", "email"],
+            mapper: (user) => ({ id: user.id, email: user.email, label: String(user.email) })
+          }
+        }
+      }
+    });
+
+    expect(config.client.auth.user.fields).toEqual(["id", "email"]);
+    expect(config.client.auth.user.mapper({ id: "1", email: "editor@example.test" })).toEqual({
+      id: "1",
+      email: "editor@example.test",
+      label: "editor@example.test"
+    });
+    expectTypeOf(config.client.auth.user.fields).toEqualTypeOf<["id", "email"]>();
+    expectTypeOf(config.client.auth.user.mapper).returns.toEqualTypeOf<{
+      id: string | undefined;
+      email: string | null | undefined;
+      label: string;
+    }>();
+  });
+
   it("uses the proxy credential name without a static-token compatibility alias", () => {
     expect(directusConfigSchema.parse({ instance: { proxyToken: "proxy-token" } })).toMatchObject({
       instance: { proxyToken: "proxy-token" }

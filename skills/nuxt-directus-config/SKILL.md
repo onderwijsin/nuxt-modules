@@ -102,6 +102,30 @@ export default defineDirectusConfig({
 });
 ```
 
+## Current user
+
+The executable config can opt into current-user fetching owned by the Directus client:
+
+```ts
+client: {
+  auth: {
+    enabled: true,
+    user: {
+      enabled: true,
+      fields: ["id", "email", "first_name", { role: ["id", "name"] }],
+      mapper: (user) => ({ id: user.id, name: user.first_name })
+    }
+  }
+}
+```
+
+User fetching is disabled by default. `fields` must be non-empty and supports nested QueryFields.
+The mapper is synchronous, server-only, and must return a plain object. Its parameter exposes
+selected SDK user fields as optional values; custom fields remain `unknown` until narrowed. Register
+this config module before `@onderwijsin/nuxt-directus-client` when using a mapper; raw Nuxt module
+options do not accept one. `useDirectusUser().refresh()` is explicit after profile mutations, and
+auth token refresh does not refresh the current user.
+
 ## Complete option reference
 
 For authentication, cookies, sealing, and secret rotation details, read the
@@ -143,15 +167,17 @@ declarations from tools such as Varlock remain available in IDEs.
 
 `@onderwijsin/nuxt-directus-config/config` exports:
 
-- `defineDirectusConfig(config)` — typed identity helper for a strict config source.
+- `defineDirectusConfig(config)` — typed identity helper that preserves concrete field selections
+  and mapper return types from a strict config source.
 - `validateDirectusConfig(value)` — runtime validation returning `ResolvedDirectusConfig`.
 - `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a source for
   dependent module dependency discovery.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.
 
 `@onderwijsin/nuxt-directus-config/schema` exports the config, instance, client, typegen, command,
-and public-projection schemas; inferred public option types; `supportedDirectusCommands`;
-`TypegenTransform` and `TypegenTransformContext`; `getPublicSchema`; and resolved-config helpers.
+and public-config schemas; inferred public option types; `UserFieldSelection`;
+`supportedDirectusCommands`; `TypegenTransform` and `TypegenTransformContext`; `getPublicSchema`;
+and resolved-config helpers.
 
 The module creates two virtual aliases:
 

@@ -1,5 +1,7 @@
 export default defineNuxtConfig({
-  modules: ["@onderwijsin/nuxt-directus-client"],
+  // Keep the shared config module before the client module so executable mapper config is
+  // available while the client registers its server runtime.
+  modules: ["@onderwijsin/nuxt-directus-config", "@onderwijsin/nuxt-directus-client"],
   nitro: {
     storage: {
       "directus-auth-refresh": { driver: "memory" }

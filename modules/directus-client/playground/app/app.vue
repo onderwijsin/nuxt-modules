@@ -7,6 +7,86 @@ const router = useRouter();
 const toast = useToast();
 const logoutPending = shallowRef(false);
 
+const navigationItems = computed(() => [
+  {
+    label: "Explore",
+    icon: "i-lucide-compass",
+    children: [
+      {
+        label: "Overview",
+        description: "Read article IDs with the Directus client.",
+        icon: "i-lucide-layout-dashboard",
+        to: "/"
+      },
+      {
+        label: "Versioned preview",
+        description: "Inspect a versioned item lookup.",
+        icon: "i-lucide-eye",
+        to: "/preview"
+      },
+      {
+        label: "Asset proxy",
+        description: "Fetch an asset through the same-origin proxy.",
+        icon: "i-lucide-image",
+        to: "/assets"
+      },
+      {
+        label: "Server request",
+        description: "Run a Directus command from a Nitro route.",
+        icon: "i-lucide-server",
+        to: "/server"
+      }
+    ]
+  },
+  {
+    label: "Authentication",
+    icon: "i-lucide-shield-check",
+    children: [
+      ...(isAuthenticated.value
+        ? [
+            {
+              label: "Current user",
+              description: "View and refresh the authenticated Directus user.",
+              icon: "i-lucide-user-round",
+              to: "/user"
+            }
+          ]
+        : [
+            {
+              label: "Login",
+              description: "Start a cookie-backed Directus session.",
+              icon: "i-lucide-log-in",
+              to: "/login"
+            }
+          ]),
+      {
+        label: "Session",
+        description: "Inspect the safe token-free session snapshot.",
+        icon: "i-lucide-user-round-check",
+        to: "/_session"
+      },
+      {
+        label: "Sealed session",
+        description: "Inspect the development-only encrypted cookie diagnostic.",
+        icon: "i-lucide-key-round",
+        to: "/session-inspection"
+      }
+    ]
+  },
+  {
+    label: "Diagnostics",
+    icon: "i-lucide-flask-conical",
+    children: [
+      {
+        label: "Error handling",
+        description: "Trigger and inspect normalized Directus failures.",
+        icon: "i-lucide-triangle-alert",
+        to: "/error"
+      }
+    ]
+  }
+]);
+
 async function logout(): Promise<void> {
   logoutPending.value = true;
   try {
@@ -32,65 +112,15 @@ async function logout(): Promise<void> {
   <PlaygroundAppShell>
     <template #actions>
       <div class="flex items-center gap-1">
+        <UNavigationMenu :items="navigationItems" content-orientation="vertical" />
         <UButton
-          to="/"
-          icon="i-lucide-layout-dashboard"
-          label="Overview"
-          color="neutral"
-          variant="ghost"
-        />
-        <UButton
-          to="/preview"
-          icon="i-lucide-eye"
-          label="Preview"
-          color="neutral"
-          variant="ghost"
-        />
-        <UButton to="/assets" icon="i-lucide-image" label="Asset" color="neutral" variant="ghost" />
-        <UButton
-          to="/server"
-          icon="i-lucide-server"
-          label="Server"
-          color="neutral"
-          variant="ghost"
-        />
-        <UButton
-          to="/error"
-          icon="i-lucide-triangle-alert"
-          label="Errors"
-          color="neutral"
-          variant="ghost"
-        />
-        <UButton
-          v-if="!isAuthenticated"
-          to="/login"
-          icon="i-lucide-log-in"
-          label="Login"
-          color="neutral"
-          variant="ghost"
-        />
-        <UButton
-          v-else
+          v-if="isAuthenticated"
           icon="i-lucide-log-out"
           label="Logout"
           color="neutral"
           variant="ghost"
           :loading="logoutPending"
           @click="logout"
-        />
-        <UButton
-          to="/_session"
-          icon="i-lucide-user-round"
-          label="Session"
-          color="neutral"
-          variant="ghost"
-        />
-        <UButton
-          to="/session-inspection"
-          icon="i-lucide-key-round"
-          label="Sealed session"
-          color="neutral"
-          variant="ghost"
         />
       </div>
     </template>
