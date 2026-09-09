@@ -4,8 +4,9 @@ import { useRuntimeConfig } from "#imports";
 import { createDirectusRestClient } from "@onderwijsin/nuxt-module-utils/shared";
 import { ofetch } from "ofetch";
 import type { Schema } from "#directus";
+import type { DirectusUserResponse, SelectedDirectusUser } from "#directus-user";
 
-type UserMapper = (user: Record<string, unknown>) => unknown;
+type UserMapper = (user: SelectedDirectusUser) => DirectusUserResponse;
 
 /**
  * Creates the current-user handler with the optional executable application mapper.
@@ -13,7 +14,7 @@ type UserMapper = (user: Record<string, unknown>) => unknown;
  * @returns A Nitro handler for the current-user route.
  */
 export function createDirectusUserHandler(mapper?: UserMapper) {
-  return defineEventHandler(async (event) => {
+  return defineEventHandler(async (event): Promise<DirectusUserResponse> => {
     setResponseHeader(event, "cache-control", "private, no-store");
 
     const auth = await event.context.directusAuth?.resolve();

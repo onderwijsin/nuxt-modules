@@ -76,9 +76,12 @@ client: {
 
 The composable returns shared `user`, `status`, `error`, and `refresh` async-data state. Both
 browser and SSR use `GET /_directus/auth/user`; SSR also forwards rotated session cookies. Profile
-edits require explicit `refresh()`, and auth token refresh does not refetch profile data. A mapper
-is synchronous, server-only, and accepted only in executable `directus.config.ts`; register the
-Directus config module when using one.
+edits require explicit `refresh()`, and auth token refresh does not refetch profile data. The user
+ref type is generated from `fields`. It uses the generated `DirectusUser`, including custom system
+collection fields, when automated type generation is enabled and falls back to the SDK user type
+when disabled. An effective executable mapper replaces that selection with its inferred return type.
+A mapper is synchronous, server-only, and accepted only in executable `directus.config.ts`; register
+the Directus config module when using one.
 
 ### Complete option reference
 

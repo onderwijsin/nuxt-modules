@@ -166,15 +166,17 @@ declarations from tools such as Varlock remain available in IDEs.
 
 `@onderwijsin/nuxt-directus-config/config` exports:
 
-- `defineDirectusConfig(config)` — typed identity helper for a strict config source.
+- `defineDirectusConfig(config)` — typed identity helper that preserves concrete field selections
+  and mapper return types from a strict config source.
 - `validateDirectusConfig(value)` — runtime validation returning `ResolvedDirectusConfig`.
 - `getResolvedDirectusConfigFromSource(rootDir, configFile)` — loads and validates a source for
   dependent module dependency discovery.
 - `DirectusConfig` and `ResolvedDirectusConfig` types.
 
 `@onderwijsin/nuxt-directus-config/schema` exports the config, instance, client, typegen, command,
-and public-config schemas; inferred public option types; `supportedDirectusCommands`;
-`TypegenTransform` and `TypegenTransformContext`; `getPublicSchema`; and resolved-config helpers.
+and public-config schemas; inferred public option types; `UserFieldSelection`;
+`supportedDirectusCommands`; `TypegenTransform` and `TypegenTransformContext`; `getPublicSchema`;
+and resolved-config helpers.
 
 The module creates two virtual aliases:
 

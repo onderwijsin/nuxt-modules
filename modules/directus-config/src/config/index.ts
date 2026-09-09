@@ -13,7 +13,7 @@ export { applyOverridesToCollectionConfig } from "./override";
  * @param config Directus configuration object.
  * @returns The unchanged typed configuration.
  */
-export function defineDirectusConfig(config: DirectusConfig): DirectusConfig {
+export function defineDirectusConfig<const Config extends DirectusConfig>(config: Config): Config {
   return config;
 }
 

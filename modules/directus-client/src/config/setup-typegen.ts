@@ -4,6 +4,7 @@ import { defu } from "defu";
 import { attempt, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
 import { resolveDirectusTypegenDeclaration } from "./typegen";
+import { generateDirectusUserTypeDeclaration } from "./user-typegen";
 import type { DirectusSetupContext } from "./setup-context";
 
 /**
@@ -12,11 +13,34 @@ import type { DirectusSetupContext } from "./setup-context";
  * @param context Resolved module setup context.
  */
 export function setupDirectusTypegen(context: DirectusSetupContext): void {
-  const { baseUrl, log, nuxt, options, resolver, runtimeDir } = context;
+  const {
+    baseUrl,
+    directusConfigFile,
+    log,
+    nuxt,
+    options,
+    rawUserConfig,
+    resolver,
+    runtimeDir,
+    sharedUserConfig
+  } = context;
   addTypeTemplate({
     filename: "types/directus-config.d.ts",
     src: resolver.resolve(runtimeDir, "typegen/config.d.ts")
   });
+  const userTypes = addTypeTemplate({
+    filename: "types/directus-user.d.ts",
+    getContents: () =>
+      generateDirectusUserTypeDeclaration(
+        options.client.auth.user.enabled ? options.client.auth.user.fields : [],
+        rawUserConfig === undefined && sharedUserConfig?.enabled && sharedUserConfig.mapper
+          ? directusConfigFile
+          : undefined,
+        options.client.typegen.enabled
+      )
+  });
+  const userTypesPath =
+    userTypes?.dst ?? resolver.resolve(nuxt.options.buildDir, "types/directus-user.d.ts");
   addTypeTemplate({
     filename: "types/directus-schema.d.ts",
     getContents: async () => {
@@ -46,6 +70,7 @@ export function setupDirectusTypegen(context: DirectusSetupContext): void {
     nuxt.options.buildDir,
     "types/directus-schema.d.ts"
   );
+  nuxt.options.alias["#directus-user"] = userTypesPath;
   const nodeTsConfig = (nuxt.options.typescript.nodeTsConfig = defu(
     nuxt.options.typescript.nodeTsConfig,
     {}
@@ -53,4 +78,5 @@ export function setupDirectusTypegen(context: DirectusSetupContext): void {
   nodeTsConfig.compilerOptions = defu(nodeTsConfig.compilerOptions, {});
   nodeTsConfig.compilerOptions.paths = defu(nodeTsConfig.compilerOptions.paths, {});
   nodeTsConfig.compilerOptions.paths["#directus"] = ["./types/directus-schema"];
+  nodeTsConfig.compilerOptions.paths["#directus-user"] = [userTypesPath];
 }

@@ -436,7 +436,10 @@ The composable shares the stable `directus:user` async-data key and uses `GET /_
 in both browser and SSR. The route has `private, no-store` semantics and preserves rotated session
 cookies during SSR. Unauthenticated state is `user === null` without a fabricated 401. Login
 refreshes existing user state, logout and invalidation clear it, and token refresh does not refetch
-it.
+it. The `user` ref is generated from the configured `fields`. With automated type generation it uses
+the generated `DirectusUser`, including custom system-collection fields; when type generation is
+disabled it falls back to the SDK user type. An executable mapper replaces either selection with its
+inferred return type.
 
 An executable `directus.config.ts` may add a synchronous server-only `mapper` that returns a plain
 object. Register `@onderwijsin/nuxt-directus-config` when using a mapper. Profile mutations require

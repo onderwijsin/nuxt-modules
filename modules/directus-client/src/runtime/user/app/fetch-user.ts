@@ -1,15 +1,16 @@
 import { useRequestEvent, useRequestFetch } from "#app";
 import { appendResponseHeader } from "h3";
 import { isArray } from "@onderwijsin/nuxt-module-utils";
+import type { DirectusUserResponse } from "#directus-user";
 
 /**
  * Fetches the current-user route and preserves rotated session cookies during SSR.
  * @returns The current-user response payload.
  */
-export async function fetchDirectusUser(): Promise<Record<string, unknown> | null> {
+export async function fetchDirectusUser(): Promise<DirectusUserResponse | null> {
   const event = useRequestEvent();
   const fetch = useRequestFetch();
-  return fetch<Record<string, unknown> | null>("/_directus/auth/user", {
+  return fetch<DirectusUserResponse | null>("/_directus/auth/user", {
     onResponse({ response }) {
       if (!event) return;
 

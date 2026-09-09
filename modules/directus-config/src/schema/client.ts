@@ -4,10 +4,15 @@ import { directusCommandsSchema } from "./commands";
 import "./sensitive";
 import { directusTypegenSchema } from "./typegen";
 
-type UserField = string | { readonly [relation: string]: readonly UserField[] };
+/** Recursive field selection accepted by the Directus current-user capability. */
+export type UserFieldSelection =
+  | string
+  | {
+      readonly [relation: string]: readonly UserFieldSelection[];
+    };
 
 /** Recursive Directus field selection used by the current-user config. */
-const directusUserFieldsSchema: z.ZodType<UserField> = z.lazy(() =>
+const directusUserFieldsSchema: z.ZodType<UserFieldSelection> = z.lazy(() =>
   z.union([
     z.string().trim().min(1),
     z
