@@ -6,9 +6,9 @@ import { fetchDirectusUser } from "./fetch-user";
  * Fetches the authenticated Directus user independently of auth session state.
  * @returns Shared current-user async-data state and its refresh operation.
  */
-export async function useDirectusUser() {
+export function useDirectusUser() {
   const auth = useDirectusAuth();
-  const asyncData = await useAsyncData<Record<string, unknown> | null>(
+  const asyncData = useAsyncData<Record<string, unknown> | null>(
     "directus:user",
     fetchDirectusUser,
     {
