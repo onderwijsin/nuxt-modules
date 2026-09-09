@@ -80,8 +80,9 @@ edits require explicit `refresh()`, and auth token refresh does not refetch prof
 ref type is generated from `fields`. It uses the generated `DirectusUser`, including custom system
 collection fields, when automated type generation is enabled and falls back to the SDK user type
 when disabled. An effective executable mapper replaces that selection with its inferred return type.
-A mapper is synchronous, server-only, and accepted only in executable `directus.config.ts`; register
-the Directus config module when using one.
+A mapper is synchronous, server-only, and accepted only in executable `directus.config.ts`. Its
+parameter exposes selected SDK user fields as optional values; custom fields remain `unknown` until
+narrowed. Register the Directus config module when using one.
 
 ### Complete option reference
 

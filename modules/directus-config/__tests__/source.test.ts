@@ -30,7 +30,7 @@ describe("Directus config source discovery", () => {
           user: {
             enabled: true,
             fields: ["id", "email"],
-            mapper: (user) => ({ id: user.id, label: String(user.email) })
+            mapper: (user) => ({ id: user.id, email: user.email, label: String(user.email) })
           }
         }
       }
@@ -39,11 +39,13 @@ describe("Directus config source discovery", () => {
     expect(config.client.auth.user.fields).toEqual(["id", "email"]);
     expect(config.client.auth.user.mapper({ id: "1", email: "editor@example.test" })).toEqual({
       id: "1",
+      email: "editor@example.test",
       label: "editor@example.test"
     });
     expectTypeOf(config.client.auth.user.fields).toEqualTypeOf<["id", "email"]>();
     expectTypeOf(config.client.auth.user.mapper).returns.toEqualTypeOf<{
-      id: unknown;
+      id: string | undefined;
+      email: string | null | undefined;
       label: string;
     }>();
   });

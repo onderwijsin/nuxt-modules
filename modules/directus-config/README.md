@@ -79,7 +79,8 @@ export default defineDirectusConfig({
 The source is executable TypeScript. Use it for server-only values and functions; Nuxt config is
 serialised and is not suitable for those values. `defineDirectusConfig()` preserves concrete field
 selections and mapper return types so consuming Directus modules can generate precise application
-types from the source.
+types from the source. Mapper parameters expose the selected SDK user fields as optional values and
+keep custom fields available as `unknown` until the mapper narrows them.
 
 For authentication, cookies, sealing, and secret rotation details, see the
 [`@onderwijsin/nuxt-directus-client` Authentication documentation](../directus-client/README.md#authentication).

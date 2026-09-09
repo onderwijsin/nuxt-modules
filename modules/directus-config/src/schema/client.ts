@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { DirectusUser } from "@directus/sdk";
 import { directusCommandsSchema } from "./commands";
 // Registers the shared Zod sensitivity method used below.
 import "./sensitive";
@@ -21,7 +22,10 @@ const directusUserFieldsSchema: z.ZodType<UserFieldSelection> = z.lazy(() =>
   ])
 );
 
-type DirectusUserMapper = (user: Record<string, unknown>) => Record<string, unknown>;
+/** Selected Directus user fields passed to a current-user mapper. */
+type DirectusUserMapperInput = Partial<DirectusUser<object>> & Record<string, unknown>;
+
+type DirectusUserMapper = (user: DirectusUserMapperInput) => Record<string, unknown>;
 
 const directusUserConfigFields = z.array(directusUserFieldsSchema).min(1);
 

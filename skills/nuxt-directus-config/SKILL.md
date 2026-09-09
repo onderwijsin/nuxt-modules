@@ -120,10 +120,11 @@ client: {
 ```
 
 User fetching is disabled by default. `fields` must be non-empty and supports nested QueryFields.
-The mapper is synchronous, server-only, and must return a plain object. Register this config module
-before `@onderwijsin/nuxt-directus-client` when using a mapper; raw Nuxt module options do not
-accept one. `useDirectusUser().refresh()` is explicit after profile mutations, and auth token
-refresh does not refresh the current user.
+The mapper is synchronous, server-only, and must return a plain object. Its parameter exposes
+selected SDK user fields as optional values; custom fields remain `unknown` until narrowed. Register
+this config module before `@onderwijsin/nuxt-directus-client` when using a mapper; raw Nuxt module
+options do not accept one. `useDirectusUser().refresh()` is explicit after profile mutations, and
+auth token refresh does not refresh the current user.
 
 ## Complete option reference
 
