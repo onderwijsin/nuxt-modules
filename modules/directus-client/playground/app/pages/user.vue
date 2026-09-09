@@ -2,6 +2,7 @@
 definePageMeta({ middleware: "authenticated" });
 
 const { user, status, error, refresh } = useDirectusUser();
+
 const formattedUser = computed(() => (user.value ? JSON.stringify(user.value, null, 2) : null));
 const userStatus = computed(() => {
   if (status.value === "pending") return { label: "Loading", color: "warning" as const };

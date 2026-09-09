@@ -13,8 +13,8 @@ export default defineDirectusConfig({
         ENV.DIRECTUS_SESSION_SECRET || "nuxt-directus-development-session-secret-32-chars",
       user: {
         enabled: true,
-        fields: ["id", "email"],
-        mapper: (user) => ({ id: user.id, email: user.email, custom: "my-custom-value" })
+        fields: ["email"],
+        mapper: (user) => ({ email: user.email, custom: "my-custom-value" })
       },
       turnstile: { enabled: true },
       cookie: {

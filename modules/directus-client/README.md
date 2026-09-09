@@ -442,8 +442,9 @@ disabled it falls back to the SDK user type. An executable mapper replaces eithe
 inferred return type.
 
 An executable `directus.config.ts` may add a synchronous server-only `mapper` that returns a plain
-object. Register `@onderwijsin/nuxt-directus-config` when using a mapper. Profile mutations require
-an explicit `refresh()` when immediate local freshness is needed.
+object. Its parameter exposes selected SDK user fields as optional values, while custom fields
+remain `unknown` until narrowed. Register `@onderwijsin/nuxt-directus-config` when using a mapper.
+Profile mutations require an explicit `refresh()` when immediate local freshness is needed.
 
 ### Magic links
 
