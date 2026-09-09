@@ -319,7 +319,7 @@ async function runFullAssertions(port, profile) {
       body.includes("#nitro-internal-virtual/storage")
     )
       throw new Error(`Packed Directus storage regression: ${body}`);
-    if (response.status !== 502)
+    if (response.status !== 404)
       throw new Error(`Packed Directus asset storage path returned ${response.status}: ${body}`);
   }
   if (
