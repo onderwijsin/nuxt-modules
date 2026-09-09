@@ -12,5 +12,5 @@
 
 <script setup lang="ts">
 const { isAuthenticated, userId } = useDirectusAuth();
-const { user } = useDirectusUser();
+const { user } = await useDirectusUser();
 </script>

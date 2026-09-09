@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const auth = useDirectusAuth();
-const { user } = useDirectusUser();
+const { user } = await useDirectusUser();
 </script>
 
 <template>

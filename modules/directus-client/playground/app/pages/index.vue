@@ -24,8 +24,6 @@ const requestStatus = computed(() => {
   if (error.value) return "Request failed";
   return "Connected";
 });
-
-const { user } = await useDirectusUser();
 </script>
 
 <template>
@@ -34,9 +32,6 @@ const { user } = await useDirectusUser();
       title="Directus playground"
       description="Inspect the client request, preview lookup, and error normalization behavior."
     />
-
-    User:
-    <pre>{{ user }}</pre>
 
     <UCard>
       <template #header>

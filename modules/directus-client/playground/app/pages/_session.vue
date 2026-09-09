@@ -41,7 +41,7 @@ async function logout(): Promise<void> {
 }
 
 const session = auth._session;
-const user = useDirectusUser().user;
+const user = (await useDirectusUser()).user;
 </script>
 
 <template>
