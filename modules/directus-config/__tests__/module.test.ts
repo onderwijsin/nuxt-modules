@@ -94,9 +94,6 @@ describe("directus-config module setup", () => {
       expect.objectContaining({ filename: "#directus-config-server" })
     );
     expect(nuxt.options.alias["#directus-config"]).toBe("/project/.nuxt/directus-config.mjs");
-    expect(nuxt.options.alias["#directus-config-server"]).toBe(
-      "/project/.nuxt/directus-config-server.mjs"
-    );
     expect(
       nuxt.options.typescript.tsConfig.compilerOptions.paths["#directus-config-server"]
     ).toEqual(["./types/directus-config-server.d.ts"]);
@@ -118,7 +115,7 @@ describe("directus-config module setup", () => {
     );
     expect(loadDirectusConfigSource).toHaveBeenCalledWith(undefined);
     expect(nuxt.options.typescript.nodeTsConfig.include).toEqual([]);
-    expect(addTemplate).toHaveBeenCalledTimes(3);
+    expect(addTemplate).toHaveBeenCalledTimes(1);
     expect(addServerTemplate).toHaveBeenCalledTimes(1);
   });
 

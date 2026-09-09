@@ -1,8 +1,6 @@
 import { useAsyncData } from "#app";
-import type { DirectusUser } from "@directus/sdk";
 import { useDirectusAuth } from "../../auth/app/use-directus-auth";
 import { fetchDirectusUser } from "./fetch-user";
-import type { Schema } from "#directus";
 
 /**
  * Fetches the authenticated Directus user independently of auth session state.
@@ -10,10 +8,13 @@ import type { Schema } from "#directus";
  */
 export function useDirectusUser() {
   const auth = useDirectusAuth();
-  const asyncData = useAsyncData<DirectusUser<Schema> | Record<string, unknown> | null>(
+  const asyncData = useAsyncData<Record<string, unknown> | null>(
     "directus:user",
     fetchDirectusUser,
-    { default: () => null, immediate: auth.isAuthenticated.value }
+    {
+      default: () => null,
+      immediate: auth.isAuthenticated.value
+    }
   );
 
   return {

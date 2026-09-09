@@ -87,7 +87,7 @@ describe("Directus config helpers", () => {
     ).toThrow();
   });
 
-  it("validates the opt-in current-user projection and nested fields", () => {
+  it("validates the opt-in current-user config and nested fields", () => {
     const mapper = (user: Record<string, unknown>) => ({ id: user.id });
     const config = validateDirectusConfig({
       client: {

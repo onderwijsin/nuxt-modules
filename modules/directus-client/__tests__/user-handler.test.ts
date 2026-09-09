@@ -77,4 +77,12 @@ describe("Directus current-user handler", () => {
 
     await expect(createDirectusUserHandler()(event)).rejects.toMatchObject({ statusCode: 401 });
   });
+
+  it("fails closed when user fetching is disabled", async () => {
+    state.runtimeConfig.directusClient.auth.user = { enabled: false };
+    await expect(createDirectusUserHandler()(authenticatedEvent())).rejects.toMatchObject({
+      statusCode: 500
+    });
+    expect(state.createClient).not.toHaveBeenCalled();
+  });
 });

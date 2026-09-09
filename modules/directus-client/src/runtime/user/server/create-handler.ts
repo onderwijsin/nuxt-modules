@@ -1,12 +1,11 @@
 import { readMe, type DirectusUser, type Query } from "@directus/sdk";
 import { createError, defineEventHandler, setResponseHeader } from "h3";
 import { useRuntimeConfig } from "#imports";
-import type { DirectusUserMapperInput } from "@onderwijsin/nuxt-directus-config/schema";
 import { createDirectusRestClient } from "@onderwijsin/nuxt-module-utils/shared";
 import { ofetch } from "ofetch";
 import type { Schema } from "#directus";
 
-type UserMapper = (user: DirectusUserMapperInput) => unknown;
+type UserMapper = (user: Record<string, unknown>) => unknown;
 
 /**
  * Creates the current-user handler with the optional executable application mapper.
@@ -21,7 +20,13 @@ export function createDirectusUserHandler(mapper?: UserMapper) {
     if (!auth?.accessToken) throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
 
     const config = useRuntimeConfig(event).directusClient;
-    const fields = config.auth.user.enabled ? config.auth.user.fields : [];
+    const userConfig = config.auth.user;
+    if (!userConfig.enabled) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Directus current user is not configured"
+      });
+    }
     const client = createDirectusRestClient<Schema>({
       baseUrl: config.baseUrl,
       accessToken: auth.accessToken,
@@ -29,10 +34,10 @@ export function createDirectusUserHandler(mapper?: UserMapper) {
     });
     const user = await client.request(
       readMe<Schema, Query<Schema, DirectusUser<Schema>>>({
-        fields: fields as Query<Schema, DirectusUser<Schema>>["fields"]
+        fields: userConfig.fields as Query<Schema, DirectusUser<Schema>>["fields"]
       })
     );
 
-    return mapper ? mapper(user as unknown as DirectusUserMapperInput) : user;
+    return mapper ? mapper(user) : user;
   });
 }

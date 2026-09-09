@@ -4,54 +4,43 @@ import { directusCommandsSchema } from "./commands";
 import "./sensitive";
 import { directusTypegenSchema } from "./typegen";
 
-type DirectusUserFieldSelection =
-  | string
-  | { readonly [relation: string]: readonly DirectusUserFieldSelection[] };
+type UserField = string | { readonly [relation: string]: readonly UserField[] };
 
-/** Recursive Directus field selection used by the current-user projection. */
-export const directusUserFieldSelectionSchema: z.ZodType<DirectusUserFieldSelection> = z.lazy(() =>
+/** Recursive Directus field selection used by the current-user config. */
+const directusUserFieldsSchema: z.ZodType<UserField> = z.lazy(() =>
   z.union([
     z.string().trim().min(1),
     z
-      .record(z.string().trim().min(1), z.array(directusUserFieldSelectionSchema).min(1))
+      .record(z.string().trim().min(1), z.array(directusUserFieldsSchema).min(1))
       .refine((value) => Object.keys(value).length > 0, "must contain at least one relation")
   ])
 );
 
-/** Public type for a recursive Directus current-user field selection. */
-export type UserFieldSelection = DirectusUserFieldSelection;
+type DirectusUserMapper = (user: Record<string, unknown>) => Record<string, unknown>;
 
-/** Broad, strongly typed input exposed to executable current-user mappers. */
-export type DirectusUserMapperInput = {
-  readonly email?: string | null;
-  readonly role?: { readonly name?: string; readonly id?: string } | null;
-  readonly [key: string]: unknown;
-};
-type DirectusUserMapper = (user: DirectusUserMapperInput) => Record<string, unknown>;
+const directusUserConfigFields = z.array(directusUserFieldsSchema).min(1);
 
-const directusUserProjectionFields = z.array(directusUserFieldSelectionSchema).min(1);
-
-const directusUserProjectionEnabledSchema = z.strictObject({
+const directusUserConfigEnabledSchema = z.strictObject({
   enabled: z.literal(true),
-  fields: directusUserProjectionFields,
+  fields: directusUserConfigFields,
   mapper: z.custom<DirectusUserMapper>((value) => typeof value === "function").optional()
 });
 
-const directusUserProjectionDisabledSchema = z.strictObject({ enabled: z.literal(false) });
+const directusUserConfigDisabledSchema = z.strictObject({ enabled: z.literal(false) });
 
-/** Executable current-user projection configuration, including its server-only mapper. */
-export const directusUserProjectionSchema = z
+/** Executable current-user config, including its server-only mapper. */
+export const directusUserConfigSchema = z
   .discriminatedUnion("enabled", [
-    directusUserProjectionDisabledSchema,
-    directusUserProjectionEnabledSchema
+    directusUserConfigDisabledSchema,
+    directusUserConfigEnabledSchema
   ])
   .sensitive();
 
-/** Serializable current-user projection accepted by raw Nuxt module options. */
-export const directusSerializableUserProjectionSchema = z
+/** Serializable current-user config accepted by raw Nuxt module options. */
+export const directusSerializableUserConfigSchema = z
   .discriminatedUnion("enabled", [
-    directusUserProjectionDisabledSchema,
-    directusUserProjectionEnabledSchema.omit({ mapper: true })
+    directusUserConfigDisabledSchema,
+    directusUserConfigEnabledSchema.omit({ mapper: true })
   ])
   .sensitive();
 
@@ -218,7 +207,7 @@ export const directusAuthSchema = z
       .boolean()
       .default(directusAuthSchemaDefaults.maskSecretsInPlayground),
     passwordResetUrl: z.url().optional().sensitive(),
-    user: directusUserProjectionSchema.default({ enabled: false })
+    user: directusUserConfigSchema.default({ enabled: false })
   })
   .default(directusAuthSchemaDefaults)
   .superRefine((options, context) => {
@@ -260,7 +249,7 @@ export const directusSerializableClientSchema = directusClientSchema.safeExtend(
   auth: directusAuthSchema
     .unwrap()
     .omit({ user: true })
-    .extend({ user: directusSerializableUserProjectionSchema.default({ enabled: false }) })
+    .extend({ user: directusSerializableUserConfigSchema.default({ enabled: false }) })
     .default(directusAuthSchemaDefaults)
     .superRefine((options, context) => {
       if (options.magicLinks.enabled && !options.enabled) {

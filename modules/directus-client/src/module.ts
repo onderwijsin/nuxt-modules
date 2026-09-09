@@ -1,10 +1,10 @@
 import { defu } from "defu";
-import { resolveDirectusConfigFile } from "@onderwijsin/nuxt-directus-config/config";
 import {
-  directusSerializableUserProjectionSchema,
+  directusSerializableUserConfigSchema,
   getResolvedDirectusConfig
 } from "@onderwijsin/nuxt-directus-config/schema";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { isAbsolute, join, resolve } from "node:path";
 import {
   addImports,
   addPlugin,
@@ -44,6 +44,12 @@ import { resolveModuleDependencies } from "./config/dependencies";
 const MODULE_KEY = "directusClient";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
 
+function resolveConfigFile(rootDir: string, configFile: string | false): string | undefined {
+  if (configFile === false) return undefined;
+  const path = isAbsolute(configFile) ? configFile : resolve(rootDir, configFile);
+  return existsSync(path) ? path : undefined;
+}
+
 /** Registers the server-safe Directus module foundation and its validated proxy boundary. */
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -79,7 +85,7 @@ export default defineNuxtModule<ModuleOptions>({
         }
       }
     };
-    if (rawUserConfig !== undefined) directusSerializableUserProjectionSchema.parse(rawUserConfig);
+    if (rawUserConfig !== undefined) directusSerializableUserConfigSchema.parse(rawUserConfig);
     const sessionSecret = resolveDirectusSessionSecret({
       configured:
         rawOptions.client?.auth?.sessionSecret ?? sharedConfig?.client?.auth?.sessionSecret,
@@ -108,7 +114,7 @@ export default defineNuxtModule<ModuleOptions>({
     const { user: _user, ...serializableAuthOptions } = options.client.auth;
     const directusConfigOptions = Reflect.get(nuxt.options, "directusConfig");
     const directusConfigFile = directusConfigAvailable
-      ? resolveDirectusConfigFile(
+      ? resolveConfigFile(
           nuxt.options.rootDir,
           isRecord(directusConfigOptions) &&
             (isString(directusConfigOptions.configFile) ||
@@ -207,7 +213,6 @@ export default defineNuxtModule<ModuleOptions>({
         preview: options.client.preview,
         auth: {
           enabled: options.client.auth.enabled,
-          user: { enabled: options.client.auth.user.enabled },
           magicLinks: { enabled: options.client.auth.magicLinks.enabled },
           maskSecretsInPlayground: options.client.auth.maskSecretsInPlayground,
           turnstile: {
