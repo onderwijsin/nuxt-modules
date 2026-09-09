@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.9
+
+### Patch Changes
+
+- Updated dependencies [0910b57]
+- Updated dependencies [0910b57]
+- Updated dependencies [0910b57]
+- Updated dependencies [0910b57]
+  - @onderwijsin/nuxt-directus-client@0.12.0
+  - @onderwijsin/nuxt-directus-config@0.9.0
+
 ## 0.3.8
 
 ### Patch Changes
