@@ -23,7 +23,7 @@ describe("Markdown editor component metadata", () => {
             props: [
               {
                 name: "tone",
-                type: '"info" | "warning"',
+                type: "ImportedColor | number",
                 description: "Visual tone.",
                 required: true,
                 default: "'info'",

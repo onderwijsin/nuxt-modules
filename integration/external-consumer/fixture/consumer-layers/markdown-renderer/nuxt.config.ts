@@ -1,4 +1,4 @@
 export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
-  markdownRenderer: { componentSets: { sanity: ["Callout"] } }
+  markdownRenderer: { componentSets: { sanity: ["MarkdownCallout"] } }
 });

@@ -1,6 +1,9 @@
 <template>
   <div>
-    <MarkdownRenderer value="**Markdown renderer**" component-set="sanity" />
+    <MarkdownRenderer
+      value='::MarkdownCallout{title="Markdown renderer"}\nPacked consumer component rendering.\n::'
+      component-set="sanity"
+    />
     <p :data-sanity="layerName">{{ data }}</p>
   </div>
 </template>

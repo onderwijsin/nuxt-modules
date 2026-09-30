@@ -1,13 +1,31 @@
 # @onderwijsin/nuxt-markdown-renderer
 
-Nuxt 4 module that renders Markdown and MDC with Comark, Nuxt UI Prose, lazy custom components, and
-component metadata for the Directus Markdown editor.
+Nuxt 4 module for rendering Markdown and MDC with Comark, Nuxt UI Prose, lazy application
+components, and component metadata for the Directus Markdown editor.
 
-## Install and register
+## Features
+
+- Renders Markdown and MDC through the global `MarkdownRenderer` component.
+- Includes `MarkdownButton`, `MarkdownCallout`, and the persisted `Reference` node.
+- Discovers application renderer components through Nuxt's component registry.
+- Lazily imports custom components and optionally restricts them with named component sets.
+- Exposes Directus-compatible component metadata, including CORS preflight handling.
+- Provides a typed compiler macro for editor labels, node types, choices, input controls, and
+  deprecation hints.
+
+## Requirements
+
+- Nuxt `^4.0.0`
+- Node.js 24 or newer
+- Nuxt UI 4 and Comark are installed automatically as Nuxt module dependencies.
+
+## Installation
 
 ```sh
 pnpm add @onderwijsin/nuxt-markdown-renderer
 ```
+
+Register the module:
 
 ```ts
 export default defineNuxtConfig({
@@ -15,7 +33,9 @@ export default defineNuxtConfig({
 });
 ```
 
-Use the component in any Nuxt template:
+## Render Markdown
+
+`MarkdownRenderer` accepts the Markdown source and an optional named component set:
 
 ```vue
 <template>
@@ -23,22 +43,36 @@ Use the component in any Nuxt template:
 </template>
 ```
 
-The module requires Nuxt 4 and Node.js 24 or newer.
+| Prop           | Type     | Default     | Description                                     |
+| -------------- | -------- | ----------- | ----------------------------------------------- |
+| `value`        | `string` | `undefined` | Markdown or MDC source.                         |
+| `componentSet` | `string` | `undefined` | Optional configured custom-component allowlist. |
+
+The built-in MDC nodes are:
+
+| Markdown node     | Vue implementation  | Editor label | Behavior                                     |
+| ----------------- | ------------------- | ------------ | -------------------------------------------- |
+| `MarkdownButton`  | `MarkdownButton`    | Button       | Inline Nuxt UI button or link.               |
+| `MarkdownCallout` | `MarkdownCallout`   | Callout      | Block Nuxt UI alert with editable content.   |
+| `Reference`       | `MarkdownReference` | —            | Directus item reference; excluded from menu. |
+
+For example:
+
+```md
+::MarkdownCallout{title="Before you continue" color="warning"} Read the
+:MarkdownButton{label="documentation" to="/docs" variant="soft"}. ::
+```
 
 ## Configuration
-
-The module is enabled by default. Renderer components placed directly in `app/components/renderer/`
-are discovered automatically and override the built-in `MarkdownButton`, `MarkdownCallout`, or
-`MarkdownReference` component when the filename matches. `MarkdownReference` is registered in the
-renderer as `Reference` so existing Directus Markdown continues to use `:Reference`.
 
 ```ts
 export default defineNuxtConfig({
   markdownRenderer: {
+    enabled: true,
     componentsDir: "renderer",
     componentSets: {
-      article: ["MarkdownButton", "MarkdownCallout", "Video"],
-      page: ["MarkdownButton", "MarkdownCallout", "Hero", "Video"]
+      article: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"],
+      landing: ["MarkdownButton", "MarkdownHero"]
     },
     resolveReferencePath: "~/utils/resolveReferencePath",
     corsOrigin: "https://directus.example.com"
@@ -46,83 +80,116 @@ export default defineNuxtConfig({
 });
 ```
 
-`componentsDir` is relative to `app/components/`. Components are loaded lazily through Comark's
-component manifest. Selecting `component-set` on `MarkdownRenderer` limits the components available
-to that configured set; omit it to allow every discovered component.
+| Option                 | Type                       | Default      | Description                                                       |
+| ---------------------- | -------------------------- | ------------ | ----------------------------------------------------------------- |
+| `enabled`              | `boolean`                  | `true`       | Enables component, manifest, and metadata endpoint registration.  |
+| `componentsDir`        | `string`                   | `"renderer"` | Directory below `app/components/` containing renderer components. |
+| `componentSets`        | `Record<string, string[]>` | `{}`         | Named allowlists used by rendering and metadata endpoints.        |
+| `resolveReferencePath` | `string`                   | unset        | Nuxt-resolvable path to a default-exported Reference resolver.    |
+| `corsOrigin`           | `string \| string[]`       | `"*"`        | Origins allowed to call the metadata endpoint from a browser.     |
 
-The module exposes editor-compatible component metadata at:
+A single `corsOrigin` string is accepted and normalized to an allowlist. Use `"null"` only when a
+sandboxed or local client intentionally sends an opaque origin.
 
-```text
-/api/markdown-renderer/components/article
-/api/markdown-renderer/components/page
-```
+## Custom renderer components
 
-The endpoint without a set returns all discovered components. `Reference` is deliberately omitted
-because the Directus editor owns that reserved node. Responses are bare component arrays, which the
-Directus extension accepts directly.
+Place Vue files directly in `app/components/<componentsDir>/`. Nested files are not discovered. Nuxt
+owns filename resolution and extension support; a consumer file with the same registered name
+replaces a built-in component.
 
-Metadata responses allow cross-origin browser requests by default with `corsOrigin: "*"`. Set one
-origin or an array of origins to restrict access to known Directus installations. The endpoint also
-handles browser `OPTIONS` preflight requests.
-
-### Editor metadata
-
-Prop types, descriptions, required/default state, literal union values, and JSDoc tags are inferred
-by `nuxt-component-meta`. Use the module's `extendMarkdownComponent` compiler macro for
-editor-specific information that cannot be inferred reliably, including a human label, block/inline
-behavior, imported union values, or editor hints for complex props. Import the macro from Nuxt's
-generated imports:
+This `MarkdownHero.vue` example uses the typed `extendMarkdownComponent` compiler macro:
 
 ```vue
 <script setup lang="ts">
 import { extendMarkdownComponent } from "#imports";
 
 extendMarkdownComponent({
-  label: "Video player",
-  description: "Embeds a hosted video.",
+  label: "Hero",
+  description: "A prominent page introduction.",
   type: "block",
-  deprecated: { text: "Use MediaEmbed instead." },
   props: {
-    provider: {
-      values: ["vimeo", "youtube"]
-    },
-    poster: {
-      input: "image"
-    },
-    website: {
-      input: "url"
-    },
-    chapters: {
-      type: "array",
-      deprecated: true
-    }
+    align: { values: ["left", "center"] },
+    actionTo: { input: "url" },
+    legacyTone: { deprecated: { text: "Use tone instead." } }
   }
 });
 
 defineProps<{
-  /** Video provider. */
-  provider: "vimeo" | "youtube";
-  /** Chapter markers. */
-  chapters?: Array<{ label: string; seconds: number }>;
-  /** Optional Directus image ID. */
-  poster?: string;
-  /** Canonical video page. */
-  website?: string;
+  /** Main hero heading. */
+  title: string;
+  /** Horizontal content alignment. */
+  align?: "left" | "center";
+  /** Call-to-action destination. */
+  actionTo?: string;
+  /** Legacy color name. */
+  legacyTone?: string;
 }>();
 </script>
+
+<template>
+  <section>
+    <h1>{{ title }}</h1>
+    <slot />
+  </section>
+</template>
 ```
 
-The macro keeps the internal `markdownRenderer` namespace and tag representation out of component
-code. `type` controls block/inline insertion. On props, `input: "image" | "url"` selects the richer
-Directus control, while `deprecated: true | { text: string }` adds a deprecation hint with optional
-migration guidance. Explicit `values`, `type`, `description`, `default`, and `required` override the
-corresponding inferred prop metadata. The lower-level `extendComponentMeta` macro remains available
-for metadata not represented by this convenience API.
+Use the registered component name in Markdown and component sets:
+
+```md
+::MarkdownHero{title="Build with Markdown" align="center" action-to="https://example.com"} Editable
+**Markdown** in the default slot. ::
+```
+
+`nuxt-component-meta` infers prop types, descriptions, required/default state, literal unions, and
+JSDoc tags. The macro covers editor information that cannot be inferred reliably:
+
+| Field                                       | Purpose                                                         |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `label`                                     | Human-facing label, distinct from the Markdown node name.       |
+| `description`                               | Help text shown while choosing a component.                     |
+| `type`                                      | Required insertion behavior: `"block"` or `"inline"`.           |
+| `deprecated`                                | `true` or migration guidance for the component.                 |
+| `props.<name>.values`                       | Explicit choices, particularly for imported union types.        |
+| `props.<name>.input`                        | `"image"` or `"url"` control for an underlying string prop.     |
+| `props.<name>.deprecated`                   | `true` or migration guidance for one prop.                      |
+| `props.<name>.type`                         | Explicit `string`, `number`, `boolean`, or `array` editor type. |
+| `props.<name>.description/default/required` | Overrides the corresponding inferred metadata.                  |
+
+The macro translates `input` and `deprecated` to the standard tags consumed by the Directus
+extension. The lower-level `extendComponentMeta` macro remains available for metadata not covered by
+this convenience API.
+
+### Component sets
+
+Component-set values use the public Markdown node names. Passing `component-set="article"` to
+`MarkdownRenderer` prevents components outside that set from resolving. The corresponding metadata
+URL returns only that set. An unknown set prevents custom component resolution and its metadata URL
+returns HTTP 404.
+
+Omit `component-set` to allow every discovered renderer component.
+
+## Directus metadata endpoint
+
+Configure the Directus Markdown editor with a browser-accessible URL:
+
+```text
+https://website.example.com/api/markdown-renderer/components/article
+```
+
+The endpoint returns a bare component array. Omit the final set name to return all discovered
+components. `Reference` is deliberately omitted because the Directus editor owns that reserved node.
+Both `GET` and browser `OPTIONS` preflight requests are handled.
+
+The endpoint is public and sends no authentication challenge. CORS controls which browser origins
+may read it; it is not an authorization mechanism. The default `corsOrigin: "*"` supports separate
+local and production Directus installations. Configure explicit HTTPS origins when deployment policy
+requires a narrower allowlist.
 
 ## References
 
-The built-in `MarkdownReference` handles persisted `:Reference` nodes and displays `text ?? label`.
-Configure a default-exported resolver when a reference should become a link:
+The built-in `MarkdownReference` renders the persisted Directus syntax `:Reference`. It displays
+`text ?? label` and remains plain text unless the application supplies a route resolver:
 
 ```ts
 // app/utils/resolveReferencePath.ts
@@ -135,10 +202,15 @@ const resolveReferencePath: ResolveReferencePath = (collection, item, _label, _t
 export default resolveReferencePath;
 ```
 
-Without a resolver, or when it returns `undefined`, the reference renders as plain text. The module
-never guesses an application route.
+The resolver receives `collection`, `item`, optional `label`, optional author-controlled `text`, and
+the optional Directus source snapshot `data`. Returning a string renders a Nuxt link; returning
+`undefined` keeps the display text unlinked. The module never guesses application routes.
 
-Disable setup with:
+An application can replace the built-in behavior with
+`app/components/<componentsDir>/MarkdownReference.vue`. It is still exposed to Markdown as
+`Reference`, preserving existing stored content.
+
+## Disable the module
 
 ```ts
 export default defineNuxtConfig({
@@ -146,9 +218,24 @@ export default defineNuxtConfig({
 });
 ```
 
+The static type declaration remains available during `nuxt prepare`, but runtime components,
+auto-imports, templates, and routes are not registered.
+
+## Troubleshooting
+
+| Symptom                              | Check                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| Custom component renders as Markdown | Put it directly in `app/components/<componentsDir>/` and use its Nuxt name. |
+| Component is missing for one field   | Include its public name in the selected `componentSets` entry.              |
+| Metadata URL returns 404             | The requested component-set name is not configured.                         |
+| Directus reports a CORS failure      | Add the exact Directus origin to `corsOrigin`, including scheme and port.   |
+| Metadata omits a custom component    | Ensure the SFC is discoverable and exposes parseable component metadata.    |
+| Reference is not linked              | Configure `resolveReferencePath` and return a route for that collection.    |
+
 ## Development
 
 ```sh
 pnpm --filter markdown-renderer-playground dev
 pnpm --filter markdown-renderer-playground typecheck
+pnpm --filter markdown-renderer-playground build
 ```

@@ -1,0 +1,29 @@
+<script setup lang="ts">
+import { extendMarkdownComponent } from "#imports";
+
+extendMarkdownComponent({
+  label: "Hero",
+  description: "A consumer-defined page introduction.",
+  type: "block",
+  props: {
+    align: { values: ["left", "center"] },
+    actionTo: { input: "url" }
+  }
+});
+
+defineProps<{
+  /** Main hero heading. */
+  title: string;
+  /** Horizontal content alignment. */
+  align?: "left" | "center";
+  /** Optional call-to-action destination. */
+  actionTo?: string;
+}>();
+</script>
+
+<template>
+  <section>
+    <h1>{{ title }}</h1>
+    <slot />
+  </section>
+</template>

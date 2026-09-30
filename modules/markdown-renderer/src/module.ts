@@ -144,16 +144,13 @@ export default createComponentMetadataHandler(
         priority: 1
       });
     }
-    addServerHandler({
-      method: "get",
-      route: "/api/markdown-renderer/components/:componentSet?",
-      handler: metadataHandler.dst
-    });
-    addServerHandler({
-      method: "options",
-      route: "/api/markdown-renderer/components/:componentSet?",
-      handler: metadataHandler.dst
-    });
+    for (const route of [
+      "/api/markdown-renderer/components",
+      "/api/markdown-renderer/components/:componentSet"
+    ]) {
+      addServerHandler({ method: "get", route, handler: metadataHandler.dst });
+      addServerHandler({ method: "options", route, handler: metadataHandler.dst });
+    }
 
     end();
   }

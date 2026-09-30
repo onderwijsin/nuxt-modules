@@ -4,7 +4,8 @@ export default defineNuxtConfig({
   extends: ["playground-layer"],
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
   markdownRenderer: {
-    componentSets: { demo: ["MarkdownButton", "MarkdownCallout"] }
+    resolveReferencePath: "~/utils/resolveReferencePath",
+    componentSets: { demo: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"] }
   },
   appConfig: { packageName }
 });

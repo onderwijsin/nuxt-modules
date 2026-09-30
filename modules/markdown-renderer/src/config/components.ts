@@ -1,4 +1,4 @@
-import { dirname, resolve } from "pathe";
+import { basename, dirname, extname, resolve } from "pathe";
 
 export interface RendererComponent {
   /** Name stored in Markdown and exposed to the renderer. */
@@ -19,11 +19,15 @@ interface ResolvedNuxtComponent {
  * Reference nodes predate the `Markdown` component prefix and are already stored as `:Reference`
  * in Directus. Keeping that public name here lets the Vue implementation use the unambiguous
  * `MarkdownReference` name without migrating persisted content.
- * @param componentName Component name registered by Nuxt.
+ * Nuxt's default component scan may prefix a file in `components/renderer/` as `RendererFoo` even
+ * when this module also registers that directory without a path prefix. The filename is the module's
+ * stable public contract; `componentName` remains available separately for metadata lookup.
+ * @param filePath Component source path registered by Nuxt.
  * @returns The public Markdown node name.
  */
-function resolveRendererNodeName(componentName: string): string {
-  return componentName === "MarkdownReference" ? "Reference" : componentName;
+function resolveRendererNodeName(filePath: string): string {
+  const fileName = basename(filePath, extname(filePath));
+  return fileName === "MarkdownReference" ? "Reference" : fileName;
 }
 
 /**
@@ -44,7 +48,7 @@ export function selectRendererComponents(
   return components
     .filter((component) => rendererDirectories.has(resolve(dirname(component.filePath))))
     .map((component) => ({
-      name: resolveRendererNodeName(component.pascalName),
+      name: resolveRendererNodeName(component.filePath),
       componentName: component.pascalName,
       filePath: component.filePath
     }))

@@ -143,8 +143,11 @@ function transformProperty(
 
   const custom = isRecord(customValue) ? customValue : {};
   const description = isString(custom.description) ? custom.description : value.description;
-  const type = resolveCustomType(custom.type) ?? resolveEditorType(value.type);
   const values = resolveCustomValues(custom.values) ?? resolveSchemaValues(value.schema);
+  const inferredType = resolveEditorType(value.type);
+  const type =
+    resolveCustomType(custom.type) ??
+    (values && inferredType !== "array" ? "string" : inferredType);
   const tags = resolveTags(custom.tags) ?? resolveTags(value.tags);
   const defaultValue = isDefined(custom.default) ? custom.default : value.default;
   const required =

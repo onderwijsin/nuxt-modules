@@ -4,7 +4,7 @@ import { $fetch, setupFixture } from "../../../packages/test-utils/src";
 describe("markdown renderer module", async () => {
   await setupFixture(import.meta.url);
 
-  it("serves generated metadata for prefixed renderer components", async () => {
+  it("serves generated metadata for built-in and consumer renderer components", async () => {
     await expect($fetch("/api/markdown-renderer/components/demo")).resolves.toMatchObject([
       {
         name: "MarkdownButton",
@@ -26,7 +26,24 @@ describe("markdown renderer module", async () => {
             values: ["primary", "secondary", "success", "info", "warning", "error", "neutral"]
           }
         }
+      },
+      {
+        name: "MarkdownHero",
+        label: "Hero",
+        description: "A consumer-defined page introduction.",
+        nodeType: "block",
+        props: {
+          align: { values: ["left", "center"] },
+          actionTo: { tags: [{ name: "editor", text: "url" }] }
+        },
+        slots: ["default"]
       }
     ]);
+  });
+
+  it("rejects unknown component sets", async () => {
+    await expect($fetch("/api/markdown-renderer/components/missing")).rejects.toMatchObject({
+      statusCode: 404
+    });
   });
 });

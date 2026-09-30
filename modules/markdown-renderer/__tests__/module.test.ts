@@ -98,16 +98,21 @@ describe("markdown renderer module", () => {
       '[{"name":"MarkdownCallout","componentName":"MarkdownCallout"}]'
     );
     expect(metadataTemplate.getContents()).toContain('  {},\n  "*"');
-    expect(kit.addServerHandler).toHaveBeenCalledWith({
-      method: "get",
-      route: "/api/markdown-renderer/components/:componentSet?",
-      handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
-    });
-    expect(kit.addServerHandler).toHaveBeenCalledWith({
-      method: "options",
-      route: "/api/markdown-renderer/components/:componentSet?",
-      handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
-    });
+    for (const route of [
+      "/api/markdown-renderer/components",
+      "/api/markdown-renderer/components/:componentSet"
+    ]) {
+      expect(kit.addServerHandler).toHaveBeenCalledWith({
+        method: "get",
+        route,
+        handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
+      });
+      expect(kit.addServerHandler).toHaveBeenCalledWith({
+        method: "options",
+        route,
+        handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
+      });
+    }
   });
 
   it("serializes configured metadata CORS origins", async () => {

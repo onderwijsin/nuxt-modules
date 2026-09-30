@@ -12,7 +12,10 @@ describe("renderer component registry", () => {
       selectRendererComponents(
         [
           { pascalName: "Video", filePath: "/project/app/components/renderer/Video.vue" },
-          { pascalName: "Hero", filePath: "/project/app/components/renderer/Hero.vue" },
+          {
+            pascalName: "RendererMarkdownHero",
+            filePath: "/project/app/components/renderer/MarkdownHero.vue"
+          },
           {
             pascalName: "MarkdownReference",
             filePath: "/project/app/components/renderer/MarkdownReference.vue"
@@ -27,9 +30,9 @@ describe("renderer component registry", () => {
       )
     ).toEqual([
       {
-        name: "Hero",
-        componentName: "Hero",
-        filePath: "/project/app/components/renderer/Hero.vue"
+        name: "MarkdownHero",
+        componentName: "RendererMarkdownHero",
+        filePath: "/project/app/components/renderer/MarkdownHero.vue"
       },
       {
         name: "Reference",
