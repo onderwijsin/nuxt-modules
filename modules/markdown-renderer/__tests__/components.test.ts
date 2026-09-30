@@ -1,57 +1,98 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
 import { describe, expect, it } from "vitest";
 
 import {
-  discoverRendererComponents,
-  generateReferenceResolver,
   generateRendererManifest,
-  mergeRendererComponents
+  mergeRendererComponents,
+  selectRendererComponents
 } from "../src/config/components";
 
 describe("renderer component registry", () => {
-  it("discovers only direct Vue files in deterministic order", () => {
-    const directory = mkdtempSync(join(tmpdir(), "markdown-renderer-"));
-    mkdirSync(join(directory, "nested"));
-    writeFileSync(join(directory, "Video.vue"), "<template />");
-    writeFileSync(join(directory, "Hero.vue"), "<template />");
-    writeFileSync(join(directory, "notes.txt"), "ignored");
-    writeFileSync(join(directory, "nested", "Nested.vue"), "<template />");
-
-    expect(discoverRendererComponents(directory).map(({ name }) => name)).toEqual([
-      "Hero",
-      "Video"
+  it("selects only direct renderer children from Nuxt's component registry", () => {
+    expect(
+      selectRendererComponents(
+        [
+          { pascalName: "Video", filePath: "/project/app/components/renderer/Video.vue" },
+          { pascalName: "Hero", filePath: "/project/app/components/renderer/Hero.vue" },
+          {
+            pascalName: "MarkdownReference",
+            filePath: "/project/app/components/renderer/MarkdownReference.vue"
+          },
+          {
+            pascalName: "Nested",
+            filePath: "/project/app/components/renderer/nested/Nested.vue"
+          },
+          { pascalName: "Unrelated", filePath: "/project/app/components/Unrelated.vue" }
+        ],
+        ["/project/app/components/renderer"]
+      )
+    ).toEqual([
+      {
+        name: "Hero",
+        componentName: "Hero",
+        filePath: "/project/app/components/renderer/Hero.vue"
+      },
+      {
+        name: "Reference",
+        componentName: "MarkdownReference",
+        filePath: "/project/app/components/renderer/MarkdownReference.vue"
+      },
+      {
+        name: "Video",
+        componentName: "Video",
+        filePath: "/project/app/components/renderer/Video.vue"
+      }
     ]);
   });
 
   it("lets consumer components replace built-ins by name", () => {
     expect(
       mergeRendererComponents(
-        [{ name: "Callout", filePath: "/built-in/Callout.vue" }],
-        [{ name: "Callout", filePath: "/consumer/Callout.vue" }]
+        [
+          {
+            name: "MarkdownCallout",
+            componentName: "MarkdownCallout",
+            filePath: "/built-in/MarkdownCallout.vue"
+          }
+        ],
+        [
+          {
+            name: "MarkdownCallout",
+            componentName: "MarkdownCallout",
+            filePath: "/consumer/MarkdownCallout.vue"
+          }
+        ]
       )
-    ).toEqual([{ name: "Callout", filePath: "/consumer/Callout.vue" }]);
+    ).toEqual([
+      {
+        name: "MarkdownCallout",
+        componentName: "MarkdownCallout",
+        filePath: "/consumer/MarkdownCallout.vue"
+      }
+    ]);
   });
 
   it("generates lazy imports and component-set constraints", () => {
     const source = generateRendererManifest(
-      [{ name: "Callout", filePath: "/components/Callout.vue" }],
-      { article: ["Callout"] }
+      [
+        {
+          name: "MarkdownCallout",
+          componentName: "MarkdownCallout",
+          filePath: "/components/MarkdownCallout.vue"
+        },
+        {
+          name: "Reference",
+          componentName: "MarkdownReference",
+          filePath: "/components/MarkdownReference.vue"
+        }
+      ],
+      { article: ["MarkdownCallout"] }
     );
 
-    expect(source).toContain('"Callout": () => import("/components/Callout.vue")');
-    expect(source).toContain('const componentSets = {"article":["Callout"]};');
-    expect(source).toContain("allowedComponents.includes(normalizedName)");
-  });
-
-  it("generates an optional reference resolver bridge", () => {
-    expect(generateReferenceResolver()).toBe(
-      "export default function resolveReferencePath(_collection: string, _item: string, _label?: string, _text?: string, _data?: Record<string, unknown>): string | undefined { return undefined; }"
+    expect(source).toContain('"MarkdownCallout": () => import("/components/MarkdownCallout.vue")');
+    expect(source).toContain('"Reference": () => import("/components/MarkdownReference.vue")');
+    expect(source).toContain(
+      'createRendererManifest(componentLoaders, {"article":["MarkdownCallout"]})'
     );
-    expect(generateReferenceResolver("~/utils/reference")).toBe(
-      'export { default } from "~/utils/reference";'
-    );
+    expect(source).not.toContain("function resolveRendererComponent");
   });
 });

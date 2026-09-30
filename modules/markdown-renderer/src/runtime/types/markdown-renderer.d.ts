@@ -9,11 +9,4 @@ declare module "#markdown-renderer/manifest" {
   ) => ReturnType<ComponentManifest>;
 }
 
-declare module "#markdown-renderer/reference-resolver" {
-  import type { ResolveReferencePath } from "@onderwijsin/nuxt-markdown-renderer/runtime";
-
-  const resolveReferencePath: ResolveReferencePath;
-  export default resolveReferencePath;
-}
-
 export {};

@@ -6,9 +6,20 @@ describe("Markdown editor component metadata", () => {
   it("maps props and slots and omits the reserved Reference node", () => {
     const result = createEditorComponentMetadata(
       {
-        Callout: {
+        MarkdownCallout: {
           meta: {
             description: "Supporting content.",
+            markdownRenderer: {
+              label: "Notice",
+              nodeType: "inline",
+              tags: [{ name: "deprecated", text: "Use Banner instead." }],
+              props: {
+                tone: {
+                  values: ["neutral", "critical"],
+                  tags: [{ name: "editor", text: "appearance" }]
+                }
+              }
+            },
             props: [
               {
                 name: "tone",
@@ -29,32 +40,34 @@ describe("Markdown editor component metadata", () => {
             slots: [{ name: "default" }]
           }
         },
-        Reference: { meta: { props: [], slots: [] } }
+        MarkdownReference: { meta: { props: [], slots: [] } }
       },
-      ["Callout", "Reference"]
+      [
+        { name: "MarkdownCallout", componentName: "MarkdownCallout" },
+        { name: "Reference", componentName: "MarkdownReference" }
+      ]
     );
 
-    expect(result).toEqual({
-      components: [
-        {
-          name: "Callout",
-          label: "Callout",
-          description: "Supporting content.",
-          nodeType: "block",
-          props: {
-            tone: {
-              name: "tone",
-              type: "string",
-              description: "Visual tone.",
-              required: true,
-              default: "info",
-              values: ["info", "warning"],
-              tags: [{ name: "editor", text: "style" }]
-            }
-          },
-          slots: ["default"]
-        }
-      ]
-    });
+    expect(result).toEqual([
+      {
+        name: "MarkdownCallout",
+        label: "Notice",
+        description: "Supporting content.",
+        nodeType: "inline",
+        props: {
+          tone: {
+            name: "tone",
+            type: "string",
+            description: "Visual tone.",
+            required: true,
+            default: "info",
+            values: ["neutral", "critical"],
+            tags: [{ name: "editor", text: "appearance" }]
+          }
+        },
+        slots: ["default"],
+        tags: [{ name: "deprecated", text: "Use Banner instead." }]
+      }
+    ]);
   });
 });

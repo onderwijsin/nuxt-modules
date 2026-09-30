@@ -51,6 +51,7 @@
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "h3": "catalog:",
     "nuxt-component-meta": "catalog:",
+    "pathe": "catalog:",
     "vue": "catalog:",
     "zod": "catalog:"
   },

@@ -64,9 +64,9 @@ Standard Markdown nodes should render using Nuxt UI / Nuxt UI Prose components w
 
 The module initially provides:
 
-- `Reference` (ULink)
-- `Button` (UButton)
-- `Callout` (UAlert)
+- `MarkdownReference` (ULink), mapped to the persisted `Reference` Markdown node
+- `MarkdownButton` (UButton), labelled “Button” in the editor
+- `MarkdownCallout` (UAlert), labelled “Callout” in the editor
 
 These components should use Nuxt UI components where appropriate.
 
@@ -124,11 +124,12 @@ Consumer components override built-in components by name.
 For example:
 
 ```text
-components/renderer/Callout.vue
-components/renderer/Reference.vue
+components/renderer/MarkdownCallout.vue
+components/renderer/MarkdownReference.vue
 ```
 
-replace the module-provided `Callout` and `Reference` implementations.
+replace the module-provided `MarkdownCallout` and `MarkdownReference` implementations. The latter
+continues to resolve persisted `:Reference` nodes.
 
 Conceptually:
 
@@ -221,9 +222,9 @@ Example:
 export default defineNuxtConfig({
   markdownRenderer: {
     componentSets: {
-      article: ["Button", "Callout", "Video"],
+      article: ["MarkdownButton", "MarkdownCallout", "Video"],
 
-      page: ["Button", "Callout", "Hero", "ProjectCard", "Video"]
+      page: ["MarkdownButton", "MarkdownCallout", "Hero", "ProjectCard", "Video"]
     }
   }
 });
@@ -264,7 +265,8 @@ component.
 
 ## `Reference`
 
-`Reference` renders the reference syntax produced by the Directus editor.
+`MarkdownReference` renders the `Reference` syntax produced by the Directus editor. This explicit
+mapping preserves existing Directus content while keeping the Vue component name prefixed.
 
 Example source:
 
@@ -288,7 +290,9 @@ The module option should accept an import path:
 ```ts
 export default defineNuxtConfig({
   markdownRenderer: {
-    resolveReferencePath: "~/utils/resolveReferencePath"
+    resolveReferencePath: "~/utils/resolveReferencePath",
+
+    corsOrigin: "https://directus.example.com"
   }
 });
 ```
@@ -328,9 +332,9 @@ the resolver must be available inside the runtime Vue bundle.
 
 ### Default `Reference` behaviour
 
-The built-in `Reference` behaves as follows:
+The built-in `MarkdownReference` behaves as follows:
 
-1. If the consumer provides `components/{componentsDir}/Reference.vue`, that component fully
+1. If the consumer provides `components/{componentsDir}/MarkdownReference.vue`, that component fully
    replaces the built-in behaviour.
 2. If no override exists and `resolveReferencePath` returns a path, render the reference using
    `ULink`.
@@ -363,9 +367,9 @@ export default defineNuxtConfig({
     componentsDir: "renderer",
 
     componentSets: {
-      article: ["Button", "Callout", "Video"],
+      article: ["MarkdownButton", "MarkdownCallout", "Video"],
 
-      page: ["Button", "Callout", "Hero", "ProjectCard", "Video"]
+      page: ["MarkdownButton", "MarkdownCallout", "Hero", "ProjectCard", "Video"]
     },
 
     resolveReferencePath: "~/utils/resolveReferencePath"
@@ -375,6 +379,10 @@ export default defineNuxtConfig({
 
 The exact TypeScript types and naming can be refined during implementation, but the behaviour
 described here should remain the same.
+
+The component metadata endpoint must support browser CORS and preflight requests. `corsOrigin`
+defaults to `"*"` because the endpoint exposes public component descriptions rather than user data.
+Consumers can configure one origin or an array of origins to restrict browser access.
 
 ---
 
@@ -416,9 +424,9 @@ The intended architecture is:
 @onderwijsin/nuxt-markdown-renderer
 │
 ├── built-in components
-│   ├── Reference
-│   ├── Button
-│   └── Callout
+│   ├── MarkdownReference (persisted node: Reference)
+│   ├── MarkdownButton
+│   └── MarkdownCallout
 │
 ├── discover components/{componentsDir}/*.vue
 │
@@ -438,7 +446,7 @@ The intended architecture is:
 │   └── consumed by directus-markdown-editor-bundle
 │
 └── optional resolveReferencePath module
-    └── used by the built-in Reference component
+    └── used by the built-in MarkdownReference component
 ```
 
 The filesystem should effectively be the source of truth for custom renderer components, with the

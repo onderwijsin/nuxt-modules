@@ -8,6 +8,8 @@ const kit = vi.hoisted(() => ({
   addTypeTemplate: vi.fn(),
   createResolver: vi.fn(() => ({ resolve: vi.fn((...parts: string[]) => parts.join("/")) })),
   defineNuxtModule: vi.fn((definition) => definition),
+  findPath: vi.fn(),
+  resolvePath: vi.fn(),
   useLogger: vi.fn(() => ({ start: vi.fn(), success: vi.fn(), info: vi.fn() }))
 }));
 
@@ -15,8 +17,8 @@ vi.mock("@nuxt/kit", () => kit);
 
 import markdownRendererModule from "../src/module";
 
-function setupModule(options: object, nuxt: object): void {
-  Reflect.get(markdownRendererModule, "setup")(options, nuxt);
+async function setupModule(options: object, nuxt: object): Promise<void> {
+  await Reflect.get(markdownRendererModule, "setup")(options, nuxt);
 }
 
 describe("markdown renderer module", () => {
@@ -24,8 +26,9 @@ describe("markdown renderer module", () => {
     vi.clearAllMocks();
     kit.addTemplate
       .mockReturnValueOnce({ dst: ".nuxt/markdown-renderer/manifest.mjs" })
-      .mockReturnValueOnce({ dst: ".nuxt/markdown-renderer/reference-resolver.ts" })
       .mockReturnValueOnce({ dst: ".nuxt/markdown-renderer/metadata-handler.mjs" });
+    kit.findPath.mockResolvedValue(null);
+    kit.resolvePath.mockResolvedValue("/project/app/utils/reference.ts");
   });
 
   it("exposes the expected identity and Nuxt compatibility", () => {
@@ -48,16 +51,18 @@ describe("markdown renderer module", () => {
     });
   });
 
-  it("registers generated manifests, components, and the metadata endpoint", () => {
+  it("registers the generated manifest, components, and static metadata endpoint", async () => {
     const nuxt = {
-      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } }
+      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      hook: vi.fn()
     };
-    setupModule({}, nuxt);
+    await setupModule({}, nuxt);
 
     expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
     expect(nuxt.options.alias).toEqual({
       "#markdown-renderer/manifest": ".nuxt/markdown-renderer/manifest.mjs",
-      "#markdown-renderer/reference-resolver": ".nuxt/markdown-renderer/reference-resolver.ts"
+      "#markdown-renderer/manifest-factory": "./runtime/app/utils/component-manifest",
+      "#markdown-renderer/reference-resolver": "./runtime/app/utils/resolve-reference-path"
     });
     expect(kit.addComponent).toHaveBeenCalledWith({
       name: "MarkdownRenderer",
@@ -66,18 +71,66 @@ describe("markdown renderer module", () => {
     expect(kit.addComponentsDir).toHaveBeenCalledWith(
       expect.objectContaining({ path: "./runtime/app/components/renderer", priority: 0 })
     );
+    const componentHook = nuxt.hook.mock.calls.find(([name]) => name === "components:extend")?.[1];
+    componentHook([
+      {
+        pascalName: "MarkdownCallout",
+        filePath: "./runtime/app/components/renderer/MarkdownCallout.vue"
+      }
+    ]);
+    const manifestTemplate = kit.addTemplate.mock.calls[0]?.[0];
+    expect(manifestTemplate.getContents()).toContain(
+      '"MarkdownCallout": () => import("./runtime/app/components/renderer/MarkdownCallout.vue")'
+    );
+    const metadataTemplate = kit.addTemplate.mock.calls[1]?.[0];
+    expect(metadataTemplate.getContents()).toContain(
+      '[{"name":"MarkdownCallout","componentName":"MarkdownCallout"}]'
+    );
+    expect(metadataTemplate.getContents()).toContain('  {},\n  "*"');
     expect(kit.addServerHandler).toHaveBeenCalledWith({
       method: "get",
       route: "/api/markdown-renderer/components/:componentSet?",
       handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
     });
+    expect(kit.addServerHandler).toHaveBeenCalledWith({
+      method: "options",
+      route: "/api/markdown-renderer/components/:componentSet?",
+      handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
+    });
   });
 
-  it("keeps declarations available but skips runtime setup when disabled", () => {
+  it("serializes configured metadata CORS origins", async () => {
     const nuxt = {
-      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } }
+      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      hook: vi.fn()
     };
-    setupModule({ enabled: false }, nuxt);
+
+    await setupModule({ corsOrigin: "https://directus.example.com" }, nuxt);
+
+    const metadataTemplate = kit.addTemplate.mock.calls[1]?.[0];
+    expect(metadataTemplate.getContents()).toContain('["https://directus.example.com"]');
+  });
+
+  it("resolves a configured reference resolver through Nuxt Kit", async () => {
+    const nuxt = {
+      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      hook: vi.fn()
+    };
+
+    await setupModule({ resolveReferencePath: "~/utils/reference" }, nuxt);
+
+    expect(kit.resolvePath).toHaveBeenCalledWith("~/utils/reference");
+    expect(nuxt.options.alias).toMatchObject({
+      "#markdown-renderer/reference-resolver": "/project/app/utils/reference.ts"
+    });
+  });
+
+  it("keeps declarations available but skips runtime setup when disabled", async () => {
+    const nuxt = {
+      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      hook: vi.fn()
+    };
+    await setupModule({ enabled: false }, nuxt);
 
     expect(kit.addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(kit.addTemplate).not.toHaveBeenCalled();

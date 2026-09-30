@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   extends: ["playground-layer"],
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
   markdownRenderer: {
-    componentSets: { demo: ["Button", "Callout"] }
+    componentSets: { demo: ["MarkdownButton", "MarkdownCallout"] }
   },
   appConfig: { packageName }
 });

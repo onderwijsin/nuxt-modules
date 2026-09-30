@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const value = `# Markdown renderer
 
-::Callout{title="Comark + Nuxt UI"}
+::MarkdownCallout{title="Comark + Nuxt UI"}
 Rendered from MDC.
 ::
 `;
