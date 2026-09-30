@@ -27,7 +27,8 @@ export default defineNuxtModule<ModuleOptions>({
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.markdownRenderer, {
       "@comark/nuxt": { version: ">=0.7.0" },
-      "@nuxt/ui": { version: ">=4.0.0" }
+      "@nuxt/ui": { version: ">=4.0.0" },
+      "nuxt-component-meta": { version: ">=0.18.0" }
     }),
   setup(_options, nuxt) {
     const log = useLogger(MODULE_KEY);
