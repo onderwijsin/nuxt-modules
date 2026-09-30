@@ -28,6 +28,13 @@ const props = withDefaults(
     actionTo?: string;
     /** Hero accent color. */
     tone?: "primary" | "neutral";
+    /** Hero image. */
+    image?: {
+      /** Image source URL. */
+      src: string;
+      /** Alternative text for the image. */
+      alt?: string;
+    };
   }>(),
   { align: "left", tone: "primary" }
 );
