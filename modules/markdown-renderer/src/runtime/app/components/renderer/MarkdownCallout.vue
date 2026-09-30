@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { AlertProps } from "@nuxt/ui";
-
-declare function extendComponentMeta(meta: Record<string, unknown>): void;
+import { extendComponentMeta } from "#imports";
 
 extendComponentMeta({
   markdownRenderer: {
@@ -10,7 +9,8 @@ extendComponentMeta({
     nodeType: "block",
     props: {
       color: {
-        values: ["primary", "secondary", "success", "info", "warning", "error", "neutral"]
+        values: ["primary", "secondary", "success", "info", "warning", "error", "neutral"],
+        tags: [{ name: "deprecated", text: "Use newProp instead." }]
       }
     }
   }

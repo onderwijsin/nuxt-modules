@@ -47,11 +47,12 @@ It returns the component metadata array directly and allows every browser origin
 Directus installations.
 
 For editor-only metadata, call the `nuxt-component-meta` `extendComponentMeta` macro in the renderer
-component and namespace overrides below `markdownRenderer`. Use `label` for the human-facing label,
-`nodeType: "block" | "inline"` for insertion behavior, and `props.<name>.values` for choices that
-cannot be expanded from an imported TypeScript type. Component and prop `tags` are arrays of
-`{ name, text? }`; use the same namespace for explicit complex-prop `type`, descriptions, defaults,
-or required state. Ordinary prop types, JSDoc, defaults, literal unions, and tags remain inferred.
+component by importing it from `#imports`, and namespace overrides below `markdownRenderer`. Use
+`label` for the human-facing label, `nodeType: "block" | "inline"` for insertion behavior, and
+`props.<name>.values` for choices that cannot be expanded from an imported TypeScript type.
+Component and prop `tags` are arrays of `{ name, text? }`; use the same namespace for explicit
+complex-prop `type`, descriptions, defaults, or required state. Ordinary prop types, JSDoc,
+defaults, literal unions, and tags remain inferred.
 
 The reference resolver must default-export a function compatible with `ResolveReferencePath`, which
 is importable from `@onderwijsin/nuxt-markdown-renderer/runtime`. If it is absent or returns

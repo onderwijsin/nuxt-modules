@@ -70,11 +70,12 @@ handles browser `OPTIONS` preflight requests.
 Prop types, descriptions, required/default state, literal union values, and JSDoc tags are inferred
 by `nuxt-component-meta`. Use its `extendComponentMeta` macro for editor-specific information that
 cannot be inferred reliably, including a human label, block/inline behavior, imported union values,
-or editor hints for complex props. The macro is available globally while the module is enabled and
-must not be imported from `#imports`:
+or editor hints for complex props. Import the macro from Nuxt's generated imports:
 
 ```vue
 <script setup lang="ts">
+import { extendComponentMeta } from "#imports";
+
 extendComponentMeta({
   markdownRenderer: {
     label: "Video player",

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { ButtonProps } from "@nuxt/ui";
-
-declare function extendComponentMeta(meta: Record<string, unknown>): void;
+import { extendComponentMeta } from "#imports";
 
 extendComponentMeta({
   markdownRenderer: {

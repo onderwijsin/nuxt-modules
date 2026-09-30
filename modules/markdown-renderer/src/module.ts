@@ -49,7 +49,7 @@ export default defineNuxtModule<ModuleOptions>({
       "@nuxt/ui": { version: ">=4.0.0" },
       "nuxt-component-meta": {
         version: ">=0.18.0",
-        defaults: { exclude: ["Markdown", "MarkdownDocument"] }
+        defaults: { exclude: ["@comark/vue"] }
       }
     }),
   async setup(rawOptions, nuxt) {
