@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const kit = vi.hoisted(() => ({
   addComponent: vi.fn(),
   addComponentsDir: vi.fn(),
+  addImports: vi.fn(),
   addServerHandler: vi.fn(),
   addTemplate: vi.fn(),
   addTypeTemplate: vi.fn(),
@@ -46,7 +47,13 @@ describe("markdown renderer module", () => {
       "@nuxt/ui": { version: ">=4.0.0" },
       "nuxt-component-meta": {
         version: ">=0.18.0",
-        defaults: { exclude: ["@comark/vue"] }
+        defaults: {
+          exclude: ["@comark/vue"],
+          extendMetaFunctions: [
+            { name: "extendComponentMeta" },
+            { name: "extendMarkdownComponent", transform: expect.any(Function) }
+          ]
+        }
       }
     });
   });
@@ -67,6 +74,10 @@ describe("markdown renderer module", () => {
     expect(kit.addComponent).toHaveBeenCalledWith({
       name: "MarkdownRenderer",
       filePath: "./runtime/app/components/MarkdownRenderer.vue"
+    });
+    expect(kit.addImports).toHaveBeenCalledWith({
+      name: "extendMarkdownComponent",
+      from: "./runtime/app/utils/extend-markdown-component"
     });
     expect(kit.addComponentsDir).toHaveBeenCalledWith(
       expect.objectContaining({ path: "./runtime/app/components/renderer", priority: 0 })
@@ -135,6 +146,7 @@ describe("markdown renderer module", () => {
     expect(kit.addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(kit.addTemplate).not.toHaveBeenCalled();
     expect(kit.addComponent).not.toHaveBeenCalled();
+    expect(kit.addImports).not.toHaveBeenCalled();
     expect(kit.addServerHandler).not.toHaveBeenCalled();
   });
 });

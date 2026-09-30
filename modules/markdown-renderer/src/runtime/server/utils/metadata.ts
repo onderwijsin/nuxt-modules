@@ -70,7 +70,7 @@ function resolveSchemaValues(schema: unknown): string[] | undefined {
 }
 
 /**
- * Reads explicit editor choices declared through `extendComponentMeta`.
+ * Reads explicit editor choices declared through `extendMarkdownComponent`.
  * @param value Custom values payload.
  * @returns The non-empty string choices, when valid.
  */
@@ -166,7 +166,7 @@ function createPropertyEntry(property: EditorPropertyMetadata): [string, EditorP
 }
 
 /**
- * Reads the namespaced payload contributed by `extendComponentMeta`.
+ * Reads the namespaced payload produced by the `extendMarkdownComponent` compiler macro.
  * @param meta Generated component metadata.
  * @returns The renderer-specific custom metadata object.
  */

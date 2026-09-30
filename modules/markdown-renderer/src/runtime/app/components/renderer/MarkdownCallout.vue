@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import type { AlertProps } from "@nuxt/ui";
-import { extendComponentMeta } from "#imports";
+import { extendMarkdownComponent } from "../../utils/extend-markdown-component";
 
-extendComponentMeta({
-  markdownRenderer: {
-    label: "Callout",
-    description: "A component used to highlight important information.",
-    nodeType: "block",
-    props: {
-      color: {
-        values: ["primary", "secondary", "success", "info", "warning", "error", "neutral"],
-        tags: [{ name: "deprecated", text: "Use newProp instead." }]
-      }
+extendMarkdownComponent({
+  label: "Callout",
+  description: "A component used to highlight important information.",
+  type: "block",
+  props: {
+    color: {
+      values: [
+        "primary",
+        "secondary",
+        "success",
+        "info",
+        "warning",
+        "error",
+        "neutral"
+      ] satisfies Array<AlertProps["color"]>
     }
   }
 });

@@ -208,6 +208,26 @@ Metadata should include the information required by the Directus editor, such as
 The exact transformation should follow the metadata contract expected by
 `directus-markdown-editor-bundle`.
 
+Renderer components may add editor-only metadata with the auto-imported `extendMarkdownComponent`
+compiler macro:
+
+```ts
+extendMarkdownComponent({
+  label: "Callout",
+  description: "Highlights important information.",
+  type: "block",
+  props: {
+    color: { values: ["info", "warning"] },
+    image: { input: "image" },
+    legacyTone: { deprecated: { text: "Use color instead." } }
+  }
+});
+```
+
+The macro translates `input: "image" | "url"` and `deprecated: true | { text: string }` to the tags
+understood by the Directus metadata contract. Types, descriptions, defaults, required state, literal
+values, and JSDoc tags should still be inferred wherever possible.
+
 ---
 
 ## Component sets

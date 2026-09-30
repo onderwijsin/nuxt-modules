@@ -3,6 +3,7 @@ import { resolve } from "pathe";
 import {
   addComponent,
   addComponentsDir,
+  addImports,
   addServerHandler,
   addTemplate,
   addTypeTemplate,
@@ -28,6 +29,7 @@ import {
   selectRendererComponents
 } from "./config/components";
 import type { RendererComponent } from "./config/components";
+import { transformMarkdownComponentMeta } from "./config/component-meta";
 import { markdownRendererOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./config/options.schema";
 
@@ -49,7 +51,13 @@ export default defineNuxtModule<ModuleOptions>({
       "@nuxt/ui": { version: ">=4.0.0" },
       "nuxt-component-meta": {
         version: ">=0.18.0",
-        defaults: { exclude: ["@comark/vue"] }
+        defaults: {
+          exclude: ["@comark/vue"],
+          extendMetaFunctions: [
+            { name: "extendComponentMeta" },
+            { name: "extendMarkdownComponent", transform: transformMarkdownComponentMeta }
+          ]
+        }
       }
     }),
   async setup(rawOptions, nuxt) {
@@ -114,6 +122,10 @@ export default createComponentMetadataHandler(
     );
     nuxt.options.alias["#markdown-renderer/reference-resolver"] = referenceResolver;
     transpileRuntime(nuxt, runtimeDir);
+    addImports({
+      name: "extendMarkdownComponent",
+      from: resolver.resolve(runtimeDir, "app", "utils", "extend-markdown-component")
+    });
     addComponent({
       name: "MarkdownRenderer",
       filePath: resolver.resolve(runtimeDir, "app", "components", "MarkdownRenderer.vue")

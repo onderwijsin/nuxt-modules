@@ -1,29 +1,27 @@
 <script setup lang="ts">
 import type { ButtonProps } from "@nuxt/ui";
-import { extendComponentMeta } from "#imports";
+import { extendMarkdownComponent } from "../../utils/extend-markdown-component";
 
-extendComponentMeta({
-  markdownRenderer: {
-    label: "Button",
-    description: "A clickable button component.",
-    nodeType: "inline",
-    props: {
-      color: {
-        values: [
-          "primary",
-          "secondary",
-          "success",
-          "info",
-          "warning",
-          "error",
-          "neutral"
-        ] satisfies Array<ButtonProps["color"]>
-      },
-      variant: {
-        values: ["solid", "outline", "soft", "subtle", "ghost", "link"] satisfies Array<
-          ButtonProps["variant"]
-        >
-      }
+extendMarkdownComponent({
+  label: "Button",
+  description: "A clickable button component.",
+  type: "inline",
+  props: {
+    color: {
+      values: [
+        "primary",
+        "secondary",
+        "success",
+        "info",
+        "warning",
+        "error",
+        "neutral"
+      ] satisfies Array<ButtonProps["color"]>
+    },
+    variant: {
+      values: ["solid", "outline", "soft", "subtle", "ghost", "link"] satisfies Array<
+        ButtonProps["variant"]
+      >
     }
   }
 });
