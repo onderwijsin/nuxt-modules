@@ -1,0 +1,15 @@
+{
+  "name": "markdown-renderer-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-markdown-renderer": "workspace:*",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
+  }
+}
