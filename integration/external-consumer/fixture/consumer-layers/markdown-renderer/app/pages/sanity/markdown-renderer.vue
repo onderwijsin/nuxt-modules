@@ -1,6 +1,6 @@
 <template>
   <div>
-    <MarkdownRenderer />
+    <MarkdownRenderer value="**Markdown renderer**" component-set="sanity" />
     <p :data-sanity="layerName">{{ data }}</p>
   </div>
 </template>

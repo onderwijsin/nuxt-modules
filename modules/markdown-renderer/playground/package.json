@@ -10,6 +10,7 @@
   "dependencies": {
     "@onderwijsin/nuxt-markdown-renderer": "workspace:*",
     "nuxt": "catalog:",
-    "playground-layer": "workspace:*"
+    "playground-layer": "workspace:*",
+    "vue": "catalog:"
   }
 }
