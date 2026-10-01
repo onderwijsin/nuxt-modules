@@ -57,7 +57,6 @@ const value = computed(() => data.value?.data[0]?.editor ?? fallback);
 
 <template>
   <UContainer class="py-10">
-    <pre>{{ error }}</pre>
     <MarkdownRenderer component-set="demo" :value="value" />
   </UContainer>
 </template>

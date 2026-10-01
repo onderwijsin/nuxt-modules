@@ -24,8 +24,6 @@ defineEditorComponentSchema({
 defineProps<{
   /** Callout title. */
   title?: string;
-  /** Supporting description when no default slot is supplied. */
-  description?: string;
   /** Nuxt UI semantic color. */
   color?: AlertProps["color"];
   /** Optional Iconify icon name. */
@@ -34,8 +32,8 @@ defineProps<{
 </script>
 
 <template>
-  <UAlert :title="title" :description="description" :color="color" :icon="icon">
-    <template v-if="$slots.default" #description>
+  <UAlert :title="title" :color="color" :icon="icon">
+    <template v-if="$slots.description" #description>
       <slot name="description" />
     </template>
   </UAlert>

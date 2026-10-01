@@ -5,7 +5,7 @@ import { defineEditorComponentSchema } from "../../utils/define-editor-component
 defineEditorComponentSchema({
   label: "Button",
   description: "A clickable button component.",
-  type: "inline",
+  type: "block",
   props: {
     color: {
       values: [
