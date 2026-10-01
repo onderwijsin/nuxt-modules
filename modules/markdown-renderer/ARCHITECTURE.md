@@ -28,11 +28,11 @@ the server, `src/runtime/server/utils/metadata.ts` recursively merges that infer
 the namespaced enrichment and validates the resulting editor schema. Partial namespaced metadata
 from `extendComponentMeta` remains supported. The special input definitions specify both their names
 and supported inferred property types, plus any required per-input configuration. The server checks
-these before applying a type override. Configured inputs are carried through the editor tag's
-`config` field in the endpoint output. `defineSpecialInput` derives the endpoint and macro object
-schemas from each control's strict config schema, and the transformer forwards those validated
-fields without a per-input mapping. String shorthand is allowed when the config schema accepts an
-empty object. The checklist at the top of the schema file covers adding a control.
+these before applying a type override. Configured inputs are carried through the `specialInputType`
+tag's `config` field in the endpoint output. `defineSpecialInput` derives the endpoint and macro
+object schemas from each control's strict config schema, and the transformer forwards those
+validated fields without a per-input mapping. String shorthand is allowed when the config schema
+accepts an empty object. The checklist at the top of the schema file covers adding a control.
 `component-metadata-handler.ts` handles CORS, component-set selection, and the HTTP response. The
 endpoint returns an array of editor components; `Reference` is omitted because the Directus editor
 owns that node.

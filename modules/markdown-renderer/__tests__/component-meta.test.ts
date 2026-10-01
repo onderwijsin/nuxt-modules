@@ -51,8 +51,8 @@ describe("Markdown component metadata macro", () => {
             values: ["primary", "warning"],
             tags: [{ name: "deprecated", text: "Use tone instead." }]
           },
-          image: { tags: [{ name: "editor", text: "image" }] },
-          href: { tags: [{ name: "editor", text: "url" }] }
+          image: { tags: [{ name: "specialInputType", text: "image" }] },
+          href: { tags: [{ name: "specialInputType", text: "url" }] }
         }
       }
     });
@@ -108,14 +108,14 @@ describe("Markdown component metadata macro", () => {
     ).toMatchObject({
       markdownRenderer: {
         props: {
-          image: { properties: { src: { tags: [{ name: "editor", text: "image" }] } } },
+          image: { properties: { src: { tags: [{ name: "specialInputType", text: "image" }] } } },
           actions: {
             items: {
               properties: {
-                to: { tags: [{ name: "editor", text: "url" }] },
+                to: { tags: [{ name: "specialInputType", text: "url" }] },
                 icon: {
                   tags: [
-                    { name: "editor", text: "icon", config: { collections: ["lucide"] } },
+                    { name: "specialInputType", text: "icon", config: { collections: ["lucide"] } },
                     { name: "deprecated" }
                   ]
                 }
@@ -153,10 +153,10 @@ describe("Markdown component metadata macro", () => {
     expect(result).toMatchObject({
       markdownRenderer: {
         props: {
-          imageA: { tags: [{ name: "editor", text: "image" }] },
-          imageB: { tags: [{ name: "editor", text: "image" }] },
-          linkA: { tags: [{ name: "editor", text: "url" }] },
-          linkB: { tags: [{ name: "editor", text: "url" }] }
+          imageA: { tags: [{ name: "specialInputType", text: "image" }] },
+          imageB: { tags: [{ name: "specialInputType", text: "image" }] },
+          linkA: { tags: [{ name: "specialInputType", text: "url" }] },
+          linkB: { tags: [{ name: "specialInputType", text: "url" }] }
         }
       }
     });

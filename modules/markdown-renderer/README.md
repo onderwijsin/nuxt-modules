@@ -170,15 +170,15 @@ without repeating their TypeScript types:
 | `props.<name>.description/default/required` | Overrides the corresponding inferred metadata.                                                                         |
 
 The macro translates `input` and `deprecated` to the standard tags consumed by the Directus
-extension. Icon collections appear as `config.collections` on the resulting `editor` tag. The string
-and object forms are equivalent when an input requires no options. Only fields declared by the
-input's Zod config schema are accepted and carried to the tag's `config` object. The lower-level
-`extendComponentMeta` macro remains available for metadata not covered by this convenience API.
-Invalid macro fields, including misspelled nested fields or unsupported input controls, produce a
-build warning with the failing property path; that component's editor overrides are ignored until
-the schema is corrected. The `image`, `url`, and `icon` inputs require an inferred string prop,
-including at nested paths. An incompatible inferred type causes the metadata endpoint to report the
-component and property path as a validation error.
+extension. Special inputs use a `specialInputType` tag; icon collections appear as
+`config.collections` on that tag. The string and object forms are equivalent when an input requires
+no options. Only fields declared by the input's Zod config schema are accepted and carried to the
+tag's `config` object. The lower-level `extendComponentMeta` macro remains available for metadata
+not covered by this convenience API. Invalid macro fields, including misspelled nested fields or
+unsupported input controls, produce a build warning with the failing property path; that component's
+editor overrides are ignored until the schema is corrected. The `image`, `url`, and `icon` inputs
+require an inferred string prop, including at nested paths. An incompatible inferred type causes the
+metadata endpoint to report the component and property path as a validation error.
 
 ### Component sets
 

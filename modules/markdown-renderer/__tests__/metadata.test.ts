@@ -9,7 +9,7 @@ describe("Markdown editor component metadata", () => {
         Hero: {
           meta: {
             markdownRenderer: {
-              props: { image: { tags: [{ name: "editor", text: "image" }] } }
+              props: { image: { tags: [{ name: "specialInputType", text: "image" }] } }
             },
             props: [{ name: "image", type: "string | undefined", schema: "string" }]
           }
@@ -20,7 +20,7 @@ describe("Markdown editor component metadata", () => {
 
     expect(result[0]?.props.image).toMatchObject({
       type: "string",
-      tags: [{ name: "editor", text: "image" }]
+      tags: [{ name: "specialInputType", text: "image" }]
     });
   });
 
@@ -32,7 +32,9 @@ describe("Markdown editor component metadata", () => {
             markdownRenderer: {
               props: {
                 icon: {
-                  tags: [{ name: "editor", text: "icon", config: { collections: ["lucide"] } }]
+                  tags: [
+                    { name: "specialInputType", text: "icon", config: { collections: ["lucide"] } }
+                  ]
                 }
               }
             },
@@ -44,7 +46,7 @@ describe("Markdown editor component metadata", () => {
     );
 
     expect(result[0]?.props.icon?.tags).toEqual([
-      { name: "editor", text: "icon", config: { collections: ["lucide"] } }
+      { name: "specialInputType", text: "icon", config: { collections: ["lucide"] } }
     ]);
   });
 
@@ -55,7 +57,9 @@ describe("Markdown editor component metadata", () => {
           Hero: {
             meta: {
               markdownRenderer: {
-                props: { image: { type: "string", tags: [{ name: "editor", text: "image" }] } }
+                props: {
+                  image: { type: "string", tags: [{ name: "specialInputType", text: "image" }] }
+                }
               },
               props: [{ name: "image", type: "number", schema: "number" }]
             }
@@ -77,7 +81,9 @@ describe("Markdown editor component metadata", () => {
               markdownRenderer: {
                 props: {
                   actions: {
-                    items: { properties: { to: { tags: [{ name: "editor", text: "url" }] } } }
+                    items: {
+                      properties: { to: { tags: [{ name: "specialInputType", text: "url" }] } }
+                    }
                   }
                 }
               },
@@ -111,10 +117,12 @@ describe("Markdown editor component metadata", () => {
           meta: {
             markdownRenderer: {
               props: {
-                image: { properties: { src: { tags: [{ name: "editor", text: "image" }] } } },
+                image: {
+                  properties: { src: { tags: [{ name: "specialInputType", text: "image" }] } }
+                },
                 actions: {
                   items: {
-                    properties: { to: { tags: [{ name: "editor", text: "url" }] } }
+                    properties: { to: { tags: [{ name: "specialInputType", text: "url" }] } }
                   }
                 }
               }
@@ -186,7 +194,7 @@ describe("Markdown editor component metadata", () => {
           type: "string",
           required: true,
           description: "Image source.",
-          tags: [{ name: "editor", text: "image" }]
+          tags: [{ name: "specialInputType", text: "image" }]
         },
         alt: { type: "string" }
       }
@@ -196,7 +204,7 @@ describe("Markdown editor component metadata", () => {
       items: {
         type: "object",
         properties: {
-          to: { required: true, tags: [{ name: "editor", text: "url" }] },
+          to: { required: true, tags: [{ name: "specialInputType", text: "url" }] },
           tone: { values: ["primary", "neutral"] }
         }
       }

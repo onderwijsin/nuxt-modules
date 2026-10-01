@@ -4,7 +4,8 @@ import { z } from "zod";
 
 import {
   EditorComponentEnrichmentSchema,
-  EditorComponentInputSchema
+  EditorComponentInputSchema,
+  SPECIAL_INPUT_TAG_NAME
 } from "../schema/editor-component-schema";
 import type {
   EditorPropertyEnrichment,
@@ -24,15 +25,19 @@ function resolveDeprecatedTag(value: EditorPropertyInput["deprecated"]): EditorT
 }
 
 /**
- * Converts a shorthand or configured control into its endpoint editor tag.
+ * Converts a shorthand or configured control into its endpoint special-input tag.
  * @param input Macro control declaration.
- * @returns Editor tag with any control-specific configuration.
+ * @returns Special-input tag with any control-specific configuration.
  */
 function resolveEditorTag(input: EditorPropertyInput["input"]): EditorTag | undefined {
   if (!input) return undefined;
-  if (isString(input)) return { name: "editor", text: input };
+  if (isString(input)) return { name: SPECIAL_INPUT_TAG_NAME, text: input };
   const { type, ...config } = input;
-  return { name: "editor", text: type, ...(Object.keys(config).length ? { config } : {}) };
+  return {
+    name: SPECIAL_INPUT_TAG_NAME,
+    text: type,
+    ...(Object.keys(config).length ? { config } : {})
+  };
 }
 
 /**

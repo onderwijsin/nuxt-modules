@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
   EditorComponentPartialEnrichmentSchema,
   EditorComponentResponseSchema,
+  SPECIAL_INPUT_TAG_NAME,
   SpecialInputNameSchema,
   specialInputs
 } from "../../../schema/editor-component-schema";
@@ -191,7 +192,8 @@ function transformProperty(
   const structure = resolveStructure(value.schema, custom, propertyPath);
   const sourceType = structure?.type ?? inferredType;
   for (const tag of custom?.tags ?? []) {
-    if (tag.name !== "editor" || !SpecialInputNameSchema.safeParse(tag.text).success) continue;
+    if (tag.name !== SPECIAL_INPUT_TAG_NAME || !SpecialInputNameSchema.safeParse(tag.text).success)
+      continue;
     if (
       specialInputs.safeParse({ inputType: tag.text, propertyType: sourceType, config: tag.config })
         .success

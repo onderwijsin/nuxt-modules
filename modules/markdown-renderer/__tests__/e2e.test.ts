@@ -34,7 +34,7 @@ describe("markdown renderer module", async () => {
         nodeType: "block",
         props: {
           align: { values: ["left", "center"] },
-          actionTo: { tags: [{ name: "editor", text: "url" }] }
+          actionTo: { tags: [{ name: "specialInputType", text: "url" }] }
         },
         slots: ["default"]
       }

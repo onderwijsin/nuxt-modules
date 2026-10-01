@@ -63,7 +63,11 @@ describe("editor component contract", () => {
           nodeType: "block",
           slots: [],
           props: {
-            icon: { name: "icon", type: "string", tags: [{ name: "editor", text: "icon" }] }
+            icon: {
+              name: "icon",
+              type: "string",
+              tags: [{ name: "specialInputType", text: "icon" }]
+            }
           }
         }
       ]).success
@@ -118,7 +122,27 @@ describe("editor component contract", () => {
             image: {
               name: "image",
               type: "number",
-              tags: [{ name: "editor", text: "image" }]
+              tags: [{ name: "specialInputType", text: "image" }]
+            }
+          }
+        }
+      ]).success
+    ).toBe(false);
+  });
+
+  it("rejects an unknown specialInputType tag value", () => {
+    expect(
+      EditorComponentResponseSchema.safeParse([
+        {
+          name: "Hero",
+          label: "Hero",
+          nodeType: "block",
+          slots: [],
+          props: {
+            image: {
+              name: "image",
+              type: "string",
+              tags: [{ name: "specialInputType", text: "unknown" }]
             }
           }
         }

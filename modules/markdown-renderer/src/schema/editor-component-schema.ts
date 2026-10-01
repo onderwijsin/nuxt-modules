@@ -94,6 +94,9 @@ export const SpecialInputMacroSchema = z.union([
   z.discriminatedUnion("type", [urlInput.macro, imageInput.macro, iconInput.macro])
 ]);
 
+/** Tag name used by the endpoint to identify a validated special editor input. */
+export const SPECIAL_INPUT_TAG_NAME = "specialInputType";
+
 /** Named JSDoc or editor hint transported in endpoint metadata. */
 export const EditorTagSchema = z.object({
   name: z.string(),
@@ -142,7 +145,7 @@ export const EditorComponentInputSchema = z.strictObject({
   props: z.record(z.string(), EditorPropertyInputSchema).optional()
 });
 
-/** Macro property fields after `input` and `deprecated` become editor tags. */
+/** Macro property fields after `input` and `deprecated` become endpoint tags. */
 const enrichmentFields = z.object({
   ...inputFields.omit({ input: true, deprecated: true }).shape,
   tags
@@ -202,7 +205,15 @@ export const EditorPropertyOutputSchema: z.ZodType<RecursiveOutput> = z
   })
   .superRefine((property, context) => {
     for (const [index, tag] of (property.tags ?? []).entries()) {
-      if (tag.name !== "editor" || !SpecialInputNameSchema.safeParse(tag.text).success) continue;
+      if (tag.name !== SPECIAL_INPUT_TAG_NAME) continue;
+      if (!SpecialInputNameSchema.safeParse(tag.text).success) {
+        context.addIssue({
+          code: "custom",
+          path: ["tags", index, "text"],
+          message: "Unknown special input type."
+        });
+        continue;
+      }
       if (
         specialInputs.safeParse({
           inputType: tag.text,
