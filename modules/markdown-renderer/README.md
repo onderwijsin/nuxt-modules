@@ -108,8 +108,16 @@ defineEditorComponentSchema({
   description: "A prominent page introduction.",
   type: "block",
   props: {
-    align: { values: ["left", "center"] },
     actionTo: { input: "url" },
+    image: { properties: { src: { input: "image" } } },
+    actions: {
+      items: {
+        properties: {
+          to: { input: "url" },
+          icon: { input: { type: "icon", collections: ["lucide"] } }
+        }
+      }
+    },
     legacyTone: { deprecated: { text: "Use tone instead." } }
   }
 });
@@ -121,6 +129,8 @@ defineProps<{
   align?: "left" | "center";
   /** Call-to-action destination. */
   actionTo?: string;
+  image?: { src: string; alt?: string };
+  actions?: { label: string; to: string; icon?: string }[];
   /** Legacy color name. */
   legacyTone?: string;
 }>();
@@ -141,24 +151,34 @@ Use the registered component name in Markdown and component sets:
 **Markdown** in the default slot. ::
 ```
 
-`nuxt-component-meta` infers prop types, descriptions, required/default state, literal unions, and
-JSDoc tags. The macro covers editor information that cannot be inferred reliably:
+`nuxt-component-meta` infers prop types, nested object fields, array items, descriptions,
+required/default state, literal unions, and JSDoc tags. The macro enriches these inferred fields
+without repeating their TypeScript types:
 
-| Field                                       | Purpose                                                         |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| `label`                                     | Human-facing label, distinct from the Markdown node name.       |
-| `description`                               | Help text shown while choosing a component.                     |
-| `type`                                      | Required insertion behavior: `"block"` or `"inline"`.           |
-| `deprecated`                                | `true` or migration guidance for the component.                 |
-| `props.<name>.values`                       | Explicit choices, particularly for imported union types.        |
-| `props.<name>.input`                        | `"image"` or `"url"` control for an underlying string prop.     |
-| `props.<name>.deprecated`                   | `true` or migration guidance for one prop.                      |
-| `props.<name>.type`                         | Explicit `string`, `number`, `boolean`, or `array` editor type. |
-| `props.<name>.description/default/required` | Overrides the corresponding inferred metadata.                  |
+| Field                                       | Purpose                                                                                                                |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `label`                                     | Human-facing label, distinct from the Markdown node name.                                                              |
+| `description`                               | Help text shown while choosing a component.                                                                            |
+| `type`                                      | Required insertion behavior: `"block"` or `"inline"`.                                                                  |
+| `deprecated`                                | `true`, a non-empty guidance string, or `{ text: string }`.                                                            |
+| `props.<name>.values`                       | Explicit choices, particularly for imported union types.                                                               |
+| `props.<name>.input`                        | `"image"`/`{ type: "image" }`, `"url"`/`{ type: "url" }`, or `{ type: "icon", collections: [...] }` for a string prop. |
+| `props.<name>.properties`                   | Overrides for fields of an inferred object prop.                                                                       |
+| `props.<name>.items`                        | Overrides for the inferred item of an array prop.                                                                      |
+| `props.<name>.deprecated`                   | `true`, a non-empty guidance string, or `{ text: string }`.                                                            |
+| `props.<name>.type`                         | Explicit `string`, `number`, `boolean`, `object`, or `array` editor type.                                              |
+| `props.<name>.description/default/required` | Overrides the corresponding inferred metadata.                                                                         |
 
 The macro translates `input` and `deprecated` to the standard tags consumed by the Directus
-extension. The lower-level `extendComponentMeta` macro remains available for metadata not covered by
-this convenience API.
+extension. Icon collections appear as `config.collections` on the resulting `editor` tag. The string
+and object forms are equivalent when an input requires no options. Only fields declared by the
+input's Zod config schema are accepted and carried to the tag's `config` object. The lower-level
+`extendComponentMeta` macro remains available for metadata not covered by this convenience API.
+Invalid macro fields, including misspelled nested fields or unsupported input controls, produce a
+build warning with the failing property path; that component's editor overrides are ignored until
+the schema is corrected. The `image`, `url`, and `icon` inputs require an inferred string prop,
+including at nested paths. An incompatible inferred type causes the metadata endpoint to report the
+component and property path as a validation error.
 
 ### Component sets
 

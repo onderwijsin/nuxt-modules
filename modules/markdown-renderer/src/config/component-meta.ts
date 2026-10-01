@@ -1,28 +1,61 @@
 import { fromEntries, isRecord, isString, toEntries } from "@onderwijsin/nuxt-module-utils/shared";
+import { useLogger } from "@nuxt/kit";
+import { z } from "zod";
 
-interface MetadataTag {
-  name: string;
-  text?: string;
-}
+import {
+  EditorComponentEnrichmentSchema,
+  EditorComponentInputSchema
+} from "../schema/editor-component-schema";
+import type {
+  EditorPropertyEnrichment,
+  EditorPropertyInput,
+  EditorTag
+} from "../schema/editor-component-schema";
 
-function resolveDeprecatedTag(value: unknown): MetadataTag | undefined {
+/**
+ * Converts macro deprecation guidance into the endpoint's standard tag.
+ * @param value Author-supplied deprecation marker or guidance.
+ * @returns Deprecated tag when the property is deprecated.
+ */
+function resolveDeprecatedTag(value: EditorPropertyInput["deprecated"]): EditorTag | undefined {
   if (value === true) return { name: "deprecated" };
-  if (!isRecord(value) || !isString(value.text)) return undefined;
-  return { name: "deprecated", text: value.text };
+  if (!value) return undefined;
+  return { name: "deprecated", text: isString(value) ? value : value.text };
 }
 
-function transformProperty(value: unknown): unknown {
-  if (!isRecord(value)) return value;
+/**
+ * Converts a shorthand or configured control into its endpoint editor tag.
+ * @param input Macro control declaration.
+ * @returns Editor tag with any control-specific configuration.
+ */
+function resolveEditorTag(input: EditorPropertyInput["input"]): EditorTag | undefined {
+  if (!input) return undefined;
+  if (isString(input)) return { name: "editor", text: input };
+  const { type, ...config } = input;
+  return { name: "editor", text: type, ...(Object.keys(config).length ? { config } : {}) };
+}
 
-  const { deprecated, input, ...metadata } = value;
+/**
+ * Converts one recursive macro property override to namespaced enrichment.
+ * @param value Validated macro property override.
+ * @returns Enrichment with editor and deprecation tags.
+ */
+function transformProperty(value: EditorPropertyInput): EditorPropertyEnrichment {
+  const { deprecated, input, properties, items, ...metadata } = value;
   const deprecatedTag = resolveDeprecatedTag(deprecated);
-  const tags = [
-    ...(input === "image" || input === "url" ? [{ name: "editor", text: input }] : []),
-    ...(deprecatedTag ? [deprecatedTag] : [])
-  ];
+  const editorTag = resolveEditorTag(input);
+  const tags = [...(editorTag ? [editorTag] : []), ...(deprecatedTag ? [deprecatedTag] : [])];
 
   return {
     ...metadata,
+    ...(properties
+      ? {
+          properties: fromEntries(
+            toEntries(properties).map(([name, prop]) => [name, transformProperty(prop)])
+          )
+        }
+      : {}),
+    ...(items ? { items: transformProperty(items) } : {}),
     ...(tags.length ? { tags } : {})
   };
 }
@@ -39,20 +72,28 @@ function transformProperty(value: unknown): unknown {
 export function transformMarkdownComponentMeta(
   extracted: Record<string, unknown> | unknown[]
 ): Record<string, unknown> {
-  if (!isRecord(extracted)) return { markdownRenderer: {} };
+  const parsed = EditorComponentInputSchema.safeParse(extracted);
+  if (!parsed.success) {
+    const label =
+      isRecord(extracted) && isString(extracted.label) ? ` ${JSON.stringify(extracted.label)}` : "";
+    useLogger("markdownRenderer").warn(
+      `Invalid defineEditorComponentSchema metadata${label}:\n${z.prettifyError(parsed.error)}`
+    );
+    return { markdownRenderer: {} };
+  }
 
-  const { deprecated, props, type, ...metadata } = extracted;
+  const { deprecated, props, type, ...metadata } = parsed.data;
   const deprecatedTag = resolveDeprecatedTag(deprecated);
-  const transformedProps = isRecord(props)
+  const transformedProps = props
     ? fromEntries(toEntries(props).map(([name, value]) => [name, transformProperty(value)]))
     : undefined;
 
   return {
-    markdownRenderer: {
+    markdownRenderer: EditorComponentEnrichmentSchema.parse({
       ...metadata,
-      ...(type === "block" || type === "inline" ? { nodeType: type } : {}),
+      nodeType: type,
       ...(transformedProps ? { props: transformedProps } : {}),
       ...(deprecatedTag ? { tags: [deprecatedTag] } : {})
-    }
+    })
   };
 }

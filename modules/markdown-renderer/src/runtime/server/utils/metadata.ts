@@ -5,31 +5,21 @@ import {
   isRecord,
   isString
 } from "@onderwijsin/nuxt-module-utils/shared";
+import { z } from "zod";
 
-interface EditorTag {
-  name: string;
-  text?: string;
-}
-
-interface EditorPropertyMetadata {
-  name: string;
-  type: "array" | "boolean" | "number" | "string";
-  description?: string;
-  required?: boolean;
-  default?: unknown;
-  values?: string[];
-  tags?: EditorTag[];
-}
-
-export interface EditorComponentMetadata {
-  name: string;
-  label: string;
-  description?: string;
-  nodeType: "block" | "inline";
-  props: Record<string, EditorPropertyMetadata>;
-  slots: string[];
-  tags?: EditorTag[];
-}
+import {
+  EditorComponentPartialEnrichmentSchema,
+  EditorComponentResponseSchema,
+  SpecialInputNameSchema,
+  specialInputs
+} from "../../../schema/editor-component-schema";
+import type {
+  EditorComponentPartialEnrichment,
+  EditorComponentOutput,
+  EditorPropertyEnrichment,
+  EditorPropertyOutput,
+  EditorTag
+} from "../../../schema/editor-component-schema";
 
 export interface EditorComponentSource {
   /** Name stored in Markdown and returned to the editor. */
@@ -47,7 +37,7 @@ export interface EditorComponentSource {
  * @param type TypeScript display type emitted by `nuxt-component-meta`.
  * @returns The closest Directus editor primitive type.
  */
-function resolveEditorType(type: unknown): EditorPropertyMetadata["type"] {
+function resolveEditorType(type: unknown): EditorPropertyOutput["type"] {
   if (!isString(type)) return "string";
   if (type.includes("[]") || type.includes("Array<")) return "array";
   if (type.includes("boolean")) return "boolean";
@@ -56,27 +46,79 @@ function resolveEditorType(type: unknown): EditorPropertyMetadata["type"] {
 }
 
 /**
+ * Reads enum members from both the array and numeric-keyed map emitted by component meta.
+ * @param schema Generated enum members.
+ * @returns Members in source order.
+ */
+function resolveEnumMembers(schema: unknown): unknown[] {
+  if (isArray(schema)) return schema;
+  return isRecord(schema) ? Object.values(schema) : [];
+}
+
+/**
+ * Builds the editor structure from vue-component-meta's expanded property schema.
+ * @param schema Generated property schema.
+ * @param custom Editor overrides for nested fields.
+ * @param path Property path used in validation errors.
+ * @returns The inferred object or array structure when available.
+ */
+function resolveStructure(
+  schema: unknown,
+  custom: EditorPropertyEnrichment | undefined,
+  path: string
+): Pick<EditorPropertyOutput, "type" | "properties" | "items"> | undefined {
+  if (!isRecord(schema)) return undefined;
+  if (schema.kind === "enum") {
+    const members = resolveEnumMembers(schema.schema).filter((member) => member !== "undefined");
+    return members.length === 1 ? resolveStructure(members[0], custom, path) : undefined;
+  }
+  if (schema.kind === "object" && isRecord(schema.schema)) {
+    const overrides = custom?.properties;
+    const properties = fromEntries(
+      Object.entries(schema.schema).flatMap(([name, value]) => {
+        const property = transformProperty(
+          value,
+          overrides?.[name],
+          name,
+          `${path}.properties.${name}`
+        );
+        return property ? [createPropertyEntry(property)] : [];
+      })
+    );
+    return { type: "object", properties };
+  }
+  if (schema.kind === "array" && isArray(schema.schema) && schema.schema.length) {
+    const itemSchema = schema.schema[0];
+    const item = transformProperty(
+      {
+        name: "item",
+        type: isRecord(itemSchema) ? itemSchema.type : itemSchema,
+        schema: itemSchema
+      },
+      custom?.items,
+      undefined,
+      `${path}.items`
+    );
+    return item ? { type: "array", items: item } : { type: "array" };
+  }
+  return undefined;
+}
+
+/**
  * Extracts string literal choices from vue-component-meta's enum schema.
  * @param schema Generated prop schema.
  * @returns String choices when the schema is a supported literal enum.
  */
 function resolveSchemaValues(schema: unknown): string[] | undefined {
-  if (!isRecord(schema) || schema.kind !== "enum" || !isArray(schema.schema)) return undefined;
+  if (!isRecord(schema) || schema.kind !== "enum") return undefined;
 
-  const values = schema.schema.flatMap((entry) =>
-    isRecord(entry) && entry.kind === "literal" && isString(entry.value) ? [entry.value] : []
-  );
-  return values.length ? values : undefined;
-}
-
-/**
- * Reads explicit editor choices declared through `defineEditorComponentSchema`.
- * @param value Custom values payload.
- * @returns The non-empty string choices, when valid.
- */
-function resolveCustomValues(value: unknown): string[] | undefined {
-  if (!isArray(value)) return undefined;
-  const values = value.filter(isString);
+  const values = resolveEnumMembers(schema.schema).flatMap((entry) => {
+    if (isRecord(entry) && entry.kind === "literal" && isString(entry.value)) {
+      return [entry.value];
+    }
+    if (isString(entry) && /^(['"]).*\1$/.test(entry)) return [entry.slice(1, -1)];
+    return [];
+  });
   return values.length ? values : undefined;
 }
 
@@ -108,20 +150,15 @@ function resolveTags(value: unknown): EditorTag[] | undefined {
 
   const tags = value.flatMap((tag) => {
     if (!isRecord(tag) || !isString(tag.name)) return [];
-    return [{ name: tag.name, ...(isString(tag.text) ? { text: tag.text } : {}) }];
+    return [
+      {
+        name: tag.name,
+        ...(isString(tag.text) ? { text: tag.text } : {}),
+        ...(isDefined(tag.config) ? { config: tag.config } : {})
+      }
+    ];
   });
   return tags.length ? tags : undefined;
-}
-
-/**
- * Returns a supported explicit editor type, leaving inference in charge for invalid values.
- * @param value Custom type override.
- * @returns The supported override when valid.
- */
-function resolveCustomType(value: unknown): EditorPropertyMetadata["type"] | undefined {
-  return value === "array" || value === "boolean" || value === "number" || value === "string"
-    ? value
-    : undefined;
 }
 
 /**
@@ -132,30 +169,53 @@ function resolveCustomType(value: unknown): EditorPropertyMetadata["type"] | und
  * TypeScript cannot reliably express for an editor, such as imported union values or a preferred
  * editor category for a complex prop.
  * @param value Inferred prop metadata.
- * @param customValue Namespaced editor override for the prop.
+ * @param custom Namespaced editor override for the prop.
+ * @param fallbackName Property name supplied by an object schema key.
+ * @param path Property path used in validation errors.
  * @returns The normalized editor prop, or nothing for malformed inferred metadata.
  */
 function transformProperty(
   value: unknown,
-  customValue: unknown
-): EditorPropertyMetadata | undefined {
-  if (!isRecord(value) || !isString(value.name)) return undefined;
+  custom: EditorPropertyEnrichment | undefined,
+  fallbackName?: string,
+  path?: string
+): EditorPropertyOutput | undefined {
+  if (!isRecord(value)) return undefined;
+  const name = isString(value.name) ? value.name : fallbackName;
+  if (!name) return undefined;
 
-  const custom = isRecord(customValue) ? customValue : {};
-  const description = isString(custom.description) ? custom.description : value.description;
-  const values = resolveCustomValues(custom.values) ?? resolveSchemaValues(value.schema);
+  const description = custom?.description ?? value.description;
+  const values = custom?.values ?? resolveSchemaValues(value.schema);
   const inferredType = resolveEditorType(value.type);
+  const propertyPath = path ?? name;
+  const structure = resolveStructure(value.schema, custom, propertyPath);
+  const sourceType = structure?.type ?? inferredType;
+  for (const tag of custom?.tags ?? []) {
+    if (tag.name !== "editor" || !SpecialInputNameSchema.safeParse(tag.text).success) continue;
+    if (
+      specialInputs.safeParse({ inputType: tag.text, propertyType: sourceType, config: tag.config })
+        .success
+    )
+      continue;
+    throw new Error(
+      `Invalid editor input ${JSON.stringify(tag.text)} for ${propertyPath}: inferred property type is ${JSON.stringify(sourceType)}.`
+    );
+  }
   const type =
-    resolveCustomType(custom.type) ??
+    custom?.type ??
+    structure?.type ??
     (values && inferredType !== "array" ? "string" : inferredType);
-  const tags = resolveTags(custom.tags) ?? resolveTags(value.tags);
-  const defaultValue = isDefined(custom.default) ? custom.default : value.default;
+  const tags = custom?.tags ?? resolveTags(value.tags);
+  const customDefault = custom?.default;
+  const defaultValue = isDefined(customDefault) ? customDefault : value.default;
   const required =
-    custom.required === true || (custom.required !== false && value.required === true);
+    custom?.required === true || (custom?.required !== false && value.required === true);
 
   return {
-    name: value.name,
+    name,
     type,
+    ...(structure?.properties ? { properties: structure.properties } : {}),
+    ...(structure?.items ? { items: structure.items } : {}),
     ...(isString(description) && description ? { description } : {}),
     ...(required ? { required: true } : {}),
     ...(isDefined(defaultValue) ? { default: resolveDefault(defaultValue) } : {}),
@@ -164,7 +224,7 @@ function transformProperty(
   };
 }
 
-function createPropertyEntry(property: EditorPropertyMetadata): [string, EditorPropertyMetadata] {
+function createPropertyEntry(property: EditorPropertyOutput): [string, EditorPropertyOutput] {
   return [property.name, property];
 }
 
@@ -173,8 +233,11 @@ function createPropertyEntry(property: EditorPropertyMetadata): [string, EditorP
  * @param meta Generated component metadata.
  * @returns The renderer-specific custom metadata object.
  */
-function resolveCustomComponentMetadata(meta: Record<string, unknown>): Record<string, unknown> {
-  return isRecord(meta.markdownRenderer) ? meta.markdownRenderer : {};
+function resolveCustomComponentMetadata(
+  meta: Record<string, unknown>
+): EditorComponentPartialEnrichment | undefined {
+  const parsed = EditorComponentPartialEnrichmentSchema.safeParse(meta.markdownRenderer);
+  return parsed.success ? parsed.data : undefined;
 }
 
 /**
@@ -194,23 +257,25 @@ function resolveCustomComponentMetadata(meta: Record<string, unknown>): Record<s
 export function createEditorComponentMetadata(
   registry: unknown,
   components: EditorComponentSource[]
-): EditorComponentMetadata[] {
+): EditorComponentOutput[] {
   if (!isRecord(registry)) return [];
 
-  return components.flatMap(({ name, componentName }) => {
+  const output = components.flatMap(({ name, componentName }) => {
     if (name === "Reference") return [];
 
     const component = registry[componentName];
     if (!isRecord(component) || !isRecord(component.meta)) return [];
 
     const custom = resolveCustomComponentMetadata(component.meta);
-    const customProps = isRecord(custom.props) ? custom.props : {};
+    const customProps = custom?.props;
     const props = isArray(component.meta.props)
       ? component.meta.props.flatMap((value) => {
           const propertyName = isRecord(value) && isString(value.name) ? value.name : undefined;
           const property = transformProperty(
             value,
-            propertyName ? customProps[propertyName] : undefined
+            propertyName ? customProps?.[propertyName] : undefined,
+            undefined,
+            `${name}.props.${propertyName ?? "unknown"}`
           );
           return property ? [createPropertyEntry(property)] : [];
         })
@@ -220,17 +285,10 @@ export function createEditorComponentMetadata(
           isRecord(slot) && isString(slot.name) ? [slot.name] : []
         )
       : [];
-    const label = isString(custom.label) ? custom.label : name;
-    const nodeType =
-      custom.nodeType === "block" || custom.nodeType === "inline"
-        ? custom.nodeType
-        : slots.length
-          ? "block"
-          : "inline";
-    const description = isString(custom.description)
-      ? custom.description
-      : component.meta.description;
-    const tags = resolveTags(custom.tags) ?? resolveTags(component.meta.tags);
+    const label = custom?.label ?? name;
+    const nodeType = custom?.nodeType ? custom.nodeType : slots.length ? "block" : "inline";
+    const description = custom?.description ?? component.meta.description;
+    const tags = custom?.tags ?? resolveTags(component.meta.tags);
 
     return [
       {
@@ -241,7 +299,14 @@ export function createEditorComponentMetadata(
         props: fromEntries(props),
         slots,
         ...(tags ? { tags } : {})
-      } satisfies EditorComponentMetadata
+      } satisfies EditorComponentOutput
     ];
   });
+  const parsed = EditorComponentResponseSchema.safeParse(output);
+  if (!parsed.success) {
+    throw new Error(
+      `Invalid Markdown editor component metadata:\n${z.prettifyError(parsed.error)}`
+    );
+  }
+  return parsed.data;
 }

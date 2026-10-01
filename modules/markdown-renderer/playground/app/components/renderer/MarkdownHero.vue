@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { defineEditorComponentSchema } from "#imports";
+import type { BadgeProps } from "@nuxt/ui";
 
 defineEditorComponentSchema({
   label: "Hero",
   description: "A prominent page introduction with an optional call to action.",
   type: "block",
   props: {
-    align: { values: ["left", "center"] },
-    actionTo: { input: "url" },
-    tone: { values: ["primary", "neutral"] }
+    image: { properties: { src: { input: "image" } } },
+    actions: { items: { properties: { to: { input: "url" } } } }
   }
 });
 
@@ -22,19 +22,18 @@ const props = withDefaults(
     description?: string;
     /** Horizontal content alignment. */
     align?: "left" | "center";
-    /** Optional call-to-action label. */
-    actionLabel?: string;
-    /** Optional call-to-action destination. */
-    actionTo?: string;
     /** Hero accent color. */
-    tone?: "primary" | "neutral";
-    /** Hero image. */
+    tone?: BadgeProps["color"];
+    /** Tags to render above the hero section. */
+    tags?: string[];
+    /** Optional hero image. */
     image?: {
       /** Image source URL. */
       src: string;
       /** Alternative text for the image. */
       alt?: string;
     };
+    /** Optional call-to-action buttons. */
     actions?: {
       /** Action label. */
       label: string;
@@ -65,12 +64,15 @@ const props = withDefaults(
     <div v-if="$slots.default" class="mt-6 text-toned">
       <slot />
     </div>
-    <UButton
-      v-if="props.actionLabel && props.actionTo"
-      class="mt-8"
-      :label="props.actionLabel"
-      :to="props.actionTo"
-      :color="props.tone"
-    />
+    <UFieldGroup v-if="props.actions?.length">
+      <UButton
+        v-for="action in props.actions"
+        :key="action.to"
+        class="mt-8"
+        :label="action.label"
+        :to="action.to"
+        :color="props.tone"
+      />
+    </UFieldGroup>
   </section>
 </template>

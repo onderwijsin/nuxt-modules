@@ -1,8 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const logger = vi.hoisted(() => ({ warn: vi.fn() }));
+vi.mock("@nuxt/kit", () => ({ useLogger: () => logger }));
 
 import { transformMarkdownComponentMeta } from "../src/config/component-meta";
 
 describe("Markdown component metadata macro", () => {
+  beforeEach(() => logger.warn.mockClear());
+
+  it("warns about invalid nested macro configuration instead of silently dropping it", () => {
+    expect(
+      transformMarkdownComponentMeta({
+        label: "Hero",
+        type: "block",
+        props: { actions: { items: { properties: { to: { imput: "url" } } } } }
+      })
+    ).toEqual({ markdownRenderer: {} });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid defineEditorComponentSchema metadata "Hero"')
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("props.actions.items.properties.to")
+    );
+  });
+
   it("namespaces the concise component metadata contract", () => {
     expect(
       transformMarkdownComponentMeta({
@@ -61,6 +82,113 @@ describe("Markdown component metadata macro", () => {
             description: "Selected items.",
             default: [],
             required: true
+          }
+        }
+      }
+    });
+  });
+
+  it("transforms editor controls recursively", () => {
+    expect(
+      transformMarkdownComponentMeta({
+        label: "Hero",
+        type: "block",
+        props: {
+          image: { properties: { src: { input: "image" } } },
+          actions: {
+            items: {
+              properties: {
+                to: { input: "url" },
+                icon: { input: { type: "icon", collections: ["lucide"] }, deprecated: true }
+              }
+            }
+          }
+        }
+      })
+    ).toMatchObject({
+      markdownRenderer: {
+        props: {
+          image: { properties: { src: { tags: [{ name: "editor", text: "image" }] } } },
+          actions: {
+            items: {
+              properties: {
+                to: { tags: [{ name: "editor", text: "url" }] },
+                icon: {
+                  tags: [
+                    { name: "editor", text: "icon", config: { collections: ["lucide"] } },
+                    { name: "deprecated" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+
+  it("warns when a configured input omits required options", () => {
+    expect(
+      transformMarkdownComponentMeta({
+        label: "Hero",
+        type: "block",
+        props: { icon: { input: { type: "icon" } } }
+      })
+    ).toEqual({ markdownRenderer: {} });
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("props.icon.input"));
+  });
+
+  it("treats bare and object forms of an unconfigured input equally", () => {
+    const result = transformMarkdownComponentMeta({
+      label: "Hero",
+      type: "block",
+      props: {
+        imageA: { input: "image" },
+        imageB: { input: { type: "image" } },
+        linkA: { input: "url" },
+        linkB: { input: { type: "url" } }
+      }
+    });
+
+    expect(result).toMatchObject({
+      markdownRenderer: {
+        props: {
+          imageA: { tags: [{ name: "editor", text: "image" }] },
+          imageB: { tags: [{ name: "editor", text: "image" }] },
+          linkA: { tags: [{ name: "editor", text: "url" }] },
+          linkB: { tags: [{ name: "editor", text: "url" }] }
+        }
+      }
+    });
+  });
+
+  it("rejects undeclared input configuration", () => {
+    expect(
+      transformMarkdownComponentMeta({
+        label: "Hero",
+        type: "block",
+        props: { image: { input: { type: "image", arbitrary: true } } }
+      })
+    ).toEqual({ markdownRenderer: {} });
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("props.image.input"));
+  });
+
+  it("turns string deprecation guidance into tags at component and nested prop level", () => {
+    expect(
+      transformMarkdownComponentMeta({
+        label: "Hero",
+        type: "block",
+        deprecated: "Use Banner instead.",
+        props: { image: { properties: { src: { deprecated: "Use assetId instead." } } } }
+      })
+    ).toMatchObject({
+      markdownRenderer: {
+        tags: [{ name: "deprecated", text: "Use Banner instead." }],
+        props: {
+          image: {
+            properties: {
+              src: { tags: [{ name: "deprecated", text: "Use assetId instead." }] }
+            }
           }
         }
       }
