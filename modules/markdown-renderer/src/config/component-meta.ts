@@ -33,7 +33,7 @@ function transformProperty(value: unknown): unknown {
  * `nuxt-component-meta` runs this transform while extracting the compiler macro. The public
  * `type`, `input`, and `deprecated` conveniences become the stable Directus metadata contract, so
  * the authoring API does not expose its `markdownRenderer` namespace or low-level tag structure.
- * @param extracted Statically extracted argument passed to `extendMarkdownComponent`.
+ * @param extracted Statically extracted argument passed to `defineEditorComponentSchema`.
  * @returns Namespaced metadata understood by the Markdown renderer metadata endpoint.
  */
 export function transformMarkdownComponentMeta(

@@ -34,12 +34,12 @@ export interface MarkdownComponentMetadata {
 }
 
 /**
- * Adds Markdown editor metadata to a Vue component.
+ * Defines editor metadata for a Markdown component.
  *
  * This is a compiler macro registered with `nuxt-component-meta`; its call is extracted at build
  * time. The implementation is intentionally inert in case tooling evaluates the module directly.
  * @param metadata Markdown editor metadata extracted during the Nuxt build.
  */
-export function extendMarkdownComponent(metadata: MarkdownComponentMetadata): void {
+export function defineEditorComponentSchema(metadata: MarkdownComponentMetadata): void {
   void metadata;
 }

@@ -50,8 +50,8 @@ The endpoint is public and allows every browser origin by default. CORS is not a
 `corsOrigin` with one exact origin or an origin array when deployment policy requires a narrower
 allowlist.
 
-For editor-only metadata, import and call `extendMarkdownComponent` from `#imports` in the renderer
-component. Use `label` for the human-facing label, `type: "block" | "inline"` for insertion
+For editor-only metadata, import and call `defineEditorComponentSchema` from `#imports` in the
+renderer component. Use `label` for the human-facing label, `type: "block" | "inline"` for insertion
 behavior, and `props.<name>.values` for choices that cannot be expanded from an imported TypeScript
 type. Use `input: "image" | "url"` for richer Directus controls and
 `deprecated: true | { text: string }` for component or prop deprecation hints. Explicit complex-prop

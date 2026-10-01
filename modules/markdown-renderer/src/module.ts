@@ -55,7 +55,7 @@ export default defineNuxtModule<ModuleOptions>({
           exclude: ["@comark/vue"],
           extendMetaFunctions: [
             { name: "extendComponentMeta" },
-            { name: "extendMarkdownComponent", transform: transformMarkdownComponentMeta }
+            { name: "defineEditorComponentSchema", transform: transformMarkdownComponentMeta }
           ]
         }
       }
@@ -123,8 +123,8 @@ export default createComponentMetadataHandler(
     nuxt.options.alias["#markdown-renderer/reference-resolver"] = referenceResolver;
     transpileRuntime(nuxt, runtimeDir);
     addImports({
-      name: "extendMarkdownComponent",
-      from: resolver.resolve(runtimeDir, "app", "utils", "extend-markdown-component")
+      name: "defineEditorComponentSchema",
+      from: resolver.resolve(runtimeDir, "app", "utils", "define-editor-component-schema")
     });
     addComponent({
       name: "MarkdownRenderer",

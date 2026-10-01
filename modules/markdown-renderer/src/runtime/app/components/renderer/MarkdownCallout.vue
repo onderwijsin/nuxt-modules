@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { AlertProps } from "@nuxt/ui";
-import { extendMarkdownComponent } from "../../utils/extend-markdown-component";
+import { defineEditorComponentSchema } from "../../utils/define-editor-component-schema";
 
-extendMarkdownComponent({
+defineEditorComponentSchema({
   label: "Callout",
   description: "A component used to highlight important information.",
   type: "block",

@@ -97,13 +97,13 @@ Place Vue files directly in `app/components/<componentsDir>/`. Nested files are 
 owns filename resolution and extension support; a consumer file with the same registered name
 replaces a built-in component.
 
-This `MarkdownHero.vue` example uses the typed `extendMarkdownComponent` compiler macro:
+This `MarkdownHero.vue` example uses the typed `defineEditorComponentSchema` compiler macro:
 
 ```vue
 <script setup lang="ts">
-import { extendMarkdownComponent } from "#imports";
+import { defineEditorComponentSchema } from "#imports";
 
-extendMarkdownComponent({
+defineEditorComponentSchema({
   label: "Hero",
   description: "A prominent page introduction.",
   type: "block",

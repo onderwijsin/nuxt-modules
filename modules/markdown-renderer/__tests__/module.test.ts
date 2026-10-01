@@ -51,7 +51,7 @@ describe("markdown renderer module", () => {
           exclude: ["@comark/vue"],
           extendMetaFunctions: [
             { name: "extendComponentMeta" },
-            { name: "extendMarkdownComponent", transform: expect.any(Function) }
+            { name: "defineEditorComponentSchema", transform: expect.any(Function) }
           ]
         }
       }
@@ -76,8 +76,8 @@ describe("markdown renderer module", () => {
       filePath: "./runtime/app/components/MarkdownRenderer.vue"
     });
     expect(kit.addImports).toHaveBeenCalledWith({
-      name: "extendMarkdownComponent",
-      from: "./runtime/app/utils/extend-markdown-component"
+      name: "defineEditorComponentSchema",
+      from: "./runtime/app/utils/define-editor-component-schema"
     });
     expect(kit.addComponentsDir).toHaveBeenCalledWith(
       expect.objectContaining({ path: "./runtime/app/components/renderer", priority: 0 })

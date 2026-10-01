@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { extendMarkdownComponent } from "#imports";
+import { defineEditorComponentSchema } from "#imports";
 
-extendMarkdownComponent({
+defineEditorComponentSchema({
   label: "Hero",
   description: "A consumer-defined page introduction.",
   type: "block",

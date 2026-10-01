@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { extendMarkdownComponent } from "#imports";
+import { defineEditorComponentSchema } from "#imports";
 
-extendMarkdownComponent({
+defineEditorComponentSchema({
   label: "Hero",
   description: "A prominent page introduction with an optional call to action.",
   type: "block",
@@ -35,6 +35,14 @@ const props = withDefaults(
       /** Alternative text for the image. */
       alt?: string;
     };
+    actions?: {
+      /** Action label. */
+      label: string;
+      /** Action destination URL. */
+      to: string;
+      /** Action icon. */
+      icon?: string;
+    }[];
   }>(),
   { align: "left", tone: "primary" }
 );

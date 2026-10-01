@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ButtonProps } from "@nuxt/ui";
-import { extendMarkdownComponent } from "../../utils/extend-markdown-component";
+import { defineEditorComponentSchema } from "../../utils/define-editor-component-schema";
 
-extendMarkdownComponent({
+defineEditorComponentSchema({
   label: "Button",
   description: "A clickable button component.",
   type: "inline",
