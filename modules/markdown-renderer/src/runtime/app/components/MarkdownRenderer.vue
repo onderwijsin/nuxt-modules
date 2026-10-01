@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import type { ComarkPlugin } from "comark";
 
 import { resolveRendererComponent } from "#markdown-renderer/manifest";
 
@@ -8,6 +9,8 @@ const props = defineProps<{
   value?: string;
   /** Optional configured component set that constrains custom components. */
   componentSet?: string;
+  /** Optional array of plugins to enhance the Markdown rendering. */
+  plugins?: ComarkPlugin[];
 }>();
 
 const componentsManifest = computed(
@@ -16,5 +19,15 @@ const componentsManifest = computed(
 </script>
 
 <template>
-  <Markdown :value="value" :components-manifest="componentsManifest" />
+  <Markdown :value="value" :components-manifest="componentsManifest" :plugins="plugins" />
 </template>
+
+<style lang="postcss">
+html.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+</style>

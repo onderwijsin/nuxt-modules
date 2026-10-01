@@ -13,6 +13,16 @@ describe("renderer component manifest", () => {
     expect(loadHero).toHaveBeenCalledOnce();
   });
 
+  it("resolves Comark kebab-case component names", async () => {
+    const loadButton = vi.fn(async () => ({ default: "button" }));
+    const manifest = createRendererManifest({ MarkdownButton: loadButton }, {});
+
+    await expect(manifest.resolveRendererComponent("markdown-button")).resolves.toEqual({
+      default: "button"
+    });
+    expect(loadButton).toHaveBeenCalledOnce();
+  });
+
   it("only resolves components belonging to the selected set", () => {
     const manifest = createRendererManifest(
       {

@@ -1,6 +1,18 @@
 type ComponentLoader = () => Promise<unknown>;
 
 /**
+ * Converts Comark's kebab-case node names to the PascalCase names used by Nuxt's component registry.
+ * @param name Component name emitted by Comark.
+ * @returns The matching renderer component name.
+ */
+function resolveComponentName(name: string): string {
+  return name
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+}
+
+/**
  * Creates the runtime resolver around build-time generated lazy component imports.
  * @param componentLoaders Lazy imports keyed by renderer component name.
  * @param componentSets Configured component allowlists.
@@ -14,7 +26,7 @@ export function createRendererManifest(
     componentSets,
     rendererComponentNames: Object.keys(componentLoaders),
     resolveRendererComponent(name: string, componentSet?: string) {
-      const normalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+      const normalizedName = resolveComponentName(name);
       const allowedComponents = componentSet ? componentSets[componentSet] : undefined;
 
       if (componentSet && (!allowedComponents || !allowedComponents.includes(normalizedName))) {

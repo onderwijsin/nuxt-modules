@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
   markdownRenderer: {
     resolveReferencePath: "~/utils/resolveReferencePath",
-    componentSets: { demo: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"] }
+    componentSets: { demo: ["MarkdownButton", "MarkdownCallout", "MarkdownHero", "Reference"] }
   },
   appConfig: { packageName }
 });
