@@ -61,9 +61,10 @@ required state are also supported. Object fields appear under `properties`, and 
 under `items`; use those same keys in the macro for nested overrides such as
 `props.image.properties.src.input: "image"` or `props.actions.items.properties.to.input: "url"`.
 These special inputs require an inferred string prop; incompatible types cause the metadata endpoint
-to report the component and property path. Ordinary prop types, nested structure, JSDoc, defaults,
-literal unions, and tags remain inferred. Invalid macro configuration produces a build warning with
-the nested field path and is ignored for that component until corrected.
+to report the component and property path. The endpoint emits them as `specialInputType` tags.
+Ordinary prop types, nested structure, JSDoc, defaults, literal unions, and tags remain inferred.
+Invalid macro configuration produces a build warning with the nested field path and is ignored for
+that component until corrected.
 
 Use the registered component name in MDC, for example:
 

@@ -1,5 +1,12 @@
 <script setup lang="ts">
-const value = `
+import { computed } from "vue";
+import { useFetch } from "#imports";
+
+const { data, error } = useFetch<{ data: { editor: string }[] }>(
+  "http://localhost:8055/items/test?fields=editor&limit=1"
+);
+
+const fallback = `
 Paragraph with **bold** and *italic* and ~~strike~~ and \`code\` and a [link](https://google.com).
 
 # Heading 1
@@ -27,7 +34,7 @@ Paragraph with **bold** and *italic* and ~~strike~~ and \`code\` and a [link](ht
 
 A (self) reference: :Reference{collection="test" item="a0d458cb-639c-4ef1-905b-fc7fc38d17ae" label="a0d458cb-639c-4ef1-905b-fc7fc38d17ae" :data='{"id":"a0d458cb-639c-4ef1-905b-fc7fc38d17ae"}'}
 
-![](/assets/4b4849c5-fdcf-4522-b090-adb9530ff526)
+![Alt text](/assets/4b4849c5-fdcf-4522-b090-adb9530ff526)
 
 ---
 
@@ -44,10 +51,13 @@ Some very important information
 
 ::
 `;
+
+const value = computed(() => data.value?.data[0]?.editor ?? fallback);
 </script>
 
 <template>
   <UContainer class="py-10">
+    <pre>{{ error }}</pre>
     <MarkdownRenderer component-set="demo" :value="value" />
   </UContainer>
 </template>
