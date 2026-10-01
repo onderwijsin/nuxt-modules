@@ -53,10 +53,17 @@ allowlist.
 For editor-only metadata, import and call `defineEditorComponentSchema` from `#imports` in the
 renderer component. Use `label` for the human-facing label, `type: "block" | "inline"` for insertion
 behavior, and `props.<name>.values` for choices that cannot be expanded from an imported TypeScript
-type. Use `input: "image" | "url"` for richer Directus controls and
-`deprecated: true | { text: string }` for component or prop deprecation hints. Explicit complex-prop
-`type`, descriptions, defaults, or required state are also supported. Ordinary prop types, JSDoc,
-defaults, literal unions, and tags remain inferred.
+type. Use `input: "image" | "url"`, their equivalent object forms (`{ type: "image" }` and
+`{ type: "url" }`), or `input: { type: "icon", collections: ["lucide"] }` for richer Directus
+controls and `deprecated: true | string | { text: string }` for component or prop deprecation hints.
+Guidance strings must be non-empty. Explicit complex-prop `type`, descriptions, defaults, or
+required state are also supported. Object fields appear under `properties`, and array item fields
+under `items`; use those same keys in the macro for nested overrides such as
+`props.image.properties.src.input: "image"` or `props.actions.items.properties.to.input: "url"`.
+These special inputs require an inferred string prop; incompatible types cause the metadata endpoint
+to report the component and property path. Ordinary prop types, nested structure, JSDoc, defaults,
+literal unions, and tags remain inferred. Invalid macro configuration produces a build warning with
+the nested field path and is ignored for that component until corrected.
 
 Use the registered component name in MDC, for example:
 

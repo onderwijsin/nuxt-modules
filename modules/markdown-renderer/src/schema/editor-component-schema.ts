@@ -31,7 +31,7 @@ function defineSpecialInput<
   const Name extends string,
   const Property extends z.infer<typeof propertyType>,
   Config extends z.ZodRawShape
->(definition: { inputType: Name; propertyType: Property; config?: z.ZodObject<Config> }) {
+>(definition: { inputType: Name; propertyType: Property; config: z.ZodObject<Config> }) {
   const { inputType, propertyType: supportedType, config } = definition;
   const nameSchema = z.literal(inputType);
   const canUseShorthand = config?.safeParse({}).success;
@@ -54,12 +54,14 @@ function defineSpecialInput<
 /** URL editor control, with optional empty configuration. */
 const urlInput = defineSpecialInput({
   inputType: "url",
-  propertyType: "string"
+  propertyType: "string",
+  config: z.strictObject({})
 });
 /** Image editor control, with optional empty configuration. */
 const imageInput = defineSpecialInput({
   inputType: "image",
-  propertyType: "string"
+  propertyType: "string",
+  config: z.strictObject({})
 });
 /** Icon editor control, requiring at least one Iconify collection. */
 const iconInput = defineSpecialInput({

@@ -7,7 +7,7 @@ defineEditorComponentSchema({
   description: "A prominent page introduction with an optional call to action.",
   type: "block",
   props: {
-    image: { properties: { src: { input: "image" } } },
+    image: { properties: { src: { input: { type: "image" } } } },
     actions: { items: { properties: { to: { input: "url" } } } }
   }
 });
