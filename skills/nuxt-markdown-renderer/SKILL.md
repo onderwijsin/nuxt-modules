@@ -72,7 +72,9 @@ path. The endpoint emits them as `specialInputType` tags. Ordinary prop types, n
 JSDoc, defaults, literal unions, and tags remain inferred. Invalid macro configuration produces a
 build warning with the nested field path and is ignored for that component until corrected. Use
 `properties` at the macro's top level and for nested object fields. The metadata endpoint still
-returns component fields under `props`.
+returns component fields under `props`. Built-in components retain JSDoc descriptions and nested
+prop fields in the generated metadata; the module reads their generated TypeScript declarations for
+inference and their compiled Vue files for macro metadata.
 
 Use the registered component name in MDC, for example:
 

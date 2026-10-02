@@ -1,1 +1,3 @@
-- [ ] Expand button and callout components props
+- [x] Expand button and callout components props
+- [ ] Intercept video via comark plugin
+- [ ] Intercept image via comark plugin

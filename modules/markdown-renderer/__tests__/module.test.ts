@@ -61,7 +61,8 @@ describe("markdown renderer module", () => {
   it("registers the generated manifest, components, and static metadata endpoint", async () => {
     const nuxt = {
       options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
-      hook: vi.fn()
+      hook: vi.fn(),
+      hooks: { addHooks: vi.fn() }
     };
     await setupModule({}, nuxt);
 
@@ -118,7 +119,8 @@ describe("markdown renderer module", () => {
   it("serializes configured metadata CORS origins", async () => {
     const nuxt = {
       options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
-      hook: vi.fn()
+      hook: vi.fn(),
+      hooks: { addHooks: vi.fn() }
     };
 
     await setupModule({ corsOrigin: "https://directus.example.com" }, nuxt);
@@ -130,7 +132,8 @@ describe("markdown renderer module", () => {
   it("resolves a configured reference resolver through Nuxt Kit", async () => {
     const nuxt = {
       options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
-      hook: vi.fn()
+      hook: vi.fn(),
+      hooks: { addHooks: vi.fn() }
     };
 
     await setupModule({ resolveReferencePath: "~/utils/reference" }, nuxt);

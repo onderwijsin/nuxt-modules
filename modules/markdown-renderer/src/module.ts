@@ -14,6 +14,7 @@ import {
   useLogger
 } from "@nuxt/kit";
 import type { ModuleDependencies } from "@nuxt/schema";
+import type { ComponentMetaParserOptions } from "nuxt-component-meta";
 import {
   moduleDependenciesWhenEnabled,
   moduleSetup,
@@ -28,6 +29,7 @@ import {
   mergeRendererComponents,
   selectRendererComponents
 } from "./config/components";
+import { useBuiltInComponentDeclarations } from "./config/built-in-component-meta";
 import type { RendererComponent } from "./config/components";
 import { transformMarkdownComponentMeta } from "./config/component-meta";
 import { markdownRendererOptionsSchema } from "./config/options.schema";
@@ -76,6 +78,12 @@ export default defineNuxtModule<ModuleOptions>({
     if (!isEnabled()) return;
 
     const builtInDirectory = resolver.resolve(runtimeDir, "app", "components", "renderer");
+    const componentMetaHooks = {
+      "component-meta:extend": (parserOptions: ComponentMetaParserOptions) => {
+        useBuiltInComponentDeclarations(parserOptions, builtInDirectory);
+      }
+    };
+    nuxt.hooks.addHooks(componentMetaHooks);
     const consumerDirectory = resolve(nuxt.options.srcDir, "components", options.componentsDir);
     const consumerDirectoryExists = await findPath(consumerDirectory, {}, "dir");
     let components: RendererComponent[] = [];

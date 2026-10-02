@@ -24,10 +24,13 @@ contract, while `nuxt-component-meta` extracts its call at build time.
 such as `input` and `deprecated` to namespaced tags. Invalid macro input is reported through a build
 warning with Zod's nested field path, then its overrides are omitted. The generated
 `nuxt-component-meta` registry also contains Vue prop types, nested schemas, defaults, and JSDoc. On
-the server, `src/runtime/server/utils/metadata.ts` recursively merges that inferred structure with
-the namespaced enrichment and validates the resulting editor schema. Partial namespaced metadata
-from `extendComponentMeta` remains supported. The special input definitions specify both their names
-and supported inferred property types, plus any required per-input configuration. The server checks
+module builds, `src/config/built-in-component-meta.ts` points metadata parsing at each built-in
+component's adjacent TypeScript declaration and adds the compiled Vue script for macro extraction.
+This keeps type inference and macro metadata available from a published package. On the server,
+`src/runtime/server/utils/metadata.ts` recursively merges that inferred structure with the
+namespaced enrichment and validates the resulting editor schema. Partial namespaced metadata from
+`extendComponentMeta` remains supported. The special input definitions specify both their names and
+supported inferred property types, plus any required per-input configuration. The server checks
 these before applying a type override. Configured inputs are carried through the `specialInputType`
 tag's `config` field in the endpoint output. `defineSpecialInput` derives the endpoint and macro
 object schemas from each control's strict config schema, and the transformer forwards those
