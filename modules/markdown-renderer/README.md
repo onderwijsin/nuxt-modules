@@ -33,6 +33,14 @@ export default defineNuxtConfig({
 });
 ```
 
+Import the module stylesheet in the consuming application's main CSS file after `@nuxt/ui`:
+
+```css
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "@onderwijsin/nuxt-markdown-renderer";
+```
+
 ## Render Markdown
 
 `MarkdownRenderer` accepts the Markdown source and an optional named component set:

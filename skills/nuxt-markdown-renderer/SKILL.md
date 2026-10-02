@@ -15,6 +15,14 @@ export default defineNuxtConfig({
 });
 ```
 
+In the consuming application's main CSS file, import the module stylesheet:
+
+```css
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "@onderwijsin/nuxt-markdown-renderer";
+```
+
 ## Component
 
 ```vue
