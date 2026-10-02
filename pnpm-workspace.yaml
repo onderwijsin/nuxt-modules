@@ -3,6 +3,7 @@ allowBuilds:
   "@sentry/cli": true
   "@tailwindcss/oxide": true
   esbuild: true
+  pnpm: true
   sharp: true
   unrs-resolver: true
   vue-demi: true
@@ -72,6 +73,13 @@ catalog:
   "@iconify-json/lucide": 1.2.121
   regexparam: 3.0.0
   wrangler: 4.120.0
+  "@comark/nuxt": 0.7.0
+  "@comark/vue": 0.7.0
+  nuxt-component-meta: 0.18.0
+  add: 2.0.9
+  "@shikijs/themes": 4.4.3
+  comark: 0.7.0
+  shiki: 4.4.3
 
 packages:
   - packages/*

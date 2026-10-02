@@ -12,6 +12,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 | [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)                   | Type-safe static text tokens with a Vue I18n-like `$t` API.                                    |
 | [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md)     | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
 | [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)             | Nuxt module for rendering Loops parsed LMX email content.                                      |
+| [`@onderwijsin/nuxt-markdown-renderer`](modules/markdown-renderer/README.md)       | Render Markdown and MDC with lazy application components and Directus metadata.                |
 | [`@onderwijsin/nuxt-theme-customizer`](modules/theme-customizer/README.md)         | Runtime theme picker and custom color editor for Nuxt UI.                                      |
 | [`@onderwijsin/nuxt-device`](modules/device/README.md)                             | SSR-aware device, browser, operating-system, and crawler detection.                            |
 | [`@onderwijsin/nuxt-webmanifest`](modules/webmanifest/README.md)                   | Zero-config rich web app manifest generation with Cloudinary and IPX icons.                    |

@@ -1,0 +1,19 @@
+{
+  "name": "markdown-renderer-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/image": "catalog:",
+    "@onderwijsin/nuxt-markdown-renderer": "workspace:*",
+    "@tailwindcss/typography": "catalog:",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*",
+    "tailwindcss": "catalog:",
+    "vue": "catalog:"
+  }
+}

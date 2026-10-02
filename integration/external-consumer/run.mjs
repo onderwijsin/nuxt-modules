@@ -245,6 +245,11 @@ async function runFocusedAssertions(port, profile, directusMock) {
     const page = await (await waitForResponse(`http://127.0.0.1:${port}/sanity/${layer}`)).text();
     if (!page.includes(`data-sanity="${layer}"`) || !page.includes(layer))
       throw new Error(`External consumer page assertion failed for layer ${layer}.`);
+    if (
+      layer === "markdown-renderer" &&
+      !page.includes('src="https://media.example.com/assets/clip.mp4"')
+    )
+      throw new Error("Packed Markdown renderer did not prefix the relative video source.");
   }
   if (profile.modules.includes("@onderwijsin/nuxt-directus-client") && !directusDisabled) {
     const response = await fetch(`http://127.0.0.1:${port}/auth-state`, {
