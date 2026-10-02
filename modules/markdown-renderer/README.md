@@ -159,9 +159,9 @@ Use the registered component name in Markdown and component sets:
 required/default state, literal unions, and JSDoc tags. The macro enriches these inferred fields
 without repeating their TypeScript types:
 
-For the module's built-in components, metadata inference reads the adjacent generated TypeScript
-declaration, while the macro is extracted from the compiled Vue component. This preserves JSDoc and
-nested prop structure in installed applications as well as the module playground.
+For the module's built-in components, metadata inference reads the packaged typed Vue source. This
+preserves JSDoc, defaults, slots, nested prop structure, and macro tags in installed applications as
+well as the module playground.
 
 | Field                                            | Purpose                                                                                                                |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |

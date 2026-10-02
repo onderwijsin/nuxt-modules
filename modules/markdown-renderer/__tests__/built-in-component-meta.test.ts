@@ -3,22 +3,23 @@ import type { ComponentMetaParserOptions } from "nuxt-component-meta";
 import { getComponentMeta } from "nuxt-component-meta/parser";
 import { describe, expect, it } from "vitest";
 
-import { useBuiltInComponentDeclarations } from "../src/config/built-in-component-meta";
+import { useBuiltInComponentSources } from "../src/config/built-in-component-meta";
 import { transformMarkdownComponentMeta } from "../src/config/component-meta";
 import { createEditorComponentMetadata } from "../src/runtime/server/utils/metadata";
 
 const source = resolve(import.meta.dirname, "fixtures/component-meta/MarkdownExample.vue");
+const compiled = resolve(import.meta.dirname, "fixtures/compiled/MarkdownExample.vue");
 
 describe("built-in component metadata", () => {
-  it("infers props from the declaration and extracts the macro from the built Vue file", () => {
+  it("infers props, defaults, slots, and macro tags from the packaged typed source", () => {
     const options: ComponentMetaParserOptions = {
       components: [
         {
           pascalName: "MarkdownExample",
           kebabName: "markdown-example",
           export: "default",
-          filePath: source,
-          shortPath: source,
+          filePath: compiled,
+          shortPath: compiled,
           chunkName: "markdown-example",
           prefetch: false,
           preload: false
@@ -29,14 +30,13 @@ describe("built-in component metadata", () => {
       metaFields: { type: true, props: true, slots: true, events: true, exposed: true },
       transformers: []
     };
-    useBuiltInComponentDeclarations(options, dirname(source));
+    useBuiltInComponentSources(options, dirname(compiled), dirname(source));
 
-    const declaration = options.components[0]?.filePath;
-    expect(declaration).toBe(source.replace(/\.vue$/, ".vue.d.ts"));
-    if (!declaration) throw new Error("Missing metadata declaration path.");
-    const meta = getComponentMeta(declaration, {
+    const metadataSource = options.components[0]?.filePath;
+    expect(metadataSource).toBe(source);
+    if (!metadataSource) throw new Error("Missing metadata source path.");
+    const meta = getComponentMeta(metadataSource, {
       rootDir: resolve(import.meta.dirname, ".."),
-      transformers: options.transformers,
       extendMetaFunctions: [
         { name: "defineEditorComponentSchema", transform: transformMarkdownComponentMeta }
       ]
@@ -56,7 +56,10 @@ describe("built-in component metadata", () => {
     ]);
     expect(output[0]).toMatchObject({
       label: "Example",
+      nodeType: "block",
+      slots: ["description"],
       props: {
+        tone: { description: "Example tone.", default: "primary" },
         actions: {
           description: "Optional actions.",
           items: {
@@ -65,6 +68,13 @@ describe("built-in component metadata", () => {
               to: {
                 description: "Action destination.",
                 tags: [{ name: "specialInputType", text: "url" }]
+              },
+              icon: {
+                description: "Action icon.",
+                tags: [
+                  { name: "specialInputType", text: "icon", config: { collections: ["lucide"] } },
+                  { name: "deprecated" }
+                ]
               }
             }
           }

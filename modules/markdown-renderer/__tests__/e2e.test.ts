@@ -9,12 +9,16 @@ describe("markdown renderer module", async () => {
       {
         name: "MarkdownButton",
         label: "Button",
-        nodeType: "inline",
+        nodeType: "block",
         props: {
+          label: { description: "Label displayed inside the button." },
           color: {
             values: ["primary", "secondary", "success", "info", "warning", "error", "neutral"]
           },
-          variant: { values: ["solid", "outline", "soft", "subtle", "ghost", "link"] }
+          variant: { values: ["solid", "outline", "soft", "subtle", "ghost", "link"] },
+          icon: {
+            tags: [{ name: "specialInputType", text: "icon", config: { collections: ["lucide"] } }]
+          }
         }
       },
       {
@@ -24,8 +28,26 @@ describe("markdown renderer module", async () => {
         props: {
           color: {
             values: ["primary", "secondary", "success", "info", "warning", "error", "neutral"]
+          },
+          actions: {
+            items: {
+              properties: {
+                label: { description: "Label displayed inside the button." },
+                icon: {
+                  tags: [
+                    {
+                      name: "specialInputType",
+                      text: "icon",
+                      config: { collections: ["lucide"] }
+                    },
+                    { name: "deprecated" }
+                  ]
+                }
+              }
+            }
           }
-        }
+        },
+        slots: ["description"]
       },
       {
         name: "MarkdownHero",

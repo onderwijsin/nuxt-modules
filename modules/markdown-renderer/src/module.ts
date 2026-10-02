@@ -29,7 +29,7 @@ import {
   mergeRendererComponents,
   selectRendererComponents
 } from "./config/components";
-import { useBuiltInComponentDeclarations } from "./config/built-in-component-meta";
+import { useBuiltInComponentSources } from "./config/built-in-component-meta";
 import type { RendererComponent } from "./config/components";
 import { transformMarkdownComponentMeta } from "./config/component-meta";
 import { markdownRendererOptionsSchema } from "./config/options.schema";
@@ -78,9 +78,10 @@ export default defineNuxtModule<ModuleOptions>({
     if (!isEnabled()) return;
 
     const builtInDirectory = resolver.resolve(runtimeDir, "app", "components", "renderer");
+    const metadataSourceDirectory = resolver.resolve("./metadata/runtime/app/components/renderer");
     const componentMetaHooks = {
       "component-meta:extend": (parserOptions: ComponentMetaParserOptions) => {
-        useBuiltInComponentDeclarations(parserOptions, builtInDirectory);
+        useBuiltInComponentSources(parserOptions, builtInDirectory, metadataSourceDirectory);
       }
     };
     nuxt.hooks.addHooks(componentMetaHooks);

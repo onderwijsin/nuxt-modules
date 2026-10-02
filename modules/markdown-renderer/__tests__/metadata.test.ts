@@ -159,8 +159,8 @@ describe("Markdown editor component metadata", () => {
                     0: "undefined",
                     1: {
                       kind: "array",
-                      schema: [
-                        {
+                      schema: {
+                        0: {
                           kind: "object",
                           type: "Action",
                           schema: {
@@ -175,7 +175,7 @@ describe("Markdown editor component metadata", () => {
                             }
                           }
                         }
-                      ]
+                      }
                     }
                   }
                 }

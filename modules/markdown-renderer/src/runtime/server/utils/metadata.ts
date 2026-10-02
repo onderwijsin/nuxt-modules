@@ -47,7 +47,7 @@ function resolveEditorType(type: unknown): EditorPropertyOutput["type"] {
 }
 
 /**
- * Reads enum members from both the array and numeric-keyed map emitted by component meta.
+ * Reads schema members from both the array and numeric-keyed map emitted by component meta.
  * @param schema Generated enum members.
  * @returns Members in source order.
  */
@@ -88,8 +88,9 @@ function resolveStructure(
     );
     return { type: "object", properties };
   }
-  if (schema.kind === "array" && isArray(schema.schema) && schema.schema.length) {
-    const itemSchema = schema.schema[0];
+  if (schema.kind === "array") {
+    const itemSchema = resolveEnumMembers(schema.schema)[0];
+    if (!isDefined(itemSchema)) return undefined;
     const item = transformProperty(
       {
         name: "item",
