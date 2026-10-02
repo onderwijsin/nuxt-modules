@@ -48,7 +48,7 @@ describe("markdown renderer module", () => {
       "nuxt-component-meta": {
         version: ">=0.18.0",
         defaults: {
-          exclude: ["@comark/vue"],
+          exclude: ["@comark/vue", "@unhead/schema-org"],
           extendMetaFunctions: [
             { name: "extendComponentMeta" },
             { name: "defineEditorComponentSchema", transform: expect.any(Function) }

@@ -19,6 +19,9 @@ components, and component metadata for the Directus Markdown editor.
 - Node.js 24 or newer
 - Nuxt UI 4 and Comark are installed automatically as Nuxt module dependencies.
 
+The renderer can be used alongside `@onderwijsin/nuxt-webmanifest` and Schema.org components without
+installing `@unhead/schema-org` separately. Renderer component metadata remains available.
+
 ## Installation
 
 ```sh

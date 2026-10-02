@@ -4,7 +4,7 @@ import { $fetch, setupFixture } from "../../../packages/test-utils/src";
 describe("markdown renderer module", async () => {
   await setupFixture(import.meta.url);
 
-  it("serves generated metadata for built-in and consumer renderer components", async () => {
+  it("serves built-in and consumer renderer metadata alongside webmanifest", async () => {
     await expect($fetch("/api/markdown-renderer/components/demo")).resolves.toMatchObject([
       {
         name: "MarkdownButton",

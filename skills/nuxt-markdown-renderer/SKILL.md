@@ -98,6 +98,10 @@ The module requires Nuxt 4 and Node.js 24 or newer. It is enabled by default and
 with `markdownRenderer: { enabled: false }`. Disabling it keeps prepare-time declarations but does
 not register runtime components, auto-imports, templates, or routes.
 
+It can be used alongside `@onderwijsin/nuxt-webmanifest` and Schema.org components without
+installing `@unhead/schema-org` separately; built-in and consumer renderer metadata remain
+available.
+
 ## Video sources and plugins
 
 Configure `markdownRenderer.videoBaseUrl` with an absolute URL, such as
