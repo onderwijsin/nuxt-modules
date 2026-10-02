@@ -5,7 +5,7 @@ defineEditorComponentSchema({
   label: "Hero",
   description: "A consumer-defined page introduction.",
   type: "block",
-  props: {
+  properties: {
     align: { values: ["left", "center"] },
     actionTo: { input: "url" }
   }

@@ -87,10 +87,10 @@ export function transformMarkdownComponentMeta(
     return { markdownRenderer: {} };
   }
 
-  const { deprecated, props, type, ...metadata } = parsed.data;
+  const { deprecated, properties, type, ...metadata } = parsed.data;
   const deprecatedTag = resolveDeprecatedTag(deprecated);
-  const transformedProps = props
-    ? fromEntries(toEntries(props).map(([name, value]) => [name, transformProperty(value)]))
+  const transformedProps = properties
+    ? fromEntries(toEntries(properties).map(([name, value]) => [name, transformProperty(value)]))
     : undefined;
 
   return {

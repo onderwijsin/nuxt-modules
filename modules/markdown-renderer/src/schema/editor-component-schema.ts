@@ -142,7 +142,7 @@ export const EditorComponentInputSchema = z.strictObject({
   description,
   type: nodeType,
   deprecated: deprecation.optional(),
-  props: z.record(z.string(), EditorPropertyInputSchema).optional()
+  properties: z.record(z.string(), EditorPropertyInputSchema).optional()
 });
 
 /** Macro property fields after `input` and `deprecated` become endpoint tags. */
@@ -170,7 +170,7 @@ export const EditorPropertyEnrichmentSchema: z.ZodType<RecursiveEnrichment> = z.
 
 /** Complete namespaced macro enrichment before Vue prop inference is merged. */
 export const EditorComponentEnrichmentSchema = z.object({
-  ...EditorComponentInputSchema.omit({ type: true, deprecated: true, props: true }).shape,
+  ...EditorComponentInputSchema.omit({ type: true, deprecated: true, properties: true }).shape,
   nodeType,
   props: z.record(z.string(), EditorPropertyEnrichmentSchema).optional(),
   tags

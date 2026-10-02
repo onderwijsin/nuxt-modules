@@ -56,6 +56,10 @@ The built-in MDC nodes are:
 | `MarkdownCallout` | `MarkdownCallout`   | Callout      | Block Nuxt UI alert with editable content.   |
 | `Reference`       | `MarkdownReference` | —            | Directus item reference; excluded from menu. |
 
+The built-in button's icon editor metadata uses the `lucide` collection by default. To offer other
+icon collections in component metadata, override the relevant renderer component and define its own
+`defineEditorComponentSchema` with the desired `collections` for each icon input.
+
 For example:
 
 ```md
@@ -107,7 +111,7 @@ defineEditorComponentSchema({
   label: "Hero",
   description: "A prominent page introduction.",
   type: "block",
-  props: {
+  properties: {
     actionTo: { input: "url" },
     image: { properties: { src: { input: "image" } } },
     actions: {
@@ -155,19 +159,19 @@ Use the registered component name in Markdown and component sets:
 required/default state, literal unions, and JSDoc tags. The macro enriches these inferred fields
 without repeating their TypeScript types:
 
-| Field                                       | Purpose                                                                                                                |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `label`                                     | Human-facing label, distinct from the Markdown node name.                                                              |
-| `description`                               | Help text shown while choosing a component.                                                                            |
-| `type`                                      | Required insertion behavior: `"block"` or `"inline"`.                                                                  |
-| `deprecated`                                | `true`, a non-empty guidance string, or `{ text: string }`.                                                            |
-| `props.<name>.values`                       | Explicit choices, particularly for imported union types.                                                               |
-| `props.<name>.input`                        | `"image"`/`{ type: "image" }`, `"url"`/`{ type: "url" }`, or `{ type: "icon", collections: [...] }` for a string prop. |
-| `props.<name>.properties`                   | Overrides for fields of an inferred object prop.                                                                       |
-| `props.<name>.items`                        | Overrides for the inferred item of an array prop.                                                                      |
-| `props.<name>.deprecated`                   | `true`, a non-empty guidance string, or `{ text: string }`.                                                            |
-| `props.<name>.type`                         | Explicit `string`, `number`, `boolean`, `object`, or `array` editor type.                                              |
-| `props.<name>.description/default/required` | Overrides the corresponding inferred metadata.                                                                         |
+| Field                                            | Purpose                                                                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `label`                                          | Human-facing label, distinct from the Markdown node name.                                                              |
+| `description`                                    | Help text shown while choosing a component.                                                                            |
+| `type`                                           | Required insertion behavior: `"block"` or `"inline"`.                                                                  |
+| `deprecated`                                     | `true`, a non-empty guidance string, or `{ text: string }`.                                                            |
+| `properties.<name>.values`                       | Explicit choices, particularly for imported union types.                                                               |
+| `properties.<name>.input`                        | `"image"`/`{ type: "image" }`, `"url"`/`{ type: "url" }`, or `{ type: "icon", collections: [...] }` for a string prop. |
+| `properties.<name>.properties`                   | Overrides for fields of an inferred object prop.                                                                       |
+| `properties.<name>.items`                        | Overrides for the inferred item of an array prop.                                                                      |
+| `properties.<name>.deprecated`                   | `true`, a non-empty guidance string, or `{ text: string }`.                                                            |
+| `properties.<name>.type`                         | Explicit `string`, `number`, `boolean`, `object`, or `array` editor type.                                              |
+| `properties.<name>.description/default/required` | Overrides the corresponding inferred metadata.                                                                         |
 
 The macro translates `input` and `deprecated` to the standard tags consumed by the Directus
 extension. Special inputs use a `specialInputType` tag; icon collections appear as
@@ -179,6 +183,9 @@ unsupported input controls, produce a build warning with the failing property pa
 editor overrides are ignored until the schema is corrected. The `image`, `url`, and `icon` inputs
 require an inferred string prop, including at nested paths. An incompatible inferred type causes the
 metadata endpoint to report the component and property path as a validation error.
+
+Use `properties` at the top level of `defineEditorComponentSchema` and for nested object fields. The
+generated metadata and Directus endpoint response continue to expose component fields as `props`.
 
 ### Component sets
 

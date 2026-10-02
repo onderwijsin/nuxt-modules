@@ -7,6 +7,23 @@ import {
 } from "../src/schema/editor-component-schema";
 
 describe("editor component contract", () => {
+  it("accepts top-level properties and rejects the former macro key", () => {
+    expect(
+      EditorComponentInputSchema.safeParse({
+        label: "Hero",
+        type: "block",
+        properties: { title: { type: "string" } }
+      }).success
+    ).toBe(true);
+    expect(
+      EditorComponentInputSchema.safeParse({
+        label: "Hero",
+        type: "block",
+        props: { title: { type: "string" } }
+      }).success
+    ).toBe(false);
+  });
+
   it("defines image as a control for string properties", () => {
     expect(specialInputs.safeParse({ inputType: "image", propertyType: "string" }).success).toBe(
       true
@@ -18,7 +35,7 @@ describe("editor component contract", () => {
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        props: { image: { input: { type: "image" } }, url: { input: { type: "url" } } }
+        properties: { image: { input: { type: "image" } }, url: { input: { type: "url" } } }
       }).success
     ).toBe(true);
   });
@@ -28,21 +45,21 @@ describe("editor component contract", () => {
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        props: { icon: { input: { type: "icon", collections: ["lucide"] } } }
+        properties: { icon: { input: { type: "icon", collections: ["lucide"] } } }
       }).success
     ).toBe(true);
     expect(
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        props: { icon: { input: { type: "icon", collections: [] } } }
+        properties: { icon: { input: { type: "icon", collections: [] } } }
       }).success
     ).toBe(false);
     expect(
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        props: { icon: { input: "icon" } }
+        properties: { icon: { input: "icon" } }
       }).success
     ).toBe(false);
     expect(
@@ -79,7 +96,7 @@ describe("editor component contract", () => {
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        props: { actions: { items: { properties: { to: { input: "unsupported" } } } } }
+        properties: { actions: { items: { properties: { to: { input: "unsupported" } } } } }
       }).success
     ).toBe(false);
   });
@@ -89,7 +106,7 @@ describe("editor component contract", () => {
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        props: { image: { properties: { src: { imput: "image" } } } }
+        properties: { image: { properties: { src: { imput: "image" } } } }
       }).success
     ).toBe(false);
   });

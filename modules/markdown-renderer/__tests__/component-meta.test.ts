@@ -13,14 +13,14 @@ describe("Markdown component metadata macro", () => {
       transformMarkdownComponentMeta({
         label: "Hero",
         type: "block",
-        props: { actions: { items: { properties: { to: { imput: "url" } } } } }
+        properties: { actions: { items: { properties: { to: { imput: "url" } } } } }
       })
     ).toEqual({ markdownRenderer: {} });
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining('Invalid defineEditorComponentSchema metadata "Hero"')
     );
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("props.actions.items.properties.to")
+      expect.stringContaining("properties.actions.items.properties.to")
     );
   });
 
@@ -31,7 +31,7 @@ describe("Markdown component metadata macro", () => {
         description: "Highlights important information.",
         type: "block",
         deprecated: true,
-        props: {
+        properties: {
           color: {
             values: ["primary", "warning"],
             deprecated: { text: "Use tone instead." }
@@ -63,7 +63,7 @@ describe("Markdown component metadata macro", () => {
       transformMarkdownComponentMeta({
         label: "Gallery",
         type: "inline",
-        props: {
+        properties: {
           items: {
             type: "array",
             description: "Selected items.",
@@ -93,7 +93,7 @@ describe("Markdown component metadata macro", () => {
       transformMarkdownComponentMeta({
         label: "Hero",
         type: "block",
-        props: {
+        properties: {
           image: { properties: { src: { input: "image" } } },
           actions: {
             items: {
@@ -132,17 +132,17 @@ describe("Markdown component metadata macro", () => {
       transformMarkdownComponentMeta({
         label: "Hero",
         type: "block",
-        props: { icon: { input: { type: "icon" } } }
+        properties: { icon: { input: { type: "icon" } } }
       })
     ).toEqual({ markdownRenderer: {} });
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("props.icon.input"));
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("properties.icon.input"));
   });
 
   it("treats bare and object forms of an unconfigured input equally", () => {
     const result = transformMarkdownComponentMeta({
       label: "Hero",
       type: "block",
-      props: {
+      properties: {
         imageA: { input: "image" },
         imageB: { input: { type: "image" } },
         linkA: { input: "url" },
@@ -167,10 +167,10 @@ describe("Markdown component metadata macro", () => {
       transformMarkdownComponentMeta({
         label: "Hero",
         type: "block",
-        props: { image: { input: { type: "image", arbitrary: true } } }
+        properties: { image: { input: { type: "image", arbitrary: true } } }
       })
     ).toEqual({ markdownRenderer: {} });
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("props.image.input"));
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("properties.image.input"));
   });
 
   it("turns string deprecation guidance into tags at component and nested prop level", () => {
@@ -179,7 +179,7 @@ describe("Markdown component metadata macro", () => {
         label: "Hero",
         type: "block",
         deprecated: "Use Banner instead.",
-        props: { image: { properties: { src: { deprecated: "Use assetId instead." } } } }
+        properties: { image: { properties: { src: { deprecated: "Use assetId instead." } } } }
       })
     ).toMatchObject({
       markdownRenderer: {

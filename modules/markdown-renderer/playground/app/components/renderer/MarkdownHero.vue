@@ -6,7 +6,7 @@ defineEditorComponentSchema({
   label: "Hero",
   description: "A prominent page introduction with an optional call to action.",
   type: "block",
-  props: {
+  properties: {
     image: { properties: { src: { input: { type: "image" } } } },
     actions: { items: { properties: { to: { input: "url" } } } }
   }

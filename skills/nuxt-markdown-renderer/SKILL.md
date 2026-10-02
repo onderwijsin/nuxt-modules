@@ -27,7 +27,13 @@ Place renderer components directly in `app/components/renderer/`. A consumer com
 `MarkdownButton.vue`, `MarkdownCallout.vue`, or `MarkdownReference.vue` replaces that built-in.
 `MarkdownReference` is exposed to the renderer as `Reference`, preserving persisted `:Reference`
 syntax. Custom files must be direct children of the configured directory; nested files are not
-discovered. Configure another directory name and named sets when needed:
+discovered.
+
+The built-in button's icon editor metadata uses the `lucide` collection by default. For other icon
+collections, override the relevant renderer component and define its own
+`defineEditorComponentSchema` with the desired `collections` for each icon input.
+
+Configure another directory name and named sets when needed:
 
 ```ts
 export default defineNuxtConfig({
@@ -52,19 +58,21 @@ allowlist.
 
 For editor-only metadata, import and call `defineEditorComponentSchema` from `#imports` in the
 renderer component. Use `label` for the human-facing label, `type: "block" | "inline"` for insertion
-behavior, and `props.<name>.values` for choices that cannot be expanded from an imported TypeScript
-type. Use `input: "image" | "url"`, their equivalent object forms (`{ type: "image" }` and
-`{ type: "url" }`), or `input: { type: "icon", collections: ["lucide"] }` for richer Directus
+behavior, and `properties.<name>.values` for choices that cannot be expanded from an imported
+TypeScript type. Use `input: "image" | "url"`, their equivalent object forms (`{ type: "image" }`
+and `{ type: "url" }`), or `input: { type: "icon", collections: ["lucide"] }` for richer Directus
 controls and `deprecated: true | string | { text: string }` for component or prop deprecation hints.
 Guidance strings must be non-empty. Explicit complex-prop `type`, descriptions, defaults, or
 required state are also supported. Object fields appear under `properties`, and array item fields
 under `items`; use those same keys in the macro for nested overrides such as
-`props.image.properties.src.input: "image"` or `props.actions.items.properties.to.input: "url"`.
-These special inputs require an inferred string prop; incompatible types cause the metadata endpoint
-to report the component and property path. The endpoint emits them as `specialInputType` tags.
-Ordinary prop types, nested structure, JSDoc, defaults, literal unions, and tags remain inferred.
-Invalid macro configuration produces a build warning with the nested field path and is ignored for
-that component until corrected.
+`properties.image.properties.src.input: "image"` or
+`properties.actions.items.properties.to.input: "url"`. These special inputs require an inferred
+string prop; incompatible types cause the metadata endpoint to report the component and property
+path. The endpoint emits them as `specialInputType` tags. Ordinary prop types, nested structure,
+JSDoc, defaults, literal unions, and tags remain inferred. Invalid macro configuration produces a
+build warning with the nested field path and is ignored for that component until corrected. Use
+`properties` at the macro's top level and for nested object fields. The metadata endpoint still
+returns component fields under `props`.
 
 Use the registered component name in MDC, for example:
 
