@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 499a4ee: Scope component metadata extraction and checker sources to renderer components by default, preserving packaged typed built-in metadata. Add `scopeComponentMeta: false` to retain global component-meta behavior when applications need unrelated component metadata.
+
 ## 0.2.0
 
 ### Minor Changes
