@@ -6,6 +6,8 @@ const origin = z.string().trim().min(1);
 /** Runtime validation schema for the public Markdown renderer module options. */
 export const markdownRendererOptionsSchema = z.strictObject({
   enabled: enabled.default(true),
+  /** Scope the global component-meta parser to renderer sources; disable for application metadata. */
+  scopeComponentMeta: z.boolean().default(true),
   componentsDir: z.string().trim().min(1).default("renderer"),
   componentSets: z.record(z.string(), z.array(z.string().trim().min(1))).default({}),
   resolveReferencePath: z.string().trim().min(1).optional(),

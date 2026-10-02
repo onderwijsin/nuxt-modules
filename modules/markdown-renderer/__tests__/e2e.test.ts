@@ -62,6 +62,14 @@ describe("markdown renderer module", async () => {
     ]);
   });
 
+  it("omits unrelated application and UI components from metadata", async () => {
+    const names = await $fetch<string[]>("/api/component-registry");
+    expect(names).toContain("MarkdownButton");
+    expect(names).toContain("RendererMarkdownHero");
+    expect(names).not.toContain("Unrelated");
+    expect(names).not.toContain("UButton");
+  });
+
   it("renders relative video sources through the lazily loaded plugin during SSR", async () => {
     await expect($fetch("/")).resolves.toContain('src="https://media.example.com/assets/clip.mp4"');
   });

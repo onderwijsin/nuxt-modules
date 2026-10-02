@@ -115,3 +115,22 @@ Pass initialized `ComarkPlugin[]` through the `MarkdownRenderer` `plugins` prop 
 transformations. Caller plugins run before the built-in video-source plugin, and their array is not
 mutated. The video plugin and base URL are selected when the renderer is created; remount it after
 changing video configuration.
+
+## Component metadata scope
+
+`markdownRenderer.scopeComponentMeta` defaults to `true`. The application's global
+`nuxt-component-meta` parser processes only built-in renderer components and direct children of
+`app/components/<componentsDir>/`, using packaged typed sources for built-in metadata.
+
+If your application uses `nuxt-component-meta` for unrelated components, retain its normal global
+behavior with:
+
+```ts
+export default defineNuxtConfig({
+  markdownRenderer: { scopeComponentMeta: false }
+});
+```
+
+Disabling scoping preserves your component-meta component and directory configuration while keeping
+built-in renderer source enrichment. Global metadata extraction can have significantly higher build
+time and memory costs.

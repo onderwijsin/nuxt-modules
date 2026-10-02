@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 import { markdownRendererOptionsSchema } from "../src/config/options.schema";
 
 describe("markdown renderer options", () => {
+  it("scopes metadata by default and accepts the global opt-out", () => {
+    expect(markdownRendererOptionsSchema.parse({}).scopeComponentMeta).toBe(true);
+    expect(
+      markdownRendererOptionsSchema.parse({ scopeComponentMeta: false }).scopeComponentMeta
+    ).toBe(false);
+    expect(markdownRendererOptionsSchema.safeParse({ scopeComponentMeta: "false" }).success).toBe(
+      false
+    );
+  });
+
   it("allows metadata requests from every origin by default", () => {
     expect(markdownRendererOptionsSchema.parse({}).corsOrigin).toBe("*");
   });

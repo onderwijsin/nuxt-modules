@@ -1,3 +1,4 @@
+import type { ComponentMetaParserOptions } from "nuxt-component-meta";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const kit = vi.hoisted(() => ({
@@ -48,7 +49,6 @@ describe("markdown renderer module", () => {
       "nuxt-component-meta": {
         version: ">=0.18.0",
         defaults: {
-          exclude: ["@comark/vue", "@unhead/schema-org"],
           extendMetaFunctions: [
             { name: "extendComponentMeta" },
             { name: "defineEditorComponentSchema", transform: expect.any(Function) }
@@ -115,6 +115,52 @@ describe("markdown renderer module", () => {
       });
     }
   });
+
+  it.each([true, false])(
+    "scopes metadata only when scopeComponentMeta is %s",
+    async (scopeComponentMeta) => {
+      const nuxt = {
+        options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
+        hook: vi.fn(),
+        hooks: { addHooks: vi.fn() }
+      };
+      await setupModule({ scopeComponentMeta, componentsDir: "markdown" }, nuxt);
+      const paths = [
+        "./runtime/app/components/renderer/MarkdownButton.vue",
+        "/project/app/components/markdown/MarkdownHero.vue",
+        "/project/app/components/Unrelated.vue",
+        "/project/app/components/markdown/nested/Nested.vue",
+        "/modules/unrelated/ModuleComponent.vue"
+      ];
+      const components = paths.map((filePath) => ({
+        pascalName: filePath.split("/").at(-1)?.replace(".vue", "") ?? "Component",
+        kebabName: "component",
+        export: "default",
+        filePath,
+        shortPath: filePath,
+        chunkName: "component",
+        prefetch: false,
+        preload: false
+      }));
+      const componentDirs = ["/project/app/components", { path: "/modules/unrelated" }];
+      const parserOptions: ComponentMetaParserOptions = {
+        components,
+        componentDirs,
+        overrides: {},
+        transformers: [],
+        metaFields: { type: true, props: true, slots: true, events: true, exposed: true }
+      };
+      const hooks = nuxt.hooks.addHooks.mock.calls[0]?.[0];
+      hooks["component-meta:extend"](parserOptions);
+      if (scopeComponentMeta) {
+        expect(parserOptions.components.map(({ filePath }) => filePath)).toEqual(paths.slice(0, 2));
+        expect(parserOptions.componentDirs).toEqual(paths.slice(0, 2));
+      } else {
+        expect(parserOptions.components).toEqual(components);
+        expect(parserOptions.componentDirs).toBe(componentDirs);
+      }
+    }
+  );
 
   it("exposes the configured video base URL to the renderer", async () => {
     const nuxt = {

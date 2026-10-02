@@ -46,7 +46,13 @@ export default defineNuxtModule<ModuleOptions>({
     version,
     compatibility: { nuxt: "^4.0.0" }
   },
-  defaults: { enabled: true, componentsDir: "renderer", componentSets: {}, corsOrigin: "*" },
+  defaults: {
+    enabled: true,
+    scopeComponentMeta: true,
+    componentsDir: "renderer",
+    componentSets: {},
+    corsOrigin: "*"
+  },
   moduleDependencies: (nuxt): ModuleDependencies =>
     moduleDependenciesWhenEnabled(nuxt.options.markdownRenderer, {
       "@comark/nuxt": { version: ">=0.7.0" },
@@ -54,7 +60,6 @@ export default defineNuxtModule<ModuleOptions>({
       "nuxt-component-meta": {
         version: ">=0.18.0",
         defaults: {
-          exclude: ["@comark/vue", "@unhead/schema-org"],
           extendMetaFunctions: [
             { name: "extendComponentMeta" },
             { name: "defineEditorComponentSchema", transform: transformMarkdownComponentMeta }
@@ -79,13 +84,30 @@ export default defineNuxtModule<ModuleOptions>({
 
     const builtInDirectory = resolver.resolve(runtimeDir, "app", "components", "renderer");
     const metadataSourceDirectory = resolver.resolve("./metadata/runtime/app/components/renderer");
+    const consumerDirectory = resolve(nuxt.options.srcDir, "components", options.componentsDir);
     const componentMetaHooks = {
       "component-meta:extend": (parserOptions: ComponentMetaParserOptions) => {
+        if (options.scopeComponentMeta) {
+          const rendererPaths = new Set(
+            selectRendererComponents(parserOptions.components, [
+              builtInDirectory,
+              consumerDirectory
+            ]).map(({ filePath }) => filePath)
+          );
+          parserOptions.components = parserOptions.components.filter(({ filePath }) =>
+            rendererPaths.has(filePath)
+          );
+        }
         useBuiltInComponentSources(parserOptions, builtInDirectory, metadataSourceDirectory);
+        if (options.scopeComponentMeta) {
+          // Exact source files keep nested and unrelated components out of the checker roots.
+          parserOptions.componentDirs = [
+            ...new Set(parserOptions.components.map(({ filePath }) => filePath))
+          ];
+        }
       }
     };
     nuxt.hooks.addHooks(componentMetaHooks);
-    const consumerDirectory = resolve(nuxt.options.srcDir, "components", options.componentsDir);
     const consumerDirectoryExists = await findPath(consumerDirectory, {}, "dir");
     let components: RendererComponent[] = [];
 

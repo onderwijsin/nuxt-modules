@@ -53,3 +53,9 @@ the prop structure, and the macro only overrides editor-specific fields. The sch
 stage and provide its TypeScript types. Keep app imports of this contract type-only so the editor
 schema validator stays out of the client bundle. The build emits this shared contract to
 `dist/schema/` so the published app declarations and server utilities resolve the same schema.
+
+By default, the `component-meta:extend` hook limits parser components to direct children of the
+built-in and configured consumer renderer directories. After typed-source replacement, checker
+inputs are the retained source files, so broad registered directories and nested non-renderer files
+are not checker roots. `scopeComponentMeta: false` skips both restrictions and keeps typed-source
+replacement for built-ins. No package exclusion list is applied by the renderer.
