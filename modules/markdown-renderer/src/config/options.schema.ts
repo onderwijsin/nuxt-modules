@@ -9,6 +9,7 @@ export const markdownRendererOptionsSchema = z.strictObject({
   componentsDir: z.string().trim().min(1).default("renderer"),
   componentSets: z.record(z.string(), z.array(z.string().trim().min(1))).default({}),
   resolveReferencePath: z.string().trim().min(1).optional(),
+  videoBaseUrl: z.url().optional(),
   corsOrigin: z
     .union([
       z.literal("*"),

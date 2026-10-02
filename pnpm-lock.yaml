@@ -857,6 +857,9 @@ importers:
       shiki:
         specifier: 'catalog:'
         version: 4.4.3
+      ufo:
+        specifier: 'catalog:'
+        version: 1.6.4
       vue:
         specifier: 'catalog:'
         version: 3.5.41(typescript@5.9.3)

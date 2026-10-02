@@ -56,6 +56,7 @@
     "nuxt-component-meta": "catalog:",
     "pathe": "catalog:",
     "shiki": "catalog:",
+    "ufo": "catalog:",
     "vue": "catalog:",
     "zod": "catalog:"
   },

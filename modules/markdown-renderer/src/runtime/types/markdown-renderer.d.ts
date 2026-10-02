@@ -9,4 +9,12 @@ declare module "#markdown-renderer/manifest" {
   ) => ReturnType<ComponentManifest>;
 }
 
+declare module "nuxt/schema" {
+  interface AppConfig {
+    markdownRenderer: {
+      videoBaseUrl?: string;
+    };
+  }
+}
+
 export {};

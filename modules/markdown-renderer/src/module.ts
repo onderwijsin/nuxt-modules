@@ -130,6 +130,11 @@ export default createComponentMetadataHandler(
       "component-manifest"
     );
     nuxt.options.alias["#markdown-renderer/reference-resolver"] = referenceResolver;
+
+    nuxt.options.appConfig.markdownRenderer = {
+      videoBaseUrl: options.videoBaseUrl
+    };
+
     transpileRuntime(nuxt, runtimeDir);
     addImports({
       name: "defineEditorComponentSchema",

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { ComarkPlugin } from "comark";
+import { useAppConfig } from "#app";
+import { videoSourcePlugin } from "../comark-plugins/video-source";
 
 import { resolveRendererComponent } from "#markdown-renderer/manifest";
 
@@ -13,13 +15,31 @@ const props = defineProps<{
   plugins?: ComarkPlugin[];
 }>();
 
+const config = useAppConfig().markdownRenderer;
+
 const componentsManifest = computed(
   () => (name: string) => resolveRendererComponent(name, props.componentSet)
 );
+
+const extendedPlugins: ComarkPlugin[] = [];
+
+if (config.videoBaseUrl) {
+  const { videoSourcePlugin } = await import("../comark-plugins/video-source");
+  extendedPlugins.push(videoSourcePlugin());
+}
+
+const lazilyExtendedPlugins = computed<ComarkPlugin[]>(() => [
+  ...(props.plugins ?? []),
+  ...extendedPlugins
+]);
 </script>
 
 <template>
-  <Markdown :value="value" :components-manifest="componentsManifest" :plugins="plugins" />
+  <Markdown
+    :value="value"
+    :components-manifest="componentsManifest"
+    :plugins="lazilyExtendedPlugins"
+  />
 </template>
 
 <style lang="postcss">
