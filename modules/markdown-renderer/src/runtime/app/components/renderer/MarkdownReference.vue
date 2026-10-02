@@ -12,6 +12,8 @@ const props = defineProps<{
   label?: string;
   /** Author-controlled display text. */
   text?: string;
+  /** Iconify icon as collection:name. */
+  icon?: string;
   /** Reference source snapshot. */
   data?: Record<string, unknown>;
 }>();
@@ -23,6 +25,9 @@ const path = computed(() =>
 </script>
 
 <template>
-  <ULink v-if="path" :to="path">{{ displayText }}</ULink>
+  <ULink v-if="path" variant="link" :to="path" :icon="icon" class="text-primary underline">
+    <UIcon v-if="icon" :name="icon" class="mr-1 align-[-0.125em]" />
+    <span>{{ displayText }}</span>
+  </ULink>
   <span v-else>{{ displayText }}</span>
 </template>
