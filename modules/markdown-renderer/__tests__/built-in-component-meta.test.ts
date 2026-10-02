@@ -30,7 +30,14 @@ describe("built-in component metadata", () => {
       metaFields: { type: true, props: true, slots: true, events: true, exposed: true },
       transformers: []
     };
+    const original = options.components[0];
+    if (!original) throw new Error("Missing component.");
+    const unrelated = { ...original, filePath: "/project/Unrelated.vue" };
+    options.components.push(unrelated);
+    const directories = options.componentDirs;
     useBuiltInComponentSources(options, dirname(compiled), dirname(source));
+    expect(options.components[1]).toBe(unrelated);
+    expect(options.componentDirs).toBe(directories);
 
     const metadataSource = options.components[0]?.filePath;
     expect(metadataSource).toBe(source);

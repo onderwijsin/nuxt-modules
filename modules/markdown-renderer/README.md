@@ -85,6 +85,7 @@ For example:
 export default defineNuxtConfig({
   markdownRenderer: {
     enabled: true,
+    scopeComponentMeta: true,
     componentsDir: "renderer",
     componentSets: {
       article: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"],
@@ -100,6 +101,7 @@ export default defineNuxtConfig({
 | Option                 | Type                       | Default      | Description                                                       |
 | ---------------------- | -------------------------- | ------------ | ----------------------------------------------------------------- |
 | `enabled`              | `boolean`                  | `true`       | Enables component, manifest, and metadata endpoint registration.  |
+| `scopeComponentMeta`   | `boolean`                  | `true`       | Limits global component metadata extraction to renderer sources.  |
 | `componentsDir`        | `string`                   | `"renderer"` | Directory below `app/components/` containing renderer components. |
 | `componentSets`        | `Record<string, string[]>` | `{}`         | Named allowlists used by rendering and metadata endpoints.        |
 | `resolveReferencePath` | `string`                   | unset        | Nuxt-resolvable path to a default-exported Reference resolver.    |
@@ -303,3 +305,22 @@ pnpm --filter markdown-renderer-playground dev
 pnpm --filter markdown-renderer-playground typecheck
 pnpm --filter markdown-renderer-playground build
 ```
+
+## Component metadata scope
+
+`markdownRenderer.scopeComponentMeta` defaults to `true`. The application's global
+`nuxt-component-meta` parser processes only built-in renderer components and direct children of
+`app/components/<componentsDir>/`, using packaged typed sources for built-in metadata.
+
+If your application uses `nuxt-component-meta` for unrelated components, retain its normal global
+behavior with:
+
+```ts
+export default defineNuxtConfig({
+  markdownRenderer: { scopeComponentMeta: false }
+});
+```
+
+Disabling scoping preserves your component-meta component and directory configuration while keeping
+built-in renderer source enrichment. Global metadata extraction can have significantly higher build
+time and memory costs.

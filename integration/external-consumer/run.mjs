@@ -242,6 +242,26 @@ async function runFocusedAssertions(port, profile, directusMock) {
       await waitForResponse(`http://127.0.0.1:${port}/api/sanity/${layer}`),
       (body) => body.layer === layer
     );
+    if (layer === "markdown-renderer") {
+      await readJson(
+        await waitForResponse(`http://127.0.0.1:${port}/api/sanity/markdown-renderer`),
+        (body) =>
+          body.components.includes("MarkdownButton") &&
+          body.components.some((name) => name.endsWith("MarkdownHero")) &&
+          !body.components.includes("Unrelated") &&
+          !body.components.includes("UButton")
+      );
+      await readJson(
+        await waitForResponse(`http://127.0.0.1:${port}/api/markdown-renderer/components`),
+        (body) =>
+          body.some(
+            (component) =>
+              component.name === "MarkdownButton" &&
+              component.props.label?.description === "Label displayed inside the button."
+          ) &&
+          body.some((component) => component.name === "MarkdownHero" && component.label === "Hero")
+      );
+    }
     const page = await (await waitForResponse(`http://127.0.0.1:${port}/sanity/${layer}`)).text();
     if (!page.includes(`data-sanity="${layer}"`) || !page.includes(layer))
       throw new Error(`External consumer page assertion failed for layer ${layer}.`);
