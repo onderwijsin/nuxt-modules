@@ -97,3 +97,17 @@ is importable from `@onderwijsin/nuxt-markdown-renderer/runtime`. If it is absen
 The module requires Nuxt 4 and Node.js 24 or newer. It is enabled by default and can be disabled
 with `markdownRenderer: { enabled: false }`. Disabling it keeps prepare-time declarations but does
 not register runtime components, auto-imports, templates, or routes.
+
+## Video sources and plugins
+
+Configure `markdownRenderer.videoBaseUrl` with an absolute URL, such as
+`https://media.example.com/assets/`, to prefix relative `video` node sources.
+`:video{src="clip.mp4" controls}` and a source of `/clip.mp4` both resolve beneath that base. URLs
+with a protocol (including `blob:` and `data:`) and protocol-relative sources remain unchanged. Only
+string `src` attributes on `video` nodes are rewritten; nested `source` elements are unchanged. Omit
+the option to preserve sources and leave the built-in plugin unloaded.
+
+Pass initialized `ComarkPlugin[]` through the `MarkdownRenderer` `plugins` prop for additional
+transformations. Caller plugins run before the built-in video-source plugin, and their array is not
+mutated. The video plugin and base URL are selected when the renderer is created; remount it after
+changing video configuration.

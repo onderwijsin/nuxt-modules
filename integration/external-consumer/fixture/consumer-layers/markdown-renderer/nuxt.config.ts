@@ -1,4 +1,7 @@
 export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
-  markdownRenderer: { componentSets: { sanity: ["MarkdownCallout"] } }
+  markdownRenderer: {
+    videoBaseUrl: "https://media.example.com/assets/",
+    componentSets: { sanity: ["MarkdownCallout"] }
+  }
 });
