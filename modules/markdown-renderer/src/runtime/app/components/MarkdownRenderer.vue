@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import type { ComarkPlugin } from "comark";
 import { useAppConfig } from "#app";
-import { videoSourcePlugin } from "../comark-plugins/video-source";
 
 import { resolveRendererComponent } from "#markdown-renderer/manifest";
 

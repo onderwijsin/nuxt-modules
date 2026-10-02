@@ -51,10 +51,11 @@ Import the module stylesheet in the consuming application's main CSS file after 
 </template>
 ```
 
-| Prop           | Type     | Default     | Description                                     |
-| -------------- | -------- | ----------- | ----------------------------------------------- |
-| `value`        | `string` | `undefined` | Markdown or MDC source.                         |
-| `componentSet` | `string` | `undefined` | Optional configured custom-component allowlist. |
+| Prop           | Type             | Default     | Description                                     |
+| -------------- | ---------------- | ----------- | ----------------------------------------------- |
+| `value`        | `string`         | `undefined` | Markdown or MDC source.                         |
+| `plugins`      | `ComarkPlugin[]` | `undefined` | Additional initialized Comark plugins.          |
+| `componentSet` | `string`         | `undefined` | Optional configured custom-component allowlist. |
 
 The built-in MDC nodes are:
 
@@ -87,6 +88,7 @@ export default defineNuxtConfig({
       landing: ["MarkdownButton", "MarkdownHero"]
     },
     resolveReferencePath: "~/utils/resolveReferencePath",
+    videoBaseUrl: "https://media.example.com/assets/",
     corsOrigin: "https://directus.example.com"
   }
 });
@@ -98,10 +100,30 @@ export default defineNuxtConfig({
 | `componentsDir`        | `string`                   | `"renderer"` | Directory below `app/components/` containing renderer components. |
 | `componentSets`        | `Record<string, string[]>` | `{}`         | Named allowlists used by rendering and metadata endpoints.        |
 | `resolveReferencePath` | `string`                   | unset        | Nuxt-resolvable path to a default-exported Reference resolver.    |
+| `videoBaseUrl`         | `string`                   | unset        | Absolute base URL for relative video sources.                     |
 | `corsOrigin`           | `string \| string[]`       | `"*"`        | Origins allowed to call the metadata endpoint from a browser.     |
 
 A single `corsOrigin` string is accepted and normalized to an allowlist. Use `"null"` only when a
 sandboxed or local client intentionally sends an opaque origin.
+
+## Video sources and plugins
+
+Set `markdownRenderer.videoBaseUrl` to an absolute URL to prefix relative `video` sources:
+
+```md
+:video{src="clip.mp4" controls}
+```
+
+With `videoBaseUrl: "https://media.example.com/assets/"`, both `clip.mp4` and `/clip.mp4` resolve to
+`https://media.example.com/assets/clip.mp4`. URLs with a protocol (including `blob:` and `data:`)
+and protocol-relative URLs (`//...`) remain unchanged. The transformation only affects a `video`
+node's string `src`; nested `source` elements are unchanged. Omit the option to preserve video
+sources and leave the built-in plugin unloaded.
+
+`MarkdownRenderer` also accepts `plugins?: ComarkPlugin[]` through its `plugins` prop. Pass
+initialized Comark plugins; they run before the built-in video-source plugin. The renderer does not
+mutate the supplied array. Built-in plugin selection and the video base URL are captured when the
+renderer is created; remount it after changing the video configuration.
 
 ## Custom renderer components
 

@@ -7,7 +7,7 @@ import {
 import { visit } from "comark/utils";
 import { useAppConfig } from "#app";
 import { hasProtocol, joinURL } from "ufo";
-import { isString, isArray } from "@onderwijsin/nuxt-module-utils";
+import { isString, isArray } from "@onderwijsin/nuxt-module-utils/shared";
 
 type VideoNode = ElementNode &
   [

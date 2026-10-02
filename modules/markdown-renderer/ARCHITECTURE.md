@@ -13,6 +13,12 @@ against that manifest and optional component sets. `MarkdownRenderer.vue` uses t
 render content. `src/runtime/app/utils/resolve-reference-path.ts` is only the default fallback for
 the `MarkdownReference` component; an application can replace it through the module option.
 
+When `videoBaseUrl` is configured, `MarkdownRenderer.vue` dynamically imports the video-source
+plugin during async setup and appends it to caller plugins. Keep that import conditional and avoid
+static imports of the same plugin. The plugin captures the app-config base URL at creation and
+rewrites relative string sources in its Comark `post` hook. Vue's compiled top-level await preserves
+the setup context; Nuxt supplies the async rendering boundary.
+
 ## Editor metadata path
 
 `src/schema/editor-component-schema.ts` owns the Zod contracts and all derived types for the

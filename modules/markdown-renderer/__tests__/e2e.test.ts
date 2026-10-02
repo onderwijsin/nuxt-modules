@@ -39,8 +39,7 @@ describe("markdown renderer module", async () => {
                       name: "specialInputType",
                       text: "icon",
                       config: { collections: ["lucide"] }
-                    },
-                    { name: "deprecated" }
+                    }
                   ]
                 }
               }
@@ -61,6 +60,10 @@ describe("markdown renderer module", async () => {
         slots: ["default"]
       }
     ]);
+  });
+
+  it("renders relative video sources through the lazily loaded plugin during SSR", async () => {
+    await expect($fetch("/")).resolves.toContain('src="https://media.example.com/assets/clip.mp4"');
   });
 
   it("rejects unknown component sets", async () => {

@@ -60,7 +60,7 @@ describe("markdown renderer module", () => {
 
   it("registers the generated manifest, components, and static metadata endpoint", async () => {
     const nuxt = {
-      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
       hook: vi.fn(),
       hooks: { addHooks: vi.fn() }
     };
@@ -116,9 +116,21 @@ describe("markdown renderer module", () => {
     }
   });
 
+  it("exposes the configured video base URL to the renderer", async () => {
+    const nuxt = {
+      options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
+      hook: vi.fn(),
+      hooks: { addHooks: vi.fn() }
+    };
+    await setupModule({ videoBaseUrl: "https://media.example.com/assets/" }, nuxt);
+    expect(nuxt.options.appConfig).toEqual({
+      markdownRenderer: { videoBaseUrl: "https://media.example.com/assets/" }
+    });
+  });
+
   it("serializes configured metadata CORS origins", async () => {
     const nuxt = {
-      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
       hook: vi.fn(),
       hooks: { addHooks: vi.fn() }
     };
@@ -131,7 +143,7 @@ describe("markdown renderer module", () => {
 
   it("resolves a configured reference resolver through Nuxt Kit", async () => {
     const nuxt = {
-      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
       hook: vi.fn(),
       hooks: { addHooks: vi.fn() }
     };
@@ -146,7 +158,7 @@ describe("markdown renderer module", () => {
 
   it("keeps declarations available but skips runtime setup when disabled", async () => {
     const nuxt = {
-      options: { srcDir: "/project/app", alias: {}, build: { transpile: [] } },
+      options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
       hook: vi.fn()
     };
     await setupModule({ enabled: false }, nuxt);
