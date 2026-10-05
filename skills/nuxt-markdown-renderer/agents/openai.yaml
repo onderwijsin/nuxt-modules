@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nuxt Markdown Renderer"
+  short_description: "Render MDC and configure Directus editor metadata"
+  default_prompt: "Use $nuxt-markdown-renderer to integrate Markdown rendering and custom editor components in a Nuxt app."
