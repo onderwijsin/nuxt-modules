@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- 0381721: Use the application's Vue, Nuxt UI, and Comark peer dependencies to avoid separate SSR runtimes and missing Prose styling. Support Comark versions from 0.6.2; install matching Comark Nuxt, Vue, and core packages in the application.
+- 0381721: Resolve the reserved Reference node regardless of the selected component set while keeping it excluded from component metadata endpoints.
+
 ## 0.2.1
 
 ### Patch Changes
