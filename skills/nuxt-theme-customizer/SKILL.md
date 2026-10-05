@@ -17,8 +17,16 @@ is no default primary color. Every palette must define the eleven Tailwind shade
 ## Setup
 
 ```sh
-pnpm add @onderwijsin/nuxt-theme-customizer
+pnpm add @onderwijsin/nuxt-theme-customizer @nuxt/ui @pinia/nuxt pinia pinia-plugin-persistedstate vue
 ```
+
+The application supplies `@nuxt/ui`, `@pinia/nuxt`, `pinia`, `pinia-plugin-persistedstate`, `vue` as
+peer dependencies so module runtime code shares the application's instances. Nuxt module
+registration remains automatic. VueUse remains a normal dependency: clipboard and debounce helpers
+do not require shared package state.
+
+The module adds the application’s Pinia package to Nuxt’s transpilation list so its Vue feature
+flags are compiled for SSR.
 
 ```ts
 export default defineNuxtConfig({

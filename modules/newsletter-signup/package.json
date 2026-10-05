@@ -48,7 +48,6 @@
   "dependencies": {
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
     "defu": "catalog:",
@@ -58,9 +57,13 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
+    "@nuxt/ui": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.0.0"
   },
   "engines": {
     "node": ">=24"

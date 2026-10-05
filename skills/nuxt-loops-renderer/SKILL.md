@@ -29,8 +29,11 @@ API client, or general-purpose HTML renderer.
 ## Install and register
 
 ```sh
-pnpm add @onderwijsin/nuxt-loops-renderer @onderwijsin/loops-core
+pnpm add @onderwijsin/nuxt-loops-renderer @nuxt/ui @onderwijsin/loops-core
 ```
+
+The application supplies `@nuxt/ui` as a peer dependency so module runtime code shares the
+application's instances. Nuxt module registration remains automatic.
 
 ```ts
 // nuxt.config.ts

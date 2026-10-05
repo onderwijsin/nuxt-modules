@@ -224,6 +224,10 @@ export default defineNuxtModule<ThemeCustomizerOptions>({
     });
 
     transpileRuntime(nuxt, runtimeDir);
+    // Pinia 4 contains Vue feature flags that Nuxt must compile for server rendering.
+    if (!nuxt.options.build.transpile.includes("pinia")) {
+      nuxt.options.build.transpile.push("pinia");
+    }
 
     end();
   }

@@ -23,8 +23,9 @@ Type and document non-obvious options. Add Zod validation only when options have
 constrained runtime shape. Declare Nuxt module dependencies with `moduleDependencies` and declare
 their packages in `dependencies` or `peerDependencies` according to ownership. Application-owned
 integrations belong in `peerDependencies`, with exact catalog pins in `devDependencies`;
-`moduleDependencies` still handles Nuxt registration and compatibility checks. Do not use deprecated
-`installModule`.
+`moduleDependencies` still handles Nuxt registration and compatibility checks. Use optional peer
+metadata for integrations that can be disabled, and document which features require installation. Do
+not use deprecated `installModule`.
 
 ## Runtime directories
 

@@ -20,8 +20,16 @@ call to the original provider.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-redirects
+pnpm add @onderwijsin/nuxt-redirects @pinia/nuxt pinia pinia-plugin-persistedstate vue
 ```
+
+The application supplies `@pinia/nuxt`, `pinia`, `pinia-plugin-persistedstate`, `vue` as peer
+dependencies so module runtime code shares the application's instances. Nuxt module registration
+remains automatic. Install the Pinia packages for the default client store; they can be omitted when
+both `store` and `routeMiddleware` are `false`.
+
+The module adds the application’s Pinia package to Nuxt’s transpilation list so its Vue feature
+flags are compiled for SSR.
 
 ```ts
 export default defineNuxtConfig({
@@ -192,7 +200,7 @@ export default defineNuxtConfig({
 
 `serverMiddleware`, `store`, and `routeMiddleware` are independent. When `routeMiddleware` is true
 and `store` is false, every client navigation uses the cached single-path endpoint instead of
-loading the complete index. Enabling `store` installs `@pinia/nuxt` and
+loading the complete index. Enabling `store` registers the application-installed `@pinia/nuxt` and
 `pinia-plugin-persistedstate/nuxt` as module dependencies. The client store persists its redirect
 index and last-fetch timestamp in browser `localStorage`, not cookies.
 

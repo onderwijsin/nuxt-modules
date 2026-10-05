@@ -11,8 +11,12 @@ mounts. It is disabled by default and is not a general-purpose public storage AP
 ## Install and configure
 
 ```sh
-pnpm add @onderwijsin/nuxt-storage-admin
+pnpm add @onderwijsin/nuxt-storage-admin @nuxt/ui vue
 ```
+
+The application supplies `@nuxt/ui`, `vue` as peer dependencies so module runtime code shares the
+application's instances. Nuxt module registration remains automatic. `@nuxt/ui` is optional when the
+development browser is disabled (`ui.enabled: false`).
 
 ```ts
 export default defineNuxtConfig({

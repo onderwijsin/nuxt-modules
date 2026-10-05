@@ -11,6 +11,15 @@ Use `@onderwijsin/nuxt-newsletter-signup` for a provider-independent newsletter 
 supports Loops and Mailchimp through server-side HTTP requests and does not expose provider SDKs or
 API keys to the browser.
 
+## Installation
+
+```sh
+pnpm add @onderwijsin/nuxt-newsletter-signup @nuxt/ui
+```
+
+The application supplies `@nuxt/ui` as a peer dependency so module runtime code shares the
+application's instances. Nuxt module registration remains automatic.
+
 ## Configuration
 
 The module composes its runtime-config namespaces with existing application and layer values,

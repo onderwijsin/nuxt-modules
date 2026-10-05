@@ -43,7 +43,6 @@
   "dependencies": {
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/loops-core": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "@tailwindcss/typography": "catalog:",
@@ -54,9 +53,13 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
+    "@nuxt/ui": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.0.0"
   },
   "engines": {
     "node": ">=24"

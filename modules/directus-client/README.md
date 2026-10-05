@@ -6,8 +6,11 @@ lookups, generated schema types, normalized errors, and optional cookie-backed a
 ## Install
 
 ```sh
-pnpm add @onderwijsin/nuxt-directus-client @onderwijsin/nuxt-directus-config
+pnpm add @onderwijsin/nuxt-directus-client vue @onderwijsin/nuxt-directus-config
 ```
+
+The application supplies `vue` as a peer dependency so this module uses the application's Vue
+instance.
 
 ```ts
 // nuxt.config.ts

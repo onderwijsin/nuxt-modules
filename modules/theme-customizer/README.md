@@ -9,8 +9,16 @@ persisted browser state.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-theme-customizer
+pnpm add @onderwijsin/nuxt-theme-customizer @nuxt/ui @pinia/nuxt pinia pinia-plugin-persistedstate vue
 ```
+
+The application supplies `@nuxt/ui`, `@pinia/nuxt`, `pinia`, `pinia-plugin-persistedstate`, `vue` as
+peer dependencies so module runtime code shares the application's instances. Nuxt module
+registration remains automatic. VueUse remains a normal dependency: clipboard and debounce helpers
+do not require shared package state.
+
+The module adds the application’s Pinia package to Nuxt’s transpilation list so its Vue feature
+flags are compiled for SSR.
 
 Register the module and configure at least one primary palette:
 
@@ -50,8 +58,8 @@ Import the stylesheet after Tailwind and Nuxt UI:
 @import "@onderwijsin/nuxt-theme-customizer";
 ```
 
-Nuxt module dependencies (`@nuxt/ui`, Pinia, persisted state, and VueUse) are registered
-automatically. The package includes its runtime dependencies.
+Nuxt UI, Pinia, and persisted-state modules are registered automatically using the application-owned
+peers. VueUse is registered from this package’s normal dependencies.
 
 ## Configuration
 

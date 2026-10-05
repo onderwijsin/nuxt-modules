@@ -7,8 +7,11 @@ provides server helpers for validating single-use Turnstile tokens before a prot
 ## Installation and configuration
 
 ```sh
-pnpm add @onderwijsin/nuxt-turnstile
+pnpm add @onderwijsin/nuxt-turnstile @nuxt/ui vue
 ```
+
+The application supplies `@nuxt/ui`, `vue` as peer dependencies so module runtime code shares the
+application's instances. Nuxt module registration remains automatic.
 
 ```ts
 export default defineNuxtConfig({

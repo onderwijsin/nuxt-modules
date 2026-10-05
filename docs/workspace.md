@@ -162,6 +162,11 @@ workspace pin, run the packed consumer with `--markdown-runtime-regression`. Thi
 that the renderer resolves the application's Vue, Comark, and Nuxt UI installations and that SSR
 includes the configured Prose paragraph classes.
 
+Use `--shared-runtime-regression` to check every packed module’s declared peers against the
+application installation, with a Vue patch different from the workspace pin. The consumer explicitly
+installs its feature peers at their catalog-pinned development versions and verifies that the
+Redirects store can use the application’s active Pinia instance.
+
 The root `build` script builds `@onderwijsin/nuxt-module-utils` once, then follows workspace
 dependency order for publishable modules under `modules/*`; it does not run playground package build
 scripts. `build:packages` is the package-only phase used after preparation by CI and publishing. The

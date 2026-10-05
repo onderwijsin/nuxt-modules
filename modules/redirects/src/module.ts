@@ -87,6 +87,13 @@ export default defineNuxtModule<ModuleOptions>({
     );
 
     transpileRuntime(nuxt, runtimeDir);
+    // Pinia 4 contains Vue feature flags that Nuxt must compile for server rendering.
+    if (
+      (options.store || options.routeMiddleware) &&
+      !nuxt.options.build.transpile.includes("pinia")
+    ) {
+      nuxt.options.build.transpile.push("pinia");
+    }
     addServerScanDir(resolver.resolve(runtimeDir, "server"));
     if (options.serverMiddleware) {
       addServerHandler({

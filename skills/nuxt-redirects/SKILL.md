@@ -8,6 +8,20 @@ description:
 Use `@onderwijsin/nuxt-redirects` for provider-agnostic redirects indexed in Nitro storage. Do not
 perform provider I/O from request middleware: sources run only when a consumer refreshes the index.
 
+## Installation
+
+```sh
+pnpm add @onderwijsin/nuxt-redirects @pinia/nuxt pinia pinia-plugin-persistedstate vue
+```
+
+The application supplies `@pinia/nuxt`, `pinia`, `pinia-plugin-persistedstate`, `vue` as peer
+dependencies so module runtime code shares the application's instances. Nuxt module registration
+remains automatic. Install the Pinia packages for the default client store; they can be omitted when
+both `store` and `routeMiddleware` are `false`.
+
+The module adds the application’s Pinia package to Nuxt’s transpilation list so its Vue feature
+flags are compiled for SSR.
+
 ## Setup
 
 ```ts
