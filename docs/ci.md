@@ -148,7 +148,8 @@ changes to `test-utils`, therefore do not trigger unrelated module builds or pac
 
 `full_quality_check` loads playground environments, runs root preparation, quality checks, recursive
 type checks, coverage tests, module builds, package metadata validation, and packing. It uploads the
-packed artifacts for the normal external-consumer path.
+packed artifacts for the normal external-consumer path. Coverage upload errors are reported as
+warnings and do not fail the quality job.
 
 ### External consumer safety validation
 
