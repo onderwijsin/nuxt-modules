@@ -20,8 +20,11 @@ export default defineNuxtModule<ModuleOptions>({
 ```
 
 Type and document non-obvious options. Add Zod validation only when options have a required or
-constrained runtime shape. Declare Nuxt module dependencies with `moduleDependencies` and retain
-them in `dependencies` when consumers resolve them; do not use deprecated `installModule`.
+constrained runtime shape. Declare Nuxt module dependencies with `moduleDependencies` and declare
+their packages in `dependencies` or `peerDependencies` according to ownership. Application-owned
+integrations belong in `peerDependencies`, with exact catalog pins in `devDependencies`;
+`moduleDependencies` still handles Nuxt registration and compatibility checks. Do not use deprecated
+`installModule`.
 
 ## Runtime directories
 

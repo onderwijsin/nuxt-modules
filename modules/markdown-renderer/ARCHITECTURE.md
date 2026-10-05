@@ -13,6 +13,12 @@ against that manifest and optional component sets. `MarkdownRenderer.vue` uses t
 render content. `src/runtime/app/utils/resolve-reference-path.ts` is only the default fallback for
 the `MarkdownReference` component; an application can replace it through the module option.
 
+Vue, Nuxt UI, and the Comark Nuxt/Vue/core packages are application-owned peers. Development uses
+the exact catalog pins, but packed consumers supply compatible versions. Comark resolves globally
+registered Prose components through Vue's current rendering instance; a separate Vue runtime can
+lose that instance during SSR and emit raw HTML while the client renders Prose components. Keep
+Comark package versions aligned and validate the packed consumer with a different Vue patch.
+
 When `videoBaseUrl` is configured, `MarkdownRenderer.vue` dynamically imports the video-source
 plugin during async setup and appends it to caller plugins. Keep that import conditional and avoid
 static imports of the same plugin. The plugin captures the app-config base URL at creation and

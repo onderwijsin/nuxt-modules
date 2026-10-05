@@ -17,15 +17,19 @@ components, and component metadata for the Directus Markdown editor.
 
 - Nuxt `^4.0.0`
 - Node.js 24 or newer
-- Nuxt UI 4 and Comark are installed automatically as Nuxt module dependencies.
+- Vue `^3.5.0`, Nuxt UI `^4.0.0`, and `@comark/nuxt`, `@comark/vue`, and `comark` `>=0.6.2` are peer
+  dependencies.
 
 The renderer can be used alongside `@onderwijsin/nuxt-webmanifest` and Schema.org components without
 installing `@unhead/schema-org` separately. Renderer component metadata remains available.
 
+Use the application's Vue runtime and keep all three Comark packages on the same version. Separate
+Vue copies can cause missing Prose styles and SSR hydration mismatches.
+
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-markdown-renderer
+pnpm add @onderwijsin/nuxt-markdown-renderer @nuxt/ui @comark/nuxt @comark/vue comark
 ```
 
 Register the module:

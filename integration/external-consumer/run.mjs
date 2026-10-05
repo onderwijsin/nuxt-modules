@@ -21,6 +21,7 @@ const packagesDirectory = resolve(
     join(root, ".artifacts", "packages")
 );
 const keepConsumer = process.argv.includes("--keep");
+const markdownRuntimeRegression = process.argv.includes("--markdown-runtime-regression");
 const directusDisabled = process.argv.includes("--directus-disabled");
 const fixtureDirectory = join(import.meta.dirname, "fixture");
 const consumerEnvironment = {
@@ -267,6 +268,15 @@ async function runFocusedAssertions(port, profile, directusMock) {
       throw new Error(`External consumer page assertion failed for layer ${layer}.`);
     if (
       layer === "markdown-renderer" &&
+      !/<p[^>]*class="[^"]*\bmarkdown-prose-proof\b[^"]*"[^>]*><!--\[-->Some content<!--\]--><\/p>/u.test(
+        page
+      )
+    )
+      throw new Error(
+        "Packed Markdown renderer did not render the styled Prose paragraph during SSR."
+      );
+    if (
+      layer === "markdown-renderer" &&
       !page.includes('src="https://media.example.com/assets/clip.mp4"')
     )
       throw new Error("Packed Markdown renderer did not prefix the relative video source.");
@@ -404,7 +414,7 @@ export async function main() {
     );
     writeFileSync(
       join(consumerDirectory, "package.json"),
-      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...packedDependencies } }, null, 2)}\n`
+      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "pnpm-workspace.yaml"),
@@ -426,6 +436,23 @@ export async function main() {
     );
     // Resolve once, then install frozen so validation cannot silently change the graph.
     installConsumerDependencies(consumerDirectory);
+    if (markdownRuntimeRegression) {
+      const runtimeCheck = join(consumerDirectory, "check-markdown-runtime.mjs");
+      writeFileSync(
+        runtimeCheck,
+        `
+const renderer = import.meta.resolve("@onderwijsin/nuxt-markdown-renderer");
+for (const name of ["vue", "@comark/vue", "@comark/nuxt", "comark", "@nuxt/ui"]) {
+  if (import.meta.resolve(name, renderer) !== import.meta.resolve(name))
+    throw new Error("Packed Markdown renderer resolves a separate " + name + " runtime.");
+}
+const comarkVue = import.meta.resolve("@comark/vue");
+if (import.meta.resolve("vue", comarkVue) !== import.meta.resolve("vue"))
+  throw new Error("Comark resolves a separate Vue runtime.");
+`
+      );
+      run("node", ["--experimental-import-meta-resolve", runtimeCheck], consumerDirectory);
+    }
     run("pnpm", ["exec", "nuxt", "prepare"], consumerDirectory);
     run("pnpm", ["exec", "nuxt", "build"], consumerDirectory);
     const serverEntryPath = join(consumerDirectory, ".output", "server", "index.mjs");

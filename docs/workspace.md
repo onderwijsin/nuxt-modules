@@ -45,9 +45,12 @@ them. If isolation is unavailable or pnpm reports a store mismatch, stop and rep
 altering the primary checkout.
 
 Every dependency addition or version change must reference a workspace catalog entry, and every
-catalog version must be an exact pin rather than a range. In user-facing documentation, use
-`pnpm ...` unless Corepack itself is relevant; agents invoke the pinned version as
-`corepack pnpm ...`.
+catalog version must be an exact pin rather than a range. Peer dependencies describe supported
+consumer versions with semver ranges; keep their development installations on exact catalog pins.
+Use peers for application-owned runtimes whose identity must be shared (such as Vue and Pinia), and
+for framework integrations that must use the application's installed version. Ordinary
+self-contained runtime utilities remain dependencies. In user-facing documentation, use `pnpm ...`
+unless Corepack itself is relevant; agents invoke the pinned version as `corepack pnpm ...`.
 
 ### Dependency release-age protection
 
@@ -153,6 +156,11 @@ credentials and does not call external services. Every module layer must keep it
 assertions local. Pull request CI runs this same consumer validation after package artifacts are
 produced, and the publish workflow runs it against the exact artifacts immediately before the
 unchanged Changesets publish step.
+
+To check the Markdown renderer against Comark 0.6.2 and a consumer Vue patch different from the
+workspace pin, run the packed consumer with `--markdown-runtime-regression`. This profile checks
+that the renderer resolves the application's Vue, Comark, and Nuxt UI installations and that SSR
+includes the configured Prose paragraph classes.
 
 The root `build` script builds `@onderwijsin/nuxt-module-utils` once, then follows workspace
 dependency order for publishable modules under `modules/*`; it does not run playground package build

@@ -33,11 +33,14 @@ All references are bundled with this skill and remain usable when installed outs
 
 ## Install and register
 
-Requires Nuxt 4 and Node.js 24 or newer. Nuxt UI 4 and Comark are installed automatically as module
-dependencies.
+Requires Nuxt 4 and Node.js 24 or newer. Vue `^3.5.0`, Nuxt UI `^4.0.0`, and `@comark/nuxt`,
+`@comark/vue`, and `comark` `>=0.6.2` are peer dependencies.
+
+Use the application's Vue runtime and keep all three Comark packages on the same version. Separate
+Vue copies can cause missing Prose styles and SSR hydration mismatches.
 
 ```sh
-pnpm add @onderwijsin/nuxt-markdown-renderer
+pnpm add @onderwijsin/nuxt-markdown-renderer @nuxt/ui @comark/nuxt @comark/vue comark
 ```
 
 ```ts
