@@ -3,6 +3,7 @@ import {
   readItems,
   type CollectionType,
   type Query,
+  type ReadItemOutput,
   type RegularCollections,
   type RestCommand
 } from "@directus/sdk";
@@ -25,9 +26,14 @@ export async function fetchDirectusItemByPath<
   query: TQuery,
   preview: DirectusPreviewContext,
   execute: <Output>(command: RestCommand<Output, Schema>) => Promise<Output>
-) {
+): Promise<ReadItemOutput<Schema, Collection, TQuery> | null> {
   if (preview.version && preview.id) {
-    return execute(readItem(collection, preview.id, { ...query, version: preview.version }));
+    return execute(
+      readItem<Schema, Collection, TQuery>(collection, preview.id, {
+        ...query,
+        version: preview.version
+      })
+    );
   }
 
   const requestQuery: TQuery & { limit: 1; version?: string } = {
@@ -35,6 +41,6 @@ export async function fetchDirectusItemByPath<
     limit: 1,
     ...(preview.version ? { version: preview.version } : {})
   };
-  const items = await execute(readItems(collection, requestQuery));
+  const items = await execute(readItems<Schema, Collection, TQuery>(collection, requestQuery));
   return items[0] ?? null;
 }

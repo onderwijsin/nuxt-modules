@@ -1,4 +1,4 @@
-import type { CollectionType, Query, RegularCollections } from "@directus/sdk";
+import type { CollectionType, Query, ReadItemOutput, RegularCollections } from "@directus/sdk";
 import type { Schema } from "#directus";
 import { useRoute, useRuntimeConfig } from "#imports";
 
@@ -14,7 +14,10 @@ import { useDirectus } from "../../client/app/use-directus";
 export async function useDirectusItemByPath<
   Collection extends RegularCollections<Schema>,
   const TQuery extends Query<Schema, CollectionType<Schema, Collection>>
->(collection: Collection, query: TQuery) {
+>(
+  collection: Collection,
+  query: TQuery
+): Promise<ReadItemOutput<Schema, Collection, TQuery> | null> {
   const config = useRuntimeConfig();
   const preview = parseDirectusPreviewContext(
     useRoute().query,

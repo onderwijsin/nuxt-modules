@@ -1,4 +1,4 @@
-import type { CollectionType, Query, RegularCollections } from "@directus/sdk";
+import type { CollectionType, Query, ReadItemOutput, RegularCollections } from "@directus/sdk";
 import type { H3Event } from "h3";
 import type { Schema } from "#directus";
 
@@ -15,7 +15,11 @@ import { fetchDirectusItemByPath } from "../fetch-by-path";
 export async function useDirectusServerItemByPath<
   Collection extends RegularCollections<Schema>,
   const TQuery extends Query<Schema, CollectionType<Schema, Collection>>
->(event: H3Event, collection: Collection, query: TQuery) {
+>(
+  event: H3Event,
+  collection: Collection,
+  query: TQuery
+): Promise<ReadItemOutput<Schema, Collection, TQuery> | null> {
   const preview = resolveDirectusRuntimeRequestContext(event).preview;
   const client = createServerDirectusClient(event);
   return fetchDirectusItemByPath(collection, query, preview, client.request);
