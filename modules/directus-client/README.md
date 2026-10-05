@@ -149,6 +149,10 @@ useDirectusItemByPath(collection, query): Promise<Item | null>
 Returns the first item matching a Directus query, or `null`. It is intended for route lookups such
 as a page by slug and automatically applies the current route's preview context.
 
+Selected fields and expanded nested relations retain the same item inference as
+`useDirectus(readItems(collection, query))`, with `null` added for a missing item. This also applies
+to version previews and the server equivalent.
+
 ### `useDirectusServerItemByPath`
 
 ```ts

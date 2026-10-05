@@ -229,6 +229,10 @@ Queries a collection and returns its first matching item or `null`. Normal path 
 `readItems` with `limit: 1`. When the request contains a valid version-preview context, it uses the
 preview URL's item ID with `readItem(id, { version })` instead.
 
+Selected fields and expanded nested relations retain the same item inference as
+`useDirectus(readItems(collection, query))`, with `null` added for a missing item. This also applies
+to version previews and the server equivalent.
+
 ### `useDirectusServerItemByPath`
 
 ```ts
