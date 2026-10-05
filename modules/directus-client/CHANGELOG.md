@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.2
+
+### Patch Changes
+
+- a1ccda0: Preserve selected fields and expanded nested relation types in application and server item-by-path lookups, including version previews.
+
 ## 0.12.1
 
 ### Patch Changes
