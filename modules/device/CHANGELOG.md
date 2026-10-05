@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.9
+
+### Patch Changes
+
+- 0381721: Use application-owned vue peer dependencies to preserve shared runtime identity. Keep exact catalog-pinned development installations and automatic Nuxt module registration.
+
 ## 1.0.8
 
 ### Patch Changes

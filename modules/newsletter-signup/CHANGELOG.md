@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2
+
+### Patch Changes
+
+- 0381721: Use application-owned @nuxt/ui peer dependencies to preserve shared runtime identity. Keep exact catalog-pinned development installations and automatic Nuxt module registration.
+
 ## 1.2.1
 
 ### Patch Changes

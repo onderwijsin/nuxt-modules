@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.1
+
+### Patch Changes
+
+- 0381721: Use application-owned vue peer dependencies to preserve shared runtime identity. Keep exact catalog-pinned development installations and automatic Nuxt module registration.
+- Updated dependencies [0381721]
+  - @onderwijsin/nuxt-turnstile@0.3.4
+
 ## 0.12.0
 
 ### Minor Changes
