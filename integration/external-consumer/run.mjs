@@ -262,7 +262,10 @@ async function runFocusedAssertions(port, profile, directusMock) {
               component.name === "MarkdownButton" &&
               component.props.label?.description === "Label displayed inside the button."
           ) &&
-          body.some((component) => component.name === "MarkdownHero" && component.label === "Hero")
+          body.some(
+            (component) => component.name === "MarkdownHero" && component.label === "Hero"
+          ) &&
+          !body.some((component) => component.name === "Reference")
       );
     }
     const page = await (await waitForResponse(`http://127.0.0.1:${port}/sanity/${layer}`)).text();
@@ -278,6 +281,13 @@ async function runFocusedAssertions(port, profile, directusMock) {
     )
       throw new Error(
         "Packed Markdown renderer did not render the styled Prose paragraph during SSR."
+      );
+    if (
+      layer === "markdown-renderer" &&
+      (!page.includes("Reference proof") || /<reference\b/iu.test(page))
+    )
+      throw new Error(
+        "Packed Markdown renderer did not resolve Reference outside its component set."
       );
     if (
       layer === "markdown-renderer" &&

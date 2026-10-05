@@ -237,6 +237,9 @@ Component-set values use the public Markdown node names. Passing `component-set=
 URL returns only that set. An unknown set prevents custom component resolution and its metadata URL
 returns HTTP 404.
 
+The reserved `Reference` node always resolves regardless of the selected set, including empty or
+unknown sets. It remains excluded from all metadata endpoints and does not need a set entry.
+
 Omit `component-set` to allow every discovered renderer component.
 
 ## Directus metadata endpoint

@@ -27,7 +27,8 @@ lazy application components, and metadata for the Directus Markdown editor.
    Keep editor schema calls static in renderer SFCs so the compiler can extract them.
 4. Check the application's rendered content and, for editor changes, the actual metadata response.
    An editor label does not rename a Markdown node; a component set controls runtime resolution as
-   well as editor choices.
+   well as editor choices. The reserved `Reference` node always resolves regardless of the set and
+   remains excluded from metadata.
 
 All references are bundled with this skill and remain usable when installed outside this repository.
 

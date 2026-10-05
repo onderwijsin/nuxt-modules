@@ -14,6 +14,10 @@ const { data } = await useFetch("/api/sanity/markdown-renderer");
       value='::MarkdownCallout{title="Markdown renderer"}\nPacked consumer component rendering.\n::'
       component-set="sanity"
     />
+    <MarkdownRenderer
+      value=':Reference{collection="events" item="42" label="Reference proof"}'
+      component-set="sanity"
+    />
     <MarkdownRenderer value=':video{src="clip.mp4" controls}' />
     <p :data-sanity="layerName">{{ data }}</p>
   </div>
