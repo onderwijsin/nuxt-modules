@@ -114,19 +114,38 @@ Confirm that:
 
 ## 6. Validate in proportion to risk
 
-Use [`workspace.md`](workspace.md) for command order and environment safety. Unless a check is truly
-inapplicable or blocked, apply formatting and lint fixes, then run type checking and tests:
+Use [`workspace.md`](workspace.md) for command order and environment safety. Select checks based on
+the change's scope and risk; more than one row can apply. A higher tier includes lower-tier checks
+unless they are inapplicable.
 
-```sh
-corepack pnpm format
-corepack pnpm lint:fix
-corepack pnpm typecheck
-corepack pnpm test
-```
+| Change                                                                                                                        | Required checks                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| A few lines of Markdown or other documentation edits, with no code or config changes                                          | No formatting, lint, typecheck, or test commands. Review the diff and run `git diff --check`. |
+| A new Markdown file or a documentation edit exceeding 100 lines                                                               | `corepack pnpm format` and `corepack pnpm lint:fix`.                                          |
+| A few lines of code changed in one isolated area                                                                              | `corepack pnpm lint:fix`.                                                                     |
+| Substantial code changes (over 50 lines), type changes, or edits across multiple files that are not tightly coupled           | `corepack pnpm lint:fix` and `corepack pnpm typecheck`.                                       |
+| Tests added or changed                                                                                                        | Run the focused test file or package command for those tests.                                 |
+| Major code work: multiple interdependent files, or linked functions/components/composables implemented or refactored together | `corepack pnpm lint:fix`, `corepack pnpm typecheck`, and `corepack pnpm test`.                |
+| New modules or major features, or a large refactor that changes package behavior, exports, dependencies, or emitted output    | Run the major-work checks, plus the relevant build/package checks and packed-consumer checks. |
 
-Add targeted tests while iterating. Add recursive builds and package validation for package-facing
-changes. Add packed artefact and external-consumer validation for exports, dependencies, emitted
-runtime code, or release readiness. Never describe an unrun check as passing.
+For changes that affect formatting, linting, types, or behavior, include the relevant checks even if
+the change is below a size threshold. A focused test does not automatically require the full suite;
+a test-only change uses focused tests unless it also meets a higher tier. If a command is
+inapplicable or blocked, record the exact command and reason. Never describe an unrun check as
+passing.
+
+Completion also requires the following contract gates; record a concrete reason when a gate does not
+apply:
+
+- maintainer and consumer documentation synchronized;
+- matching consumer skill synchronized when public module behavior changes;
+- proper JSDoc present where applicable for code written or touched;
+- runtime and compatibility contracts preserved unless an explicit change was requested; and
+- one correctly scoped Changeset per affected public-package concern.
+
+Add targeted tests while iterating. For package-facing work, select the relevant build and package
+checks; use packed artefact and external-consumer validation for exports, dependencies, emitted
+runtime code, or release readiness.
 
 ## 7. Reconcile completion
 

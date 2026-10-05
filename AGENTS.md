@@ -104,22 +104,14 @@ Follow [`docs/workspace.md`](docs/workspace.md) for the complete tooling contrac
 
 ## Completion gates
 
-A task is complete only when every applicable gate is satisfied or explicitly reported as blocked:
+A task is complete when its applicable checks pass, or when an inapplicable or blocked check is
+recorded with a reason. Choose checks by the risk and scope of the change. Never claim success for a
+skipped or failing check. Include the exact command and blocker in the handoff.
 
-- formatting applied with `corepack pnpm format`;
-- lint autofixes applied and lint passing with `corepack pnpm lint:fix`;
-- TypeScript checks passing with `corepack pnpm typecheck`;
-- unit tests passing with `corepack pnpm test`;
-- broader build, package, playground, or packed-consumer checks run when triggered by the change;
-- maintainer and consumer documentation synchronized, or a concrete no-doc-impact reason recorded;
-- matching consumer skill synchronized when public module behavior changes;
-- proper JSDoc present where applicable for code written or touched;
-- runtime and compatibility contracts preserved unless an explicit change was requested; and
-- one correctly scoped Changeset per affected public-package concern, or a concrete no-Changeset
-  reason recorded.
-
-Never claim success for a skipped or failing check. Include the exact command and blocker in the
-handoff.
+Use the [validation decision tree](docs/agent-workflow.md#6-validate-in-proportion-to-risk) to
+select checks. Also confirm maintainer and consumer documentation, matching consumer skills for
+public behavior changes, applicable JSDoc, runtime and compatibility contracts, and correctly scoped
+Changesets (or record a concrete reason each does not apply).
 
 ## Required handoff
 
