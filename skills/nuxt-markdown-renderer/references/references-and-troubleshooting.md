@@ -58,7 +58,7 @@ export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
   markdownRenderer: {
     resolveReferencePath: "~/utils/resolveReferencePath",
-    componentSets: { article: ["MarkdownButton", "MarkdownCallout", "Reference"] }
+    componentSets: { article: ["MarkdownButton", "MarkdownCallout"] }
   }
 });
 ```
@@ -88,8 +88,9 @@ are not registered; declarations alone do not indicate that runtime rendering is
 | Custom component is missing from editor choices       | Check discovery and statically extractable metadata; inspect build warnings.                                   |
 | Nested special input fails validation                 | Put `input` on an inferred string field through `properties` or `items.properties`.                            |
 | Macro overrides disappear                             | Check the warning's field path, unsupported keys, top-level `properties`, and required icon collections.       |
-| Reference appears as plain text                       | Check resolver path/default export and returned route; include `Reference` in the active set.                  |
+| Reference appears as plain text                       | Check resolver path/default export and returned route.                                                         |
 | Callout content is missing                            | Use its named `description` slot in MDC.                                                                       |
+| SSR hydration warns or Prose styles are missing       | Check that Vue is shared with the application and all three Comark packages use the same version (`>=0.6.2`).  |
 | Renderer looks unstyled                               | Load the main CSS and import the module stylesheet after `@nuxt/ui`.                                           |
 | Relative video path is unchanged                      | Check absolute `videoBaseUrl`, string `src` on a `video` node, and remount after config changes.               |
 | Unrelated component metadata disappears               | Set `scopeComponentMeta: false` when the application needs global extraction.                                  |

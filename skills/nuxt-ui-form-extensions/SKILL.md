@@ -16,8 +16,11 @@ currently provides one composable, `useDraftForm`, designed for Nuxt 4 + Nuxt UI
 ## Install and register
 
 ```sh
-pnpm add @onderwijsin/nuxt-ui-form-extensions
+pnpm add @onderwijsin/nuxt-ui-form-extensions @nuxt/ui
 ```
+
+The application supplies `@nuxt/ui` as a peer dependency so module runtime code shares the
+application's instances. Nuxt module registration remains automatic.
 
 ```ts
 // nuxt.config.ts

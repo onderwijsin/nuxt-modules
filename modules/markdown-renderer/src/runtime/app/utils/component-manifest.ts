@@ -29,7 +29,11 @@ export function createRendererManifest(
       const normalizedName = resolveComponentName(name);
       const allowedComponents = componentSet ? componentSets[componentSet] : undefined;
 
-      if (componentSet && (!allowedComponents || !allowedComponents.includes(normalizedName))) {
+      if (
+        normalizedName !== "Reference" &&
+        componentSet &&
+        (!allowedComponents || !allowedComponents.includes(normalizedName))
+      ) {
         return null;
       }
 

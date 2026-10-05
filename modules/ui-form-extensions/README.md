@@ -19,8 +19,11 @@ The module will likely grow over time with additional form utilities as common p
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-ui-form-extensions
+pnpm add @onderwijsin/nuxt-ui-form-extensions @nuxt/ui
 ```
+
+The application supplies `@nuxt/ui` as a peer dependency so module runtime code shares the
+application's instances. Nuxt module registration remains automatic.
 
 Register the module in `nuxt.config.ts`:
 
@@ -38,8 +41,8 @@ Install the consumer-facing skill for this module with:
 npx skills add onderwijsin/nuxt-modules --skill nuxt-ui-form-extensions
 ```
 
-`@nuxt/ui` is installed and initialized as a module dependency automatically. The consuming
-application should also follow the
+The application-installed `@nuxt/ui` is initialized as a module dependency automatically. The
+consuming application should also follow the
 [Nuxt UI installation guide](https://ui.nuxt.com/docs/getting-started/installation/nuxt) for its
 Tailwind CSS setup.
 

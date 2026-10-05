@@ -53,13 +53,10 @@
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
-    "@pinia/nuxt": "catalog:",
     "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
     "ohash": "catalog:",
-    "pinia": "catalog:",
-    "pinia-plugin-persistedstate": "catalog:",
     "regexparam": "catalog:",
     "ufo": "catalog:",
     "unstorage": "catalog:",
@@ -68,9 +65,30 @@
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
     "@nuxt/test-utils": "catalog:",
+    "@pinia/nuxt": "catalog:",
     "nuxt": "catalog:",
+    "pinia": "catalog:",
+    "pinia-plugin-persistedstate": "catalog:",
     "typescript": "catalog:",
-    "unbuild": "catalog:"
+    "unbuild": "catalog:",
+    "vue": "catalog:"
+  },
+  "peerDependencies": {
+    "@pinia/nuxt": "^1.0.1",
+    "pinia": "^4.0.2",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@pinia/nuxt": {
+      "optional": true
+    },
+    "pinia": {
+      "optional": true
+    },
+    "pinia-plugin-persistedstate": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=24"

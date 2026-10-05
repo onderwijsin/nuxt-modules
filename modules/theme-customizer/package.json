@@ -44,27 +44,35 @@
     "@iconify-json/lucide": "catalog:",
     "@nuxt/kit": "catalog:",
     "@nuxt/schema": "catalog:",
-    "@nuxt/ui": "catalog:",
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
-    "@pinia/nuxt": "catalog:",
     "@vueuse/core": "catalog:",
     "@vueuse/nuxt": "catalog:",
     "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",
     "ofetch": "catalog:",
-    "pinia": "catalog:",
-    "pinia-plugin-persistedstate": "catalog:",
     "scule": "catalog:",
     "tailwindcss": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
+    "@nuxt/ui": "catalog:",
+    "@pinia/nuxt": "catalog:",
     "nuxt": "catalog:",
+    "pinia": "catalog:",
+    "pinia-plugin-persistedstate": "catalog:",
     "typescript": "catalog:",
-    "unbuild": "catalog:"
+    "unbuild": "catalog:",
+    "vue": "catalog:"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.6.1",
+    "@pinia/nuxt": "^1.0.1",
+    "pinia": "^4.0.2",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "vue": "^3.5.0"
   },
   "engines": {
     "node": ">=24"

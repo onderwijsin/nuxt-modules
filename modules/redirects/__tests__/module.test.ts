@@ -110,6 +110,7 @@ describe("redirects module setup", () => {
     expect(addServerScanDir).toHaveBeenCalledTimes(1);
     expect(addServerHandler).toHaveBeenCalledWith(expect.objectContaining({ middleware: true }));
     expect(addPlugin).toHaveBeenCalledTimes(1);
+    expect(nuxt.options.build.transpile).toContain("pinia");
     expect(addServerPlugin).toHaveBeenCalledWith(".nuxt/redirects-source-registry.mjs");
     expect(addTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ filename: "redirects-source-registry.mjs", write: true })
@@ -144,6 +145,17 @@ describe("redirects module setup", () => {
 
     expect(addPlugin).toHaveBeenCalledTimes(1);
     expect(addServerHandler).not.toHaveBeenCalled();
+  });
+
+  it("keeps server-only redirects independent of Pinia transpilation", async () => {
+    const module = (await import("../src/module")).default;
+    const nuxt = createNuxt();
+
+    setupModule(module, { store: false, routeMiddleware: false }, nuxt);
+
+    expect(nuxt.options.build.transpile).not.toContain("pinia");
+    expect(addPlugin).not.toHaveBeenCalled();
+    expect(addServerHandler).toHaveBeenCalled();
   });
 
   it("does not register runtime behavior when disabled", async () => {

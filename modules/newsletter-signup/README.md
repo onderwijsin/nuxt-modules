@@ -7,8 +7,11 @@ provider requests stay on the server; the browser only calls the generated Nuxt 
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-newsletter-signup
+pnpm add @onderwijsin/nuxt-newsletter-signup @nuxt/ui
 ```
+
+The application supplies `@nuxt/ui` as a peer dependency so module runtime code shares the
+application's instances. Nuxt module registration remains automatic.
 
 Register the module in `nuxt.config.ts`:
 

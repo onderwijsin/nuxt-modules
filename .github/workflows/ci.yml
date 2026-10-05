@@ -262,6 +262,7 @@ jobs:
           file: coverage/cobertura-coverage.xml
           language: JavaScript
           label: code-coverage/vitest
+          fail-on-error: false
 
   external_consumer_check:
     needs: [detect_changes, focused_quality_check, full_quality_check]

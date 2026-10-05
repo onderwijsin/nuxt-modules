@@ -68,7 +68,11 @@
     "ioredis": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
-    "unbuild": "catalog:"
+    "unbuild": "catalog:",
+    "vue": "catalog:"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
   },
   "engines": {
     "node": ">=24"

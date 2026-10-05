@@ -74,6 +74,13 @@ describe("markdown renderer module", async () => {
     await expect($fetch("/")).resolves.toContain('src="https://media.example.com/assets/clip.mp4"');
   });
 
+  it("resolves styled Prose paragraphs during SSR with a component set", async () => {
+    const html = await $fetch<string>("/");
+    expect(html).toMatch(
+      /<p[^>]*class="[^"]*\bmarkdown-prose-proof\b[^"]*"[^>]*><!--\[-->Some content<!--\]--><\/p>/u
+    );
+  });
+
   it("rejects unknown component sets", async () => {
     await expect($fetch("/api/markdown-renderer/components/missing")).rejects.toMatchObject({
       statusCode: 404

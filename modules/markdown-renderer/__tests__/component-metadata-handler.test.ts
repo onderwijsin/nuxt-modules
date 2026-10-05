@@ -62,6 +62,18 @@ describe("component metadata handler", () => {
     ]);
   });
 
+  it.each([undefined, "article"])("omits Reference from metadata (%s)", (componentSet) => {
+    h3.getRouterParam.mockReturnValue(componentSet);
+    const handler = createComponentMetadataHandler(
+      { MarkdownReference: { meta: { props: [], slots: [] } } },
+      [{ name: "Reference", componentName: "MarkdownReference" }],
+      { article: ["Reference"] },
+      "*"
+    );
+
+    expect(Reflect.apply(handler, undefined, [{}])).toEqual([]);
+  });
+
   it("returns not found for an unknown component set", () => {
     h3.getRouterParam.mockReturnValue("missing");
     const handler = createComponentMetadataHandler({}, [], {}, "*");

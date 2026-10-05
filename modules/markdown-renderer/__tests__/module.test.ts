@@ -44,7 +44,7 @@ describe("markdown renderer module", () => {
   it("declares renderer dependencies", () => {
     const dependencies = Reflect.get(markdownRendererModule, "moduleDependencies")({ options: {} });
     expect(dependencies).toEqual({
-      "@comark/nuxt": { version: ">=0.7.0" },
+      "@comark/nuxt": { version: ">=0.6.2" },
       "@nuxt/ui": { version: ">=4.0.0" },
       "nuxt-component-meta": {
         version: ">=0.18.0",

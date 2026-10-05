@@ -22,7 +22,7 @@ export default defineNuxtConfig({
     componentsDir: "renderer",
     scopeComponentMeta: true,
     componentSets: {
-      article: ["MarkdownButton", "MarkdownCallout", "MarkdownHero", "Reference"],
+      article: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"],
       landing: ["MarkdownButton", "MarkdownHero"]
     },
     resolveReferencePath: "~/utils/resolveReferencePath",
@@ -71,8 +71,8 @@ Read the documentation before proceeding.
 
 Omit `component-set` to allow every discovered renderer component. An unknown set prevents custom
 component resolution and returns HTTP 404 from its metadata URL. Sets use registered node names;
-include `Reference` when reference links should resolve in that set. `Reference` is still omitted
-from the editor metadata menu.
+`Reference` always resolves regardless of the selected set, including empty or unknown sets, and
+remains excluded from all metadata endpoints. It does not need a set entry.
 
 ## MDC syntax
 

@@ -13,8 +13,11 @@ result is a reactive presentation helper, not a security boundary.
 ## Install and register
 
 ```sh
-pnpm add @onderwijsin/nuxt-device
+pnpm add @onderwijsin/nuxt-device vue
 ```
+
+The application supplies `vue` as a peer dependency so this module uses the application's Vue
+instance.
 
 ```ts
 export default defineNuxtConfig({

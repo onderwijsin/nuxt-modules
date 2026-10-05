@@ -21,6 +21,8 @@ const packagesDirectory = resolve(
     join(root, ".artifacts", "packages")
 );
 const keepConsumer = process.argv.includes("--keep");
+const sharedRuntimeRegression = process.argv.includes("--shared-runtime-regression");
+const markdownRuntimeRegression = process.argv.includes("--markdown-runtime-regression");
 const directusDisabled = process.argv.includes("--directus-disabled");
 const fixtureDirectory = join(import.meta.dirname, "fixture");
 const consumerEnvironment = {
@@ -88,7 +90,7 @@ function getPackedDependencies(manifest) {
  * the consumer validates one coherent release set.
  *
  * @param {{artifacts: Array<{name: string, filename: string}>}} manifest - Packed artifacts.
- * @returns {void}
+ * @returns {Array<{name: string, peerDependencies?: Record<string, string>}>} Packed manifests.
  */
 function validateWorkspaceDependencies(manifest) {
   const packageManifests = manifest.artifacts.map((artifact) => {
@@ -110,6 +112,7 @@ function validateWorkspaceDependencies(manifest) {
   const missing = findMissingWorkspaceDependencies(manifest, packageManifests);
   if (missing.length)
     throw new Error(`Packed artifact set is missing internal dependencies:\n${missing.join("\n")}`);
+  return packageManifests;
 }
 
 /**
@@ -259,12 +262,33 @@ async function runFocusedAssertions(port, profile, directusMock) {
               component.name === "MarkdownButton" &&
               component.props.label?.description === "Label displayed inside the button."
           ) &&
-          body.some((component) => component.name === "MarkdownHero" && component.label === "Hero")
+          body.some(
+            (component) => component.name === "MarkdownHero" && component.label === "Hero"
+          ) &&
+          !body.some((component) => component.name === "Reference")
       );
     }
     const page = await (await waitForResponse(`http://127.0.0.1:${port}/sanity/${layer}`)).text();
     if (!page.includes(`data-sanity="${layer}"`) || !page.includes(layer))
       throw new Error(`External consumer page assertion failed for layer ${layer}.`);
+    if (layer === "redirects" && !page.includes('data-shared-pinia="true"'))
+      throw new Error("Packed Redirects store did not use the application Pinia instance.");
+    if (
+      layer === "markdown-renderer" &&
+      !/<p[^>]*class="[^"]*\bmarkdown-prose-proof\b[^"]*"[^>]*><!--\[-->Some content<!--\]--><\/p>/u.test(
+        page
+      )
+    )
+      throw new Error(
+        "Packed Markdown renderer did not render the styled Prose paragraph during SSR."
+      );
+    if (
+      layer === "markdown-renderer" &&
+      (!page.includes("Reference proof") || /<reference\b/iu.test(page))
+    )
+      throw new Error(
+        "Packed Markdown renderer did not resolve Reference outside its component set."
+      );
     if (
       layer === "markdown-renderer" &&
       !page.includes('src="https://media.example.com/assets/clip.mp4"')
@@ -387,7 +411,21 @@ export async function main() {
   // The manifest is deliberately read before copying the fixture so the selected profile
   // controls the generated dependency metadata and the fixture's conditional Nuxt config.
   const manifest = readManifest();
-  validateWorkspaceDependencies(manifest);
+  const packageManifests = validateWorkspaceDependencies(manifest);
+  const peerDependencies = {};
+  // Keep the normal consumer on the catalog-pinned development graph. Published peer ranges
+  // describe compatibility; they should not silently turn this check into a latest-version matrix.
+  for (const metadata of packageManifests) {
+    for (const name of Object.keys(metadata.peerDependencies ?? {})) {
+      const developmentManifest = JSON.parse(
+        readFileSync(
+          join(root, "modules", getLayerName(metadata.name), "node_modules", name, "package.json"),
+          "utf8"
+        )
+      );
+      peerDependencies[name] = developmentManifest.version;
+    }
+  }
   const profile = getProfile(manifest);
   const packedDependencies = getPackedDependencies(manifest);
   const consumerDirectory = mkdtempSync(join(tmpdir(), "nuxt-external-consumer-"));
@@ -404,7 +442,7 @@ export async function main() {
     );
     writeFileSync(
       join(consumerDirectory, "package.json"),
-      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...packedDependencies } }, null, 2)}\n`
+      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...peerDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "pnpm-workspace.yaml"),
@@ -426,6 +464,38 @@ export async function main() {
     );
     // Resolve once, then install frozen so validation cannot silently change the graph.
     installConsumerDependencies(consumerDirectory);
+    const sharedRuntimeCheck = join(consumerDirectory, "check-shared-runtime.mjs");
+    writeFileSync(
+      sharedRuntimeCheck,
+      `
+const manifests = ${JSON.stringify(packageManifests)};
+for (const metadata of manifests) {
+  const entry = import.meta.resolve(metadata.name);
+  for (const name of Object.keys(metadata.peerDependencies ?? {})) {
+    if (import.meta.resolve(name, entry) !== import.meta.resolve(name))
+      throw new Error(metadata.name + " resolves a separate " + name + " runtime.");
+  }
+}
+`
+    );
+    run("node", ["--experimental-import-meta-resolve", sharedRuntimeCheck], consumerDirectory);
+    if (markdownRuntimeRegression) {
+      const runtimeCheck = join(consumerDirectory, "check-markdown-runtime.mjs");
+      writeFileSync(
+        runtimeCheck,
+        `
+const renderer = import.meta.resolve("@onderwijsin/nuxt-markdown-renderer");
+for (const name of ["vue", "@comark/vue", "@comark/nuxt", "comark", "@nuxt/ui"]) {
+  if (import.meta.resolve(name, renderer) !== import.meta.resolve(name))
+    throw new Error("Packed Markdown renderer resolves a separate " + name + " runtime.");
+}
+const comarkVue = import.meta.resolve("@comark/vue");
+if (import.meta.resolve("vue", comarkVue) !== import.meta.resolve("vue"))
+  throw new Error("Comark resolves a separate Vue runtime.");
+`
+      );
+      run("node", ["--experimental-import-meta-resolve", runtimeCheck], consumerDirectory);
+    }
     run("pnpm", ["exec", "nuxt", "prepare"], consumerDirectory);
     run("pnpm", ["exec", "nuxt", "build"], consumerDirectory);
     const serverEntryPath = join(consumerDirectory, ".output", "server", "index.mjs");

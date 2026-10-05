@@ -125,7 +125,7 @@ describe("theme customizer module", () => {
       nuxt as never
     );
 
-    expect(nuxt.options.build.transpile).toEqual(["./runtime"]);
+    expect(nuxt.options.build.transpile).toEqual(["./runtime", "pinia"]);
     expect(kit.addComponentsDir).toHaveBeenCalledWith({
       path: "./runtime/app/components",
       pathPrefix: false,

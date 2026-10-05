@@ -23,6 +23,22 @@ describe("renderer component manifest", () => {
     expect(loadButton).toHaveBeenCalledOnce();
   });
 
+  it.each([undefined, "article", "empty", "missing"])(
+    "resolves Reference independently of the selected set (%s)",
+    async (componentSet) => {
+      const loadReference = vi.fn(async () => ({ default: "reference" }));
+      const manifest = createRendererManifest(
+        { Reference: loadReference },
+        { article: ["MarkdownButton"], empty: [] }
+      );
+
+      await expect(manifest.resolveRendererComponent("reference", componentSet)).resolves.toEqual({
+        default: "reference"
+      });
+      expect(loadReference).toHaveBeenCalledOnce();
+    }
+  );
+
   it("only resolves components belonging to the selected set", () => {
     const manifest = createRendererManifest(
       {

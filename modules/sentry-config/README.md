@@ -6,8 +6,12 @@ without rewriting the initialization options.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-sentry-config
+pnpm add @onderwijsin/nuxt-sentry-config @nuxt/ui vue
 ```
+
+The application supplies `@nuxt/ui`, `vue` as peer dependencies so module runtime code shares the
+application's instances. Nuxt module registration remains automatic. `@nuxt/ui` is optional when the
+diagnostics page is disabled.
 
 ```ts
 export default defineNuxtConfig({
