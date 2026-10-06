@@ -1,36 +1,30 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { expect, it } from "vitest";
 
 it("preserves nested junction inference in emitted lookup declarations", () => {
   const resolve = (path: string) => fileURLToPath(new URL(path, import.meta.url));
-  const configPath = resolve("../.nuxt/tsconfig.json");
-  const config = ts.readConfigFile(configPath, ts.sys.readFile);
-  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, resolve("../.nuxt"));
   const sources = {
     "#item-app": resolve("../src/runtime/items/app/use-directus-item-by-path.ts"),
     "#item-server": resolve("../src/runtime/items/server/use-directus-item-by-path.ts"),
     "#item-fetch": resolve("../src/runtime/items/fetch-by-path.ts")
   };
-  // Emit against the module builder's schema, then consume with a concrete application schema.
+  // Explicit public signatures can be emitted without loading the Nuxt dependency graph.
+  // Consume the declarations with a concrete application schema to check real inference.
   const declarations = new Map<string, string>();
-  const emitOptions: ts.CompilerOptions = {
-    ...parsed.options,
-    noEmit: false,
-    declaration: true,
-    emitDeclarationOnly: true,
-    noCheck: true
-  };
-  const emitter = ts.createProgram(Object.values(sources), emitOptions);
   const paths: Record<string, string[]> = {
     "#directus": [resolve("./fixtures/item-inference.ts")]
   };
   for (const [alias, path] of Object.entries(sources)) {
-    const source = emitter.getSourceFile(path);
-    expect(source).toBeDefined();
-    if (!source) throw new Error(`Missing lookup source: ${path}`);
+    const emitted = ts.transpileDeclaration(readFileSync(path, "utf8"), {
+      compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.Preserve },
+      fileName: path,
+      reportDiagnostics: true
+    });
+    expect(emitted.diagnostics).toEqual([]);
     const declarationPath = path.replace(/\.ts$/, ".d.ts");
-    emitter.emit(source, (_name, text) => declarations.set(declarationPath, text));
+    declarations.set(declarationPath, emitted.outputText);
     paths[alias] = [declarationPath];
   }
   const options: ts.CompilerOptions = {
