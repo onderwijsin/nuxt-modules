@@ -1,1 +1,6 @@
-export default async () => [{ from: "/redirect-sanity", to: "/", statusCode: 302 }];
+import { useRuntimeConfig } from "#imports";
+
+export default async () => {
+  useRuntimeConfig();
+  return [{ from: "/redirect-sanity", to: "/", statusCode: 302 }];
+};

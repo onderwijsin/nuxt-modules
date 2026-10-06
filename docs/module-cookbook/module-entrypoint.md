@@ -102,3 +102,12 @@ source:
 ```
 
 Publish its `style` export and let consumers import it alongside application CSS.
+
+## Generated server entrypoints
+
+Use `addServerTemplate()` for generated executable Nitro plugins and handlers, and register the
+returned `filename`. For plugins, use an absolute virtual filename because Nitro resolves relative
+plugin IDs against its server directory. No physical file is required. This keeps their transitive
+imports inside Nitro compilation in development and production, including virtual aliases. Use
+`addTemplate({ write: true })` when the output needs to be a physical Nuxt build artifact, such as
+an application manifest, stylesheet, or public asset.

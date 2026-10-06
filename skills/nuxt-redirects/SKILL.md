@@ -212,3 +212,6 @@ export default defineNuxtConfig({
 For another mount name, configure both `redirects.storageMount` and `nitro.storage` with the same
 key. Use webhook routes for provider-specific change notifications and call `upsertRedirect` or
 `removeRedirect` only after validating the provider request.
+
+Discovered server sources support Nitro virtual imports such as `#imports` in development and
+production, including when refreshing through a consumer task.

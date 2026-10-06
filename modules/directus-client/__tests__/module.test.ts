@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
       }
     }
   },
+  addServerTemplate: vi.fn(),
   addTemplate: vi.fn(),
   addTypeTemplate: vi.fn()
 }));
@@ -27,6 +28,7 @@ vi.mock("@nuxt/kit", () => ({
   addServerHandler: vi.fn(),
   addServerImports: vi.fn(),
   addServerPlugin: vi.fn(),
+  addServerTemplate: state.addServerTemplate,
   addTemplate: state.addTemplate,
   addTypeTemplate: state.addTypeTemplate,
   createResolver: () => ({ resolve: (...parts: string[]) => join("/module", ...parts) }),
@@ -75,6 +77,8 @@ function createNuxt() {
 }
 
 beforeEach(() => {
+  state.addServerTemplate.mockReset();
+  state.addServerTemplate.mockImplementation((template) => template);
   state.addTemplate.mockReset();
   state.addTemplate.mockImplementation(({ filename }: { filename: string }) => ({
     dst: `/project/.nuxt/${filename}`
@@ -135,8 +139,8 @@ describe("directus-client module setup", () => {
       enabled: true,
       fields: ["email"]
     });
-    const userHandler = state.addTemplate.mock.calls.find(
-      ([template]) => template.filename === "server/handlers/directus-user.get.mjs"
+    const userHandler = state.addServerTemplate.mock.calls.find(
+      ([template]) => template.filename === "#directus-client/user-handler"
     )?.[0] as { getContents: () => string } | undefined;
     expect(userHandler?.getContents()).not.toContain("directus.config.ts");
   });

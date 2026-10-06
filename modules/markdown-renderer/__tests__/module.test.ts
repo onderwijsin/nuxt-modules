@@ -6,6 +6,7 @@ const kit = vi.hoisted(() => ({
   addComponentsDir: vi.fn(),
   addImports: vi.fn(),
   addServerHandler: vi.fn(),
+  addServerTemplate: vi.fn(),
   addTemplate: vi.fn(),
   addTypeTemplate: vi.fn(),
   createResolver: vi.fn(() => ({ resolve: vi.fn((...parts: string[]) => parts.join("/")) })),
@@ -26,9 +27,8 @@ async function setupModule(options: object, nuxt: object): Promise<void> {
 describe("markdown renderer module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    kit.addTemplate
-      .mockReturnValueOnce({ dst: ".nuxt/markdown-renderer/manifest.mjs" })
-      .mockReturnValueOnce({ dst: ".nuxt/markdown-renderer/metadata-handler.mjs" });
+    kit.addTemplate.mockReturnValue({ dst: ".nuxt/markdown-renderer/manifest.mjs" });
+    kit.addServerTemplate.mockImplementation((template) => template);
     kit.findPath.mockResolvedValue(null);
     kit.resolvePath.mockResolvedValue("/project/app/utils/reference.ts");
   });
@@ -94,7 +94,7 @@ describe("markdown renderer module", () => {
     expect(manifestTemplate.getContents()).toContain(
       '"MarkdownCallout": () => import("./runtime/app/components/renderer/MarkdownCallout.vue")'
     );
-    const metadataTemplate = kit.addTemplate.mock.calls[1]?.[0];
+    const metadataTemplate = kit.addServerTemplate.mock.calls[0]?.[0];
     expect(metadataTemplate.getContents()).toContain(
       '[{"name":"MarkdownCallout","componentName":"MarkdownCallout"}]'
     );
@@ -106,12 +106,12 @@ describe("markdown renderer module", () => {
       expect(kit.addServerHandler).toHaveBeenCalledWith({
         method: "get",
         route,
-        handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
+        handler: "#markdown-renderer/metadata-handler"
       });
       expect(kit.addServerHandler).toHaveBeenCalledWith({
         method: "options",
         route,
-        handler: ".nuxt/markdown-renderer/metadata-handler.mjs"
+        handler: "#markdown-renderer/metadata-handler"
       });
     }
   });
@@ -183,7 +183,7 @@ describe("markdown renderer module", () => {
 
     await setupModule({ corsOrigin: "https://directus.example.com" }, nuxt);
 
-    const metadataTemplate = kit.addTemplate.mock.calls[1]?.[0];
+    const metadataTemplate = kit.addServerTemplate.mock.calls[0]?.[0];
     expect(metadataTemplate.getContents()).toContain('["https://directus.example.com"]');
   });
 

@@ -331,3 +331,5 @@ export default defineNuxtConfig({
 Disabling scoping preserves your component-meta component and directory configuration while keeping
 built-in renderer source enrichment. Global metadata extraction can have significantly higher build
 time and memory costs.
+
+Component metadata endpoints resolve server metadata in both development and production.

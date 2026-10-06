@@ -8,7 +8,7 @@ const addPlugin = vi.fn();
 const addServerHandler = vi.fn();
 const addServerPlugin = vi.fn();
 const addServerScanDir = vi.fn();
-const addTemplate = vi.fn();
+const addServerTemplate = vi.fn();
 const addTypeTemplate = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn(), error: vi.fn() };
 const temporaryDirectories: string[] = [];
@@ -18,7 +18,7 @@ vi.mock("@nuxt/kit", () => ({
   addServerHandler,
   addServerPlugin,
   addServerScanDir,
-  addTemplate,
+  addServerTemplate,
   addTypeTemplate,
   createResolver: () => ({ resolve: (...segments: string[]) => segments.join("/") }),
   defineNuxtModule: (definition: unknown) => definition,
@@ -57,6 +57,7 @@ function createNuxt() {
   return {
     options: {
       rootDir: "/project",
+      buildDir: "/project/.nuxt",
       serverDir: "/project/server",
       runtimeConfig: {
         redirects: { consumerValue: "preserved" },
@@ -86,10 +87,10 @@ describe("redirects module setup", () => {
       addServerHandler,
       addServerPlugin,
       addServerScanDir,
-      addTemplate,
+      addServerTemplate,
       addTypeTemplate
     ].forEach((mock) => mock.mockReset());
-    addTemplate.mockReturnValue({ dst: ".nuxt/redirects-source-registry.mjs" });
+    addServerTemplate.mockReturnValue({ filename: "/project/.nuxt/redirects-source-registry.mjs" });
   });
 
   it("registers storage-backed server and client runtime when enabled", async () => {
@@ -111,9 +112,9 @@ describe("redirects module setup", () => {
     expect(addServerHandler).toHaveBeenCalledWith(expect.objectContaining({ middleware: true }));
     expect(addPlugin).toHaveBeenCalledTimes(1);
     expect(nuxt.options.build.transpile).toContain("pinia");
-    expect(addServerPlugin).toHaveBeenCalledWith(".nuxt/redirects-source-registry.mjs");
-    expect(addTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ filename: "redirects-source-registry.mjs", write: true })
+    expect(addServerPlugin).toHaveBeenCalledWith("/project/.nuxt/redirects-source-registry.mjs");
+    expect(addServerTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ filename: "/project/.nuxt/redirects-source-registry.mjs" })
     );
     expect(Reflect.get(nuxt.options.routeRules, "/api/_redirects/**")).toEqual({
       prerender: false
@@ -133,7 +134,7 @@ describe("redirects module setup", () => {
 
     setupModule(module, {}, nuxt);
 
-    const template = addTemplate.mock.calls[0]?.[0];
+    const template = addServerTemplate.mock.calls[0]?.[0];
     expect(template.getContents()).toContain(`import source0 from ${JSON.stringify(sourcePath)};`);
   });
 

@@ -5,6 +5,7 @@ import {
   addComponentsDir,
   addImports,
   addServerHandler,
+  addServerTemplate,
   addTemplate,
   addTypeTemplate,
   createResolver,
@@ -123,9 +124,8 @@ export default defineNuxtModule<ModuleOptions>({
       write: true,
       getContents: () => generateRendererManifest(components, options.componentSets)
     });
-    const metadataHandler = addTemplate({
-      filename: "markdown-renderer/metadata-handler.mjs",
-      write: true,
+    const metadataHandler = addServerTemplate({
+      filename: "#markdown-renderer/metadata-handler",
       getContents: () => `
 import componentMeta from "#nuxt-component-meta/nitro";
 import { createComponentMetadataHandler } from ${JSON.stringify(
@@ -184,8 +184,8 @@ export default createComponentMetadataHandler(
       "/api/markdown-renderer/components",
       "/api/markdown-renderer/components/:componentSet"
     ]) {
-      addServerHandler({ method: "get", route, handler: metadataHandler.dst });
-      addServerHandler({ method: "options", route, handler: metadataHandler.dst });
+      addServerHandler({ method: "get", route, handler: metadataHandler.filename });
+      addServerHandler({ method: "options", route, handler: metadataHandler.filename });
     }
 
     end();

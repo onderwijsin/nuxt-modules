@@ -657,3 +657,5 @@ automatically; the application decides how to react to iframe updates.
 - Directus permissions remain the final authorization boundary.
 - Supported environments are Nuxt 4 and Node.js 24 or newer. Node.js 22 may work but is untested and
   unsupported.
+
+The current-user route supports executable shared configuration in development and production.

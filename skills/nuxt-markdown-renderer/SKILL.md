@@ -83,3 +83,5 @@ const content = "# Welcome\n\nRead **Markdown** and MDC in your Nuxt application
   authentication.
 - `scopeComponentMeta: true` scopes the application's global metadata parser. Set it to `false` when
   unrelated application components also need extraction.
+
+Component metadata endpoints resolve server metadata in both development and production.
