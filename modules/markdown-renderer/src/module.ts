@@ -20,6 +20,7 @@ import {
   moduleDependenciesWhenEnabled,
   moduleSetup,
   resolveModuleName,
+  resolveLoggerScope,
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
@@ -69,7 +70,7 @@ export default defineNuxtModule<ModuleOptions>({
       }
     }),
   async setup(rawOptions, nuxt) {
-    const log = useLogger(MODULE_KEY);
+    const log = useLogger(resolveLoggerScope(MODULE_KEY));
     const { start, end, isEnabled } = moduleSetup(MODULE_NAME, rawOptions, log);
     start();
     const options = validateModuleOptions(rawOptions, markdownRendererOptionsSchema, log);

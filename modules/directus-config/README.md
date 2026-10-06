@@ -82,6 +82,13 @@ selections and mapper return types so consuming Directus modules can generate pr
 types from the source. Mapper parameters expose the selected SDK user fields as optional values and
 keep custom fields available as `unknown` until the mapper narrows them.
 
+`directus.config.ts` executes during Nuxt module setup and may also be imported and executed in the
+production Nitro runtime when runtime consumers such as `@onderwijsin/nuxt-directus-sitemaps` are
+enabled. All module-scope code, imported dependencies, and their side effects must be safe in the
+deployed Nitro server environment, including Cloudflare Workers when targeting that runtime. Avoid
+module-scope build tooling, local filesystem assumptions, and browser globals. Keep build-only work
+outside this config and defer request-specific work to the relevant mapper or fetcher.
+
 For authentication, cookies, sealing, and secret rotation details, see the
 [`@onderwijsin/nuxt-directus-client` Authentication documentation](../directus-client/README.md#authentication).
 Generate a session secret with:

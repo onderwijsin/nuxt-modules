@@ -43,6 +43,12 @@ respect module ordering when using discovery, and configuration files execute du
 Jiti. Server and client aliases have explicit trust boundaries, while array replacement gives
 consumers a complete override mechanism.
 
+The server-only alias imports the original configuration source. Runtime consumers such as
+`@onderwijsin/nuxt-directus-sitemaps` therefore also import and execute that source in the
+production Nitro runtime. All module-scope code, imported dependencies, and their side effects must
+be safe for the deployment target, including Cloudflare Workers when targeted. Build-only work must
+remain outside the config, and request-specific work belongs in the relevant runtime callbacks.
+
 ## Reconsideration criteria
 
 Revisit this decision if Nuxt provides a safer shared configuration lifecycle, if Directus modules
