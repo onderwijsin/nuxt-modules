@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import {
   addServerHandler,
-  addTemplate,
+  addServerTemplate,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -63,9 +63,8 @@ export default defineNuxtModule<ModuleOptions>({
 
     const componentDirectory = resolve(nuxt.options.serverDir, "healthcheck");
     const components = discoverHealthcheckComponents(componentDirectory);
-    const healthHandler = addTemplate({
-      filename: "healthcheck-handler.mjs",
-      write: true,
+    const healthHandler = addServerTemplate({
+      filename: "#healthcheck/handler",
       getContents: () =>
         generateHealthcheckComponentHandler(
           discoverHealthcheckComponents(componentDirectory),
@@ -89,7 +88,7 @@ export default defineNuxtModule<ModuleOptions>({
     });
     addServerHandler({
       route: "/api/system/health",
-      handler: healthHandler.dst
+      handler: healthHandler.filename
     });
 
     nuxt.options.routeRules = defu(nuxt.options.routeRules, {});

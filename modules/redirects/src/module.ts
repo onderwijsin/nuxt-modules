@@ -5,7 +5,7 @@ import {
   addServerHandler,
   addServerPlugin,
   addServerScanDir,
-  addTemplate,
+  addServerTemplate,
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
@@ -105,15 +105,14 @@ export default defineNuxtModule<ModuleOptions>({
       addPlugin(resolver.resolve(runtimeDir, "app/plugins/redirects.client"), { append: true });
     }
 
-    const registry = addTemplate({
-      filename: "redirects-source-registry.mjs",
-      write: true,
+    const registry = addServerTemplate({
+      filename: resolve(nuxt.options.buildDir, "redirects-source-registry.mjs"),
       getContents: () =>
         generateRedirectsSourceRegistry(
           discoverRedirectSources(resolve(nuxt.options.serverDir, "redirects"))
         )
     });
-    addServerPlugin(registry.dst);
+    addServerPlugin(registry.filename);
     nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
     nuxt.options.routeRules["/api/_redirects/**"] = defu(
       { prerender: false },

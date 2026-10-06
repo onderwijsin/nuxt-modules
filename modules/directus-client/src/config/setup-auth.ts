@@ -1,4 +1,10 @@
-import { addImports, addPlugin, addServerHandler, addServerPlugin, addTemplate } from "@nuxt/kit";
+import {
+  addImports,
+  addPlugin,
+  addServerHandler,
+  addServerPlugin,
+  addServerTemplate
+} from "@nuxt/kit";
 import { defu } from "defu";
 
 import type { DirectusSetupContext } from "./setup-context";
@@ -55,9 +61,8 @@ export function setupDirectusAuth(context: DirectusSetupContext): void {
     name: "useDirectusUser",
     from: resolver.resolve(runtimeDir, "user/app/use-directus-user")
   });
-  const userHandler = addTemplate({
-    filename: "server/handlers/directus-user.get.mjs",
-    write: true,
+  const userHandler = addServerTemplate({
+    filename: "#directus-client/user-handler",
     getContents: () => {
       const handler = resolver.resolve(runtimeDir, "user/server/create-handler");
       if (
@@ -71,7 +76,7 @@ export function setupDirectusAuth(context: DirectusSetupContext): void {
       return `import directusConfig from ${JSON.stringify(directusConfigFile)};\nimport { createDirectusUserHandler } from ${JSON.stringify(handler)};\nconst userConfig = directusConfig.client?.auth?.user;\nexport default createDirectusUserHandler(userConfig?.enabled ? userConfig.mapper : undefined);\n`;
     }
   });
-  addServerHandler({ route: "/_directus/auth/user", method: "get", handler: userHandler.dst });
+  addServerHandler({ route: "/_directus/auth/user", method: "get", handler: userHandler.filename });
   nuxt.options.routeRules = defu(nuxt.options.routeRules, {});
   nuxt.options.routeRules["/_directus/auth/user"] = defu(
     { cache: false, prerender: false },

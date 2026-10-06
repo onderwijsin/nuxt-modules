@@ -57,3 +57,5 @@ their HTTP request at that configured timeout.
 
 `warn` produces HTTP `200`, while overall `error` produces HTTP `503`. Disabled built-ins are not
 included in the response. Never return credentials or other secrets in component details.
+
+Custom server health components support Nitro virtual imports in development and production.

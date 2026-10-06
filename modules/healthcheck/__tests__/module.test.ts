@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const addServerHandler = vi.fn();
-const addTemplate = vi.fn();
+const addServerTemplate = vi.fn();
 const addTypeTemplate = vi.fn();
 const logger = { start: vi.fn(), success: vi.fn(), info: vi.fn(), error: vi.fn() };
 
 vi.mock("@nuxt/kit", () => ({
   addServerHandler,
-  addTemplate,
+  addServerTemplate,
   addTypeTemplate,
   createResolver: () => ({ resolve: (...segments: string[]) => segments.join("/") }),
   defineNuxtModule: (definition: unknown) => definition,
@@ -42,8 +42,8 @@ describe("healthcheck module setup", () => {
   beforeEach(() => {
     vi.resetModules();
     addServerHandler.mockReset();
-    addTemplate.mockReset();
-    addTemplate.mockReturnValue({ dst: ".nuxt/healthcheck-handler.mjs" });
+    addServerTemplate.mockReset();
+    addServerTemplate.mockReturnValue({ filename: "#healthcheck/handler" });
     addTypeTemplate.mockReset();
     Object.values(logger).forEach((mock) => mock.mockReset());
   });
@@ -74,8 +74,8 @@ describe("healthcheck module setup", () => {
       directus: { enabled: true, baseUrl: "https://directus.example.com" }
     });
     expect(addServerHandler).toHaveBeenCalledTimes(2);
-    expect(addTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ filename: "healthcheck-handler.mjs", write: true })
+    expect(addServerTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ filename: "#healthcheck/handler" })
     );
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
     expect(nuxt.options.routeRules["/api/system/**"]).toEqual({ cache: false, prerender: false });
@@ -112,7 +112,7 @@ describe("healthcheck module setup", () => {
     };
     module.setup({ enabled: false }, nuxt);
     expect(addServerHandler).not.toHaveBeenCalled();
-    expect(addTemplate).not.toHaveBeenCalled();
+    expect(addServerTemplate).not.toHaveBeenCalled();
     expect(addTypeTemplate).toHaveBeenCalledTimes(1);
   });
 });

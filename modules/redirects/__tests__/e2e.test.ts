@@ -1,11 +1,25 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { $fetch, setupFixture, url } from "../../../packages/test-utils/src";
+import { $fetch, setupFixture, useTestContext, url } from "../../../packages/test-utils/src";
 
 describe("redirects module", async () => {
   await setupFixture(import.meta.url);
 
   beforeEach(async () => {
     await $fetch("/api/_test/refresh", { method: "POST" });
+  });
+
+  it("keeps the source registry virtual instead of writing a raw server entrypoint", () => {
+    const nuxt = useTestContext().nuxt;
+    if (!nuxt) throw new Error("Nuxt test context is unavailable");
+    expect(existsSync(join(nuxt.options.buildDir, "redirects-source-registry.mjs"))).toBe(false);
+  });
+
+  it("refreshes registered sources through the consumer task", async () => {
+    await expect($fetch("/api/_test/task", { method: "POST" })).resolves.toMatchObject({
+      result: { count: 8 }
+    });
   });
 
   it("refreshes consumer sources into the list and lookup endpoints", async () => {

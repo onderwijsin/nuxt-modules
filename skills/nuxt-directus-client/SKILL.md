@@ -555,3 +555,5 @@ can only target the configured Directus URL; authorization still happens in Dire
 
 Supported environments are Nuxt 4 and Node.js 24 or newer. Node.js 22 may work but is untested and
 unsupported.
+
+The current-user route supports executable shared configuration in development and production.
