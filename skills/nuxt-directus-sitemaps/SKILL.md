@@ -36,6 +36,12 @@ source for executable `mapper` and `fetcher` functions.
 
 Create `directus.config.ts` in the Nuxt root:
 
+With shared configuration enabled, the sitemap runtime imports and executes this file in production
+Nitro as well as during Nuxt module setup. All module-scope code, imported dependencies, and their
+side effects must be safe for the deployment runtime, including Cloudflare Workers when targeted.
+Avoid module-scope build tooling, local filesystem assumptions, and browser globals. Keep build-only
+work outside the config and defer request-specific work to mappers or fetchers.
+
 ```ts
 import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 

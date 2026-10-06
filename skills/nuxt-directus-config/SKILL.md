@@ -27,6 +27,13 @@ export default defineNuxtConfig({
 Create `directus.config.ts` in the Nuxt root. It is executable TypeScript: use it for secrets,
 functions, and other values that must not be serialised through `nuxt.config.ts`.
 
+The file executes during Nuxt module setup and may also be imported and executed in production Nitro
+when runtime consumers such as `@onderwijsin/nuxt-directus-sitemaps` are enabled. Keep all
+module-scope code, imported dependencies, and their side effects safe for the deployed Nitro server
+environment, including Cloudflare Workers when targeted. Avoid module-scope build tooling, local
+filesystem assumptions, and browser globals; keep build-only work outside the config and defer
+request-specific work to the relevant mapper or fetcher.
+
 ```ts
 import { defineDirectusConfig } from "@onderwijsin/nuxt-directus-config/config";
 
