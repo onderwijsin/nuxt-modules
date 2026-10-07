@@ -34,7 +34,7 @@ Paragraph with **bold** and *italic* and ~~strike~~ and \`code\` and a [link](ht
 
 A (self) reference: :Reference{collection="test" item="a0d458cb-639c-4ef1-905b-fc7fc38d17ae" label="a0d458cb-639c-4ef1-905b-fc7fc38d17ae" :data='{"id":"a0d458cb-639c-4ef1-905b-fc7fc38d17ae"}'}
 
-![Alt text](/assets/4b4849c5-fdcf-4522-b090-adb9530ff526)
+![Alt text](/assets/4b4849c5-fdcf-4522-b090-adb9530ff526){width="300"}
 
 ---
 

@@ -1,8 +1,31 @@
+import { createRequire } from "node:module";
+import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { $fetch, setupFixture } from "../../../packages/test-utils/src";
 
 describe("markdown renderer module", async () => {
-  await setupFixture(import.meta.url);
+  const requireVue = createRequire(createRequire(import.meta.url).resolve("vue"));
+  const vuePackages = [
+    "vue",
+    "@vue/runtime-dom",
+    "@vue/runtime-core",
+    "@vue/reactivity",
+    "@vue/shared",
+    "@vue/server-renderer"
+  ];
+  // Nitro can trace another Vue patch from the workspace into the standalone server.
+  // Resolve the runtime graph from this fixture's Vue and bundle Comark with it so
+  // component resolution and SSR slots use the same runtime instance.
+  await setupFixture(import.meta.url, "basic", {
+    nuxtConfig: {
+      nitro: {
+        alias: Object.fromEntries(
+          vuePackages.map((name) => [name, dirname(requireVue.resolve(`${name}/package.json`))])
+        ),
+        externals: { inline: [...vuePackages, "@comark/vue"] }
+      }
+    }
+  });
 
   it("serves built-in and consumer renderer metadata alongside webmanifest", async () => {
     await expect($fetch("/api/markdown-renderer/components/demo")).resolves.toMatchObject([
@@ -79,6 +102,15 @@ describe("markdown renderer module", async () => {
     expect(html).toMatch(
       /<p[^>]*class="[^"]*\bmarkdown-prose-proof\b[^"]*"[^>]*><!--\[-->Some content<!--\]--><\/p>/u
     );
+  });
+
+  it("renders Markdown images with the specified width attribute during SSR", async () => {
+    const html = await $fetch<string>("/");
+    const image = html.match(/<img\b[^>]*\balt="Alt text"[^>]*>/u)?.[0];
+    expect(image).toBeDefined();
+    expect(image).toMatch(/\salt="Alt text"/u);
+    expect(image).toContain("/assets/4b4849c5-fdcf-4522-b090-adb9530ff526");
+    expect(image).toMatch(/\swidth="300"/u);
   });
 
   it("rejects unknown component sets", async () => {

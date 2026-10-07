@@ -1,1 +1,2 @@
 @source "./app";
+@plugin '@tailwindcss/typography';
