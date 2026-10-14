@@ -1,5 +1,5 @@
 import { defineNuxtPlugin, refreshNuxtData } from "#app";
-import { useRoute, useRuntimeConfig } from "#imports";
+import { useRoute, useRouter, useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
 import { createDirectusRestClient } from "@onderwijsin/nuxt-module-utils/shared";
 import type { Schema } from "#directus";
@@ -40,6 +40,16 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (preview.isPreview) {
     nuxtApp.hook("page:finish", () => {
       void refreshNuxtData();
+    });
+  }
+
+  if (preview.token) {
+    const router = useRouter();
+    nuxtApp.hook("app:mounted", async () => {
+      const route = router.currentRoute.value;
+      const query = { ...route.query };
+      delete query[config.public.directusClient.preview.queryKeys.token];
+      await router.replace({ path: route.path, query, hash: route.hash });
     });
   }
 

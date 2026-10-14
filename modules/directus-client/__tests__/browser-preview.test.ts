@@ -5,13 +5,14 @@ import type { DirectusPreviewOptions } from "../src/runtime/preview/context";
 const state = vi.hoisted(() => {
   const query: Record<string, string | string[]> = {};
   return {
-    route: { fullPath: "/", query },
+    route: { fullPath: "/", path: "/", hash: "", query },
     preview: {
       enabled: true,
       versioning: true,
       queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
     } satisfies DirectusPreviewOptions,
-    refresh: vi.fn()
+    refresh: vi.fn(),
+    replace: vi.fn()
   };
 });
 
@@ -23,7 +24,8 @@ vi.mock("#imports", () => ({
   useRuntimeConfig: () => ({
     public: { directusClient: { proxy: { path: "/_directus/proxy" }, preview: state.preview } }
   }),
-  useRoute: () => state.route
+  useRoute: () => state.route,
+  useRouter: () => ({ currentRoute: { value: state.route }, replace: state.replace })
 }));
 
 const { default: plugin } = await import("../src/runtime/client/app/browser-plugin");
@@ -33,11 +35,12 @@ const app = {
 };
 
 beforeEach(() => {
-  state.route = { fullPath: "/", query: {} };
+  state.route = { fullPath: "/", path: "/", hash: "", query: {} };
   state.preview.enabled = true;
   state.preview.queryKeys.preview = "preview";
   state.preview.queryKeys.token = "token";
   state.refresh.mockReset();
+  state.replace.mockReset();
   hooks.clear();
   vi.stubGlobal("location", { origin: "https://app.example.test" });
 });
@@ -61,7 +64,29 @@ describe("browser preview", () => {
   it("does not register global refreshes for ordinary browsing", () => {
     plugin(app);
     expect(hooks.has("page:finish")).toBe(false);
+    expect(hooks.has("app:mounted")).toBe(false);
     expect(state.refresh).not.toHaveBeenCalled();
+  });
+
+  it("replaces only the configured token query after mounting, preserving item context and hash", async () => {
+    state.preview.queryKeys.token = "capability";
+    state.route.path = "/pages/example";
+    state.route.hash = "#details";
+    state.route.query = {
+      preview: "true",
+      capability: "secret",
+      id: "page-1",
+      version: "draft",
+      tag: ["one", "two"]
+    };
+    plugin(app);
+    expect(state.replace).not.toHaveBeenCalled();
+    await hooks.get("app:mounted")?.();
+    expect(state.replace).toHaveBeenCalledExactlyOnceWith({
+      path: "/pages/example",
+      hash: "#details",
+      query: { preview: "true", id: "page-1", version: "draft", tag: ["one", "two"] }
+    });
   });
 
   it("retains the preview credential across navigation and restricts it to the same-origin proxy", async () => {
@@ -82,6 +107,12 @@ describe("browser preview", () => {
     );
     const result = plugin(app);
     await result.provide.directus.request(readItems("pages"));
+    state.replace.mockImplementation(({ query }) => {
+      state.route.query = query;
+    });
+    await hooks.get("app:mounted")?.();
+    expect(state.route.query).toEqual({ editing: "true" });
+    await result.provide.directus.request(readItems("pages"));
     state.route.query = { editing: "true", capability: "second-preview" };
     await result.provide.directus.request(readItems("pages"));
     state.route.query = {};
@@ -89,6 +120,7 @@ describe("browser preview", () => {
     result.provide.directus.url.host = "external.example.test";
     await result.provide.directus.request(readItems("pages"));
     expect(received.map((headers) => headers.get("x-directus-preview-token"))).toEqual([
+      "first-preview",
       "first-preview",
       "first-preview",
       "first-preview",
@@ -117,6 +149,7 @@ describe("browser preview", () => {
       await result.provide.directus.request(readItems("pages"));
       expect(received[0]?.has("x-directus-preview-token")).toBe(false);
       expect(hooks.has("page:finish")).toBe(enabled);
+      expect(hooks.has("app:mounted")).toBe(false);
     }
   );
 });

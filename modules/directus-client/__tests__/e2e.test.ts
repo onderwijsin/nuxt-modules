@@ -85,6 +85,45 @@ describe("Directus client and server composables", async () => {
     expect(upstream.lastPreviewHeader).toBeUndefined();
   });
 
+  it.each([undefined, "wrong-token"])(
+    "rejects draft access with preview credential %s",
+    async (token) => {
+      const response = await fetch(url("/_directus/proxy/items/pages/page-1?version=draft"), {
+        headers: token ? { "x-directus-preview-token": token } : {}
+      });
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toMatchObject({
+        errors: [{ extensions: { code: "FORBIDDEN" } }]
+      });
+    }
+  );
+
+  it("requires the requested version to exist and returns published content without a draft version", async () => {
+    const headers = { "x-directus-preview-token": "preview-secret" };
+    const unknown = await fetch(url("/_directus/proxy/items/pages/page-1?version=missing"), {
+      headers
+    });
+    expect(unknown.status).toBe(404);
+    for (const query of ["", "?version=main"]) {
+      const published = await fetch(url(`/_directus/proxy/items/pages/page-1${query}`), {
+        headers
+      });
+      expect(published.status).toBe(200);
+      await expect(published.json()).resolves.toEqual({ data: { id: "page-1" } });
+    }
+  });
+
+  it("authorizes a versioned draft with the session even when the preview token is invalid", async () => {
+    const cookie = await loginWithAccessToken(60_000);
+    const response = await fetch(url("/_directus/proxy/items/pages/page-1?version=draft"), {
+      headers: { cookie, "x-directus-preview-token": "wrong-token" }
+    });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ data: { id: "Draft title" } });
+    expect(upstream.lastItemsAuthorization).toMatch(/^Bearer access-/);
+    expect(upstream.lastPreviewHeader).toBeUndefined();
+  });
+
   it("resolves the opt-in current user through its private route", async () => {
     const cookie = await loginWithAccessToken(60_000);
     const response = await fetch(url("/_directus/auth/user"), { headers: { cookie } });

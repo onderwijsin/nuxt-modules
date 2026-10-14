@@ -329,9 +329,15 @@ module never copies preview tokens into Nuxt state, public runtime config, cooki
 Session access and refresh tokens remain server-only. Directus enforces preview-token expiry.
 
 Prerendered pages still require the application's Nitro REST proxy at runtime; a purely static host
-without that endpoint cannot provide credentialed preview. The initial preview URL still contains
-the token. Avoid recording full preview URLs in analytics and configure request-log redaction at
-your hosting/proxy boundary. Automatic URL cleanup is not provided.
+without that endpoint cannot provide credentialed preview. After the browser captures the token, it
+replaces the current URL after mounting, removing only the configured token parameter and preserving
+the other query parameters and hash. The token remains in memory for client navigation. A full
+reload of the cleaned URL loses the preview credential; reopen the original Directus preview link to
+restore it.
+
+The initial HTTP request still contains the token, and scripts running before cleanup can read it.
+Avoid recording full preview URLs in analytics and configure request-log redaction at your
+hosting/proxy boundary.
 
 ## Authentication
 

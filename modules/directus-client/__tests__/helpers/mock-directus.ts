@@ -79,12 +79,40 @@ export class MockDirectus {
         this.lastItemsUrl = request.url;
         const previewHeader = request.headers["x-directus-preview-token"];
         this.lastPreviewHeader = typeof previewHeader === "string" ? previewHeader : undefined;
+        const itemUrl = new URL(request.url, "http://directus.test");
+        const version = itemUrl.searchParams.get("version");
+        if (itemUrl.pathname === "/items/pages/page-1" && version && version !== "main") {
+          const authorization = request.headers.authorization;
+          const authorized =
+            authorization === "Bearer preview-secret" ||
+            authorization?.startsWith("Bearer access-") ||
+            authorization === "Bearer refreshed-access";
+          if (!authorized) {
+            response.writeHead(403, { "content-type": "application/json" });
+            response.end(
+              JSON.stringify({
+                errors: [{ message: "Forbidden", extensions: { code: "FORBIDDEN" } }]
+              })
+            );
+            return;
+          }
+          if (version !== "draft") {
+            response.writeHead(404, { "content-type": "application/json" });
+            response.end(
+              JSON.stringify({
+                errors: [{ message: "Version not found", extensions: { code: "NOT_FOUND" } }]
+              })
+            );
+            return;
+          }
+        }
         response.writeHead(200, { "content-type": "application/json" });
         response.end(
           JSON.stringify({
-            data: request.url.startsWith("/items/pages/page-1")
-              ? { id: "Draft title" }
-              : [{ id: "page-1" }]
+            data:
+              itemUrl.pathname === "/items/pages/page-1"
+                ? { id: version === "draft" ? "Draft title" : "page-1" }
+                : [{ id: "page-1" }]
           })
         );
         return;

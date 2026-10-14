@@ -440,8 +440,12 @@ runtime config, cookies, or web storage. Session access and refresh tokens remai
 Directus enforces token expiry. Prerendered pages require the Nitro proxy at runtime, so purely
 static hosting without that endpoint is insufficient.
 
-The token remains in the preview page URL; automatic URL cleanup is not implemented. Avoid full-URL
-analytics and redact preview tokens in hosting/proxy request logs.
+After capturing the token, the browser replaces the current URL after mounting, removing only the
+configured token parameter while preserving other query parameters and the hash. Client navigation
+continues using the in-memory credential. Reloading the cleaned URL loses that credential; reopen
+the original Directus preview link to restore it. The initial HTTP request and scripts running
+before cleanup can still see the token. Avoid full-URL analytics and redact tokens in hosting/proxy
+logs.
 
 ## Auto-imported SDK commands
 
