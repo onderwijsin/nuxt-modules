@@ -1,5 +1,8 @@
 import { isString } from "@onderwijsin/nuxt-module-utils";
 
+/** Browser-to-proxy preview credential; never forwarded to Directus. */
+export const DIRECTUS_PREVIEW_TOKEN_HEADER = "x-directus-preview-token";
+
 /** Runtime preview settings exposed by the module. */
 export interface DirectusPreviewOptions {
   readonly enabled: boolean;

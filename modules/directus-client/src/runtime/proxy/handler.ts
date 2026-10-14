@@ -1,4 +1,4 @@
-import { defineEventHandler, getRequestURL, proxyRequest } from "h3";
+import { defineEventHandler, getRequestHeader, getRequestURL, proxyRequest } from "h3";
 import { useRuntimeConfig } from "#imports";
 import {
   type DirectusCredential,
@@ -7,6 +7,7 @@ import {
 import { assertDirectusEventSameOrigin } from "../core/same-origin";
 import { createSanitizedProxyFetch } from "./transport";
 import { resolveDirectusUpstreamUrl } from "../core/upstream-url";
+import { DIRECTUS_PREVIEW_TOKEN_HEADER } from "../preview/context";
 
 /**
  * Returns whether a proxy request using the selected credential must prove same-origin intent.
@@ -39,6 +40,7 @@ export default defineEventHandler(async (event) => {
   const { credential } = resolveDirectusRequestContext(event, {
     preview: config.public.directusClient.preview,
     proxyToken: config.directusClient.proxyToken,
+    previewAccessToken: getRequestHeader(event, DIRECTUS_PREVIEW_TOKEN_HEADER),
     sessionAccessToken
   });
   if (requiresDirectusProxySameOrigin(credential)) {

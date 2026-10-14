@@ -11,6 +11,8 @@ export class MockDirectus {
   private _refreshRequests = 0;
   private _userRequests = 0;
   private _lastItemsAuthorization: string | undefined;
+  lastItemsUrl: string | undefined;
+  lastPreviewHeader: string | undefined;
 
   refreshBehavior: RefreshBehavior = "success";
   refreshDelayMs = 0;
@@ -62,6 +64,8 @@ export class MockDirectus {
     this.userDelayMs = 0;
     this.loginExpires = 1;
     this._lastItemsAuthorization = undefined;
+    this.lastItemsUrl = undefined;
+    this.lastPreviewHeader = undefined;
     this._userRequests = 0;
   }
 
@@ -72,8 +76,17 @@ export class MockDirectus {
     const server = createServer(async (request, response) => {
       if (request.url?.startsWith("/items/pages")) {
         this._lastItemsAuthorization = request.headers.authorization;
+        this.lastItemsUrl = request.url;
+        const previewHeader = request.headers["x-directus-preview-token"];
+        this.lastPreviewHeader = typeof previewHeader === "string" ? previewHeader : undefined;
         response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify({ data: [{ id: "page-1" }] }));
+        response.end(
+          JSON.stringify({
+            data: request.url.startsWith("/items/pages/page-1")
+              ? { id: "Draft title" }
+              : [{ id: "page-1" }]
+          })
+        );
         return;
       }
 

@@ -59,6 +59,32 @@ describe("Directus client and server composables", async () => {
     expect(html).toContain('<p data-testid="client-ssr-error"></p>');
   });
 
+  it("serves published prerendered data, then authorizes the browser preview refetch through the proxy", async () => {
+    const html = await $fetch<string>(
+      "/preview?preview=true&token=preview-secret&id=page-1&version=draft"
+    );
+    expect(html).toContain('<p data-testid="preview-title">page-1</p>');
+    expect(html).not.toContain("preview-secret");
+    const response = await fetch(url("/_directus/proxy/items/pages/page-1?version=draft"), {
+      headers: { "x-directus-preview-token": "preview-secret", authorization: "Bearer untrusted" }
+    });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ data: { id: "Draft title" } });
+    expect(upstream.lastItemsAuthorization).toBe("Bearer preview-secret");
+    expect(upstream.lastItemsUrl).toBe("/items/pages/page-1?version=draft");
+    expect(upstream.lastPreviewHeader).toBeUndefined();
+  });
+
+  it("prefers an authenticated session over the browser preview header", async () => {
+    const cookie = await loginWithAccessToken(60_000);
+    const response = await fetch(url("/_directus/proxy/items/pages?limit=1"), {
+      headers: { cookie, "x-directus-preview-token": "preview-secret" }
+    });
+    expect(response.status).toBe(200);
+    expect(upstream.lastItemsAuthorization).toMatch(/^Bearer access-/);
+    expect(upstream.lastPreviewHeader).toBeUndefined();
+  });
+
   it("resolves the opt-in current user through its private route", async () => {
     const cookie = await loginWithAccessToken(60_000);
     const response = await fetch(url("/_directus/auth/user"), { headers: { cookie } });

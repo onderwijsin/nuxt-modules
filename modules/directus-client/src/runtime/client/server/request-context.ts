@@ -56,6 +56,7 @@ export function resolveDirectusRequestContext(
     readonly preview: DirectusPreviewOptions;
     readonly proxyToken?: string;
     readonly sessionAccessToken?: string;
+    readonly previewAccessToken?: string;
   }
 ): DirectusRequestContext {
   const preview = event
@@ -65,7 +66,9 @@ export function resolveDirectusRequestContext(
   return {
     preview,
     credential: resolveDirectusCredential({
-      previewAccessToken: preview.token,
+      previewAccessToken: options.preview.enabled
+        ? (preview.token ?? options.previewAccessToken)
+        : undefined,
       sessionAccessToken: options.sessionAccessToken,
       proxyToken: options.proxyToken
     })

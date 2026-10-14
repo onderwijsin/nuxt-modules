@@ -7,8 +7,8 @@ import { useNuxtApp } from "#app";
  *
  * Pass a command from `@directus/sdk`, such as `readItems("articles", { limit: 10 })`. In the
  * browser, the request is sent through the module's same-origin proxy; during server rendering,
- * it is sent directly to Directus. Credentials are selected by the module and are not exposed to
- * the caller.
+ * it is sent directly to Directus. Session credentials stay server-only; a preview token from
+ * the current browser route is carried to the proxy for server-side credential selection.
  *
  * @param command A Directus SDK REST command, for example `readItems("articles")`.
  * @returns A promise containing the command result, typed from the supplied command.

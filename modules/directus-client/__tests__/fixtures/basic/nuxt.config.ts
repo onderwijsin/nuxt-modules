@@ -6,6 +6,7 @@ const refreshRedisUrl = process.env.DIRECTUS_E2E_REDIS_URL;
 export default defineNuxtConfig({
   modules: [directusConfigModule, directusModule],
   turnstile: { siteKey: "fixture-site-key", secretKey: "fixture-secret-key" },
+  routeRules: { "/preview": { prerender: true } },
   nitro: {
     storage: {
       "directus-auth-refresh": {
@@ -24,6 +25,7 @@ export default defineNuxtConfig({
       baseUrl: process.env.DIRECTUS_E2E_URL ?? "https://sandbox.directus.com"
     },
     client: {
+      preview: { enabled: true },
       commands: ["readItems"],
       auth: {
         enabled: true,

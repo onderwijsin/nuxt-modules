@@ -157,6 +157,19 @@ async function waitForResponse(url, options = {}, expectedStatus = 200) {
 async function startDirectusMock() {
   const state = { userRequests: 0 };
   const server = createServer((request, response) => {
+    if (request.url === "/items/preview-regression?version=draft") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          data: {
+            preview: request.headers.authorization === "Bearer external-preview",
+            session: request.headers.authorization === "Bearer external-access",
+            leaked: request.headers["x-directus-preview-token"] !== undefined
+          }
+        })
+      );
+      return;
+    }
     if (request.url?.startsWith("/auth/login")) {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(
@@ -347,6 +360,24 @@ async function runFocusedAssertions(port, profile, directusMock) {
       throw new Error(
         `Packed Directus current-user request count changed unexpectedly: ${directusMock.state.userRequests}`
       );
+    for (const authenticated of [false, true]) {
+      const previewResponse = await waitForResponse(
+        `http://127.0.0.1:${port}/_directus/proxy/items/preview-regression?version=draft`,
+        {
+          headers: {
+            "x-directus-preview-token": "external-preview",
+            ...(authenticated ? { cookie: sessionCookie } : {})
+          }
+        }
+      );
+      await readJson(
+        previewResponse,
+        (body) =>
+          body.data.preview === !authenticated &&
+          body.data.session === authenticated &&
+          !body.data.leaked
+      );
+    }
   }
 }
 
