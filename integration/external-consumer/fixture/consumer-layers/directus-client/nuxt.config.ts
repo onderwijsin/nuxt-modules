@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     enabled: process.env.DIRECTUS_EXTERNAL_DISABLED !== "true",
     instance: { baseUrl: "http://127.0.0.1:1" },
     client: {
+      preview: { enabled: true },
       auth: {
         enabled: true,
         sessionSecret: "external-consumer-directus-session-secret-32-chars",

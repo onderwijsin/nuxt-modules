@@ -85,6 +85,7 @@ route and file naming contracts. Do not perform opportunistic refactors.
   when they affect the same package or have the same release level.
 - Do not commit changes. The human collaborator reviews and commits them unless the current request
   explicitly says otherwise.
+- Do not try to verify changes by starting a browser session manually.
 
 ## Package manager and workspace safety
 
