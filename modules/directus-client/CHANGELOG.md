@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.4
+
+### Patch Changes
+
+- b1ab5dd: Remove the captured preview token from the browser URL after mounting using router replacement,
+  preserving other query parameters and the hash. Client navigation retains the in-memory credential;
+  reloading the cleaned URL requires reopening the original preview link to restore the credential.
+- b1ab5dd: Refresh prerendered Nuxt data after each preview page finishes loading. Retain the initial preview
+  credential across client navigation and carry it to the same-origin REST proxy in a stripped header,
+  preserving authenticated-session precedence.
+
 ## 0.12.3
 
 ### Patch Changes
