@@ -46,6 +46,7 @@ use the source-level generic types; type-only exports are listed separately belo
 | Utility                          | Calling signature                                                                                                                                                  | Import from                             |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
 | `attempt`                        | `attempt<T>(operation: () => T \| Promise<T>): Promise<AttemptResult<T>>`                                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
+| `attemptSync`                    | `attemptSync<T>(operation: () => T): AttemptResult<T>`                                                                                                             | `@onderwijsin/nuxt-module-utils/shared` |
 | `attemptWithRetry`               | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `@onderwijsin/nuxt-module-utils/shared` |
 | `toEntries`                      | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
 | `fromEntries`                    | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
@@ -118,6 +119,13 @@ return result.data;
 Inspect the error and rethrow or map it when the failure cannot safely be hidden from the caller.
 Use it for fallible local parsing as well as asynchronous operations, for example when a module
 needs to treat malformed persisted metadata as absent rather than throw.
+
+## `attemptSync`
+
+`attemptSync` captures a synchronous operation using the same `AttemptResult<T>` shape as `attempt`,
+without introducing a promise. Use it for synchronous parsing when callers need to enrich errors
+with source context. Inspect the captured error and rethrow or map it explicitly. When successful
+data cannot be null, checking `result.data === null` also narrows the failure branch safely.
 
 ## `attemptWithRetry`
 
