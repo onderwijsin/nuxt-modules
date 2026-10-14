@@ -97,6 +97,28 @@ describe("markdown document Nuxt setup", () => {
     }
   });
 
+  it("captures explicit pages and Nitro handlers for runtime collision validation", async () => {
+    const nuxt = await loadModule(rootDirectory(), {});
+    try {
+      const nitro = nuxt.runWithContext(() => useNitro());
+      if (!nitro) throw new Error("Nitro was not initialized");
+      nitro.options.handlers.push({ route: "/articles/one.md", handler: "/server/article.ts" });
+      await nuxt.callHook("pages:extend", [
+        { path: "/articles/:slug().md", file: "/app/page.vue" }
+      ]);
+      const template = nuxt.options.nitro.virtual?.["#markdown-documents-http"];
+      if (typeof template !== "function") throw new Error("Missing HTTP template");
+      const generated = await template();
+      expect(generated).toContain("/articles/one.md");
+      expect(generated).toContain("/app/page.vue");
+      expect(nitro.options.handlers).toContainEqual(
+        expect.objectContaining({ middleware: true, handler: "#markdown-documents-http" })
+      );
+    } finally {
+      await nuxt.close();
+    }
+  });
+
   it("skips registration and missing-directory checks when disabled", async () => {
     const nuxt = await loadModule(rootDirectory(), { enabled: false, dir: "absent" });
     try {

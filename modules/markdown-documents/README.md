@@ -1,9 +1,8 @@
 # @onderwijsin/nuxt-markdown-documents
 
-Source-agnostic Markdown document delivery for Nuxt. Phase 2 provides typed server definitions,
-structured resolution, metadata listing and Markdown URL derivation. **Markdown HTTP responses, YAML
-serialization and prerendering are not implemented yet.** This is not ready for production document
-delivery.
+Source-agnostic Markdown document delivery for Nuxt. Typed server definitions provide structured
+resolution, metadata listing and plain-text Markdown responses with YAML frontmatter. Phase 3
+implements dynamic delivery; prerendering remains planned.
 
 The module will be released standalone before AI Toolkit. No CMS, AI Toolkit or Agent Discovery
 installation is required.
@@ -28,12 +27,12 @@ export default defineNuxtConfig({
 Requires Node.js >=24 and Nuxt 4. The pinned workspace graph on Node 24 is the tested baseline.
 Runtime code uses no Node-specific filesystem APIs; discovery runs at build time.
 
-| Option      | Default            | Current contract                                                                    |
-| ----------- | ------------------ | ----------------------------------------------------------------------------------- |
-| `enabled`   | `true`             | Disable server registration/discovery when false. Options are still validated.      |
-| `dir`       | `server/documents` | Directory relative to application `rootDir`.                                        |
-| `rawPrefix` | `undefined`        | No prefix by default; set `/raw` explicitly for URL derivation and future delivery. |
-| `prerender` | `false`            | Validated setting reserved for the later prerendering phase.                        |
+| Option      | Default            | Current contract                                                               |
+| ----------- | ------------------ | ------------------------------------------------------------------------------ |
+| `enabled`   | `true`             | Disable server registration/discovery when false. Options are still validated. |
+| `dir`       | `server/documents` | Directory relative to application `rootDir`.                                   |
+| `rawPrefix` | `undefined`        | No prefix by default; set `/raw` explicitly for prefixed delivery.             |
+| `prerender` | `false`            | Validated setting reserved for the later prerendering phase.                   |
 
 An absent implicit default directory is allowed. An explicitly configured missing directory or a
 path that is not a directory is an error. Directory paths must be relative, without traversal. The
@@ -46,16 +45,17 @@ unrelated helpers elsewhere.
 `rawPrefix` accepts slash-prefixed literal segments, without trailing slash, query or parameters.
 Omit `rawPrefix` (the default), or use `null`, for no prefix; empty strings and `/` are invalid.
 Nuxt's standard option merging treats `null` like an omitted value. The URL helper derives these
-representations; HTTP delivery follows in a later phase:
+representations, which are served by GET:
 
 | Canonical HTML | With `/raw`        | Without a prefix |
 | -------------- | ------------------ | ---------------- |
 | `/blog/one`    | `/raw/blog/one.md` | `/blog/one.md`   |
 | `/`            | `/raw/index.md`    | `/index.md`      |
 
-These `.md` URLs are separate from the canonical HTML route. Existing `.md` routes can conflict; do
-not assign the same URL to two handlers. Future AI Toolkit integration must respect document
-ownership in either mode. There is no content negotiation in this module.
+These `.md` URLs are separate from the canonical HTML route. Overlapping explicit `.md` pages and
+Nitro handlers fail with route and source diagnostics at server startup; do not assign the same URL
+to two handlers. Future AI Toolkit integration must respect document ownership in either mode. There
+is no content negotiation in this module.
 
 ## Define documents on the server
 
@@ -101,10 +101,8 @@ The public `/server` subpath exports the helper and these types:
 
 `list` receives an optional context and must work without an event for future prerendering. Its
 paths identify canonical HTML, not Markdown URLs. Consumers own public/published filtering and
-credentials. Keep all definitions and source access server-only. Frontmatter must ultimately be
-JSON-compatible; validation of that recursive value constraint and YAML serialization arrive in
-Phase 3. The top-level transform shape is already validated as exactly frontmatter plus a string
-body.
+credentials. Keep all definitions and source access server-only. Frontmatter must be
+JSON-compatible. The transform shape is validated as exactly frontmatter plus a string body.
 
 ### Route patterns
 
@@ -168,11 +166,32 @@ listing conflicts throw statusCode 500 with operation/source diagnostics that om
 and payloads. Missing documents return null; they are not converted to HTTP responses by the
 service.
 
+## Raw Markdown and frontmatter
+
+GET the derived `.md` URL to receive `Content-Type: text/plain; charset=utf-8`. Only declared
+patterns are served: HTML, API routes and neighboring `.md` handlers remain application-owned.
+Missing/private documents return a generic 404. Invalid document parameters return 400 before fetch;
+provider, transform and serialization failures return a generic 500 without source diagnostics or
+backend payloads. Query strings do not change document selection. HEAD and other methods on a
+matched document URL return 405 with `Allow: GET`, without fetching or transforming.
+
+Frontmatter accepts plain objects (including null-prototype objects), dense arrays, strings,
+booleans, finite numbers and null, recursively. Undefined, bigint, functions, symbols, symbol keys,
+non-finite numbers, cycles, sparse arrays, getters, hidden properties and class instances (including
+Date) are rejected. Convert dates to strings yourself. Structured resolution reports the offending
+metadata path without including its value. Repeated non-cyclic references are supported.
+
+The module serializes YAML 1.2 without aliases or custom tags. It writes one `---` frontmatter
+block, followed by your body unchanged; empty metadata returns just the body. Supply Markdown
+without its own leading YAML mapping block: duplicate body frontmatter is an error. Ordinary
+Markdown horizontal rules remain supported. Structured resolution and listing never serialize or
+reparse YAML.
+
 ## Boundaries and development
 
-No raw endpoint, YAML serializer or prerender behavior is available yet. No sitemap, CMS adapter,
-HTML conversion, MCP server or `llms.txt` endpoint is included. Future AI Toolkit integration will
-be optional follow-up after the standalone release.
+Prerendering remains unimplemented. No sitemap, CMS adapter, HTML conversion, MCP server or
+`llms.txt` endpoint is included. Future AI Toolkit integration will be optional follow-up after the
+standalone release.
 
 See
 [the implementation plan](https://github.com/onderwijsin/nuxt-modules/blob/main/modules/markdown-documents/IMPLEMENTATION.md)

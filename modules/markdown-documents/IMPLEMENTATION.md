@@ -3,10 +3,11 @@
 ## Status and scope
 
 Phase 0 is the development scaffold. Phase 1 adds validated options, typed definitions and a server
-registry. Phase 2 adds structured resolution, listing and URL mapping; later phases remain planned.
-Implement phases sequentially, with tests and documentation in each phase rather than deferring
-verification until the end. Release Markdown Documents as a standalone module before AI Toolkit. No
-standalone release gate requires AI Toolkit to exist or be installed.
+registry. Phase 2 adds structured resolution, listing and URL mapping. Phase 3 implements JSON
+validation, YAML serialization and dynamic HTTP delivery; later phases remain planned. Implement
+phases sequentially, with tests and documentation in each phase rather than deferring verification
+until the end. Release Markdown Documents as a standalone module before AI Toolkit. No standalone
+release gate requires AI Toolkit to exist or be installed.
 
 Source requirements:
 
@@ -159,7 +160,7 @@ validation/deduplication, route precedence, root mapping, Unicode, encoded paths
 Exit: server utilities work without self-requests, request context is optional, and errors do not
 expose source payloads or credentials. Finalize names/signatures in README and consumer skill.
 
-## Phase 3 — JSON frontmatter and raw HTTP delivery
+## Phase 3 — JSON frontmatter and raw HTTP delivery (implemented)
 
 1. Add `yaml` as an exact catalog pin, selected from a maintained release satisfying the repository
    release-age policy. Validate frontmatter recursively as JSON-compatible data before
@@ -181,6 +182,13 @@ expose source payloads or credentials. Finalize names/signatures in README and c
    extra alias; `/blog/one` remains canonical HTML. Root maps to `/index.md`. Avoid a global raw
    catch-all. Do not implement Accept negotiation. Future AI Toolkit aliases must defer to these
    document-owned routes rather than registering competing handlers.
+
+Delivery uses exact per-definition middleware matchers: Nitro 2 treats `:slug.md` as a whole
+parameter and cannot register a suffix-constrained route directly. Nonmatching requests pass
+through; no prefix-wide catch-all is reserved. Definitions execute only in the compiled Nitro
+registry. GET retrieves documents; HEAD and other methods return 405 with `Allow: GET` without
+retrieval. Collision checks cover explicit `.md` pages and Nitro handlers when the compiled handler
+starts.
 
 Tests: YAML parse round-trip for nested objects/arrays, scalar-looking strings, numeric/boolean/null
 values, multiline text, escapes, Unicode and delimiter-like text; empty metadata; every rejected

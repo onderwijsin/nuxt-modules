@@ -23,6 +23,7 @@ import {
   watchDocumentDefinitions,
   resolveDefinitionDirectory
 } from "./config/definitions";
+import { registerDocumentDelivery } from "./config/http";
 import type { ModuleOptions } from "./types/options";
 
 export type { ModuleOptions } from "./types/options";
@@ -30,7 +31,7 @@ export type { ModuleOptions } from "./types/options";
 const MODULE_KEY = "markdownDocuments";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
 
-/** Registers typed server definitions without enabling the later delivery pipeline. */
+/** Registers typed server documents, structured utilities and scoped Markdown delivery. */
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: MODULE_NAME,
@@ -81,6 +82,7 @@ export default () => {};
     });
     addServerPlugin(plugin.filename);
 
+    registerDocumentDelivery(nuxt, resolver.resolve(runtimeDir, "server"));
     if (nuxt.options.dev) watchDocumentDefinitions(nuxt, directory);
     end();
   }

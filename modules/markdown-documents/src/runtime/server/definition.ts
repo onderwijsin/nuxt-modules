@@ -9,8 +9,10 @@ import type {
   MarkdownDocumentListItem
 } from "./types";
 
+import { frontmatterSchema } from "./frontmatter";
+
 const documentSchema = z.strictObject({
-  frontmatter: z.record(z.string(), z.unknown()),
+  frontmatter: frontmatterSchema,
   body: z.string()
 });
 
@@ -69,9 +71,15 @@ export function prepareDocumentDefinition<T>(
       const transformed = await runCallback(source, "transform", () => definition.transform(data));
       const parsed = attemptSync(() => documentSchema.safeParse(transformed));
       if (parsed.data === null || !parsed.data.success) {
+        const issues =
+          parsed.data && !parsed.data.success
+            ? parsed.data.error.issues
+                .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+                .join("; ")
+            : "Validation could not read the transform result.";
         throw createError({
           statusCode: 500,
-          message: `Invalid Markdown document transform in ${source}. Expected frontmatter and a string body.`
+          message: `Invalid Markdown document transform in ${source}. Expected JSON frontmatter and a string body. ${issues}`
         });
       }
       return parsed.data.data;

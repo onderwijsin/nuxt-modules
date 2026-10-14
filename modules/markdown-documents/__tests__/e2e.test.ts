@@ -25,7 +25,33 @@ describe("markdown documents server utilities", async () => {
     });
   });
 
-  it("does not claim a raw document endpoint before delivery is implemented", async () => {
+  it("leaves unmatched raw URLs unclaimed", async () => {
     expect((await fetch("/missing.md")).status).toBe(404);
+  });
+  it("delivers YAML frontmatter and a Markdown body as plain text", async () => {
+    const response = await fetch("/articles/first.md");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    expect(await response.text()).toBe(
+      "---\ntitle: First article\n---\nSERVER_ONLY_ARTICLE_BODY_354"
+    );
+  });
+
+  it("returns generic missing/error responses and rejects unsupported methods", async () => {
+    expect((await fetch("/articles/private.md")).status).toBe(404);
+    const failure = await fetch("/articles/failure.md");
+    expect(failure.status).toBe(500);
+    expect(await failure.text()).not.toContain("BACKEND_SECRET");
+    for (const method of ["HEAD", "POST"]) {
+      const response = await fetch("/articles/first.md", { method });
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("GET");
+    }
+  });
+
+  it("preserves neighboring raw routes and canonical HTML", async () => {
+    expect(await $fetch("/neighbor.md")).toBe("Application-owned Markdown");
+    expect(await $fetch("/articles/first")).toContain("Article HTML");
+    expect(await $fetch("/index.md")).toBe("# Root document");
   });
 });

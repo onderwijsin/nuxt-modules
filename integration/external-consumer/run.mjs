@@ -268,6 +268,18 @@ async function runFocusedAssertions(port, profile, directusMock) {
           body.entries[0]?.path === "/sanity/markdown-documents" &&
           body.url === "/sanity/markdown-documents.md"
       );
+      const response = await waitForResponse(
+        `http://127.0.0.1:${port}/sanity/markdown-documents.md`
+      );
+      const markdown = await response.text();
+      if (
+        response.headers.get("content-type") !== "text/plain; charset=utf-8" ||
+        markdown !== "---\ntitle: Public document\n---\n# Public"
+      ) {
+        throw new Error(
+          "Packed Markdown Documents did not serve plain-text Markdown with YAML frontmatter."
+        );
+      }
     }
     if (layer === "markdown-renderer") {
       await readJson(

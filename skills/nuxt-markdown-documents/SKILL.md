@@ -2,14 +2,14 @@
 name: nuxt-markdown-documents
 description:
   Configure typed server-only document definitions with @onderwijsin/nuxt-markdown-documents,
-  including nullable rawPrefix and its current development boundaries.
+  including structured resolution, JSON frontmatter and scoped raw Markdown delivery.
 ---
 
 # Markdown Documents
 
-Requires Node.js >=24 and Nuxt 4. Phase 2 provides definition authoring, structured resolution,
-metadata listing and URL derivation; HTTP Markdown delivery, YAML serialization and prerendering
-remain unimplemented. Do not present the module as ready for production delivery.
+Requires Node.js >=24 and Nuxt 4. Phase 3 provides typed definitions, structured resolution,
+metadata listing, URL derivation and dynamic Markdown delivery with YAML 1.2 frontmatter.
+Prerendering remains unimplemented.
 
 When published, install with `pnpm add @onderwijsin/nuxt-markdown-documents`, then register:
 
@@ -22,10 +22,10 @@ export default defineNuxtConfig({
 
 Options: `enabled` defaults to true; `dir` defaults to `server/documents` relative to rootDir;
 `rawPrefix` defaults to undefined (no prefix) and accepts an explicit prefix such as `/raw` or null;
-`prerender` defaults to false. The URL helper uses rawPrefix now; prerender is validated but its
-behavior is a later phase. Empty prefixes and `/` are invalid. Default URL mapping is `/blog/one` →
-`/blog/one.md`, root → `/index.md`, with HTML unchanged. Existing `.md` handlers may conflict;
-future Toolkit aliases must defer.
+`prerender` defaults to false. Delivery and the URL helper use rawPrefix; prerender is validated but
+its behavior is a later phase. Empty prefixes and `/` are invalid. Default URL mapping is
+`/blog/one` → `/blog/one.md`, root → `/index.md`, with HTML unchanged. Existing `.md` handlers may
+conflict; future Toolkit aliases must defer.
 
 False enabled skips registration/discovery after validation. A missing implicit default directory is
 allowed; an explicit missing dir is an error. Set dir for a custom serverDir; srcDir/serverDir do
@@ -56,8 +56,8 @@ credentials.
 The server subpath also exports types MarkdownDocument, MarkdownDocumentListItem,
 MarkdownDocumentDefinition, MarkdownDocumentContext, MarkdownDocumentFetchContext and
 MarkdownDocumentService. Transform returns structured frontmatter plus a string body. Listing paths
-are canonical HTML. Frontmatter will require JSON-compatible values; the exact transform shape is
-validated now; recursive JSON validation and YAML delivery remain planned.
+are canonical HTML. Frontmatter requires JSON-compatible values recursively; the exact transform
+shape is validated.
 
 Definition patterns support root, literals and named single-segment params. Reject optional params,
 wildcards, queries, fragments, encoded segments, traversal, trailing slashes, repeated param names,
@@ -93,9 +93,23 @@ Definition patterns remain unencoded; ordinary encoded parameter characters are 
 
 Caller path errors have statusCode 400. Callback/shape/listing errors have statusCode 500 with
 sanitized operation/source diagnostics. Missing documents return null; callers choose HTTP status.
-No self-requests or YAML parsing/serialization occur.
+Structured utilities make no self-requests and neither serialize nor reparse YAML.
+
+GET derived `.md` URLs returns `text/plain; charset=utf-8`. Only declared patterns are served; HTML
+and unrelated `.md` handlers remain unchanged. Explicit overlapping `.md` pages/handlers fail at
+startup with source diagnostics. Missing/private content returns generic 404; unsafe params return
+400 before fetch; provider/transform/serialization errors return generic 500. HEAD and other methods
+return 405 with `Allow: GET`, without fetching. Query strings do not change document selection.
+
+Frontmatter permits plain objects (including null-prototype objects), dense arrays, strings,
+booleans, finite numbers and null. Reject undefined, bigint, functions, symbols/symbol keys,
+non-finite numbers, cycles, sparse arrays, getters, hidden properties and class instances such as
+Date. Convert dates to strings. Structured validation reports metadata paths without values. Shared
+non-cyclic references are allowed; YAML emits no aliases/custom tags. Body is Markdown without a
+leading YAML mapping block; duplicate body metadata is an error. Empty metadata emits the body
+unchanged. Ordinary horizontal rules remain valid. Only HTTP delivery writes frontmatter delimiters.
 
 This module will release standalone before AI Toolkit. No CMS, Agent Discovery or AI Toolkit is
-required. Do not invent package imports for application-bound utilities, raw endpoints, negotiation,
-sitemap integration, discovery endpoints or MCP tools. Consult the package README for the current
-phase before integration.
+required. Do not invent package imports for application-bound utilities, negotiation, sitemap
+integration, discovery endpoints or MCP tools. Consult the package README for the current phase
+before integration.
