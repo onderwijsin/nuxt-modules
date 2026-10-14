@@ -301,6 +301,28 @@ describe("Directus CSRF boundary", () => {
 });
 
 describe("Directus credential selection", () => {
+  it("accepts a browser preview capability only when preview is enabled", () => {
+    const preview = {
+      enabled: true,
+      versioning: true,
+      queryKeys: { preview: "preview", token: "token", version: "version", id: "id" }
+    };
+    expect(
+      resolveDirectusRequestContext(createTestEvent(), {
+        preview,
+        previewAccessToken: "browser-preview",
+        proxyToken: "proxy"
+      }).credential
+    ).toEqual({ accessToken: "browser-preview", source: "preview" });
+    expect(
+      resolveDirectusRequestContext(createTestEvent(), {
+        preview: { ...preview, enabled: false },
+        previewAccessToken: "browser-preview",
+        proxyToken: "proxy"
+      }).credential
+    ).toEqual({ accessToken: "proxy", source: "proxy" });
+  });
+
   it("prefers a session token over a proxy token", () => {
     const credential = resolveDirectusCredential({
       sessionAccessToken: "session",

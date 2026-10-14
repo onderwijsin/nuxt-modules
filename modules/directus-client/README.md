@@ -315,6 +315,30 @@ configuration. Set `client.preview.enabled` to `false` to ignore all preview par
 lookup, not the embedded editor; see [Live preview and framing](#live-preview-and-framing) for that
 setup.
 
+Opening the application with preview enabled registers a `page:finish` hook that refreshes Nuxt
+async data after the page finishes, including prerendered pages. Preview mode and its credential
+remain active across client navigation for that application instance. Ordinary page loads do not
+register this hook. Use `useAsyncData` or `useFetch` for refreshable content. Item/version selection
+remains the responsibility of `useDirectusItemByPath`; plain `useDirectus` requests share the
+preview credential. Reload a URL without preview parameters to leave preview.
+
+The browser keeps the initial short-lived preview token in memory and sends it only to the
+same-origin REST proxy in a dedicated header. The proxy removes that header before forwarding and
+selects credentials in this order: authenticated session, preview token, proxy token, anonymous. The
+module never copies preview tokens into Nuxt state, public runtime config, cookies, or web storage.
+Session access and refresh tokens remain server-only. Directus enforces preview-token expiry.
+
+Prerendered pages still require the application's Nitro REST proxy at runtime; a purely static host
+without that endpoint cannot provide credentialed preview. After the browser captures the token, it
+replaces the current URL after mounting, removing only the configured token parameter and preserving
+the other query parameters and hash. The token remains in memory for client navigation. A full
+reload of the cleaned URL loses the preview credential; reopen the original Directus preview link to
+restore it.
+
+The initial HTTP request still contains the token, and scripts running before cleanup can read it.
+Avoid recording full preview URLs in analytics and configure request-log redaction at your
+hosting/proxy boundary.
+
 ## Authentication
 
 Enable authentication with `directusClient.client.auth.enabled: true`:

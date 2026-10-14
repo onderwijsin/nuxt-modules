@@ -427,6 +427,26 @@ Directus' embedded editor; see the Directus
 [Live Preview guide](https://docs.directus.io/guides/headless-cms/live-preview/nuxt-3) for framing
 and refresh behavior.
 
+Opening the app in preview registers a `page:finish` hook to refresh Nuxt async data, including
+prerendered pages. Preview mode and its initial credential persist across client navigation for that
+application instance; ordinary page loads register no refresh hook. Wrap refreshable content in
+`useAsyncData` or `useFetch`. The item helper owns item/version selection; plain `useDirectus` calls
+share the preview credential. Reload without preview parameters to exit preview.
+
+The browser keeps the initial preview token in memory and sends it in a dedicated header only to the
+same-origin proxy. The proxy strips the header and selects credentials using
+`session > preview > proxy > none`. The module never copies preview tokens into Nuxt state, public
+runtime config, cookies, or web storage. Session access and refresh tokens remain server-only.
+Directus enforces token expiry. Prerendered pages require the Nitro proxy at runtime, so purely
+static hosting without that endpoint is insufficient.
+
+After capturing the token, the browser replaces the current URL after mounting, removing only the
+configured token parameter while preserving other query parameters and the hash. Client navigation
+continues using the in-memory credential. Reloading the cleaned URL loses that credential; reopen
+the original Directus preview link to restore it. The initial HTTP request and scripts running
+before cleanup can still see the token. Avoid full-URL analytics and redact tokens in hosting/proxy
+logs.
+
 ## Auto-imported SDK commands
 
 The default auto-imports are `readItem` and `readItems`. The supported command names for

@@ -11,6 +11,8 @@ export class MockDirectus {
   private _refreshRequests = 0;
   private _userRequests = 0;
   private _lastItemsAuthorization: string | undefined;
+  lastItemsUrl: string | undefined;
+  lastPreviewHeader: string | undefined;
 
   refreshBehavior: RefreshBehavior = "success";
   refreshDelayMs = 0;
@@ -62,6 +64,8 @@ export class MockDirectus {
     this.userDelayMs = 0;
     this.loginExpires = 1;
     this._lastItemsAuthorization = undefined;
+    this.lastItemsUrl = undefined;
+    this.lastPreviewHeader = undefined;
     this._userRequests = 0;
   }
 
@@ -72,8 +76,45 @@ export class MockDirectus {
     const server = createServer(async (request, response) => {
       if (request.url?.startsWith("/items/pages")) {
         this._lastItemsAuthorization = request.headers.authorization;
+        this.lastItemsUrl = request.url;
+        const previewHeader = request.headers["x-directus-preview-token"];
+        this.lastPreviewHeader = typeof previewHeader === "string" ? previewHeader : undefined;
+        const itemUrl = new URL(request.url, "http://directus.test");
+        const version = itemUrl.searchParams.get("version");
+        if (itemUrl.pathname === "/items/pages/page-1" && version && version !== "main") {
+          const authorization = request.headers.authorization;
+          const authorized =
+            authorization === "Bearer preview-secret" ||
+            authorization?.startsWith("Bearer access-") ||
+            authorization === "Bearer refreshed-access";
+          if (!authorized) {
+            response.writeHead(403, { "content-type": "application/json" });
+            response.end(
+              JSON.stringify({
+                errors: [{ message: "Forbidden", extensions: { code: "FORBIDDEN" } }]
+              })
+            );
+            return;
+          }
+          if (version !== "draft") {
+            response.writeHead(404, { "content-type": "application/json" });
+            response.end(
+              JSON.stringify({
+                errors: [{ message: "Version not found", extensions: { code: "NOT_FOUND" } }]
+              })
+            );
+            return;
+          }
+        }
         response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify({ data: [{ id: "page-1" }] }));
+        response.end(
+          JSON.stringify({
+            data:
+              itemUrl.pathname === "/items/pages/page-1"
+                ? { id: version === "draft" ? "Draft title" : "page-1" }
+                : [{ id: "page-1" }]
+          })
+        );
         return;
       }
 
