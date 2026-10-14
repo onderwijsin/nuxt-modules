@@ -27,7 +27,7 @@ describe("document discovery", () => {
     const root = createRoot();
     const path = resolveDefinitionDirectory(root, "server/documents", false);
     expect(generateDocumentRegistry(path, "/runtime/registry")).toContain(
-      "validateDocumentDefinitions(["
+      "export const documents = ["
     );
     expect(() => resolveDefinitionDirectory(root, "custom/documents", true)).toThrow(
       /does not exist/
@@ -47,7 +47,7 @@ describe("document discovery", () => {
     const registry = generateDocumentRegistry(root, "/runtime/registry");
     expect(registry.indexOf("nested/a.ts")).toBeLessThan(registry.indexOf("z.ts"));
     expect(registry).not.toContain("types.d.ts");
-    expect(registry).toContain("definition: document0");
+    expect(registry).toContain("prepareDocumentDefinition(document0");
     expect(registry).not.toContain("#build");
   });
 

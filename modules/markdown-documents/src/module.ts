@@ -2,6 +2,7 @@ import {
   addServerImports,
   addServerPlugin,
   addServerTemplate,
+  addTypeTemplate,
   createResolver,
   defineNuxtModule,
   useLogger
@@ -16,6 +17,8 @@ import {
 import { version } from "../package.json";
 import { markdownDocumentsOptionsSchema } from "./config/options.schema";
 import {
+  documentServiceUtilities,
+  generateDocumentServiceTypes,
   generateDocumentRegistry,
   watchDocumentDefinitions,
   resolveDefinitionDirectory
@@ -57,13 +60,19 @@ export default defineNuxtModule<ModuleOptions>({
     });
 
     const registry = addServerTemplate({
-      filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/registry.mjs"),
+      filename: "#markdown-documents",
       getContents: () =>
-        generateDocumentRegistry(directory, resolver.resolve(runtimeDir, "server/registry"), {
+        generateDocumentRegistry(directory, resolver.resolve(runtimeDir, "server"), {
+          baseURL: nuxt.options.app.baseURL,
           rawPrefix: options.rawPrefix,
           prerender: options.prerender
         })
     });
+    addServerImports(documentServiceUtilities.map((name) => ({ name, from: registry.filename })));
+    addTypeTemplate(
+      { filename: "types/markdown-documents.d.ts", getContents: generateDocumentServiceTypes },
+      { nuxt: false, nitro: true }
+    );
     const plugin = addServerTemplate({
       filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/plugin.mjs"),
       getContents: () => `import ${JSON.stringify(registry.filename)};

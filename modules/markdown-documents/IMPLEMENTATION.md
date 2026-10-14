@@ -3,10 +3,10 @@
 ## Status and scope
 
 Phase 0 is the development scaffold. Phase 1 adds validated options, typed definitions and a server
-registry; later phases remain planned. Implement phases sequentially, with tests and documentation
-in each phase rather than deferring verification until the end. Release Markdown Documents as a
-standalone module before AI Toolkit. No standalone release gate requires AI Toolkit to exist or be
-installed.
+registry. Phase 2 adds structured resolution, listing and URL mapping; later phases remain planned.
+Implement phases sequentially, with tests and documentation in each phase rather than deferring
+verification until the end. Release Markdown Documents as a standalone module before AI Toolkit. No
+standalone release gate requires AI Toolkit to exist or be installed.
 
 Source requirements:
 
@@ -57,11 +57,11 @@ Definitions contain `route`, `fetch`, `transform`, optional `list`, and optional
 precisely the structured document contract and keep metadata structured for programmatic resolution.
 Do not serialize functions or credentials into Nuxt runtime config or app payloads.
 
-Proposed generated Nitro utilities are `resolveMarkdownDocument(path, context?)`,
-`listMarkdownDocuments(context?)`, and `getMarkdownDocumentURL(path)`; finalize their signatures in
-Phase 2. The resolver returns a structured document or null; only the HTTP boundary translates null
-to 404. Utilities share the same service as HTTP handlers, without self-requests. The URL utility
-returns an application-relative raw URL including `app.baseURL`, not a canonical HTML URL.
+Generated Nitro utilities are `resolveMarkdownDocument(path, context?)`,
+`listMarkdownDocuments(context?)`, and `getMarkdownDocumentURL(path)`. The resolver returns a
+structured document or null; only the HTTP boundary translates null to 404. Utilities share the same
+service as HTTP handlers, without self-requests. The URL utility returns an application-relative raw
+URL including `app.baseURL`, not a canonical HTML URL.
 
 ## Architecture and comparable implementations
 
@@ -126,7 +126,7 @@ subpath requires a full module build between module preparation and playground p
 Exit: clean build and packed consumer resolve the server subpath and Nitro imports. No client bundle
 contains document definitions or credentials. README and consumer skill explain the new API.
 
-## Phase 2 — routing, resolution, listing and URL mapping
+## Phase 2 — routing, resolution, listing and URL mapping (implemented)
 
 1. Implement a single path policy shared by matching, listing and URL mapping. Accept only local
    absolute canonical paths; reject external/protocol-relative URLs, backslashes, traversal, encoded

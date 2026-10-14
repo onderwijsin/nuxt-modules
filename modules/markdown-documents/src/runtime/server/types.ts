@@ -33,3 +33,20 @@ export interface MarkdownDocumentDefinition<TSource> {
   list?: (context?: MarkdownDocumentContext) => MaybePromise<MarkdownDocumentListItem[]>;
   prerender?: boolean;
 }
+
+/** Application-specific URL configuration used by the generated server service. */
+export interface MarkdownDocumentServiceOptions {
+  baseURL?: string;
+  rawPrefix?: string | null;
+  prerender?: boolean;
+}
+
+/** Server-only utilities bound to the application's discovered definitions. */
+export interface MarkdownDocumentService {
+  resolveMarkdownDocument: (
+    path: string,
+    context?: MarkdownDocumentContext
+  ) => Promise<MarkdownDocument | null>;
+  listMarkdownDocuments: (context?: MarkdownDocumentContext) => Promise<MarkdownDocumentListItem[]>;
+  getMarkdownDocumentURL: (path: string) => string;
+}

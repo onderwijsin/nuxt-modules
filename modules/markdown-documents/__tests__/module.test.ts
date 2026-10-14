@@ -1,7 +1,7 @@
 import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { loadNuxt, useNitro } from "@nuxt/kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import markdownDocuments from "../src/module";
@@ -57,7 +57,7 @@ describe("markdown document Nuxt setup", () => {
     async (rawPrefix) => {
       const nuxt = await loadModule(rootDirectory(), { rawPrefix });
       try {
-        const registry = resolve(nuxt.options.buildDir, "markdown-documents/registry.mjs");
+        const registry = "#markdown-documents";
         const template = nuxt.options.nitro.virtual?.[registry];
         expect(template).toBeTypeOf("function");
         if (typeof template !== "function") throw new Error("Missing registry template");
@@ -78,10 +78,7 @@ describe("markdown document Nuxt setup", () => {
   it("uses no prefix when the public configuration key sets null", async () => {
     const nuxt = await loadModule(rootDirectory(), {}, false, { rawPrefix: null });
     try {
-      const template =
-        nuxt.options.nitro.virtual?.[
-          resolve(nuxt.options.buildDir, "markdown-documents/registry.mjs")
-        ];
+      const template = nuxt.options.nitro.virtual?.["#markdown-documents"];
       if (typeof template !== "function") throw new Error("Missing registry template");
       expect(await template()).not.toContain('"rawPrefix"');
     } finally {
@@ -92,10 +89,7 @@ describe("markdown document Nuxt setup", () => {
   it("keeps an explicitly configured /raw prefix", async () => {
     const nuxt = await loadModule(rootDirectory(), { rawPrefix: "/raw" });
     try {
-      const template =
-        nuxt.options.nitro.virtual?.[
-          resolve(nuxt.options.buildDir, "markdown-documents/registry.mjs")
-        ];
+      const template = nuxt.options.nitro.virtual?.["#markdown-documents"];
       if (typeof template !== "function") throw new Error("Missing registry template");
       expect(await template()).toContain('"rawPrefix":"/raw"');
     } finally {
@@ -107,7 +101,7 @@ describe("markdown document Nuxt setup", () => {
     const nuxt = await loadModule(rootDirectory(), { enabled: false, dir: "absent" });
     try {
       expect(Object.keys(nuxt.options.nitro.virtual ?? {})).not.toEqual(
-        expect.arrayContaining([expect.stringContaining("markdown-documents/registry")])
+        expect.arrayContaining([expect.stringContaining("#markdown-documents")])
       );
     } finally {
       await nuxt.close();

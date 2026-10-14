@@ -258,6 +258,17 @@ async function runFocusedAssertions(port, profile, directusMock) {
       await waitForResponse(`http://127.0.0.1:${port}/api/sanity/${layer}`),
       (body) => body.layer === layer
     );
+    if (layer === "markdown-documents") {
+      await readJson(
+        await waitForResponse(`http://127.0.0.1:${port}/api/sanity/markdown-documents`),
+        (body) =>
+          body.document?.frontmatter?.title === "Public document" &&
+          body.document.body === "# Public" &&
+          body.entries?.length === 1 &&
+          body.entries[0]?.path === "/sanity/markdown-documents" &&
+          body.url === "/sanity/markdown-documents.md"
+      );
+    }
     if (layer === "markdown-renderer") {
       await readJson(
         await waitForResponse(`http://127.0.0.1:${port}/api/sanity/markdown-renderer`),

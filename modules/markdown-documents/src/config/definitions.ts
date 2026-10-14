@@ -1,8 +1,32 @@
 import type { Nuxt } from "@nuxt/schema";
 import { existsSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import type { ModuleOptions } from "../types/options";
+import type {
+  MarkdownDocumentService,
+  MarkdownDocumentServiceOptions
+} from "../runtime/server/types";
 import { discoverSourceFiles } from "@onderwijsin/nuxt-module-utils/build";
+
+export const documentServiceUtilities: (keyof MarkdownDocumentService)[] = [
+  "resolveMarkdownDocument",
+  "listMarkdownDocuments",
+  "getMarkdownDocumentURL"
+];
+
+/**
+ * Describes the generated service module using the public server utility signatures.
+ * @returns Nitro-only module declarations for the emitted service utilities.
+ */
+export function generateDocumentServiceTypes(): string {
+  const exports = documentServiceUtilities
+    .map((name) => `  export const ${name}: Service["${name}"];`)
+    .join("\n");
+  return `declare module "#markdown-documents" {
+  type Service = import("@onderwijsin/nuxt-markdown-documents/server").MarkdownDocumentService;
+${exports}
+}
+`;
+}
 
 /**
  * Resolves the application-owned definition directory, without importing consumer code.
@@ -31,28 +55,34 @@ export function resolveDefinitionDirectory(
 /**
  * Generates a server-only registry retaining each definition's inferred type.
  * @param directory Absolute consumer definition directory.
- * @param validationPath Runtime validation module path.
- * @param configuration Validated delivery settings retained for the later service.
+ * @param runtimeDirectory Absolute server runtime directory.
+ * @param configuration Application base URL and validated document settings.
  * @returns ESM source with static imports, never serialized consumer callbacks.
  */
 export function generateDocumentRegistry(
   directory: string,
-  validationPath: string,
-  configuration?: Pick<ModuleOptions, "rawPrefix" | "prerender">
+  runtimeDirectory: string,
+  configuration?: MarkdownDocumentServiceOptions
 ): string {
   const files = discoverSourceFiles(directory);
   const imports = files
     .map((file, index) => `import document${index} from ${JSON.stringify(file)};`)
     .join("\n");
   const entries = files
-    .map((file, index) => `{ source: ${JSON.stringify(file)}, definition: document${index} }`)
+    .map((file, index) => `prepareDocumentDefinition(document${index}, ${JSON.stringify(file)})`)
     .join(",\n");
-  return `import { validateDocumentDefinitions } from ${JSON.stringify(validationPath)};
+  return `import { prepareDocumentDefinition } from ${JSON.stringify(`${runtimeDirectory}/definition`)};
+import { createMarkdownDocumentService } from ${JSON.stringify(`${runtimeDirectory}/service`)};
 ${imports}
 export const configuration = ${JSON.stringify(configuration ?? {})};
-export const documents = validateDocumentDefinitions([
+export const documents = [
 ${entries}
-]);
+];
+export const {
+  resolveMarkdownDocument,
+  listMarkdownDocuments,
+  getMarkdownDocumentURL
+} = createMarkdownDocumentService(documents, configuration);
 `;
 }
 
