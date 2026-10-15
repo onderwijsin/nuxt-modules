@@ -31,6 +31,7 @@ export interface MarkdownDocumentDefinition<TSource> {
   fetch: (context: MarkdownDocumentFetchContext) => MaybePromise<TSource | null>;
   transform: (source: NoInfer<NonNullable<TSource>>) => MaybePromise<MarkdownDocument>;
   list?: (context?: MarkdownDocumentContext) => MaybePromise<MarkdownDocumentListItem[]>;
+  /** Reserved compatibility setting; does not schedule prerendering. */
   prerender?: boolean;
 }
 
@@ -38,6 +39,7 @@ export interface MarkdownDocumentDefinition<TSource> {
 export interface MarkdownDocumentServiceOptions {
   baseURL?: string;
   rawPrefix?: string | null;
+  /** Reserved compatibility setting; does not schedule prerendering. */
   prerender?: boolean;
 }
 

@@ -6,6 +6,6 @@ export interface ModuleOptions {
   dir?: string;
   /** Raw Markdown delivery prefix; omit or use null for /:path.md. @default undefined */
   rawPrefix?: string | null;
-  /** Planned default for document prerendering. @default false */
+  /** Reserved compatibility setting; no effect. Consumers configure prerendering. @default false */
   prerender?: boolean;
 }

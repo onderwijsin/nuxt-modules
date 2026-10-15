@@ -4,7 +4,8 @@
 
 Phase 0 is the development scaffold. Phase 1 adds validated options, typed definitions and a server
 registry. Phase 2 adds structured resolution, listing and URL mapping. Phase 3 implements JSON
-validation, YAML serialization and dynamic HTTP delivery; later phases remain planned. Implement
+validation, YAML serialization and dynamic HTTP delivery. Phase 4 is abandoned: consumers own
+prerender route discovery and scheduling. Phase 5 remains the standalone release gate. Implement
 phases sequentially, with tests and documentation in each phase rather than deferring verification
 until the end. Release Markdown Documents as a standalone module before AI Toolkit. No standalone
 release gate requires AI Toolkit to exist or be installed.
@@ -21,14 +22,14 @@ its `nuxt-llms` integration owns `/llms.txt` and `/llms-full.txt`.
 
 ## Proposed API and invariants
 
-Phase 1 introduces these validated options. Delivery and prerender behavior arrive in later phases:
+The module accepts these validated options. The reserved prerender setting has no effect:
 
 | Option      | Proposed default   | Meaning                                                     |
 | ----------- | ------------------ | ----------------------------------------------------------- |
 | `enabled`   | `true`             | Disable all registration and build-time listing when false. |
 | `dir`       | `server/documents` | Definition directory relative to application root.          |
 | `rawPrefix` | `undefined`        | Optional prefix; unset or `null` serves `/:path.md`.        |
-| `prerender` | `false`            | Default, overridden by each definition's boolean.           |
+| `prerender` | `false`            | Reserved compatibility setting; no effect.                  |
 
 Public server-only export: `@onderwijsin/nuxt-markdown-documents/server`. Expose
 `defineMarkdownDocument` there and as a Nitro server auto-import, never an app auto-import. Export
@@ -198,30 +199,21 @@ baseURL/custom-prefix routes; unrelated routes remain unchanged.
 Exit: dynamic public Markdown works and structured utilities retain metadata without YAML reparsing.
 Update playground with public sample articles and links; never use privileged live credentials.
 
-## Phase 4 — build-time listing and prerendering
+## Phase 4 — build-time listing and prerendering (abandoned)
 
-1. Resolve effective enablement as `definition.prerender ?? options.prerender`. Require list for
-   enabled types and skip disabled types without invoking their list function.
-2. Through `prerender:routes`, enumerate validated listing entries without an event, derive raw URLs
-   with the shared mapper, deduplicate, and add only module-owned raw representations. Preserve
-   prerender ignores and effective route rules; never add HTML or AI aliases implicitly.
-3. Prove when generated consumer definitions can safely execute during Nuxt's build lifecycle.
-   Prefer a Nitro-compiled bridge to the generated service if direct imports cannot resolve Nuxt
-   aliases. Do not use ad hoc source evaluation or internal HTTP requests to hide lifecycle issues.
-   Test build-only credentials/config access and fail clearly if a consumer requires an event.
-4. Fail builds on missing list, invalid entries, listing failures, or failed document rendering.
-   Include definition identity and operation in diagnostics without credential values. Do not
-   silently omit expected documents or convert failures to empty output.
-5. Compare dynamic response bytes with prerendered output, including root and non-root baseURL.
-   Confirm MIME metadata for the supported Nitro output and test it through the Node server. Static
-   hosts control their own MIME mappings: document the required `text/plain` deployment
-   configuration and verify a representative host configuration before claiming static
-   compatibility.
+The module owns dynamic document delivery, structured resolution, metadata listing and raw URL
+mapping. It does not enumerate build-time routes or orchestrate prerendering. Consumers can supply
+concrete `.md` routes through Nuxt/Nitro configuration, route rules and existing discovery modules.
+Directus Prerenderer mappers can already return raw Markdown routes alongside HTML routes.
 
-Tests: global/per-type true/false combinations, list invocation counts, event-free builds, failing
-sources, ignores/rules, duplicate routes, byte parity, generated files and served Content-Type.
+Do not create a second Nitro instance or source-evaluation bridge. Keep the current definition API
+and the module independent of Directus Client. Collection-config adapters, shared collection
+fetchers and dedicated Markdown URL generation in Directus Prerenderer are not part of this work. AI
+Toolkit integration remains optional future work rather than a prerendering prerequisite.
 
-Exit: raw-only prerender works with documented hosting requirements; dynamic definitions still work.
+Existing module and definition `prerender` fields remain accepted with no effect to preserve the
+current API shape. Document that behavior explicitly rather than promising a later implementation. A
+removal or deprecation would need a separate compatibility decision.
 
 ## Phase 5 — standalone release readiness
 
@@ -235,7 +227,7 @@ Exit: raw-only prerender works with documented hosting requirements; dynamic def
    response, structured resolution/listing and preserved HTML. Verify only intended dist entries,
    declarations, README, changelog and licence are packed; no private dependencies leak.
 4. Complete README/consumer skill examples for arbitrary data, publication filtering, route grammar,
-   listing, YAML restrictions, prerendering, build credentials and static-host MIME requirements.
+   listing, YAML restrictions, consumer-owned prerendering and static-host MIME requirements.
    Preserve Node/Workers runtime boundaries; describe Node 24/pinned Nuxt as tested baseline.
 5. Run repository validation and review all #354 acceptance criteria against named tests. Maintain a
    Changeset for each coherent public concern. Do not publish the scaffold as a completed MVP.

@@ -1,8 +1,8 @@
 # @onderwijsin/nuxt-markdown-documents
 
 Source-agnostic Markdown document delivery for Nuxt. Typed server definitions provide structured
-resolution, metadata listing and plain-text Markdown responses with YAML frontmatter. Phase 3
-implements dynamic delivery; prerendering remains planned.
+resolution, metadata listing and plain-text Markdown responses with YAML frontmatter. Prerendering
+is configured by the consuming application.
 
 The module will be released standalone before AI Toolkit. No CMS, AI Toolkit or Agent Discovery
 installation is required.
@@ -32,7 +32,7 @@ Runtime code uses no Node-specific filesystem APIs; discovery runs at build time
 | `enabled`   | `true`             | Disable server registration/discovery when false. Options are still validated. |
 | `dir`       | `server/documents` | Directory relative to application `rootDir`.                                   |
 | `rawPrefix` | `undefined`        | No prefix by default; set `/raw` explicitly for prefixed delivery.             |
-| `prerender` | `false`            | Validated setting reserved for the later prerendering phase.                   |
+| `prerender` | `false`            | Reserved setting with no effect; use application prerender configuration.      |
 
 An absent implicit default directory is allowed. An explicitly configured missing directory or a
 path that is not a directory is an error. Directory paths must be relative, without traversal. The
@@ -67,7 +67,7 @@ export default defineMarkdownDocument({
   route: "/articles/:slug",
   fetch({ params, event }) {
     // Replace this local source with any consumer-owned public data lookup.
-    // event is optional because later build-time resolution has no HTTP event.
+    // event is optional for event-free server work.
     return params.slug === "introduction"
       ? { title: "Introduction", content: "# Introduction" }
       : null;
@@ -99,7 +99,7 @@ The public `/server` subpath exports the helper and these types:
 - `MarkdownDocumentFetchContext`: route params plus that optional event.
 - `MarkdownDocumentService`: the signatures of the three application-bound utilities.
 
-`list` receives an optional context and must work without an event for future prerendering. Its
+`list` receives an optional context and must work without an event for event-free server work. Its
 paths identify canonical HTML, not Markdown URLs. Consumers own public/published filtering and
 credentials. Keep all definitions and source access server-only. Frontmatter must be
 JSON-compatible. The transform shape is validated as exactly frontmatter plus a string body.
@@ -182,21 +182,35 @@ Date) are rejected. Convert dates to strings yourself. Structured resolution rep
 metadata path without including its value. Repeated non-cyclic references are supported.
 
 The module serializes YAML 1.2 without aliases or custom tags. It writes one `---` frontmatter
-block, followed by your body unchanged; empty metadata returns just the body. Supply Markdown
-without its own leading YAML mapping block: duplicate body frontmatter is an error. Ordinary
-Markdown horizontal rules remain supported. Structured resolution and listing never serialize or
-reparse YAML.
+block, followed by exactly one blank line before the body. Leading blank lines in the body are
+normalized at that boundary; other body content is preserved. Empty metadata returns the body
+unchanged. Supply Markdown without its own leading YAML mapping block: duplicate body frontmatter is
+an error. Ordinary Markdown horizontal rules remain supported. Structured resolution and listing
+never serialize or reparse YAML.
 
 ## Boundaries and development
 
-Prerendering remains unimplemented. No sitemap, CMS adapter, HTML conversion, MCP server or
-`llms.txt` endpoint is included. Future AI Toolkit integration will be optional follow-up after the
-standalone release.
+The module does not discover prerender routes or schedule prerendering. Supply concrete `.md` URLs
+through Nuxt/Nitro prerender configuration or an existing route-discovery module such as Directus
+Prerenderer. A route mapper can return both a canonical HTML route and its raw Markdown URL; route
+rules control rendering policy but do not enumerate unknown slugs. Root maps to `/index.md`; account
+for any configured rawPrefix and application base URL.
+
+The module and definition `prerender` settings remain accepted for compatibility but have no effect.
+No Directus dependency or collection adapter is included. Static hosting controls the MIME type for
+generated `.md` files; configure it to serve `text/plain; charset=utf-8`.
+
+No sitemap, CMS adapter, HTML conversion, MCP server or `llms.txt` endpoint is included. Future AI
+Toolkit integration will be optional follow-up after the standalone release.
 
 See
 [the implementation plan](https://github.com/onderwijsin/nuxt-modules/blob/main/modules/markdown-documents/IMPLEMENTATION.md)
 for the remaining phases, based on [#354](https://github.com/onderwijsin/nuxt-modules/issues/354)
 and related [#353](https://github.com/onderwijsin/nuxt-modules/issues/353).
+
+The playground includes two published articles, a filtered draft, nested JSON metadata, and rich
+Markdown. Its overview links to `/documents`, where Shiki highlights the structured API response and
+raw Markdown in separate sections. The examples use only local data.
 
 The playground registers the public package and extends the shared playground layer. After preparing
 the workspace:

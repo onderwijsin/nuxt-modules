@@ -28,9 +28,19 @@ describe("JSON frontmatter and YAML delivery", () => {
     const serialized = serializeMarkdownDocument(document);
     expect(parse(serialized.slice(4, serialized.lastIndexOf("---\n")))).toEqual(frontmatter);
     expect(serialized).not.toMatch(/[&*]a[0-9]/u);
-    expect(serialized.endsWith("---\n# Body")).toBe(true);
+    expect(serialized.endsWith("---\n\n# Body")).toBe(true);
     expect(document.frontmatter).toEqual(frontmatter);
   });
+
+  it.each(["# Body", "\n# Body", "\n\n# Body", " \t\r\n\r\n# Body"])(
+    "writes exactly one blank line between metadata and the body (%j)",
+    (body) => {
+      expect(serializeMarkdownDocument({ frontmatter: { title: "Example" }, body })).toBe(
+        "---\ntitle: Example\n---\n\n# Body"
+      );
+      expect(serializeMarkdownDocument({ frontmatter: {}, body })).toBe(body);
+    }
+  );
 
   it.each([
     undefined,
@@ -75,12 +85,13 @@ describe("JSON frontmatter and YAML delivery", () => {
     expect(serializeMarkdownDocument({ frontmatter: { title: "Metadata" }, body })).toContain(body);
   });
 
-  it.each(["---\ntitle: Duplicate\n---\nBody", "\uFEFF---\r\ntitle: Duplicate\r\n...\r\nBody"])(
-    "rejects body-owned frontmatter",
-    (body) => {
-      expect(() => serializeMarkdownDocument({ frontmatter: {}, body })).toThrow(
-        /body must not contain/
-      );
-    }
-  );
+  it.each([
+    "---\ntitle: Duplicate\n---\nBody",
+    "\n\n---\ntitle: Duplicate\n---\nBody",
+    "\uFEFF---\r\ntitle: Duplicate\r\n...\r\nBody"
+  ])("rejects body-owned frontmatter", (body) => {
+    expect(() => serializeMarkdownDocument({ frontmatter: {}, body })).toThrow(
+      /body must not contain/
+    );
+  });
 });

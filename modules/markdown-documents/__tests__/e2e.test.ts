@@ -33,7 +33,7 @@ describe("markdown documents server utilities", async () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
     expect(await response.text()).toBe(
-      "---\ntitle: First article\n---\nSERVER_ONLY_ARTICLE_BODY_354"
+      "---\ntitle: First article\n---\n\nSERVER_ONLY_ARTICLE_BODY_354"
     );
   });
 

@@ -21,7 +21,8 @@ export function hasBodyFrontmatter(body: string): boolean {
  * @returns Markdown with metadata delimiters, or the unchanged body for empty metadata.
  */
 export function serializeMarkdownDocument(document: MarkdownDocument): string {
-  if (hasBodyFrontmatter(document.body)) {
+  const body = document.body.replace(/^(?:[ \t]*\r?\n)+/u, "");
+  if (hasBodyFrontmatter(body)) {
     throw createError({
       statusCode: 500,
       message: "Markdown body must not contain a leading YAML frontmatter block."
@@ -37,5 +38,5 @@ export function serializeMarkdownDocument(document: MarkdownDocument): string {
   );
   if (result.data === null)
     throw createError({ statusCode: 500, message: "Markdown frontmatter serialization failed." });
-  return `---\n${result.data}---\n${document.body}`;
+  return `---\n${result.data}---\n\n${body}`;
 }

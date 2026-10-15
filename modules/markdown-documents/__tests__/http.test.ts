@@ -51,7 +51,7 @@ describe("scoped Markdown delivery", () => {
   it("serves plain text and passes the request context to fetch", async () => {
     const { handler, fetch } = fixture();
     const request = event("/articles/caf%C3%A9.md");
-    expect(await handler(request)).toBe("---\ntitle: café\n---\n# Public");
+    expect(await handler(request)).toBe("---\ntitle: café\n---\n\n# Public");
     expect(request.node.res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(fetch).toHaveBeenCalledWith({ params: { slug: "café" }, event: request });
   });
