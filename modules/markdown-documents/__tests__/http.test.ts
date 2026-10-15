@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { createTestEvent } from "../../../packages/test-utils/src";
-import { createMarkdownDocumentHandler } from "../src/runtime/server/http";
+import { createApp, defineEventHandler, type H3Event } from "h3";
+import { attemptSync } from "@onderwijsin/nuxt-module-utils/shared";
+import { registerMarkdownDocumentHandlers } from "../src/runtime/server/http";
 import { createMarkdownDocumentService } from "../src/runtime/server/service";
 import { prepareDocumentDefinition } from "../src/runtime/server/definition";
 import type { MarkdownDocumentServiceOptions } from "../src/runtime/server/types";
@@ -8,7 +10,7 @@ import type { MarkdownDocumentServiceOptions } from "../src/runtime/server/types
 /** Creates a scoped delivery handler and observable consumer callback.
  * @param options URL configuration.
  * @param route Consumer route pattern.
- * @returns Handler, callback and prepared definition for collision tests.
+ * @returns Handler, callback and scoped H3 application.
  */
 function fixture(options: MarkdownDocumentServiceOptions = {}, route = "/articles/:slug") {
   const fetch = vi.fn(({ params }: { params: Record<string, string> }) => {
@@ -27,11 +29,19 @@ function fixture(options: MarkdownDocumentServiceOptions = {}, route = "/article
     )
   ];
   const service = createMarkdownDocumentService(documents, options);
+  const app = createApp();
+  registerMarkdownDocumentHandlers(app, documents, service.resolveMarkdownDocument, options);
   return {
     fetch,
+    app,
     documents,
     service,
-    handler: createMarkdownDocumentHandler(documents, service.resolveMarkdownDocument, options)
+    async handler(request: H3Event) {
+      const target = request.node.req.url ?? "/";
+      const path = attemptSync(() => decodeURI(target)).data ?? target;
+      const matched = await app.resolve(path);
+      return matched?.handler(request);
+    }
   };
 }
 
@@ -55,6 +65,69 @@ describe("scoped Markdown delivery", () => {
     expect(request.node.res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(fetch).toHaveBeenCalledWith({ params: { slug: "café" }, event: request });
   });
+  it.each([
+    { fallback: "plain", accept: undefined, requestType: undefined, expected: "plain" },
+    { fallback: "markdown", accept: undefined, requestType: undefined, expected: "markdown" },
+    { fallback: "plain", accept: "text/markdown", requestType: "text/plain", expected: "markdown" },
+    { fallback: "markdown", accept: "text/plain", requestType: "text/markdown", expected: "plain" },
+    {
+      fallback: "plain",
+      accept: "Text/Markdown; charset=utf-8",
+      requestType: undefined,
+      expected: "markdown"
+    },
+    {
+      fallback: "plain",
+      accept: "text/plain;q=0.2, text/markdown;q=0.9",
+      requestType: undefined,
+      expected: "markdown"
+    },
+    {
+      fallback: "markdown",
+      accept: "text/markdown;q=0, text/plain;q=0.5",
+      requestType: undefined,
+      expected: "plain"
+    },
+    {
+      fallback: "markdown",
+      accept: "text/plain, text/markdown",
+      requestType: undefined,
+      expected: "markdown"
+    },
+    {
+      fallback: "plain",
+      accept: "text/markdown;q=bogus",
+      requestType: undefined,
+      expected: "plain"
+    },
+    {
+      fallback: "plain",
+      accept: "*/*",
+      requestType: "text/markdown; charset=UTF-8",
+      expected: "markdown"
+    },
+    {
+      fallback: "markdown",
+      accept: "text/html, */*;q=0.8",
+      requestType: "application/json",
+      expected: "markdown"
+    },
+    { fallback: "markdown", accept: undefined, requestType: "text/plain", expected: "plain" }
+  ])(
+    "selects $expected for $accept / $requestType with default $fallback",
+    async ({ fallback, accept, requestType, expected }) => {
+      const contentType = fallback === "markdown" ? "markdown" : "plain";
+      const { handler } = fixture({ contentType });
+      const request = event("/articles/one.md");
+      if (accept) request.node.req.headers.accept = accept;
+      if (requestType) request.node.req.headers["content-type"] = requestType;
+      request.node.res.setHeader("Vary", "Origin");
+      expect(await handler(request)).toBe("---\ntitle: one\n---\n\n# Public");
+      expect(request.node.res.getHeader("Content-Type")).toBe(`text/${expected}; charset=utf-8`);
+      expect(String(request.node.res.getHeader("Vary"))).toContain("Origin");
+      expect(String(request.node.res.getHeader("Vary"))).toContain("Accept, Content-Type");
+    }
+  );
   it.each(["/articles/one", "/neighbor.md", "/api/example", "/articles/deep/one.md"])(
     "passes through unrelated URL %s",
     async (path) => {
@@ -100,32 +173,41 @@ describe("scoped Markdown delivery", () => {
     expect(await handler(event("/raw/index.md"))).toBeUndefined();
     expect(fetch).toHaveBeenCalledTimes(1);
   });
-  it.each(["/articles/first.md", "/articles/:id.md", "/articles/:slug().md"])(
-    "rejects explicit route ownership conflicts with %s",
-    (route) => {
-      const { documents, service } = fixture();
-      expect(() =>
-        createMarkdownDocumentHandler(documents, service.resolveMarkdownDocument, {}, [
-          { route, source: "existing.ts" }
-        ])
-      ).toThrow(/articles.ts.*existing.ts/);
-    }
-  );
-  it("detects overlapping parameters in different segments", () => {
-    const { documents, service } = fixture({}, "/a/:id");
-    expect(() =>
-      createMarkdownDocumentHandler(documents, service.resolveMarkdownDocument, {}, [
-        { route: "/:id/b.md", source: "page.vue" }
-      ])
-    ).toThrow(/conflicts/);
-  });
-  it("matches literal Unicode routes and detects their ownership conflicts", async () => {
-    const { documents, service, handler } = fixture({}, "/café");
+  it("matches literal Unicode routes", async () => {
+    const { handler } = fixture({}, "/café");
     expect(await handler(event("/caf%C3%A9.md"))).toContain("# Public");
-    expect(() =>
-      createMarkdownDocumentHandler(documents, service.resolveMarkdownDocument, {}, [
-        { route: "/café.md", source: "page.vue" }
-      ])
-    ).toThrow(/conflicts/);
+  });
+  it("registers scoped layers with an exact suffix and segment matcher", () => {
+    const { app } = fixture();
+    expect(app.stack).toHaveLength(1);
+    expect(app.stack[0]?.route).toBe("/articles");
+    expect(app.stack[0]?.match?.("/one.md")).toBe(true);
+    expect(app.stack[0]?.match?.("/one")).toBe(false);
+    expect(app.stack[0]?.match?.("/one/deep.md")).toBe(false);
+  });
+  it("keeps application middleware before document delivery and the native router after it", () => {
+    const { documents, service } = fixture();
+    const app = createApp();
+    const middleware = defineEventHandler(() => undefined);
+    const nativeRouter = defineEventHandler(() => "Native response");
+    app.use(middleware);
+    app.use(nativeRouter);
+    registerMarkdownDocumentHandlers(
+      app,
+      documents,
+      service.resolveMarkdownDocument,
+      {},
+      nativeRouter
+    );
+    expect(app.stack[0]?.handler).toBe(middleware);
+    expect(app.stack[1]?.route).toBe("/articles");
+    expect(app.stack[2]?.handler).toBe(nativeRouter);
+  });
+  it("matches parameters followed by literal segments without treating dots as wildcards", async () => {
+    const { handler, fetch } = fixture({}, "/guides/:slug/details.v1");
+    expect(await handler(event("/guides/one/details.v1.md"))).toContain("title: one");
+    expect(await handler(event("/guides/one/detailsXv1.md"))).toBeUndefined();
+    expect(await handler(event("/guides/one/details.v1"))).toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

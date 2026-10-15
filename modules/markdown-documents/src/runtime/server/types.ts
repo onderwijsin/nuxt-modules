@@ -35,10 +35,12 @@ export interface MarkdownDocumentDefinition<TSource> {
   prerender?: boolean;
 }
 
-/** Application-specific URL configuration used by the generated server service. */
+/** Application-specific URL and delivery configuration used by the generated server service. */
 export interface MarkdownDocumentServiceOptions {
   baseURL?: string;
   rawPrefix?: string | null;
+  /** Default HTTP response type when the request has no supported preference. */
+  contentType?: "plain" | "markdown";
   /** Reserved compatibility setting; does not schedule prerendering. */
   prerender?: boolean;
 }

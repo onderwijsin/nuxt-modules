@@ -97,22 +97,19 @@ describe("markdown document Nuxt setup", () => {
     }
   });
 
-  it("captures explicit pages and Nitro handlers for runtime collision validation", async () => {
+  it("registers delivery in a compiled plugin without a global middleware handler", async () => {
     const nuxt = await loadModule(rootDirectory(), {});
     try {
+      const plugin = nuxt.options.nitro.plugins?.find((path) =>
+        path?.endsWith("markdown-documents/plugin.mjs")
+      );
+      expect(plugin).toBeDefined();
+      const template = plugin ? nuxt.options.nitro.virtual?.[plugin] : undefined;
+      if (typeof template !== "function") throw new Error("Missing document plugin");
+      expect(await template()).toContain("registerMarkdownDocumentHandlers(app.h3App");
       const nitro = nuxt.runWithContext(() => useNitro());
-      if (!nitro) throw new Error("Nitro was not initialized");
-      nitro.options.handlers.push({ route: "/articles/one.md", handler: "/server/article.ts" });
-      await nuxt.callHook("pages:extend", [
-        { path: "/articles/:slug().md", file: "/app/page.vue" }
-      ]);
-      const template = nuxt.options.nitro.virtual?.["#markdown-documents-http"];
-      if (typeof template !== "function") throw new Error("Missing HTTP template");
-      const generated = await template();
-      expect(generated).toContain("/articles/one.md");
-      expect(generated).toContain("/app/page.vue");
-      expect(nitro.options.handlers).toContainEqual(
-        expect.objectContaining({ middleware: true, handler: "#markdown-documents-http" })
+      expect(nitro.options.handlers).not.toContainEqual(
+        expect.objectContaining({ handler: "#markdown-documents-http" })
       );
     } finally {
       await nuxt.close();

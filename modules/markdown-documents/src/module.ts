@@ -23,7 +23,6 @@ import {
   watchDocumentDefinitions,
   resolveDefinitionDirectory
 } from "./config/definitions";
-import { registerDocumentDelivery } from "./config/http";
 import type { ModuleOptions } from "./types/options";
 
 export type { ModuleOptions } from "./types/options";
@@ -66,6 +65,7 @@ export default defineNuxtModule<ModuleOptions>({
         generateDocumentRegistry(directory, resolver.resolve(runtimeDir, "server"), {
           baseURL: nuxt.options.app.baseURL,
           rawPrefix: options.rawPrefix,
+          contentType: options.contentType,
           prerender: options.prerender
         })
     });
@@ -76,13 +76,14 @@ export default defineNuxtModule<ModuleOptions>({
     );
     const plugin = addServerTemplate({
       filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/plugin.mjs"),
-      getContents: () => `import ${JSON.stringify(registry.filename)};
-export default () => {};
+      getContents:
+        () => `import { registerMarkdownDocumentHandlers } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/http"))};
+import { documents, configuration, resolveMarkdownDocument } from ${JSON.stringify(registry.filename)};
+export default (app) => registerMarkdownDocumentHandlers(app.h3App, documents, resolveMarkdownDocument, configuration, app.router.handler);
 `
     });
     addServerPlugin(plugin.filename);
 
-    registerDocumentDelivery(nuxt, resolver.resolve(runtimeDir, "server"));
     if (nuxt.options.dev) watchDocumentDefinitions(nuxt, directory);
     end();
   }

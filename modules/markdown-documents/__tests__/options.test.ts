@@ -6,6 +6,7 @@ describe("markdown document options", () => {
     expect(markdownDocumentsOptionsSchema.parse({})).toEqual({
       enabled: true,
       dir: "server/documents",
+      contentType: "plain",
       prerender: false
     });
     expect(
@@ -20,6 +21,18 @@ describe("markdown document options", () => {
         prerender: true
       })
     ).toMatchObject({ dir: "backend/documents", rawPrefix: "/exports/raw", prerender: true });
+  });
+
+  it("accepts both response types and rejects unsupported values", () => {
+    expect(markdownDocumentsOptionsSchema.parse({ contentType: "markdown" }).contentType).toBe(
+      "markdown"
+    );
+    expect(markdownDocumentsOptionsSchema.parse({ contentType: "plain" }).contentType).toBe(
+      "plain"
+    );
+    expect(markdownDocumentsOptionsSchema.safeParse({ contentType: "text/plain" }).success).toBe(
+      false
+    );
   });
 
   it.each([

@@ -32,9 +32,22 @@ describe("markdown documents server utilities", async () => {
     const response = await fetch("/articles/first.md");
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    expect(response.headers.get("x-application-middleware")).toBe("preserved");
+    expect(response.headers.get("x-document-route-rule")).toBe("preserved");
     expect(await response.text()).toBe(
       "---\ntitle: First article\n---\n\nSERVER_ONLY_ARTICLE_BODY_354"
     );
+  });
+
+  it("matches Markdown request headers while preserving the document bytes", async () => {
+    for (const name of ["accept", "content-type"]) {
+      const headers = { [name]: "text/markdown" };
+      const response = await fetch("/articles/first.md", { headers });
+      expect(response.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+      expect(await response.text()).toBe(
+        "---\ntitle: First article\n---\n\nSERVER_ONLY_ARTICLE_BODY_354"
+      );
+    }
   });
 
   it("returns generic missing/error responses and rejects unsupported methods", async () => {
@@ -53,5 +66,6 @@ describe("markdown documents server utilities", async () => {
     expect(await $fetch("/neighbor.md")).toBe("Application-owned Markdown");
     expect(await $fetch("/articles/first")).toContain("Article HTML");
     expect(await $fetch("/index.md")).toBe("# Root document");
+    expect(await $fetch("/caf%C3%A9.md")).toBe("# Unicode document");
   });
 });

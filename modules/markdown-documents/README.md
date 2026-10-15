@@ -133,17 +133,19 @@ export default defineNuxtConfig({
   markdownDocuments: {
     enabled: true,
     dir: "server/documents",
-    rawPrefix: "/raw"
+    rawPrefix: "/raw",
+    contentType: "plain"
   }
 });
 ```
 
-| Option      | Default            | Behavior                                                                                                        |
-| ----------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `enabled`   | `true`             | Enables server discovery, utilities, and raw delivery. `false` skips registration; options are still validated. |
-| `dir`       | `server/documents` | Definition directory relative to application `rootDir`.                                                         |
-| `rawPrefix` | Unset              | Serves canonical paths with `.md` appended. Set a prefix such as `/raw` for prefixed delivery.                  |
-| `prerender` | `false`            | Reserved compatibility option. Accepted but has no effect.                                                      |
+| Option        | Default            | Behavior                                                                                                                                  |
+| ------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`     | `true`             | Enables server discovery, utilities, and raw delivery. `false` skips registration; options are still validated.                           |
+| `dir`         | `server/documents` | Definition directory relative to application `rootDir`.                                                                                   |
+| `rawPrefix`   | Unset              | Serves canonical paths with `.md` appended. Set a prefix such as `/raw` for prefixed delivery.                                            |
+| `contentType` | `"plain"`          | Default response MIME type: `"plain"` for `text/plain`, or `"markdown"` for `text/markdown`. Requests can override it as described below. |
+| `prerender`   | `false`            | Reserved compatibility option. Accepted but has no effect.                                                                                |
 
 The implicit default directory may be absent. An explicitly configured missing directory, or a path
 that is not a directory, fails setup. `dir` must be a nonempty relative path without traversal. It
@@ -194,8 +196,10 @@ underscores, and appear only once per pattern. Literal segments allow Unicode le
 unsupported. `/index` and paths ending in `.md` are reserved.
 
 Static routes take precedence over parameter routes. Equally specific overlapping patterns fail with
-both definition filenames. Existing explicit `.md` pages or Nitro handlers that overlap a document's
-raw route fail when the compiled server starts. Give each raw URL one owner.
+both definition filenames. You are responsible for keeping document-owned raw URLs distinct from
+application pages, server handlers, public files and other modules. The module does not inspect
+those routes or report collisions; overlapping ownership can cause one response to shadow another.
+Give each raw URL one owner, or configure a separate rawPrefix.
 
 | Canonical input | Default URL        | With `rawPrefix: "/raw"` | With `/raw` and `app.baseURL: "/docs/"` |
 | --------------- | ------------------ | ------------------------ | --------------------------------------- |
@@ -258,6 +262,18 @@ content is unchanged. Empty metadata emits the original body without delimiters 
 changes. Do not put a leading YAML mapping block in body; raw delivery rejects it. Ordinary Markdown
 horizontal rules are supported.
 
+Responses use `text/plain; charset=utf-8` by default. Set `markdownDocuments.contentType` to
+`"markdown"` to default to `text/markdown; charset=utf-8` instead. Both formats contain identical
+Markdown and YAML bytes.
+
+For each request, an explicit `Accept: text/plain` or `Accept: text/markdown` overrides the default.
+Supported entries use their `q` weights; zero or invalid weights are ignored, and equal weights
+favor the configured default. If Accept has no supported positive preference, a request
+`Content-Type` of `text/plain` or `text/markdown` is used, ignoring charset parameters and case.
+Otherwise the configured default applies. Wildcards and unsupported types do not select a format;
+this is a best-effort preference rather than strict negotiation and never returns 406. Responses
+include `Vary: Accept, Content-Type` so caches can distinguish the headers.
+
 Only GET retrieves a document. Matching HEAD and other methods return 405 with `Allow: GET`, without
 calling fetch or transform. A query string does not change HTTP document selection. Missing/private
 documents return generic 404 responses; unsafe matched paths return 400 before retrieval. Provider,
@@ -296,13 +312,14 @@ export default defineNuxtConfig({
 Use `/raw/articles/introduction.md` when rawPrefix is `/raw`. Route rules express rendering policy;
 wildcard rules do not enumerate unknown slugs. Existing Directus Prerenderer mappers may return raw
 Markdown URLs alongside HTML routes. Source services and private credentials must be available
-during prerender requests. Your host controls MIME mappings for generated files: serve `.md` as
-`text/plain; charset=utf-8` and verify that response in the deployed environment.
+during prerender requests. Your host controls MIME mappings for generated files: serve `.md` with
+the desired `text/plain` or `text/markdown` MIME type and UTF-8 charset, and verify that response in
+the deployed environment.
 
-The module has no HTML conversion, Accept negotiation, sitemap integration, `llms.txt`, built-in MCP
-server, source adapter framework, or cache/invalidation layer. AI Toolkit integration is separate
-optional work; do not register competing handlers for document-owned raw URLs or convert their
-Markdown through an HTML converter.
+The module has no HTML conversion, HTML/Markdown negotiation on canonical routes, sitemap
+integration, `llms.txt`, built-in MCP server, source adapter framework, or cache/invalidation layer.
+AI Toolkit integration is separate optional work; do not register competing handlers for
+document-owned raw URLs or convert their Markdown through an HTML converter.
 
 ## Troubleshooting
 
@@ -312,5 +329,5 @@ Markdown through an HTML converter.
 | Raw request returns 404        | Use the derived raw URL and inspect the matching fetch result and publication filter.                                               |
 | Raw request returns 500        | Call the structured resolver server-side for sanitized fetch/transform diagnostics; check JSON metadata and body-owned frontmatter. |
 | Listing fails                  | Check nonblank titles, canonical paths, definition ownership, and conflicting duplicate metadata.                                   |
-| Server fails at startup        | Resolve ambiguous definition patterns or overlapping explicit `.md` pages/handlers identified in the error.                         |
+| Server fails at startup        | Resolve ambiguous document-definition patterns identified in the error.                                                             |
 | Prerender setting does nothing | The reserved module/definition fields have no effect. Configure Nuxt/Nitro prerendering.                                            |

@@ -174,27 +174,36 @@ expose source payloads or credentials. Finalize names/signatures in README and c
    block. Reject a leading body frontmatter block with a useful diagnostic rather than stripping
    content silently or producing duplicate metadata. Distinguish ordinary Markdown horizontal rules.
 3. Register scoped GET handlers only for document patterns under rawPrefix. Return
-   `Content-Type: text/plain; charset=utf-8`. Preserve normal HTML and unrelated API routes.
+   `Content-Type: text/plain; charset=utf-8` by default. The later response-type enhancement adds
+   the configurable plain/markdown default and request header preferences; document bytes stay the
+   same. Preserve normal HTML and unrelated API routes.
 4. Translate null/unmatched documents to a generic 404. Invalid request paths must not reach fetch;
    unexpected provider/transform errors remain 500 with sanitized public messages, not false 404s.
    Choose and document HEAD behavior; unsupported methods must not execute document retrieval.
-5. Detect overlapping module-owned raw routes and existing explicit `.md` handlers/pages during
-   registration. With `rawPrefix: null`, `/blog/one.md` is the module-owned representation, not an
-   extra alias; `/blog/one` remains canonical HTML. Root maps to `/index.md`. Avoid a global raw
-   catch-all. Do not implement Accept negotiation. Future AI Toolkit aliases must defer to these
-   document-owned routes rather than registering competing handlers.
+5. Validate ambiguous document-definition patterns. Consumers own collisions with application
+   routes; do not inspect pages or Nitro handlers. With `rawPrefix: null`, `/blog/one.md` is the
+   module-owned representation, not an extra alias; `/blog/one` remains canonical HTML. Root maps to
+   `/index.md`. Avoid a global raw catch-all. Do not negotiate HTML versus Markdown on canonical
+   HTML routes. Raw `.md` routes may select text/plain or text/markdown using request headers.
+   Future AI Toolkit aliases must defer to these document-owned routes rather than registering
+   competing handlers.
 
 Delivery uses exact per-definition middleware matchers: Nitro 2 treats `:slug.md` as a whole
 parameter and cannot register a suffix-constrained route directly. Nonmatching requests pass
 through; no prefix-wide catch-all is reserved. Definitions execute only in the compiled Nitro
 registry. GET retrieves documents; HEAD and other methods return 405 with `Allow: GET` without
-retrieval. Collision checks cover explicit `.md` pages and Nitro handlers when the compiled handler
-starts.
+retrieval. A generated runtime plugin registers scoped H3 layers from the compiled definitions.
+Literal prefixes and per-definition matchers select requests; no global document scanner or
+build-time page/handler inventory is registered. Layers are placed before the native terminal
+router, after existing application middleware and route rules. Only that router's handler reference
+is used for placement; no application route metadata is inspected. External route collisions are
+consumer-owned.
 
-Tests: YAML parse round-trip for nested objects/arrays, scalar-looking strings, numeric/boolean/null
-values, multiline text, escapes, Unicode and delimiter-like text; empty metadata; every rejected
-non-JSON category; one frontmatter block; HTTP MIME/status/method behavior; missing/private items;
-baseURL/custom-prefix routes; unrelated routes remain unchanged.
+Tests: scoped layer registration, preserved application middleware/route rules and neighboring
+routes; YAML parse round-trip for nested objects/arrays, scalar-looking strings,
+numeric/boolean/null values, multiline text, escapes, Unicode and delimiter-like text; empty
+metadata; every rejected non-JSON category; one frontmatter block; HTTP MIME/status/method behavior;
+missing/private items; baseURL/custom-prefix routes; unrelated routes remain unchanged.
 
 Exit: dynamic public Markdown works and structured utilities retain metadata without YAML reparsing.
 Update playground with public sample articles and links; never use privileged live credentials.
@@ -223,8 +232,8 @@ actual Toolkit coexistence is optional follow-up, not a standalone release prere
 
 - [x] Preserve canonical HTML and neighboring application-owned Markdown routes in standalone Nuxt.
 - [x] Exercise default/null and `/raw` prefixes, root mapping, Unicode and non-root app.baseURL.
-- [x] Build real Nuxt applications with conflicting `.md` pages and Nitro handlers; assert source
-      diagnostics and failed startup for both prefix configurations (`collision-build.test.ts`).
+- [x] Document external route ownership as a consumer responsibility. Application collision
+      inspection and its dedicated build tests were removed by maintainer decision.
 - [x] Validate packed server exports and generic inference with an external TypeScript consumer.
 - [x] Extend the packed consumer with parameter routes, nested metadata, private/missing documents,
       sanitized provider failures, method guards, a root document and neighboring raw/HTML routes.
@@ -251,7 +260,7 @@ The accepted module/definition `prerender` fields have no effect. No Directus ad
 | Typed metadata listings, ownership and deduplication                                             | `service.test.ts`: metadata-only listing, static ownership, conflicts and sanitized failures                                                  |
 | Structured resolution and URL derivation without self-requests                                   | `service.test.ts`, `paths.test.ts`, generated Nitro utility checks in `e2e.test.ts`                                                           |
 | Event-free callback support                                                                      | `definition.test.ts`, `service.test.ts`: optional context and event-free resolution/listing; automatic build-time enumeration is out of scope |
-| Prefix/baseURL/root routing and ownership                                                        | `paths.test.ts`, `e2e-prefix.test.ts`, `collision-build.test.ts`, default and `--markdown-documents-prefix` packed profiles                   |
+| Prefix/baseURL/root routing and ownership                                                        | `paths.test.ts`, `e2e-prefix.test.ts`, default and `--markdown-documents-prefix` packed profiles                                              |
 | Server-only source and package exports                                                           | `module.test.ts`: server-only imports; packed declaration compiler; client-source scan and packed-package validator                           |
 | Built-in global/per-definition prerender scheduling and byte/static-host parity                  | Removed with phase 4. README documents consumer-owned Nitro configuration and deployed MIME verification                                      |
 | Optional AI Toolkit discovery/coexistence                                                        | Deferred until its supported public integration exists; not required for standalone delivery                                                  |
@@ -293,6 +302,43 @@ The package allowlist change affects no dependency graph. Subsequent pnpm comman
 modifying the primary checkout. No dependency install or repair is part of this phase. Workers
 deployment and optional AI Toolkit coexistence are not tested here; the existing portability
 contract is preserved. Consumer-owned prerendering remains outside module acceptance.
+
+### Response-type enhancement validation
+
+The later response-type enhancement was validated with `corepack pnpm typecheck`,
+`corepack pnpm exec vitest run modules/markdown-documents/__tests__` (187 passing tests),
+`corepack pnpm --filter @onderwijsin/nuxt-markdown-documents build`,
+`corepack pnpm --filter markdown-documents-playground build`, formatting, lint and package/docs
+validation. Commands used `pnpm_config_verify_deps_before_run=false` to preserve the installation.
+`corepack pnpm pack:packages /private/tmp/markdown-documents-content-type '--packages=@onderwijsin/nuxt-module-utils @onderwijsin/nuxt-markdown-documents'`
+and
+`corepack pnpm validate:external-consumer --packages-dir=/private/tmp/markdown-documents-content-type`
+passed, including both request-header overrides against the packed module. The full-suite retry
+`corepack pnpm test --maxWorkers=1` passed 1064 assertions but still exited 1 with the same 11
+Redirects `EMFILE` watcher errors. No route-registration changes were made for this enhancement.
+
+### Scoped delivery refactor validation
+
+The application collision inventory and its dedicated build tests were removed. Runtime delivery now
+registers a scoped H3 layer per document definition. Definition ambiguity validation remains. The
+module does not inspect application pages or server routes; consumers own those collisions.
+
+Passed commands (with `pnpm_config_verify_deps_before_run=false` to prevent implicit installs):
+
+- `corepack pnpm exec vitest run modules/markdown-documents/__tests__`: 11 files, 182 tests,
+  including middleware/route-rule ordering, Unicode, suffix matching and both prefix modes.
+- `corepack pnpm typecheck`.
+- `corepack pnpm --filter @onderwijsin/nuxt-markdown-documents build`.
+- `corepack pnpm --filter markdown-documents-playground build`.
+- `corepack pnpm format`, `corepack pnpm lint:fix`, `corepack pnpm validate:docs`,
+  `corepack pnpm validate:packages` and `git diff --check`.
+- `corepack pnpm pack:packages /private/tmp/markdown-documents-scoped-delivery '--packages=@onderwijsin/nuxt-module-utils @onderwijsin/nuxt-markdown-documents'`.
+- `corepack pnpm validate:external-consumer --packages-dir=/private/tmp/markdown-documents-scoped-delivery`.
+- `corepack pnpm validate:external-consumer --packages-dir=/private/tmp/markdown-documents-scoped-delivery --markdown-documents-prefix`.
+
+`corepack pnpm test --maxWorkers=1` passed 1059 assertions (160 files; one file/four tests skipped),
+but exited 1 with the same 11 Redirects `EMFILE` watcher errors. The full-suite gate remains
+unresolved; no unrelated watcher configuration was changed.
 
 ## Post-release follow-up — optional AI Toolkit integration
 
