@@ -162,6 +162,11 @@ workspace pin, run the packed consumer with `--markdown-runtime-regression`. Thi
 that the renderer resolves the application's Vue, Comark, and Nuxt UI installations and that SSR
 includes the configured Prose paragraph classes.
 
+Use `--markdown-documents-prefix` with an artifact set containing Markdown Documents to repeat its
+packed-consumer checks with an explicit `/raw` prefix. The normal profile checks no-prefix delivery.
+Both exercise the public server declarations, root mapping, dynamic documents and neighboring
+routes.
+
 Use `--shared-runtime-regression` to check every packed module’s declared peers against the
 application installation, with a Vue patch different from the workspace pin. The consumer explicitly
 installs its feature peers at their catalog-pinned development versions and verifies that the

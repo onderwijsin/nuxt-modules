@@ -1,17 +1,21 @@
 ---
 name: nuxt-markdown-documents
-description:
-  Configure typed server-only document definitions with @onderwijsin/nuxt-markdown-documents,
-  including structured resolution, JSON frontmatter and scoped raw Markdown delivery.
+description: >
+  Integrate @onderwijsin/nuxt-markdown-documents in a Nuxt application: define source-agnostic
+  server documents, return JSON-compatible frontmatter and Markdown, expose public metadata
+  listings, resolve documents server-side, and configure raw URLs and consumer-owned prerendering.
 ---
 
 # Markdown Documents
 
-Requires Node.js >=24 and Nuxt 4. Phase 3 provides typed definitions, structured resolution,
-metadata listing, URL derivation and dynamic Markdown delivery with YAML 1.2 frontmatter.
-Prerendering remains unimplemented.
+Use this skill when integrating or maintaining an application that uses
+`@onderwijsin/nuxt-markdown-documents`. The module owns document resolution, listing validation,
+YAML serialization, and scoped raw HTTP delivery. The application owns its data sources, publication
+policy, Markdown conversion, HTML pages, and prerender route discovery.
 
-When published, install with `pnpm add @onderwijsin/nuxt-markdown-documents`, then register:
+## Register and locate definitions
+
+Install with `pnpm add @onderwijsin/nuxt-markdown-documents` and register the public package:
 
 ```ts
 export default defineNuxtConfig({
@@ -20,96 +24,155 @@ export default defineNuxtConfig({
 });
 ```
 
-Options: `enabled` defaults to true; `dir` defaults to `server/documents` relative to rootDir;
-`rawPrefix` defaults to undefined (no prefix) and accepts an explicit prefix such as `/raw` or null;
-`prerender` defaults to false. Delivery and the URL helper use rawPrefix; prerender is validated but
-its behavior is a later phase. Empty prefixes and `/` are invalid. Default URL mapping is
-`/blog/one` → `/blog/one.md`, root → `/index.md`, with HTML unchanged. Existing `.md` handlers may
-conflict; future Toolkit aliases must defer.
+Requires Nuxt 4 and Node.js >=24. Node 24 with the repository's pinned Nuxt graph is the tested
+baseline. Runtime code is portable to Workers, but consumer clients must be portable too; do not
+claim a separate continuously tested Cloudflare deployment matrix.
 
-False enabled skips registration/discovery after validation. A missing implicit default directory is
-allowed; an explicit missing dir is an error. Set dir for a custom serverDir; srcDir/serverDir do
-not change the default. Layer definition directories are not merged. Every recursively discovered
-JS/TS source (excluding declarations) must default-export a definition. Put helpers elsewhere.
+Options:
 
-Use only server files:
+- `enabled`: true by default; false skips server registration/discovery after option validation.
+- `dir`: `server/documents` relative to application rootDir, independent of srcDir/serverDir. An
+  absent implicit default is allowed; an explicitly missing directory is an error. Layer definition
+  directories are not merged. Paths must be nonempty, relative, and traversal-free.
+- `rawPrefix`: omitted by default, giving `/:path.md`. An explicit prefix such as `/raw` or
+  `/content/raw` must contain only letters, digits, underscores, hyphens and segment separators.
+  Empty strings, `/`, and trailing slashes are invalid. Null is accepted but treated like omission
+  by Nuxt option merging; it does not reliably clear an inherited prefix.
+- `contentType`: `"plain"` by default (`text/plain`); `"markdown"` selects `text/markdown`. Both use
+  UTF-8 and identical document bytes. Request preferences can override this default.
+- `prerender`: false by default; reserved and has no effect. The definition field of the same name
+  also has no effect. Configure prerendering in the consuming application.
+
+Every recursively discovered JS/TS file except declarations must default-export a definition. Put
+helpers under server/utils or another directory outside dir. Definition imports execute in Nitro;
+server aliases and auto-imports are available there. Development additions/removals rebuild the
+registry.
+
+## Author the source boundary
+
+Import `defineMarkdownDocument` from `@onderwijsin/nuxt-markdown-documents/server`, or use its Nitro
+server auto-import. Never import it into app/client code. It preserves inference without executing
+callbacks. Sync and async callbacks are supported.
 
 ```ts
+// server/documents/guide.ts
 import { defineMarkdownDocument } from "@onderwijsin/nuxt-markdown-documents/server";
 
 export default defineMarkdownDocument({
-  route: "/articles/:slug",
-  fetch: ({ params }) => (params.slug === "intro" ? { title: "Intro" } : null),
-  transform: (article) => ({ frontmatter: { title: article.title }, body: "# Intro" }),
-  list: () => [{ title: "Intro", path: "/articles/intro" }]
+  route: "/guides/:slug",
+  fetch: ({ params }) =>
+    params.slug === "intro"
+      ? { title: "Introduction", summary: "A public guide.", markdown: "# Introduction" }
+      : null,
+  transform: (guide) => ({
+    frontmatter: { title: guide.title, description: guide.summary },
+    body: guide.markdown
+  }),
+  list: () => [{ title: "Introduction", path: "/guides/intro", description: "A public guide." }]
 });
 ```
 
-Nuxt uses standard option merging: null behaves like an omitted value.
+For real sources, fetch one record directly and apply its public/published filter before returning
+it. Null means unavailable and never reaches transform. Undefined is invalid. Keep credentials in
+private runtime configuration, and return only public metadata/body fields. Do not expose drafts or
+previews through privileged source access.
 
-The helper is also a Nitro server auto-import, never an app auto-import. It preserves the original
-definition without executing callbacks. Fetch-to-transform inference excludes null; sync and async
-callbacks are supported. Fetch context has params and an optional H3 event. Listing context is
-optional and listing must work without a request event. Consumers own publication filtering and
-credentials.
+Transform must return exactly `{ frontmatter: Record<string, unknown>, body: string }`. The fetched
+non-null source type is inferred automatically; do not cast it to bypass validation. Convert source
+content to Markdown yourself. Fetch context has decoded params and an optional H3 event. Raw HTTP
+supplies the event; programmatic callers may omit it. Callbacks used without an event must support
+that invocation.
 
-The server subpath also exports types MarkdownDocument, MarkdownDocumentListItem,
-MarkdownDocumentDefinition, MarkdownDocumentContext, MarkdownDocumentFetchContext and
-MarkdownDocumentService. Transform returns structured frontmatter plus a string body. Listing paths
-are canonical HTML. Frontmatter requires JSON-compatible values recursively; the exact transform
-shape is validated.
+## Preserve paths and listing semantics
 
-Definition patterns support root, literals and named single-segment params. Reject optional params,
-wildcards, queries, fragments, encoded segments, traversal, trailing slashes, repeated param names,
-/index and .md endings. Static routes precede parameter routes. Equally specific overlapping
-patterns fail with filenames when the server registry is evaluated. Definition additions/removals
-rebuild Nitro in development without executing callbacks during discovery.
+Use canonical HTML paths without baseURL or `.md`. Patterns support root, literal segments, and
+named single-segment params. Literal characters are Unicode letters/numbers and `._~-`; parameter
+names start with a letter/underscore and continue with letters/digits/underscores. Reject optional
+params, wildcards, encoded patterns, trailing slashes, queries/fragments, repeated parameter names,
+/index and .md endings. Static routes precede parameter routes. Equally specific overlaps between
+document definitions fail with source diagnostics. Application route collisions are the consumer's
+responsibility: keep raw URLs distinct from pages, server handlers, public files and other modules,
+or configure a separate rawPrefix. The module does not inspect application routes or diagnose
+collisions; competing owners can shadow each other.
 
-Use these application-bound Nitro server auto-imports, not imports from the package server subpath:
+List is optional and independent of resolution. It returns title, canonical path and optional
+description, without fetching or transforming every body. Use a metadata query for remote listings.
+Apply the same publication policy as fetch: availability is consumer-owned, not checked through body
+retrieval. Missing list contributes nothing. Nonblank titles and path ownership are validated;
+identical normalized entries deduplicate, conflicting metadata fails, and extra fields are omitted.
 
-- `resolveMarkdownDocument(path, context?)` returns a Promise of structured document or null. It
-  fetches and transforms one match, never lists. Null fetch/unmatched path means unavailable;
-  transform-null/undefined or undefined fetch means invalid output. Metadata/body stay separate.
-- `listMarkdownDocuments(context?)` returns a Promise of structured listing entries, without fetch
-  or transform. Types without list contribute nothing. Titles must be nonblank, paths canonical and
-  owned by the listing definition. Identical entries deduplicate; conflicting metadata fails. Extra
-  source fields are omitted from returned metadata. Consumers own publication filtering.
-- `getMarkdownDocumentURL(path)` derives a URL without fetching or checking availability. It applies
-  app.baseURL and optional rawPrefix once. Canonical inputs exclude baseURL and never end in .md.
+Canonical paths normalize non-root trailing slashes, percent-encode Unicode, and decode fetch params
+once. Reject external/protocol-relative URLs, backslashes, traversal, encoded separators,
+malformed/nested encoding, queries/fragments and raw representations.
 
-Example in a server handler:
+Raw mapping:
+
+| Canonical path  | Default            | rawPrefix `/raw`       | `/raw` plus baseURL `/docs/` |
+| --------------- | ------------------ | ---------------------- | ---------------------------- |
+| `/`             | `/index.md`        | `/raw/index.md`        | `/docs/raw/index.md`         |
+| `/guides/intro` | `/guides/intro.md` | `/raw/guides/intro.md` | `/docs/raw/guides/intro.md`  |
+
+Do not create HTML pages automatically or assign a raw URL to another handler.
+
+## Use server utilities directly
+
+These are application-bound Nitro auto-imports, not implementations exported by the package:
 
 ```ts
-const document = await resolveMarkdownDocument("/articles/intro", { event });
+const document = await resolveMarkdownDocument("/guides/intro", { event });
 const entries = await listMarkdownDocuments();
-const markdownURL = getMarkdownDocumentURL("/articles/intro");
+const markdownURL = getMarkdownDocumentURL("/guides/intro");
 ```
 
-Context and its event are optional; callbacks must support event-free invocation for build/server
-work. Canonical path normalization removes trailing slashes, percent-encodes Unicode consistently,
-and decodes fetch params once. Reject external/protocol-relative URLs, traversal, backslashes,
-queries/fragments, encoded separators, malformed/nested encoding, /index and .md representations.
-Definition patterns remain unencoded; ordinary encoded parameter characters are supported.
+- Resolver returns a structured document or null; it calls only the matching fetch and transform,
+  never list. Frontmatter/body stay separate; do not serialize and reparse YAML.
+- Listing returns structured metadata and calls only list callbacks. Context/event are optional.
+- URL derivation applies baseURL and rawPrefix once without checking availability or ownership.
+  Inputs exclude baseURL; never pass an already-derived Markdown URL.
 
-Caller path errors have statusCode 400. Callback/shape/listing errors have statusCode 500 with
-sanitized operation/source diagnostics. Missing documents return null; callers choose HTTP status.
-Structured utilities make no self-requests and neither serialize nor reparse YAML.
+Invalid paths throw statusCode 400; failed callbacks or invalid output throw statusCode 500 with
+sanitized operation/source diagnostics. Null remains null until an HTTP caller chooses a status.
+Consumer MCP tools and discovery adapters can use these functions without self-requests.
 
-GET derived `.md` URLs returns `text/plain; charset=utf-8`. Only declared patterns are served; HTML
-and unrelated `.md` handlers remain unchanged. Explicit overlapping `.md` pages/handlers fail at
-startup with source diagnostics. Missing/private content returns generic 404; unsafe params return
-400 before fetch; provider/transform/serialization errors return generic 500. HEAD and other methods
-return 405 with `Allow: GET`, without fetching. Query strings do not change document selection.
+The public server subpath exports the helper and types MarkdownDocument, MarkdownDocumentListItem,
+MarkdownDocumentDefinition, MarkdownDocumentContext, MarkdownDocumentFetchContext and
+MarkdownDocumentService. Do not import internal runtime files or generated registry modules.
 
-Frontmatter permits plain objects (including null-prototype objects), dense arrays, strings,
-booleans, finite numbers and null. Reject undefined, bigint, functions, symbols/symbol keys,
-non-finite numbers, cycles, sparse arrays, getters, hidden properties and class instances such as
-Date. Convert dates to strings. Structured validation reports metadata paths without values. Shared
-non-cyclic references are allowed; YAML emits no aliases/custom tags. Body is Markdown without a
-leading YAML mapping block; duplicate body metadata is an error. Empty metadata emits the body
-unchanged. Ordinary horizontal rules remain valid. Only HTTP delivery writes frontmatter delimiters.
+## Respect serialization and delivery
 
-This module will release standalone before AI Toolkit. No CMS, Agent Discovery or AI Toolkit is
-required. Do not invent package imports for application-bound utilities, negotiation, sitemap
-integration, discovery endpoints or MCP tools. Consult the package README for the current phase
-before integration.
+Frontmatter values must be JSON-compatible: plain objects including null-prototype objects, dense
+arrays, strings, finite numbers, booleans and null. Reject undefined, bigint, symbols/symbol keys,
+functions, non-finite numbers, cycles, sparse arrays, accessors, hidden properties and class
+instances including Date. Convert dates to strings. Errors identify metadata paths without values.
+
+YAML 1.2 is generated once without aliases/custom tags; repeated non-cyclic references are allowed.
+Exactly one blank line separates frontmatter from the body; leading body blank lines normalize at
+that boundary. Empty metadata emits the original body unchanged. Do not supply a leading YAML
+mapping block in body: raw serialization rejects it. Ordinary horizontal rules are allowed.
+
+Matching GET requests return the selected `text/plain` or `text/markdown` with `charset=utf-8`.
+Choose an explicit supported Accept type using the highest positive valid q weight; ties favor the
+configured default. With no supported positive Accept preference, match the request Content-Type
+(case-insensitive, ignoring parameters), then use the configured default. Wildcards and unsupported
+values do not select a format. This is best-effort preference matching, without 406 responses.
+Preserve `Vary: Accept, Content-Type` when configuring caches. Null/private content returns generic
+404; unsafe paths return 400 before retrieval; provider/transform/serialization errors return
+generic 500. Matching HEAD and other methods return 405 with `Allow: GET` without retrieval. Query
+strings do not change selection. HTML, unrelated APIs and neighboring raw routes remain
+application-owned.
+
+## Leave orchestration to the consumer
+
+Prerender concrete raw URLs through Nuxt/Nitro prerender.routes or existing Directus Prerenderer
+mappers. Route rules establish policy but do not enumerate unknown slugs. Make source services and
+credentials available during prerender requests. Static hosts control `.md` MIME mappings; configure
+the desired `text/plain` or `text/markdown` with UTF-8 and verify deployed headers. Prerendered
+files cannot negotiate per request by themselves.
+
+No Directus/CMS adapter, sitemap integration, HTML conversion, HTML/Markdown negotiation on
+canonical routes, llms.txt, built-in MCP server or cache/invalidation layer is provided. AI Toolkit
+is optional separate integration work; never replace document-owned responses with generic HTML
+conversion or competing raw handlers.
+
+Before handing off an application integration, verify a public raw response, a missing/private 404,
+structured resolution/listing, URL mapping for the actual baseURL/prefix, and preserved HTML routes.

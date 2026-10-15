@@ -876,6 +876,9 @@ importers:
       playground-layer:
         specifier: workspace:*
         version: link:../../../packages/playground-layer
+      shiki:
+        specifier: 'catalog:'
+        version: 4.4.3
 
   modules/markdown-renderer:
     dependencies:
