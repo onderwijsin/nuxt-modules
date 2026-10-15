@@ -5,10 +5,10 @@
 Phase 0 is the development scaffold. Phase 1 adds validated options, typed definitions and a server
 registry. Phase 2 adds structured resolution, listing and URL mapping. Phase 3 implements JSON
 validation, YAML serialization and dynamic HTTP delivery. Phase 4 is abandoned: consumers own
-prerender route discovery and scheduling. Phase 5 remains the standalone release gate. Implement
-phases sequentially, with tests and documentation in each phase rather than deferring verification
-until the end. Release Markdown Documents as a standalone module before AI Toolkit. No standalone
-release gate requires AI Toolkit to exist or be installed.
+prerender route discovery and scheduling. Phase 5 records the standalone release evidence and
+remaining environment limits. Implement phases sequentially, with tests and documentation in each
+phase rather than deferring verification until the end. Release Markdown Documents as a standalone
+module before AI Toolkit. No standalone release gate requires AI Toolkit to exist or be installed.
 
 Source requirements:
 
@@ -217,24 +217,82 @@ removal or deprecation would need a separate compatibility decision.
 
 ## Phase 5 — standalone release readiness
 
-1. Validate standalone use without AI Toolkit or Agent Discovery. Add a neighboring fixture-owned
-   raw route and normal HTML page to prove scoped handlers preserve application routes. Cover both
-   `/raw` and null prefixes, including explicit `.md` collision diagnostics.
-2. Release this module before AI Toolkit. The future adapter and actual Toolkit coexistence tests
-   are follow-up work, not blocked prerequisites for this release. Neither module depends on the
-   other.
-3. Expand external-consumer assertions beyond scaffold sanity: public server import, real raw
-   response, structured resolution/listing and preserved HTML. Verify only intended dist entries,
-   declarations, README, changelog and licence are packed; no private dependencies leak.
-4. Complete README/consumer skill examples for arbitrary data, publication filtering, route grammar,
-   listing, YAML restrictions, consumer-owned prerendering and static-host MIME requirements.
-   Preserve Node/Workers runtime boundaries; describe Node 24/pinned Nuxt as tested baseline.
-5. Run repository validation and review all #354 acceptance criteria against named tests. Maintain a
-   Changeset for each coherent public concern. Do not publish the scaffold as a completed MVP.
+Implementation and documentation are complete. Publishing remains a maintainer action after the
+required validation gates are accepted. The module can be released independently before AI Toolkit;
+actual Toolkit coexistence is optional follow-up, not a standalone release prerequisite.
 
-Exit: all applicable checks pass and remaining environmental/integration limits are recorded before
-release. Search/indexing, providers, sitemap, built-in MCP tools, universal conversion,
-sophisticated caching and automatic schema inference remain out of scope.
+- [x] Preserve canonical HTML and neighboring application-owned Markdown routes in standalone Nuxt.
+- [x] Exercise default/null and `/raw` prefixes, root mapping, Unicode and non-root app.baseURL.
+- [x] Build real Nuxt applications with conflicting `.md` pages and Nitro handlers; assert source
+      diagnostics and failed startup for both prefix configurations (`collision-build.test.ts`).
+- [x] Validate packed server exports and generic inference with an external TypeScript consumer.
+- [x] Extend the packed consumer with parameter routes, nested metadata, private/missing documents,
+      sanitized provider failures, method guards, a root document and neighboring raw/HTML routes.
+- [x] Keep source definitions out of client JavaScript and inspect tarball contents/private imports.
+- [x] Include CHANGELOG.md in the package allowlist alongside built files, README and licence.
+- [x] Rewrite README and consumer skill around the current public API and consumer responsibilities.
+- [x] Curate the existing concern-specific Changesets so initial release notes do not describe
+      already implemented features as planned. Preserve the separate frontmatter-spacing Changeset.
+
+### Acceptance reconciliation with #354
+
+The original issue is a proposal rather than the final contract where later maintainer decisions
+changed scope. No-prefix delivery is the default; `/raw` is explicit. Phase 4 was abandoned, so
+built-in prerender enablement, enumeration and static-host acceptance are not release requirements.
+The accepted module/definition `prerender` fields have no effect. No Directus adapter is included.
+
+| Requirement                                                                                      | Evidence / disposition                                                                                                                        |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone package, no module-owned CMS client or sitemap integration                            | `package.json`, `module.ts`, focused packed consumer installs only the module, its shared utilities and Nuxt                                  |
+| Arbitrary source data and inferred non-null transform input                                      | `definition.test.ts`: asynchronous inference; `service.test.ts`: independent local/asynchronous sources; external declaration check           |
+| GET plain text with YAML metadata                                                                | `http.test.ts`, `e2e.test.ts`, packed raw-response assertions                                                                                 |
+| Nested JSON, scalar types, Unicode, multiline/escaped strings, empty metadata and invalid values | `serialization.test.ts`: round-trip, JSON rejection and whitespace cases                                                                      |
+| Single lookup never calls list; null/private content stays unavailable                           | `service.test.ts`: fetch/transform calls and null behavior; `e2e.test.ts` and packed private/missing responses                                |
+| Typed metadata listings, ownership and deduplication                                             | `service.test.ts`: metadata-only listing, static ownership, conflicts and sanitized failures                                                  |
+| Structured resolution and URL derivation without self-requests                                   | `service.test.ts`, `paths.test.ts`, generated Nitro utility checks in `e2e.test.ts`                                                           |
+| Event-free callback support                                                                      | `definition.test.ts`, `service.test.ts`: optional context and event-free resolution/listing; automatic build-time enumeration is out of scope |
+| Prefix/baseURL/root routing and ownership                                                        | `paths.test.ts`, `e2e-prefix.test.ts`, `collision-build.test.ts`, default and `--markdown-documents-prefix` packed profiles                   |
+| Server-only source and package exports                                                           | `module.test.ts`: server-only imports; packed declaration compiler; client-source scan and packed-package validator                           |
+| Built-in global/per-definition prerender scheduling and byte/static-host parity                  | Removed with phase 4. README documents consumer-owned Nitro configuration and deployed MIME verification                                      |
+| Optional AI Toolkit discovery/coexistence                                                        | Deferred until its supported public integration exists; not required for standalone delivery                                                  |
+| Consumer documentation and compatibility boundaries                                              | Rewritten README and consumer skill; Node 24 baseline and Workers portability documented without an untested deployment claim                 |
+
+### Validation record
+
+Validated on Node 24 with pnpm 11.13.1. Nothing was published or committed.
+
+Passed:
+
+- `corepack pnpm format` and `corepack pnpm lint:fix`.
+- `corepack pnpm typecheck` and `corepack pnpm build` across the workspace.
+- `corepack pnpm exec vitest run modules/markdown-documents/__tests__`: 12 files, 172 tests.
+- `corepack pnpm --filter markdown-documents-playground typecheck` and
+  `corepack pnpm --filter markdown-documents-playground build`.
+- `corepack pnpm validate:docs` and `corepack pnpm validate:packages`.
+- `pnpm_config_verify_deps_before_run=false corepack pnpm pack:packages /private/tmp/markdown-documents-phase5-release '--packages=@onderwijsin/nuxt-module-utils @onderwijsin/nuxt-markdown-documents'`:
+  self-contained tarballs and Publint. Inspected the module tarball for built runtime, declarations,
+  README, changelog and licence. No application fixtures or private workspace imports are packed.
+- `git diff --check`.
+
+- `pnpm_config_verify_deps_before_run=false corepack pnpm validate:external-consumer --packages-dir=/private/tmp/markdown-documents-phase5-release`:
+  passed public declarations/inference, server build, client isolation and HTTP/service assertions.
+- `pnpm_config_verify_deps_before_run=false corepack pnpm validate:external-consumer --packages-dir=/private/tmp/markdown-documents-phase5-release --markdown-documents-prefix`:
+  passed the same checks with `/raw` delivery. Both isolated consumers installed only the packed
+  module, packed shared utilities and Nuxt; no AI Toolkit, Agent Discovery or CMS client was needed.
+
+Repository-wide test gate:
+
+- `corepack pnpm test --maxWorkers=2`: **failed** with 11 unhandled
+  `EMFILE: too many open files, watch` errors attributed to
+  `modules/redirects/__tests__/e2e-dev.test.ts`. Test assertions passed (161 files, 1049 tests; one
+  file/four tests skipped), but the command exited 1. Rerun this gate in an environment with
+  sufficient file-watcher capacity before release.
+
+The package allowlist change affects no dependency graph. Subsequent pnpm commands use
+`pnpm_config_verify_deps_before_run=false` to prevent pnpm 11's automatic pre-script install from
+modifying the primary checkout. No dependency install or repair is part of this phase. Workers
+deployment and optional AI Toolkit coexistence are not tested here; the existing portability
+contract is preserved. Consumer-owned prerendering remains outside module acceptance.
 
 ## Post-release follow-up — optional AI Toolkit integration
 
