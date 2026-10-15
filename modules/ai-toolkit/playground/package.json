@@ -1,0 +1,19 @@
+{
+  "name": "ai-toolkit-playground",
+  "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-ai-toolkit": "workspace:*",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
+  }
+}

@@ -9,6 +9,7 @@ modules are opinionated building blocks for use in internal _Onderwijs in_ proje
 
 | Package                                                                            | Description                                                                                    |
 | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`@onderwijsin/nuxt-ai-toolkit`](modules/ai-toolkit/README.md)                     | AI Toolkit scaffold; HTML-to-Markdown and agent discovery are planned.                         |
 | [`@onderwijsin/nuxt-static-text`](modules/static-text/README.md)                   | Type-safe static text tokens with a Vue I18n-like `$t` API.                                    |
 | [`@onderwijsin/nuxt-ui-form-extensions`](modules/ui-form-extensions/README.md)     | Nuxt UI form extensions for keeping editable drafts separate from canonical application state. |
 | [`@onderwijsin/nuxt-loops-renderer`](modules/loops-renderer/README.md)             | Nuxt module for rendering Loops parsed LMX email content.                                      |
