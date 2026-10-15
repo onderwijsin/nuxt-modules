@@ -11,6 +11,15 @@ function entry(route: string, source = `${route}.ts`) {
 }
 
 describe("document route grammar and registry", () => {
+  it("rejects removed per-document prerender settings with the source filename", () => {
+    const document = entry("/article", "article.ts");
+    const definition = { ...document.definition, prerender: true };
+    expect(() => validateDocumentDefinitions([{ ...document, definition }])).toThrow(
+      /article.ts.*prerender/s
+    );
+    expect(document.definition.fetch).not.toHaveBeenCalled();
+  });
+
   it("accepts root, Unicode literals and named single-segment parameters", () => {
     expect(parseDocumentRoute("/")).toEqual([]);
     expect(parseDocumentRoute("/éducation/:article_slug")).toEqual(["éducation", ":article_slug"]);

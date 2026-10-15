@@ -19,12 +19,11 @@ describe("raw prefix and application baseURL", async () => {
     expect(await $fetch("/docs/neighbor.md")).toBe("Application-owned Markdown");
     expect(await $fetch("/docs/articles/first")).toContain("Article HTML");
   });
-  it("honors request preferences over the configured Markdown default", async () => {
+  it("keeps the configured Markdown type despite plain-text request headers", async () => {
     const response = await fetch("/docs/raw/articles/first.md", {
-      headers: { accept: "text/plain" }
+      headers: { accept: "text/plain", "content-type": "text/plain" }
     });
-    expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
-    expect(response.headers.get("vary")).toContain("Accept");
+    expect(response.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
     expect(await response.text()).toContain("title: First article");
   });
 });

@@ -22,6 +22,5 @@ export const markdownDocumentsOptionsSchema = z.strictObject({
   enabled,
   dir: directory.default("server/documents"),
   rawPrefix: prefix.nullable().optional(),
-  contentType: z.enum(["plain", "markdown"]).default("plain"),
-  prerender: z.boolean().default(false)
+  contentType: z.enum(["plain", "markdown"]).default("plain")
 });

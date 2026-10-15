@@ -39,9 +39,11 @@ Options:
   Empty strings, `/`, and trailing slashes are invalid. Null is accepted but treated like omission
   by Nuxt option merging; it does not reliably clear an inherited prefix.
 - `contentType`: `"plain"` by default (`text/plain`); `"markdown"` selects `text/markdown`. Both use
-  UTF-8 and identical document bytes. Request preferences can override this default.
-- `prerender`: false by default; reserved and has no effect. The definition field of the same name
-  also has no effect. Configure prerendering in the consuming application.
+  UTF-8 and identical document bytes. Request headers do not override the configured type.
+
+Built-in prerender orchestration is deferred. No module or document `prerender` setting is
+supported; configure prerendering in the consuming application. Unsupported definition fields fail
+validation.
 
 Every recursively discovered JS/TS file except declarations must default-export a definition. Put
 helpers under server/utils or another directory outside dir. Definition imports execute in Nitro;
@@ -151,23 +153,19 @@ that boundary. Empty metadata emits the original body unchanged. Do not supply a
 mapping block in body: raw serialization rejects it. Ordinary horizontal rules are allowed.
 
 Matching GET requests return the selected `text/plain` or `text/markdown` with `charset=utf-8`.
-Choose an explicit supported Accept type using the highest positive valid q weight; ties favor the
-configured default. With no supported positive Accept preference, match the request Content-Type
-(case-insensitive, ignoring parameters), then use the configured default. Wildcards and unsupported
-values do not select a format. This is best-effort preference matching, without 406 responses.
-Preserve `Vary: Accept, Content-Type` when configuring caches. Null/private content returns generic
-404; unsafe paths return 400 before retrieval; provider/transform/serialization errors return
-generic 500. Matching HEAD and other methods return 405 with `Allow: GET` without retrieval. Query
-strings do not change selection. HTML, unrelated APIs and neighboring raw routes remain
-application-owned.
+Request Accept and Content-Type headers do not override the configured type. The module does not add
+header-based cache variation. Null/private content returns generic 404; unsafe paths return 400
+before retrieval; provider/transform/serialization errors return generic 500. Matching HEAD and
+other methods return 405 with `Allow: GET` without retrieval. Query strings do not change selection.
+HTML, unrelated APIs and neighboring raw routes remain application-owned.
 
 ## Leave orchestration to the consumer
 
 Prerender concrete raw URLs through Nuxt/Nitro prerender.routes or existing Directus Prerenderer
 mappers. Route rules establish policy but do not enumerate unknown slugs. Make source services and
 credentials available during prerender requests. Static hosts control `.md` MIME mappings; configure
-the desired `text/plain` or `text/markdown` with UTF-8 and verify deployed headers. Prerendered
-files cannot negotiate per request by themselves.
+the desired `text/plain` or `text/markdown` with UTF-8 and verify deployed headers. The host
+controls the response type of prerendered files.
 
 No Directus/CMS adapter, sitemap integration, HTML conversion, HTML/Markdown negotiation on
 canonical routes, llms.txt, built-in MCP server or cache/invalidation layer is provided. AI Toolkit

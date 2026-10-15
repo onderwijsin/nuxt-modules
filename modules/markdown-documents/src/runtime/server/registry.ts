@@ -7,12 +7,11 @@ const LITERAL_SEGMENT = /^[\p{L}\p{N}._~-]+$/u;
 const callbackSchema = z.custom<(...args: never[]) => unknown>(isFunction, {
   error: "Expected a function."
 });
-const definitionSchema = z.object({
+const definitionSchema = z.strictObject({
   route: z.string(),
   fetch: callbackSchema,
   transform: callbackSchema,
-  list: callbackSchema.optional(),
-  prerender: z.boolean().optional()
+  list: callbackSchema.optional()
 });
 
 /** Discovered definition with its source filename retained for diagnostics. */

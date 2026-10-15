@@ -6,8 +6,6 @@ export interface ModuleOptions {
   dir?: string;
   /** Raw Markdown delivery prefix; omit or use null for /:path.md. @default undefined */
   rawPrefix?: string | null;
-  /** Default response type when the request has no supported preference. @default "plain" */
+  /** Response MIME type; request headers do not override it. @default "plain" */
   contentType?: "plain" | "markdown";
-  /** Reserved compatibility setting; no effect. Consumers configure prerendering. @default false */
-  prerender?: boolean;
 }

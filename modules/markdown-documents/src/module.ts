@@ -65,8 +65,7 @@ export default defineNuxtModule<ModuleOptions>({
         generateDocumentRegistry(directory, resolver.resolve(runtimeDir, "server"), {
           baseURL: nuxt.options.app.baseURL,
           rawPrefix: options.rawPrefix,
-          contentType: options.contentType,
-          prerender: options.prerender
+          contentType: options.contentType
         })
     });
     addServerImports(documentServiceUtilities.map((name) => ({ name, from: registry.filename })));

@@ -31,18 +31,14 @@ export interface MarkdownDocumentDefinition<TSource> {
   fetch: (context: MarkdownDocumentFetchContext) => MaybePromise<TSource | null>;
   transform: (source: NoInfer<NonNullable<TSource>>) => MaybePromise<MarkdownDocument>;
   list?: (context?: MarkdownDocumentContext) => MaybePromise<MarkdownDocumentListItem[]>;
-  /** Reserved compatibility setting; does not schedule prerendering. */
-  prerender?: boolean;
 }
 
 /** Application-specific URL and delivery configuration used by the generated server service. */
 export interface MarkdownDocumentServiceOptions {
   baseURL?: string;
   rawPrefix?: string | null;
-  /** Default HTTP response type when the request has no supported preference. */
+  /** Response MIME type; request headers do not override it. */
   contentType?: "plain" | "markdown";
-  /** Reserved compatibility setting; does not schedule prerendering. */
-  prerender?: boolean;
 }
 
 /** Server-only utilities bound to the application's discovered definitions. */

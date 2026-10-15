@@ -6,8 +6,7 @@ describe("markdown document options", () => {
     expect(markdownDocumentsOptionsSchema.parse({})).toEqual({
       enabled: true,
       dir: "server/documents",
-      contentType: "plain",
-      prerender: false
+      contentType: "plain"
     });
     expect(
       markdownDocumentsOptionsSchema.parse({ rawPrefix: undefined }).rawPrefix
@@ -17,10 +16,13 @@ describe("markdown document options", () => {
     expect(
       markdownDocumentsOptionsSchema.parse({
         rawPrefix: "/exports/raw",
-        dir: "backend/documents",
-        prerender: true
+        dir: "backend/documents"
       })
-    ).toMatchObject({ dir: "backend/documents", rawPrefix: "/exports/raw", prerender: true });
+    ).toMatchObject({ dir: "backend/documents", rawPrefix: "/exports/raw" });
+  });
+
+  it("rejects the removed prerender option instead of accepting a no-op", () => {
+    expect(markdownDocumentsOptionsSchema.safeParse({ prerender: true }).success).toBe(false);
   });
 
   it("accepts both response types and rejects unsupported values", () => {

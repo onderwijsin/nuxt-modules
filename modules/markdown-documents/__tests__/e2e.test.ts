@@ -39,11 +39,11 @@ describe("markdown documents server utilities", async () => {
     );
   });
 
-  it("matches Markdown request headers while preserving the document bytes", async () => {
+  it("keeps the configured plain type despite Markdown request headers", async () => {
     for (const name of ["accept", "content-type"]) {
       const headers = { [name]: "text/markdown" };
       const response = await fetch("/articles/first.md", { headers });
-      expect(response.headers.get("content-type")).toBe("text/markdown; charset=utf-8");
+      expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
       expect(await response.text()).toBe(
         "---\ntitle: First article\n---\n\nSERVER_ONLY_ARTICLE_BODY_354"
       );

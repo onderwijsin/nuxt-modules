@@ -19,7 +19,7 @@ const documentSchema = z.strictObject({
 /** A definition with typed callbacks bound before heterogeneous definitions are collected. */
 export interface PreparedDocumentDefinition {
   source: string;
-  definition: { route: string; prerender?: boolean };
+  definition: { route: string };
   resolve: (context: MarkdownDocumentFetchContext) => Promise<MarkdownDocument | null>;
   list: (context?: MarkdownDocumentContext) => Promise<MarkdownDocumentListItem[]>;
 }

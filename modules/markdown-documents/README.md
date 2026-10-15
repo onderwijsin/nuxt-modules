@@ -139,13 +139,12 @@ export default defineNuxtConfig({
 });
 ```
 
-| Option        | Default            | Behavior                                                                                                                                  |
-| ------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`     | `true`             | Enables server discovery, utilities, and raw delivery. `false` skips registration; options are still validated.                           |
-| `dir`         | `server/documents` | Definition directory relative to application `rootDir`.                                                                                   |
-| `rawPrefix`   | Unset              | Serves canonical paths with `.md` appended. Set a prefix such as `/raw` for prefixed delivery.                                            |
-| `contentType` | `"plain"`          | Default response MIME type: `"plain"` for `text/plain`, or `"markdown"` for `text/markdown`. Requests can override it as described below. |
-| `prerender`   | `false`            | Reserved compatibility option. Accepted but has no effect.                                                                                |
+| Option        | Default            | Behavior                                                                                                                 |
+| ------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`     | `true`             | Enables server discovery, utilities, and raw delivery. `false` skips registration; options are still validated.          |
+| `dir`         | `server/documents` | Definition directory relative to application `rootDir`.                                                                  |
+| `rawPrefix`   | Unset              | Serves canonical paths with `.md` appended. Set a prefix such as `/raw` for prefixed delivery.                           |
+| `contentType` | `"plain"`          | Response MIME type: `"plain"` for `text/plain`, or `"markdown"` for `text/markdown`. Request headers do not override it. |
 
 The implicit default directory may be absent. An explicitly configured missing directory, or a path
 that is not a directory, fails setup. `dir` must be a nonempty relative path without traversal. It
@@ -171,7 +170,8 @@ clear a prefix inherited from another configuration layer.
 | `fetch(context)`    | Yes      | Returns source data or `null`. Context contains decoded `params` and an optional H3 `event`. |
 | `transform(source)` | Yes      | Returns exactly `{ frontmatter: Record<string, unknown>, body: string }`.                    |
 | `list(context?)`    | No       | Returns `{ title, path, description? }` entries for public documents.                        |
-| `prerender`         | No       | Reserved compatibility field. Accepted but has no effect.                                    |
+
+Definitions accept only the fields listed above; unsupported fields fail validation.
 
 A raw HTTP request supplies the event. Programmatic resolution and listing can run without one, so
 callbacks used that way must support event-free execution. A null fetch never reaches transform.
@@ -266,13 +266,8 @@ Responses use `text/plain; charset=utf-8` by default. Set `markdownDocuments.con
 `"markdown"` to default to `text/markdown; charset=utf-8` instead. Both formats contain identical
 Markdown and YAML bytes.
 
-For each request, an explicit `Accept: text/plain` or `Accept: text/markdown` overrides the default.
-Supported entries use their `q` weights; zero or invalid weights are ignored, and equal weights
-favor the configured default. If Accept has no supported positive preference, a request
-`Content-Type` of `text/plain` or `text/markdown` is used, ignoring charset parameters and case.
-Otherwise the configured default applies. Wildcards and unsupported types do not select a format;
-this is a best-effort preference rather than strict negotiation and never returns 406. Responses
-include `Vary: Accept, Content-Type` so caches can distinguish the headers.
+Request `Accept` and `Content-Type` headers do not change the response type. The module does not add
+header-based cache variation.
 
 Only GET retrieves a document. Matching HEAD and other methods return 405 with `Allow: GET`, without
 calling fetch or transform. A query string does not change HTTP document selection. Missing/private
@@ -293,8 +288,9 @@ can call the server utilities directly; it does not need to fetch the applicatio
 
 ## Prerendering and integrations
 
-The module does not discover routes or schedule prerendering. Configure concrete raw URLs through
-Nuxt/Nitro or an existing route-discovery module. For the default URL mapping:
+The module does not discover routes or schedule prerendering. There is no module or per-document
+`prerender` option; built-in prerender orchestration is deferred. Configure concrete raw URLs
+through Nuxt/Nitro or an existing route-discovery module. For the default URL mapping:
 
 ```ts
 // nuxt.config.ts
@@ -323,11 +319,10 @@ document-owned raw URLs or convert their Markdown through an HTML converter.
 
 ## Troubleshooting
 
-| Symptom                        | Check                                                                                                                               |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Definition is not discovered   | Check root-relative dir, nested source extensions, and the file's default export. Keep helpers elsewhere.                           |
-| Raw request returns 404        | Use the derived raw URL and inspect the matching fetch result and publication filter.                                               |
-| Raw request returns 500        | Call the structured resolver server-side for sanitized fetch/transform diagnostics; check JSON metadata and body-owned frontmatter. |
-| Listing fails                  | Check nonblank titles, canonical paths, definition ownership, and conflicting duplicate metadata.                                   |
-| Server fails at startup        | Resolve ambiguous document-definition patterns identified in the error.                                                             |
-| Prerender setting does nothing | The reserved module/definition fields have no effect. Configure Nuxt/Nitro prerendering.                                            |
+| Symptom                      | Check                                                                                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Definition is not discovered | Check root-relative dir, nested source extensions, and the file's default export. Keep helpers elsewhere.                           |
+| Raw request returns 404      | Use the derived raw URL and inspect the matching fetch result and publication filter.                                               |
+| Raw request returns 500      | Call the structured resolver server-side for sanitized fetch/transform diagnostics; check JSON metadata and body-owned frontmatter. |
+| Listing fails                | Check nonblank titles, canonical paths, definition ownership, and conflicting duplicate metadata.                                   |
+| Server fails at startup      | Resolve ambiguous document-definition patterns identified in the error.                                                             |

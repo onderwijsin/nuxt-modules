@@ -294,17 +294,16 @@ async function runFocusedAssertions(port, profile, directusMock) {
       }
       const origin = `http://127.0.0.1:${port}`;
       for (const name of ["accept", "content-type"]) {
-        const negotiated = await waitForResponse(
+        const fixedTypeResponse = await waitForResponse(
           `${origin}${prefix}/sanity/markdown-documents.md`,
           { headers: { [name]: "text/markdown" } }
         );
         if (
-          negotiated.headers.get("content-type") !== "text/markdown; charset=utf-8" ||
-          !negotiated.headers.get("vary")?.includes("Accept") ||
-          (await negotiated.text()) !== markdown
+          fixedTypeResponse.headers.get("content-type") !== "text/plain; charset=utf-8" ||
+          (await fixedTypeResponse.text()) !== markdown
         ) {
           throw new Error(
-            "Packed Markdown response type selection changed headers or document bytes."
+            "Packed Markdown request headers overrode the configured response type or changed document bytes."
           );
         }
       }

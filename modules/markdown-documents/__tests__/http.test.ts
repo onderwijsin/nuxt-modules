@@ -65,67 +65,19 @@ describe("scoped Markdown delivery", () => {
     expect(request.node.res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(fetch).toHaveBeenCalledWith({ params: { slug: "café" }, event: request });
   });
-  it.each([
-    { fallback: "plain", accept: undefined, requestType: undefined, expected: "plain" },
-    { fallback: "markdown", accept: undefined, requestType: undefined, expected: "markdown" },
-    { fallback: "plain", accept: "text/markdown", requestType: "text/plain", expected: "markdown" },
-    { fallback: "markdown", accept: "text/plain", requestType: "text/markdown", expected: "plain" },
-    {
-      fallback: "plain",
-      accept: "Text/Markdown; charset=utf-8",
-      requestType: undefined,
-      expected: "markdown"
-    },
-    {
-      fallback: "plain",
-      accept: "text/plain;q=0.2, text/markdown;q=0.9",
-      requestType: undefined,
-      expected: "markdown"
-    },
-    {
-      fallback: "markdown",
-      accept: "text/markdown;q=0, text/plain;q=0.5",
-      requestType: undefined,
-      expected: "plain"
-    },
-    {
-      fallback: "markdown",
-      accept: "text/plain, text/markdown",
-      requestType: undefined,
-      expected: "markdown"
-    },
-    {
-      fallback: "plain",
-      accept: "text/markdown;q=bogus",
-      requestType: undefined,
-      expected: "plain"
-    },
-    {
-      fallback: "plain",
-      accept: "*/*",
-      requestType: "text/markdown; charset=UTF-8",
-      expected: "markdown"
-    },
-    {
-      fallback: "markdown",
-      accept: "text/html, */*;q=0.8",
-      requestType: "application/json",
-      expected: "markdown"
-    },
-    { fallback: "markdown", accept: undefined, requestType: "text/plain", expected: "plain" }
-  ])(
-    "selects $expected for $accept / $requestType with default $fallback",
-    async ({ fallback, accept, requestType, expected }) => {
-      const contentType = fallback === "markdown" ? "markdown" : "plain";
+  it.each(["plain", "markdown"])(
+    "uses the configured %s type regardless of request headers",
+    async (format) => {
+      const contentType = format === "markdown" ? "markdown" : "plain";
       const { handler } = fixture({ contentType });
       const request = event("/articles/one.md");
-      if (accept) request.node.req.headers.accept = accept;
-      if (requestType) request.node.req.headers["content-type"] = requestType;
+      const oppositeType = contentType === "plain" ? "text/markdown" : "text/plain";
+      request.node.req.headers.accept = oppositeType;
+      request.node.req.headers["content-type"] = oppositeType;
       request.node.res.setHeader("Vary", "Origin");
       expect(await handler(request)).toBe("---\ntitle: one\n---\n\n# Public");
-      expect(request.node.res.getHeader("Content-Type")).toBe(`text/${expected}; charset=utf-8`);
-      expect(String(request.node.res.getHeader("Vary"))).toContain("Origin");
-      expect(String(request.node.res.getHeader("Vary"))).toContain("Accept, Content-Type");
+      expect(request.node.res.getHeader("Content-Type")).toBe(`text/${contentType}; charset=utf-8`);
+      expect(request.node.res.getHeader("Vary")).toBe("Origin");
     }
   );
   it.each(["/articles/one", "/neighbor.md", "/api/example", "/articles/deep/one.md"])(
