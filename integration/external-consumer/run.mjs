@@ -4,7 +4,15 @@
  * fall back to the registry.
  */
 import { createServer } from "node:http";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -23,6 +31,7 @@ const packagesDirectory = resolve(
 const keepConsumer = process.argv.includes("--keep");
 const sharedRuntimeRegression = process.argv.includes("--shared-runtime-regression");
 const markdownRuntimeRegression = process.argv.includes("--markdown-runtime-regression");
+const markdownDocumentsPrefix = process.argv.includes("--markdown-documents-prefix");
 const directusDisabled = process.argv.includes("--directus-disabled");
 const fixtureDirectory = join(import.meta.dirname, "fixture");
 const consumerEnvironment = {
@@ -258,6 +267,93 @@ async function runFocusedAssertions(port, profile, directusMock) {
       await waitForResponse(`http://127.0.0.1:${port}/api/sanity/${layer}`),
       (body) => body.layer === layer
     );
+    if (layer === "markdown-documents") {
+      const prefix = markdownDocumentsPrefix ? "/raw" : "";
+      await readJson(
+        await waitForResponse(`http://127.0.0.1:${port}/api/sanity/markdown-documents`),
+        (body) =>
+          body.document?.frontmatter?.title === "Public document" &&
+          body.document.body === "# Public" &&
+          body.missing === null &&
+          body.entries?.length === 2 &&
+          body.entries.some((entry) => entry.path === "/sanity/markdown-documents") &&
+          body.rootURL === `${prefix}/index.md` &&
+          body.url === `${prefix}/sanity/markdown-documents.md`
+      );
+      const response = await waitForResponse(
+        `http://127.0.0.1:${port}${prefix}/sanity/markdown-documents.md`
+      );
+      const markdown = await response.text();
+      if (
+        response.headers.get("content-type") !== "text/plain; charset=utf-8" ||
+        markdown !== "---\ntitle: Public document\n---\n\n# Public"
+      ) {
+        throw new Error(
+          "Packed Markdown Documents did not serve plain-text Markdown with YAML frontmatter."
+        );
+      }
+      const origin = `http://127.0.0.1:${port}`;
+      for (const name of ["accept", "content-type"]) {
+        const fixedTypeResponse = await waitForResponse(
+          `${origin}${prefix}/sanity/markdown-documents.md`,
+          { headers: { [name]: "text/markdown" } }
+        );
+        if (
+          fixedTypeResponse.headers.get("content-type") !== "text/plain; charset=utf-8" ||
+          (await fixedTypeResponse.text()) !== markdown
+        ) {
+          throw new Error(
+            "Packed Markdown request headers overrode the configured response type or changed document bytes."
+          );
+        }
+      }
+      const root = await waitForResponse(`${origin}${prefix}/index.md`);
+      if (
+        root.headers.get("content-type") !== "text/plain; charset=utf-8" ||
+        (await root.text()) !== "# Packed root document"
+      ) {
+        throw new Error("Packed root Markdown mapping or empty-frontmatter delivery failed.");
+      }
+      const article = await waitForResponse(
+        `${origin}${prefix}/sanity/markdown-documents/articles/public.md`
+      );
+      if (!(await article.text()).includes("author:\n  name: Example author")) {
+        throw new Error("Packed parameter document did not preserve nested YAML metadata.");
+      }
+      for (const slug of ["private", "missing"]) {
+        await waitForResponse(
+          `${origin}${prefix}/sanity/markdown-documents/articles/${slug}.md`,
+          {},
+          404
+        );
+      }
+      const failure = await waitForResponse(
+        `${origin}${prefix}/sanity/markdown-documents/articles/failure.md`,
+        {},
+        500
+      );
+      if ((await failure.text()).includes("PACKED_PROVIDER_SECRET_354")) {
+        throw new Error("Packed provider failure exposed backend details.");
+      }
+      const head = await waitForResponse(
+        `${origin}${prefix}/sanity/markdown-documents.md`,
+        { method: "HEAD" },
+        405
+      );
+      if (head.headers.get("allow") !== "GET")
+        throw new Error("Packed method guard is missing Allow: GET.");
+      const neighbor = await waitForResponse(`${origin}/markdown-documents-neighbor.md`);
+      if ((await neighbor.text()) !== "Application-owned packed Markdown") {
+        throw new Error("Packed module claimed an application-owned Markdown route.");
+      }
+      const html = await waitForResponse(`${origin}/sanity/markdown-documents`);
+      if (
+        !html.headers.get("content-type")?.includes("text/html") ||
+        !(await html.text()).includes('data-sanity="markdown-documents"')
+      ) {
+        throw new Error("Packed module did not preserve its canonical HTML page.");
+      }
+    }
     if (layer === "markdown-renderer") {
       await readJson(
         await waitForResponse(`http://127.0.0.1:${port}/api/sanity/markdown-renderer`),
@@ -469,7 +565,7 @@ export async function main() {
     cpSync(fixtureDirectory, consumerDirectory, { recursive: true });
     writeFileSync(
       join(consumerDirectory, "consumer-profile.json"),
-      `${JSON.stringify({ layers: profile.modules.map(getLayerName), full: profile.full }, null, 2)}\n`
+      `${JSON.stringify({ layers: profile.modules.map(getLayerName), full: profile.full, markdownDocumentsPrefix }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "package.json"),
@@ -527,11 +623,77 @@ if (import.meta.resolve("vue", comarkVue) !== import.meta.resolve("vue"))
       );
       run("node", ["--experimental-import-meta-resolve", runtimeCheck], consumerDirectory);
     }
+    if (profile.modules.includes("@onderwijsin/nuxt-markdown-documents")) {
+      writeFileSync(
+        join(consumerDirectory, "markdown-documents-types.ts"),
+        `
+import { defineMarkdownDocument } from "@onderwijsin/nuxt-markdown-documents/server";
+import type { ModuleOptions } from "@onderwijsin/nuxt-markdown-documents";
+import type {
+  MarkdownDocument, MarkdownDocumentContext, MarkdownDocumentDefinition,
+  MarkdownDocumentFetchContext, MarkdownDocumentListItem, MarkdownDocumentService
+} from "@onderwijsin/nuxt-markdown-documents/server";
+const options: ModuleOptions = { rawPrefix: "/raw", contentType: "markdown" };
+const context: MarkdownDocumentContext = {};
+const fetchContext: MarkdownDocumentFetchContext = { params: { slug: "public" }, ...context };
+const definition = defineMarkdownDocument({
+  route: "/articles/:slug",
+  fetch: async ({ params }) => params.slug ? { title: "Public" } : null,
+  transform: (article) => ({ frontmatter: { title: article.title.toUpperCase() }, body: "# Public" })
+});
+const typed: MarkdownDocumentDefinition<{ title: string }> = definition;
+const document: MarkdownDocument = await typed.transform({ title: "Public" });
+const entries: MarkdownDocumentListItem[] = [{ title: "Public", path: "/articles/public" }];
+declare const service: MarkdownDocumentService;
+const resolved: Promise<MarkdownDocument | null> = service.resolveMarkdownDocument("/articles/public", context);
+const listed: Promise<MarkdownDocumentListItem[]> = service.listMarkdownDocuments();
+const url: string = service.getMarkdownDocumentURL("/");
+void [options, document, entries, resolved, listed, url, fetchContext];
+`
+      );
+      writeFileSync(
+        join(consumerDirectory, "tsconfig.markdown-documents.json"),
+        JSON.stringify({
+          compilerOptions: {
+            strict: true,
+            target: "ESNext",
+            module: "ESNext",
+            moduleResolution: "Bundler",
+            types: [],
+            skipLibCheck: true,
+            noEmit: true
+          },
+          files: ["markdown-documents-types.ts"]
+        })
+      );
+      run(
+        "node",
+        [
+          join(root, "node_modules/typescript/bin/tsc"),
+          "--project",
+          "tsconfig.markdown-documents.json"
+        ],
+        consumerDirectory
+      );
+    }
     run("pnpm", ["exec", "nuxt", "prepare"], consumerDirectory);
     run("pnpm", ["exec", "nuxt", "build"], consumerDirectory);
     const serverEntryPath = join(consumerDirectory, ".output", "server", "index.mjs");
     if (!existsSync(serverEntryPath))
       throw new Error(`Nitro Node entrypoint was not emitted: ${serverEntryPath}`);
+    if (profile.modules.includes("@onderwijsin/nuxt-markdown-documents")) {
+      const publicDirectory = join(consumerDirectory, ".output/public");
+      for (const path of readdirSync(publicDirectory, { recursive: true })) {
+        if (
+          path.endsWith(".js") &&
+          readFileSync(join(publicDirectory, path), "utf8").includes("PACKED_PROVIDER_SECRET_354")
+        ) {
+          throw new Error(
+            "Markdown document source leaked into the packed consumer client bundle."
+          );
+        }
+      }
+    }
     if (profile.modules.includes("@onderwijsin/nuxt-directus-prerenderer")) {
       const syntheticPrerenderedPage = join(
         consumerDirectory,

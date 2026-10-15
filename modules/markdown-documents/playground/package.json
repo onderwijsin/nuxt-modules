@@ -1,0 +1,20 @@
+{
+  "name": "markdown-documents-playground",
+  "private": true,
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-markdown-documents": "workspace:*",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*",
+    "shiki": "catalog:"
+  }
+}
