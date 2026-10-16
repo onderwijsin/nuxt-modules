@@ -11,6 +11,24 @@ function entry(route: string, source = `${route}.ts`) {
 }
 
 describe("document route grammar and registry", () => {
+  it("accepts LLMS metadata and rejects malformed metadata with its source", () => {
+    const document = entry("/article", "article.ts");
+    const definition = {
+      ...document.definition,
+      llms: { title: "Articles", description: "Public" }
+    };
+    expect(validateDocumentDefinitions([{ ...document, definition }])).toHaveLength(1);
+    for (const llms of [
+      { title: "Articles" },
+      { title: " ", description: "" },
+      { title: "Articles", description: 5 }
+    ]) {
+      expect(() =>
+        validateDocumentDefinitions([{ ...document, definition: { ...definition, llms } }])
+      ).toThrow(/article.ts/);
+    }
+  });
+
   it("rejects removed per-document prerender settings with the source filename", () => {
     const document = entry("/article", "article.ts");
     const definition = { ...document.definition, prerender: true };

@@ -9,6 +9,7 @@ const callbackSchema = z.custom<(...args: never[]) => unknown>(isFunction, {
 });
 const definitionSchema = z.strictObject({
   route: z.string(),
+  llms: z.strictObject({ title: z.string().trim().min(1), description: z.string() }).optional(),
   fetch: callbackSchema,
   transform: callbackSchema,
   list: callbackSchema.optional()

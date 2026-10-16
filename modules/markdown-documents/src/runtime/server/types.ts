@@ -25,9 +25,16 @@ export interface MarkdownDocumentFetchContext extends MarkdownDocumentContext {
   params: Record<string, string>;
 }
 
+/** Opt-in section metadata for the optional Nuxt LLMS integration. */
+export interface MarkdownDocumentLlmsSection {
+  title: string;
+  description: string;
+}
+
 /** Consumer-owned server definition with fetch-to-transform type inference. */
 export interface MarkdownDocumentDefinition<TSource> {
   route: string;
+  llms?: MarkdownDocumentLlmsSection;
   fetch: (context: MarkdownDocumentFetchContext) => MaybePromise<TSource | null>;
   transform: (source: NoInfer<NonNullable<TSource>>) => MaybePromise<MarkdownDocument>;
   list?: (context?: MarkdownDocumentContext) => MaybePromise<MarkdownDocumentListItem[]>;

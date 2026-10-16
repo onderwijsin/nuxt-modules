@@ -3,6 +3,14 @@ import { findPublicArticle, listPublicArticles } from "../utils/example-articles
 
 export default defineMarkdownDocument({
   route: "/articles/:slug",
+  llms: {
+    title: "Random articles for testing",
+    description: `
+    > This is a description
+
+    With support for markdown
+    `
+  },
   fetch: ({ params }) => findPublicArticle(params.slug),
   transform: (article) => ({
     frontmatter: {
