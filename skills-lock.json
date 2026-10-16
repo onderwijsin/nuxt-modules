@@ -77,6 +77,12 @@
       "skillPath": "skills/nuxt/SKILL.md",
       "computedHash": "96dbdbfc06bf7045aeb9a463b972d5c0b5679d6dadf196d8ef6b98dc6defed2d"
     },
+    "nuxt-ai-ready": {
+      "source": "harlan-zw/nuxt-ai-ready",
+      "sourceType": "github",
+      "skillPath": "skills/nuxt-ai-ready/SKILL.md",
+      "computedHash": "e00ff80878364199cb5d24b11d8ac9d106f12acbd2c19c5065e95ea5f2deaaf5"
+    },
     "nuxt-content": {
       "source": "onmax/nuxt-skills",
       "sourceType": "github",

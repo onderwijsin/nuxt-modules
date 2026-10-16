@@ -25,7 +25,7 @@ export interface MarkdownDocumentFetchContext extends MarkdownDocumentContext {
   params: Record<string, string>;
 }
 
-/** Opt-in section metadata for the optional Nuxt LLMS integration. */
+/** Opt-in section metadata for the optional Nuxt LLMS and AI Ready integrations. */
 export interface MarkdownDocumentLlmsSection {
   title: string;
   description: string;

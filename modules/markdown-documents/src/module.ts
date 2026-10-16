@@ -84,8 +84,8 @@ export default (app) => registerMarkdownDocumentHandlers(app.h3App, documents, r
     });
     addServerPlugin(plugin.filename);
 
-    // Add nuxt-llms integration
     nuxt.hook("modules:done", () => {
+      // Add nuxt-llms integration
       if (hasNuxtModule("nuxt-llms", nuxt)) {
         const llmsPlugin = addServerTemplate({
           filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/llms.mjs"),
@@ -96,6 +96,24 @@ export default (app) => registerMarkdownDocumentLlms(app.hooks, service);
 `
         });
         addServerPlugin(llmsPlugin.filename);
+      }
+
+      // Add nuxt-ai-ready integration
+      if (hasNuxtModule("nuxt-ai-ready", nuxt)) {
+        const aiReadyPlugin = addServerTemplate({
+          filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/ai-ready.mjs"),
+          getContents: () => `import { defineNitroPlugin, useRuntimeConfig } from "#imports";
+import { registerMarkdownDocumentAiReady } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/ai-ready"))};
+import { registerMarkdownDocumentAiReadySource, registerMarkdownDocumentAiReadyMarkdown } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/ai-ready-content"))};
+import { service, configuration } from ${JSON.stringify(registry.filename)};
+export default defineNitroPlugin((app) => {
+  registerMarkdownDocumentAiReady(app.hooks, service, useRuntimeConfig, configuration);
+  registerMarkdownDocumentAiReadySource(app.hooks, service, configuration);
+  registerMarkdownDocumentAiReadyMarkdown(app.hooks, service);
+});
+`
+        });
+        addServerPlugin(aiReadyPlugin.filename);
       }
     });
 

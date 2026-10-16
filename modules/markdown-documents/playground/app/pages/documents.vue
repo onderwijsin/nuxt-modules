@@ -2,11 +2,28 @@
 import { computed } from "vue";
 import { useFetch } from "#imports";
 
+import shiki from "@comark/nuxt/plugins/shiki";
+import githubLight from "@shikijs/themes/github-light";
+import githubDark from "@shikijs/themes/github-dark";
+
+const plugins = [
+  shiki({
+    themes: { light: githubLight, dark: githubDark }
+  })
+];
+
 const { data, error } = await useFetch("/api/documents");
 const { data: markdown, error: markdownError } = await useFetch<string>("/articles/example.md", {
   responseType: "text"
 });
-const json = computed(() => JSON.stringify(data.value, null, 2) ?? "{}");
+const json = computed(() => `\`\`\`json\n${JSON.stringify(data.value, null, 2) ?? "{}"}\n\`\`\``);
+// A longer outer fence keeps code fences inside the document visible as source text.
+const markdownCode = computed(() => {
+  const source = markdown.value ?? "";
+  const fences = source.match(/`+/g) ?? [];
+  const fence = "`".repeat(Math.max(3, ...fences.map((value) => value.length + 1)));
+  return `${fence}markdown\n${source}\n${fence}`;
+});
 </script>
 
 <template>
@@ -50,7 +67,7 @@ const json = computed(() => JSON.stringify(data.value, null, 2) ?? "{}");
             size="sm"
           />
         </div>
-        <DocumentCodeBlock :code="json" language="json" />
+        <MarkdownRenderer :value="json" :plugins="plugins" />
       </section>
 
       <section aria-labelledby="markdown-title" class="space-y-4">
@@ -68,7 +85,7 @@ const json = computed(() => JSON.stringify(data.value, null, 2) ?? "{}");
             size="sm"
           />
         </div>
-        <DocumentCodeBlock :code="markdown ?? ''" language="markdown" />
+        <MarkdownRenderer :value="markdownCode" :plugins="plugins" />
       </section>
 
       <section aria-labelledby="listing-title" class="space-y-4">

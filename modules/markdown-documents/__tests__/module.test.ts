@@ -104,6 +104,9 @@ describe("markdown document Nuxt setup", () => {
         path?.endsWith("markdown-documents/plugin.mjs")
       );
       expect(plugin).toBeDefined();
+      expect(nuxt.options.nitro.plugins).not.toEqual(
+        expect.arrayContaining([expect.stringContaining("markdown-documents/ai-ready.mjs")])
+      );
       const template = plugin ? nuxt.options.nitro.virtual?.[plugin] : undefined;
       if (typeof template !== "function") throw new Error("Missing document plugin");
       expect(await template()).toContain("registerMarkdownDocumentHandlers(app.h3App");

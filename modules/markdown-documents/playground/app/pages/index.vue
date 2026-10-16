@@ -10,6 +10,14 @@
         YAML frontmatter. Explore two local articles without a CMS or credentials.
       </p>
       <div class="flex flex-wrap gap-3">
+        <UButton
+          to="/about"
+          label="About the playground"
+          icon="i-lucide-sparkles"
+          color="neutral"
+          variant="soft"
+          size="lg"
+        />
         <UButton to="/documents" label="Explore the responses" icon="i-lucide-code" size="lg" />
         <UButton
           to="/articles/example.md"

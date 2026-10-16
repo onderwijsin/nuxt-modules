@@ -355,3 +355,94 @@ section. Documents whose fetch returns `null` are skipped. Callback and validati
 generation using the same sanitized errors as the document service. Both hooks pass the current
 request event to callbacks. Prerendered output reflects build-time data, so callbacks must also work
 during prerendering. Listing remains metadata-only for `/llms.txt`.
+
+## Experimental AI Ready integration
+
+With `nuxt-ai-ready` 2.5.3 registered, the same definition `llms` metadata and `list()` callbacks
+contribute sections to `/llms.txt`. Use either AI Ready or Nuxt LLMS as the discovery route owner,
+not both. The adapter runs in Nitro on GET `/llms.txt`, respecting `app.baseURL`, and appends
+sections to the request-local AI Ready configuration. Existing sections are preserved, listings
+receive the request event, and links use the module's raw Markdown URLs with `rawPrefix`.
+Definitions without `llms` are excluded; listing validation is unchanged and no document bodies are
+fetched.
+
+AI Ready owns formatting and caching. In 2.5.3, section descriptions appear in the preamble, while
+section headings and links appear below it. Listings run even on cache hits, but output changes only
+when AI Ready regenerates it. Prerendered files reflect build-time data. This proof of concept
+relies on AI Ready's 2.5.3 runtime configuration, not its setup-time `ai-ready:llms-txt` hook. It
+does not extend application-owned static discovery files or provide `/llms-full.txt` orchestration.
+
+AI Ready generates the full export from prerendered pages. Document `list()` entries and runtime
+Markdown requests do not populate its page index; without prerendering or runtime indexing,
+`/llms-full.txt` reports "No pages indexed". Configure concrete canonical pages with
+`nitro.prerender.routes` (for example, `["/articles/public"]`) in the consuming app. The full export
+uses our original document bodies, while AI Ready strips their YAML frontmatter from the aggregate;
+arbitrary frontmatter remains available in the individual generated `.md` files.
+
+Nitro captures request-hook errors and continues serving the AI Ready route. If a document listing
+fails, `/llms.txt` can still return HTTP 200 with AI Ready's base output and no document sections.
+Check server error reporting when document sections are unexpectedly absent.
+
+### Original Markdown content
+
+When AI Ready is registered, the module also supplies original documents through its Nitro content
+hooks. No additional configuration is needed:
+
+- `ai-ready:markdown:source` resolves the requested document before runtime HTML conversion. Known
+  documents supply their original Markdown; unknown or unavailable documents leave AI Ready's
+  existing source or HTML fallback unchanged. Application base URLs and raw prefixes are handled.
+- `ai-ready:page:markdown` replaces converted output for known canonical document routes, including
+  prerendering and indexing calls. These callbacks may run without a request event, so document
+  fetchers used during indexing must support event-free execution.
+
+The module serializes the complete document frontmatter into the supplied Markdown, preserving
+arbitrary JSON-compatible properties such as nested authors, tags, numbers, booleans, and nulls. It
+does not spread these properties onto AI Ready's source object, which accepts only a few standard
+fields. String `title`, `description`, and `updatedAt` values are also passed through the source
+metadata; `updatedAt` becomes AI Ready's `last_updated` while remaining in the original metadata.
+
+AI Ready layers its own response fields over source frontmatter, including the canonical URL and
+standard title/description fields, and may append its sitemap footer. Its generated values win for
+colliding keys; custom properties otherwise survive in a single YAML block. Conversion-hook
+replacement writes our serialized document into the converted Markdown; AI Ready's separate index
+fields such as extracted HTML titles and headings remain controlled by AI Ready. This does not
+change the module's standalone raw delivery behavior when AI Ready is absent.
+
+Source retrieval and serialization errors fail AI Ready's Markdown request with a server error; they
+do not silently fall back to an HTML representation. This differs from discovery listing errors in
+Nitro's request hook described above.
+
+### AI Ready indexing and MCP limitations
+
+The module supplies original Markdown to AI Ready. The consuming application owns prerendering,
+runtime indexing, and content freshness. Configure concrete prerender routes or sitemap sources and
+runtime sync in the consumer; document `list()` entries do not configure either automatically.
+Publishing flows, reindexing after edits, removal of unpublished documents from the stored index,
+and cache freshness are also consumer responsibilities. The module does not orchestrate these
+operations or invalidate AI Ready's caches.
+
+These restrictions apply to the experimental integration with AI Ready 2.5.3:
+
+- The content hooks replace Markdown while AI Ready is already processing a route. They do not
+  discover routes, schedule prerendering, or initiate indexing. Runtime source responses do not
+  update the page index. Definition `list()` entries only populate our `llms.txt` sections.
+- MCP reads AI Ready's stored page index. Prerender canonical HTML pages or use AI Ready's runtime
+  indexing to make their documents available to its tools. Installing MCP Toolkit and configuring
+  database storage remain application responsibilities.
+- HTML is the metadata authority for prerendered and indexed pages: title, description, headings,
+  keywords, and declared update dates come from HTML extraction. Our integration replaces the
+  Markdown body, including serialized document frontmatter, but does not synchronize those separate
+  index fields from document metadata. Keep HTML metadata aligned when accurate MCP listings and
+  search metadata matter. Arbitrary frontmatter is preserved inside Markdown, not exposed as
+  structured MCP fields.
+- Documents without a working canonical HTML page can be served through the runtime Markdown source
+  hook, but are not supported by AI Ready's HTML-based prerendering and route-indexing pipeline. A
+  raw Markdown URL alone is insufficient for that pipeline.
+- In AI Ready 2.5.3, polling and cron process pending index entries, including newly discovered
+  routes. They do not periodically refresh every indexed page after its TTL expires. For edits
+  between deployments, call AI Ready's authenticated reindex endpoint or trusted indexing helpers;
+  TTL controls freshness checks for manual indexing and sitemap refreshes. Unpublishing also needs
+  an explicit stored-index cleanup policy.
+- AI Ready 2.5.3's MCP tools cache listings and the pages resource for one hour, and search and
+  Markdown retrieval for five minutes. A successful reindex does not guarantee immediately fresh MCP
+  responses; account for these cache lifetimes in the consumer's publishing and freshness policy.
