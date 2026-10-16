@@ -97,6 +97,19 @@ export default (app) => registerMarkdownDocumentLlms(app.hooks, service);
         });
         addServerPlugin(llmsPlugin.filename);
       }
+
+      // Add nuxt-ai-ready integration
+      if (hasNuxtModule("nuxt-ai-ready", nuxt)) {
+        const aiReadyPlugin = addServerTemplate({
+          filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/ai-ready.mjs"),
+          getContents: () => `import { useRuntimeConfig } from "#imports";
+import { registerMarkdownDocumentAiReady } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/ai-ready"))};
+import { service, configuration } from ${JSON.stringify(registry.filename)};
+export default (app) => registerMarkdownDocumentAiReady(app.hooks, service, useRuntimeConfig, configuration);
+`
+        });
+        addServerPlugin(aiReadyPlugin.filename);
+      }
     });
 
     // Add HMR watchers for server/documents

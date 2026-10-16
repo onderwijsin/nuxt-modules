@@ -2,6 +2,13 @@ import type { H3Event } from "h3";
 import type { createMarkdownDocumentService } from "./service";
 import { serializeMarkdownDocument } from "./serialize";
 
+/** Shared discovery shape accepted by Nuxt LLMS and AI Ready. */
+export interface LlmsSection {
+  title: string;
+  description?: string | string[];
+  links?: { title: string; description?: string; href: string }[];
+}
+
 /** Local structural contract for the optional nuxt-llms 0.2 runtime hooks. */
 interface LlmsHooks {
   hook(
@@ -9,11 +16,7 @@ interface LlmsHooks {
     callback: (
       event: H3Event,
       options: {
-        sections: {
-          title: string;
-          description?: string;
-          links?: { title: string; description?: string; href: string }[];
-        }[];
+        sections: LlmsSection[];
       }
     ) => Promise<void>
   ): unknown;
@@ -21,6 +24,23 @@ interface LlmsHooks {
     name: "llms:generate:full",
     callback: (event: H3Event, options: unknown, contents: string[]) => Promise<void>
   ): unknown;
+}
+
+/**
+ * Lists public discovery sections without exposing internal canonical paths or fetching bodies.
+ * @param service Application-bound document service.
+ * @param event Current discovery request.
+ * @returns Sections with public Markdown links.
+ */
+export async function listMarkdownDocumentLlmsSections(
+  service: ReturnType<typeof createMarkdownDocumentService>,
+  event: H3Event
+) {
+  const sections = await service.listLlmsSections({ event });
+  return sections.map((section) => ({
+    ...section,
+    links: section.links.map(({ title, description, href }) => ({ title, description, href }))
+  }));
 }
 
 /**
@@ -33,13 +53,7 @@ export function registerMarkdownDocumentLlms(
   service: ReturnType<typeof createMarkdownDocumentService>
 ): void {
   hooks.hook("llms:generate", async (event, options) => {
-    const sections = await service.listLlmsSections({ event });
-    options.sections.push(
-      ...sections.map((section) => ({
-        ...section,
-        links: section.links.map(({ title, description, href }) => ({ title, description, href }))
-      }))
-    );
+    options.sections.push(...(await listMarkdownDocumentLlmsSections(service, event)));
   });
   hooks.hook("llms:generate:full", async (event, _options, contents) => {
     for (const section of await service.listLlmsSections({ event })) {

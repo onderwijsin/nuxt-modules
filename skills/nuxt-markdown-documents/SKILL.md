@@ -189,3 +189,20 @@ Enable `llms.full` in Nuxt LLMS to include serialized listed documents in `/llms
 Unavailable (`null`) documents are skipped; callback and validation failures fail generation. Both
 hooks forward the request event. Callbacks must work during prerendering when enabled; prerendered
 output reflects build-time data. `/llms.txt` lists metadata without fetching bodies.
+
+## Experimental AI Ready output
+
+With `nuxt-ai-ready` 2.5.3 registered, the same definition `llms` metadata and `list()` callbacks
+contribute sections to `/llms.txt`. Use either AI Ready or Nuxt LLMS as the discovery route owner,
+not both. The adapter runs in Nitro on GET `/llms.txt`, respecting `app.baseURL`, and appends
+sections to the request-local AI Ready configuration. Existing sections are preserved, listings
+receive the request event, and links use the module's raw Markdown URLs with `rawPrefix`.
+Definitions without `llms` are excluded; listing validation is unchanged and no document bodies are
+fetched.
+
+AI Ready owns formatting and caching. In 2.5.3, section descriptions appear in the preamble, while
+section headings and links appear below it. Listings run even on cache hits, but output changes only
+when AI Ready regenerates it. Prerendered files reflect build-time data. This proof of concept
+relies on AI Ready's 2.5.3 runtime configuration, not its setup-time `ai-ready:llms-txt` hook. It
+does not extend application-owned static discovery files, add `/llms-full.txt` support, or resolve
+competing raw-route ownership with HTML conversion.
