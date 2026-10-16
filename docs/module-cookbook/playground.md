@@ -50,6 +50,11 @@ export default defineNuxtConfig({
 The shared layer owns the repository-wide `compatibilityDate: "2026-08-07"`; module-scoped
 playgrounds should not repeat it in their own `nuxt.config.ts` files.
 
+When a module's `dev:prepare` also prepares a playground that uses another workspace module, declare
+that module in the owning package's `devDependencies` as well as the playground's dependencies. The
+recursive preparation command orders the owning package by its own dependency graph; a dependency
+declared only in the nested playground does not ensure that module is built first.
+
 Use the established scripts:
 
 ```json

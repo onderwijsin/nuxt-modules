@@ -55,6 +55,7 @@
     "@nuxt/module-builder": "catalog:",
     "@nuxt/test-utils": "catalog:",
     "@nuxtjs/mcp-toolkit": "catalog:",
+    "@onderwijsin/nuxt-markdown-renderer": "workspace:*",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"
