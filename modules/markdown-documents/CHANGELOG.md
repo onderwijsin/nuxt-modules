@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- 47a3b82: Integrate opted-in Markdown document definitions with Nuxt LLMS sections and full document output, using validated listings and Markdown URLs.
+- 98b04dc: Add an experimental nuxt-ai-ready 2.5.3 integration that includes opted-in document sections in llms.txt at request time.
+- 98b04dc: Supply original Markdown documents and arbitrary frontmatter to AI Ready's source and conversion hooks instead of relying on HTML conversion.
+
+### Patch Changes
+
+- 47a3b82: Derive the module options type from its validation schema to keep configuration types synchronized.
+
 ## 0.1.0
 
 ### Minor Changes
