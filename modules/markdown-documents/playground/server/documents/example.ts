@@ -6,10 +6,9 @@ export default defineMarkdownDocument({
   llms: {
     title: "Random articles for testing",
     description: `
-    > This is a description
-
-    With support for markdown
-    `
+> This is a description
+With support for markdown
+`
   },
   fetch: ({ params }) => findPublicArticle(params.slug),
   transform: (article) => ({

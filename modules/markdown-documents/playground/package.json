@@ -12,10 +12,18 @@
     "build": "nuxt build"
   },
   "dependencies": {
+    "@comark/nuxt": "catalog:",
+    "@nuxtjs/sitemap": "catalog:",
     "@onderwijsin/nuxt-markdown-documents": "workspace:*",
+    "@onderwijsin/nuxt-markdown-renderer": "workspace:*",
+    "@shikijs/themes": "catalog:",
+    "@tailwindcss/typography": "catalog:",
+    "better-sqlite3": "catalog:",
     "nuxt": "catalog:",
+    "nuxt-ai-ready": "catalog:",
     "nuxt-llms": "catalog:",
     "playground-layer": "workspace:*",
-    "shiki": "catalog:"
+    "tailwindcss": "catalog:",
+    "vue": "catalog:"
   }
 }

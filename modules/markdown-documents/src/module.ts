@@ -84,8 +84,8 @@ export default (app) => registerMarkdownDocumentHandlers(app.h3App, documents, r
     });
     addServerPlugin(plugin.filename);
 
-    // Add nuxt-llms integration
     nuxt.hook("modules:done", () => {
+      // Add nuxt-llms integration
       if (hasNuxtModule("nuxt-llms", nuxt)) {
         const llmsPlugin = addServerTemplate({
           filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/llms.mjs"),
