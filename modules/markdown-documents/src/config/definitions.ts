@@ -78,11 +78,12 @@ export const configuration = ${JSON.stringify(configuration ?? {})};
 export const documents = [
 ${entries}
 ];
+export const service = createMarkdownDocumentService(documents, configuration);
 export const {
   resolveMarkdownDocument,
   listMarkdownDocuments,
   getMarkdownDocumentURL
-} = createMarkdownDocumentService(documents, configuration);
+} = service;
 `;
 }
 

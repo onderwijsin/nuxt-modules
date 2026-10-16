@@ -6,6 +6,7 @@ export type {
   MarkdownDocumentDefinition,
   MarkdownDocumentFetchContext,
   MarkdownDocumentListItem,
+  MarkdownDocumentLlmsSection,
   MarkdownDocumentService
 } from "./types";
 

@@ -6,10 +6,21 @@ import { parseDocumentPath, parseLocalPath } from "./paths";
 import type { DocumentPath } from "./paths";
 import type { PreparedDocumentDefinition } from "./definition";
 import type {
+  MarkdownDocumentContext,
   MarkdownDocumentListItem,
+  MarkdownDocumentLlmsSection,
   MarkdownDocumentService,
   MarkdownDocumentServiceOptions
 } from "./types";
+
+/** Internal application service with per-definition LLMS discovery. */
+interface DocumentService extends MarkdownDocumentService {
+  listLlmsSections: (context?: MarkdownDocumentContext) => Promise<
+    (MarkdownDocumentLlmsSection & {
+      links: (MarkdownDocumentListItem & { href: string })[];
+    })[]
+  >;
+}
 
 const listingSchema = z.array(
   z.object({
@@ -46,7 +57,7 @@ function matchRoute(pattern: string[], path: DocumentPath): Record<string, strin
 export function createMarkdownDocumentService(
   definitions: PreparedDocumentDefinition[],
   options: MarkdownDocumentServiceOptions = {}
-): MarkdownDocumentService {
+): DocumentService {
   const documents = validateDocumentDefinitions(definitions).map((entry) => ({
     ...entry,
     segments: parseDocumentRoute(entry.definition.route)
@@ -63,6 +74,42 @@ export function createMarkdownDocumentService(
     return null;
   };
 
+  async function listDocuments(context: MarkdownDocumentContext | undefined, selected = documents) {
+    const entries = new Map<string, MarkdownDocumentListItem>();
+    for (const document of selected) {
+      const listing = await document.list(context);
+      const parsed = attemptSync(() => listingSchema.safeParse(listing));
+      if (parsed.data === null || !parsed.data.success) {
+        throw createError({
+          statusCode: 500,
+          message: `Invalid Markdown document listing in ${document.source}. Expected title, canonical path and optional description.`
+        });
+      }
+      for (const item of parsed.data.data) {
+        const canonical = attemptSync(() => parseDocumentPath(item.path));
+        if (canonical.data === null || findDocument(canonical.data)?.document !== document) {
+          throw createError({
+            statusCode: 500,
+            message: `Invalid or unowned listing path in ${document.source}.`
+          });
+        }
+        const normalized = { ...item, path: canonical.data.path };
+        const previous = entries.get(normalized.path);
+        if (
+          previous &&
+          (previous.title !== normalized.title || previous.description !== normalized.description)
+        ) {
+          throw createError({
+            statusCode: 500,
+            message: `Conflicting document listing metadata in ${document.source}.`
+          });
+        }
+        entries.set(normalized.path, normalized);
+      }
+    }
+    return [...entries.values()];
+  }
+
   return {
     async resolveMarkdownDocument(path, context = {}) {
       const match = findDocument(parseDocumentPath(path));
@@ -70,40 +117,23 @@ export function createMarkdownDocumentService(
       return match.document.resolve({ ...context, params: match.params });
     },
 
-    async listMarkdownDocuments(context) {
-      const entries = new Map<string, MarkdownDocumentListItem>();
+    listMarkdownDocuments: (context) => listDocuments(context),
+
+    async listLlmsSections(context) {
+      const sections = [];
       for (const document of documents) {
-        const listing = await document.list(context);
-        const parsed = attemptSync(() => listingSchema.safeParse(listing));
-        if (parsed.data === null || !parsed.data.success) {
-          throw createError({
-            statusCode: 500,
-            message: `Invalid Markdown document listing in ${document.source}. Expected title, canonical path and optional description.`
-          });
-        }
-        for (const item of parsed.data.data) {
-          const canonical = attemptSync(() => parseDocumentPath(item.path));
-          if (canonical.data === null || findDocument(canonical.data)?.document !== document) {
-            throw createError({
-              statusCode: 500,
-              message: `Invalid or unowned listing path in ${document.source}.`
-            });
-          }
-          const normalized = { ...item, path: canonical.data.path };
-          const previous = entries.get(normalized.path);
-          if (
-            previous &&
-            (previous.title !== normalized.title || previous.description !== normalized.description)
-          ) {
-            throw createError({
-              statusCode: 500,
-              message: `Conflicting document listing metadata in ${document.source}.`
-            });
-          }
-          entries.set(normalized.path, normalized);
-        }
+        if (!document.definition.llms) continue;
+        const listing = await listDocuments(context, [document]);
+        sections.push({
+          ...document.definition.llms,
+          links: listing.map(({ path, ...metadata }) => ({
+            ...metadata,
+            path,
+            href: `${prefix}${path === "/" ? "/index" : path}.md`
+          }))
+        });
       }
-      return [...entries.values()];
+      return sections;
     },
 
     getMarkdownDocumentURL(path) {

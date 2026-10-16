@@ -174,3 +174,18 @@ conversion or competing raw handlers.
 
 Before handing off an application integration, verify a public raw response, a missing/private 404,
 structured resolution/listing, URL mapping for the actual baseURL/prefix, and preserved HTML routes.
+
+## Optional Nuxt LLMS output
+
+Register `nuxt-llms` in the application, then add
+`llms: { title: "Articles", description: "Public articles" }` to each participating definition. Both
+fields are required strings; titles must contain non-whitespace text. Each definition adds one
+section. `list()` supplies its links; paths remain canonical HTML paths and are converted to
+Markdown URLs respecting the application base URL and raw prefix. Existing listing validation and
+route ownership rules apply. Definitions without `llms` are excluded; missing `list()` yields an
+empty section.
+
+Enable `llms.full` in Nuxt LLMS to include serialized listed documents in `/llms-full.txt`.
+Unavailable (`null`) documents are skipped; callback and validation failures fail generation. Both
+hooks forward the request event. Callbacks must work during prerendering when enabled; prerendered
+output reflects build-time data. `/llms.txt` lists metadata without fetching bodies.

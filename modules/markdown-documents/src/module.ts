@@ -5,7 +5,8 @@ import {
   addTypeTemplate,
   createResolver,
   defineNuxtModule,
-  useLogger
+  useLogger,
+  hasNuxtModule
 } from "@nuxt/kit";
 import {
   moduleSetup,
@@ -83,6 +84,22 @@ export default (app) => registerMarkdownDocumentHandlers(app.h3App, documents, r
     });
     addServerPlugin(plugin.filename);
 
+    // Add nuxt-llms integration
+    nuxt.hook("modules:done", () => {
+      if (hasNuxtModule("nuxt-llms", nuxt)) {
+        const llmsPlugin = addServerTemplate({
+          filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/llms.mjs"),
+          getContents:
+            () => `import { registerMarkdownDocumentLlms } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/llms"))};
+import { service } from ${JSON.stringify(registry.filename)};
+export default (app) => registerMarkdownDocumentLlms(app.hooks, service);
+`
+        });
+        addServerPlugin(llmsPlugin.filename);
+      }
+    });
+
+    // Add HMR watchers for server/documents
     if (nuxt.options.dev) watchDocumentDefinitions(nuxt, directory);
     end();
   }

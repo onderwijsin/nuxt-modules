@@ -326,3 +326,32 @@ document-owned raw URLs or convert their Markdown through an HTML converter.
 | Raw request returns 500      | Call the structured resolver server-side for sanitized fetch/transform diagnostics; check JSON metadata and body-owned frontmatter. |
 | Listing fails                | Check nonblank titles, canonical paths, definition ownership, and conflicting duplicate metadata.                                   |
 | Server fails at startup      | Resolve ambiguous document-definition patterns identified in the error.                                                             |
+
+## Nuxt LLMS integration
+
+When `nuxt-llms` is registered in the application, definitions can opt into its output with section
+metadata:
+
+```ts
+export default defineMarkdownDocument({
+  route: "/articles/:slug",
+  llms: { title: "Articles", description: "Public articles and guides" },
+  fetch: ({ params }) => getArticle(params.slug),
+  transform: (article) => ({ frontmatter: { title: article.title }, body: article.body }),
+  list: () => getPublicArticleMetadata()
+});
+```
+
+Each opted-in definition contributes one section to `/llms.txt`. Its `list()` callback supplies link
+titles, descriptions, and canonical paths; links point to Markdown URLs and respect `app.baseURL`
+and `markdownDocuments.rawPrefix`. Existing listing validation, deduplication, and route ownership
+checks apply. Definitions without `llms` are excluded; without `list()` a section has no links. Both
+`llms.title` and `llms.description` are required strings, and the title must contain non-whitespace
+text.
+
+Enable `llms.full` in the `nuxt-llms` configuration to generate `/llms-full.txt`. The integration
+resolves each listed document and includes its serialized frontmatter and Markdown body under its
+section. Documents whose fetch returns `null` are skipped. Callback and validation failures fail
+generation using the same sanitized errors as the document service. Both hooks pass the current
+request event to callbacks. Prerendered output reflects build-time data, so callbacks must also work
+during prerendering. Listing remains metadata-only for `/llms.txt`.

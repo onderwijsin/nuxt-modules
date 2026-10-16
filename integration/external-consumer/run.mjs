@@ -280,6 +280,37 @@ async function runFocusedAssertions(port, profile, directusMock) {
           body.rootURL === `${prefix}/index.md` &&
           body.url === `${prefix}/sanity/markdown-documents.md`
       );
+      const llmsResponse = await waitForResponse(`http://127.0.0.1:${port}/llms.txt`);
+      const llms = await llmsResponse.text();
+      for (const expected of [
+        "## Existing section",
+        "## Public articles",
+        "Packed consumer articles",
+        "## Public pages",
+        `[Public article](${prefix}/sanity/markdown-documents/articles/public.md): Article summary`,
+        `[Public document](${prefix}/sanity/markdown-documents.md)`
+      ]) {
+        if (!llms.includes(expected)) throw new Error(`Packed LLMS index is missing: ${expected}`);
+      }
+      if (llms.includes("# Packed article") || llms.includes("Packed root document")) {
+        throw new Error("Packed LLMS index included a body or a definition without LLMS metadata.");
+      }
+      const fullResponse = await waitForResponse(`http://127.0.0.1:${port}/llms-full.txt`);
+      const full = await fullResponse.text();
+      for (const expected of [
+        "## Public articles",
+        "## Public pages",
+        "title: Public article",
+        "# Packed article",
+        "title: Public document",
+        "# Public"
+      ]) {
+        if (!full.includes(expected))
+          throw new Error(`Packed LLMS full output is missing: ${expected}`);
+      }
+      if (full.includes("PACKED_PROVIDER_SECRET_354") || full.includes("Packed root document")) {
+        throw new Error("Packed LLMS full output included an unlisted or excluded document.");
+      }
       const response = await waitForResponse(
         `http://127.0.0.1:${port}${prefix}/sanity/markdown-documents.md`
       );
@@ -554,6 +585,16 @@ export async function main() {
     }
   }
   const profile = getProfile(manifest);
+  const llmsDependencies = profile.modules.includes("@onderwijsin/nuxt-markdown-documents")
+    ? {
+        "nuxt-llms": JSON.parse(
+          readFileSync(
+            join(root, "modules/markdown-documents/playground/node_modules/nuxt-llms/package.json"),
+            "utf8"
+          )
+        ).version
+      }
+    : {};
   const packedDependencies = getPackedDependencies(manifest);
   const consumerDirectory = mkdtempSync(join(tmpdir(), "nuxt-external-consumer-"));
   const directusMock = await startDirectusMock();
@@ -569,7 +610,7 @@ export async function main() {
     );
     writeFileSync(
       join(consumerDirectory, "package.json"),
-      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...peerDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
+      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...peerDependencies, ...llmsDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "pnpm-workspace.yaml"),
@@ -631,13 +672,15 @@ import { defineMarkdownDocument } from "@onderwijsin/nuxt-markdown-documents/ser
 import type { ModuleOptions } from "@onderwijsin/nuxt-markdown-documents";
 import type {
   MarkdownDocument, MarkdownDocumentContext, MarkdownDocumentDefinition,
-  MarkdownDocumentFetchContext, MarkdownDocumentListItem, MarkdownDocumentService
+  MarkdownDocumentFetchContext, MarkdownDocumentListItem, MarkdownDocumentLlmsSection, MarkdownDocumentService
 } from "@onderwijsin/nuxt-markdown-documents/server";
 const options: ModuleOptions = { rawPrefix: "/raw", contentType: "markdown" };
 const context: MarkdownDocumentContext = {};
 const fetchContext: MarkdownDocumentFetchContext = { params: { slug: "public" }, ...context };
+const section: MarkdownDocumentLlmsSection = { title: "Articles", description: "Public articles" };
 const definition = defineMarkdownDocument({
   route: "/articles/:slug",
+  llms: section,
   fetch: async ({ params }) => params.slug ? { title: "Public" } : null,
   transform: (article) => ({ frontmatter: { title: article.title.toUpperCase() }, body: "# Public" })
 });

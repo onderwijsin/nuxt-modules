@@ -6,6 +6,7 @@ import type {
   MarkdownDocumentContext,
   MarkdownDocumentDefinition,
   MarkdownDocumentFetchContext,
+  MarkdownDocumentLlmsSection,
   MarkdownDocumentListItem
 } from "./types";
 
@@ -19,7 +20,7 @@ const documentSchema = z.strictObject({
 /** A definition with typed callbacks bound before heterogeneous definitions are collected. */
 export interface PreparedDocumentDefinition {
   source: string;
-  definition: { route: string };
+  definition: { route: string; llms?: MarkdownDocumentLlmsSection };
   resolve: (context: MarkdownDocumentFetchContext) => Promise<MarkdownDocument | null>;
   list: (context?: MarkdownDocumentContext) => Promise<MarkdownDocumentListItem[]>;
 }

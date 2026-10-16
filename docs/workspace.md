@@ -165,7 +165,8 @@ includes the configured Prose paragraph classes.
 Use `--markdown-documents-prefix` with an artifact set containing Markdown Documents to repeat its
 packed-consumer checks with an explicit `/raw` prefix. The normal profile checks no-prefix delivery.
 Both exercise the public server declarations, root mapping, dynamic documents and neighboring
-routes.
+routes. The Markdown Documents consumer also installs the catalog-pinned Nuxt LLMS version used by
+its playground and checks section links and full Markdown content in both generated LLMS files.
 
 Use `--shared-runtime-regression` to check every packed module’s declared peers against the
 application installation, with a Vue patch different from the workspace pin. The consumer explicitly
