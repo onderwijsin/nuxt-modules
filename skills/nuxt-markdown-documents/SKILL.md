@@ -248,6 +248,13 @@ Nitro's request hook described above.
 
 ### AI Ready indexing and MCP limitations
 
+The module supplies original Markdown to AI Ready. The consuming application owns prerendering,
+runtime indexing, and content freshness. Configure concrete prerender routes or sitemap sources and
+runtime sync in the consumer; document `list()` entries do not configure either automatically.
+Publishing flows, reindexing after edits, removal of unpublished documents from the stored index,
+and cache freshness are also consumer responsibilities. The module does not orchestrate these
+operations or invalidate AI Ready's caches.
+
 These restrictions apply to the experimental integration with AI Ready 2.5.3:
 
 - The content hooks replace Markdown while AI Ready is already processing a route. They do not
@@ -270,3 +277,6 @@ These restrictions apply to the experimental integration with AI Ready 2.5.3:
   between deployments, call AI Ready's authenticated reindex endpoint or trusted indexing helpers;
   TTL controls freshness checks for manual indexing and sitemap refreshes. Unpublishing also needs
   an explicit stored-index cleanup policy.
+- AI Ready 2.5.3's MCP tools cache listings and the pages resource for one hour, and search and
+  Markdown retrieval for five minutes. A successful reindex does not guarantee immediately fresh MCP
+  responses; account for these cache lifetimes in the consumer's publishing and freshness policy.
