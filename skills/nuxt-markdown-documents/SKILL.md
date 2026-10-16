@@ -206,3 +206,7 @@ when AI Ready regenerates it. Prerendered files reflect build-time data. This pr
 relies on AI Ready's 2.5.3 runtime configuration, not its setup-time `ai-ready:llms-txt` hook. It
 does not extend application-owned static discovery files, add `/llms-full.txt` support, or resolve
 competing raw-route ownership with HTML conversion.
+
+Nitro captures request-hook errors and continues serving the AI Ready route. If a document listing
+fails, `/llms.txt` can still return HTTP 200 with AI Ready's base output and no document sections.
+Check server error reporting when document sections are unexpectedly absent.
