@@ -5,6 +5,17 @@ import { $fetch, fetch, setupFixture } from "../../../packages/test-utils/src";
 describe("AI Ready llms.txt integration", async () => {
   await setupFixture(import.meta.url, "ai-ready");
 
+  it("reports an empty full export without prerendered or indexed pages", async () => {
+    // Document discovery listings alone do not populate AI Ready's page index.
+    await $fetch("/llms.txt");
+    await $fetch("/articles/public.md");
+    const response = await fetch("/llms-full.txt");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain(
+      "No pages indexed. Run `nuxi generate` or enable runtime indexing."
+    );
+  });
+
   it("includes document metadata alongside configured sections in the real AI Ready response", async () => {
     const response = await fetch("/llms.txt");
     expect(response.status).toBe(200);

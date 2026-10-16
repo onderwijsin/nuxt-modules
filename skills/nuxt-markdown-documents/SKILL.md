@@ -206,6 +206,13 @@ when AI Ready regenerates it. Prerendered files reflect build-time data. This pr
 relies on AI Ready's 2.5.3 runtime configuration, not its setup-time `ai-ready:llms-txt` hook. It
 does not extend application-owned static discovery files or provide `/llms-full.txt` orchestration.
 
+AI Ready generates the full export from prerendered pages. Document `list()` entries and runtime
+Markdown requests do not populate its page index; without prerendering or runtime indexing,
+`/llms-full.txt` reports "No pages indexed". Configure concrete canonical pages with
+`nitro.prerender.routes` (for example, `["/articles/public"]`) in the consuming app. The full export
+uses our original document bodies, while AI Ready strips their YAML frontmatter from the aggregate;
+arbitrary frontmatter remains available in the individual generated `.md` files.
+
 Nitro captures request-hook errors and continues serving the AI Ready route. If a document listing
 fails, `/llms.txt` can still return HTTP 200 with AI Ready's base output and no document sections.
 Check server error reporting when document sections are unexpectedly absent.
