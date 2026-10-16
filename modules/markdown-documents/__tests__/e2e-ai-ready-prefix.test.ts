@@ -27,4 +27,14 @@ describe("AI Ready discovery with baseURL and rawPrefix", async () => {
       "AI Ready integration fixture HTML"
     );
   });
+
+  it("serves source Markdown for both AI Ready twins and module-owned prefixed URLs", async () => {
+    for (const path of ["/docs/articles/public.md", "/docs/raw/articles/public.md"]) {
+      const body = await $fetch<string>(path);
+      expect(body).toContain("SOURCE_MARKDOWN_BODY");
+      expect(body).toContain("author:");
+      expect(body).not.toContain("Canonical public article HTML");
+    }
+    expect(await $fetch<string>("/docs/raw/index.md")).toContain("# Root source");
+  });
 });

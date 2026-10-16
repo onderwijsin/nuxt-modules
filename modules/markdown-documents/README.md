@@ -370,9 +370,37 @@ AI Ready owns formatting and caching. In 2.5.3, section descriptions appear in t
 section headings and links appear below it. Listings run even on cache hits, but output changes only
 when AI Ready regenerates it. Prerendered files reflect build-time data. This proof of concept
 relies on AI Ready's 2.5.3 runtime configuration, not its setup-time `ai-ready:llms-txt` hook. It
-does not extend application-owned static discovery files, add `/llms-full.txt` support, or resolve
-competing raw-route ownership with HTML conversion.
+does not extend application-owned static discovery files or provide `/llms-full.txt` orchestration.
 
 Nitro captures request-hook errors and continues serving the AI Ready route. If a document listing
 fails, `/llms.txt` can still return HTTP 200 with AI Ready's base output and no document sections.
 Check server error reporting when document sections are unexpectedly absent.
+
+### Original Markdown content
+
+When AI Ready is registered, the module also supplies original documents through its Nitro content
+hooks. No additional configuration is needed:
+
+- `ai-ready:markdown:source` resolves the requested document before runtime HTML conversion. Known
+  documents supply their original Markdown; unknown or unavailable documents leave AI Ready's
+  existing source or HTML fallback unchanged. Application base URLs and raw prefixes are handled.
+- `ai-ready:page:markdown` replaces converted output for known canonical document routes, including
+  prerendering and indexing calls. These callbacks may run without a request event, so document
+  fetchers used during indexing must support event-free execution.
+
+The module serializes the complete document frontmatter into the supplied Markdown, preserving
+arbitrary JSON-compatible properties such as nested authors, tags, numbers, booleans, and nulls. It
+does not spread these properties onto AI Ready's source object, which accepts only a few standard
+fields. String `title`, `description`, and `updatedAt` values are also passed through the source
+metadata; `updatedAt` becomes AI Ready's `last_updated` while remaining in the original metadata.
+
+AI Ready layers its own response fields over source frontmatter, including the canonical URL and
+standard title/description fields, and may append its sitemap footer. Its generated values win for
+colliding keys; custom properties otherwise survive in a single YAML block. Conversion-hook
+replacement writes our serialized document into the converted Markdown; AI Ready's separate index
+fields such as extracted HTML titles and headings remain controlled by AI Ready. This does not
+change the module's standalone raw delivery behavior when AI Ready is absent.
+
+Source retrieval and serialization errors fail AI Ready's Markdown request with a server error; they
+do not silently fall back to an HTML representation. This differs from discovery listing errors in
+Nitro's request hook described above.

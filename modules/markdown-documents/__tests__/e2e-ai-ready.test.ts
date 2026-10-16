@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 import { $fetch, fetch, setupFixture } from "../../../packages/test-utils/src";
 
 describe("AI Ready llms.txt integration", async () => {
@@ -47,5 +48,45 @@ describe("AI Ready llms.txt integration", async () => {
     expect(body).toContain("## Existing section");
     expect(body).not.toContain("## Public articles");
     expect(body).not.toContain("PRIVATE_LISTING_SECRET");
+  });
+
+  it("serves source Markdown and arbitrary frontmatter instead of the HTML article", async () => {
+    const response = await fetch("/articles/public.md");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/markdown");
+    const body = await response.text();
+    expect(body).toContain("SOURCE_MARKDOWN_BODY");
+    expect(body).not.toContain("Canonical public article HTML");
+    expect(body.match(/^---$/gm)).toHaveLength(2);
+    const metadata = /^---\n([\s\S]*?)\n---\n/.exec(body);
+    expect(metadata).not.toBeNull();
+    expect(parse(metadata?.[1] ?? "")).toMatchObject({
+      title: "Public article",
+      description: "Original document description",
+      updatedAt: "2026-10-16T09:00:00Z",
+      last_updated: "2026-10-16T09:00:00Z",
+      canonical_url: "https://example.com/articles/public",
+      author: { name: "Alex", role: "Editor" },
+      tags: ["Nuxt", "日本語"],
+      featured: true,
+      readingMinutes: 6,
+      expiresAt: null
+    });
+  });
+
+  it("converts unknown pages and preserves unavailable and failed document responses", async () => {
+    expect(await $fetch<string>("/about.md")).toContain("# Fallback HTML content");
+    expect(await $fetch<string>("/index.md")).toContain("# Root source");
+    expect((await fetch("/articles/draft.md")).status).toBe(404);
+    const failure = await fetch("/articles/failure.md");
+    expect(failure.status).toBe(500);
+    expect(await failure.text()).not.toContain("PRIVATE_FETCH_SECRET");
+  });
+
+  it("registers the conversion hook for event-free indexing-style calls in the built Nitro app", async () => {
+    const result = await $fetch<{ markdown: string }>("/api/markdown-conversion");
+    expect(result.markdown).toContain("SOURCE_MARKDOWN_BODY");
+    expect(result.markdown).toContain("author:");
+    expect(result.markdown).not.toContain("Converted HTML");
   });
 });
