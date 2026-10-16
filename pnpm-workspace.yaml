@@ -37,6 +37,7 @@ catalog:
   "@directus/sdk": 24.0.0
   ioredis: 5.11.1
   jiti: 2.7.0
+  "@nuxtjs/mcp-toolkit": 0.23.0
   "@nuxtjs/sitemap": 8.3.0
   directus-sdk-typegen: 0.2.1
   "@pinia/nuxt": 1.0.1

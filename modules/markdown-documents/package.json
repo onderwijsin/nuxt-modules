@@ -54,6 +54,7 @@
   "devDependencies": {
     "@nuxt/module-builder": "catalog:",
     "@nuxt/test-utils": "catalog:",
+    "@nuxtjs/mcp-toolkit": "catalog:",
     "nuxt": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:"

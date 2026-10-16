@@ -411,3 +411,28 @@ change the module's standalone raw delivery behavior when AI Ready is absent.
 Source retrieval and serialization errors fail AI Ready's Markdown request with a server error; they
 do not silently fall back to an HTML representation. This differs from discovery listing errors in
 Nitro's request hook described above.
+
+### AI Ready indexing and MCP limitations
+
+These restrictions apply to the experimental integration with AI Ready 2.5.3:
+
+- The content hooks replace Markdown while AI Ready is already processing a route. They do not
+  discover routes, schedule prerendering, or initiate indexing. Runtime source responses do not
+  update the page index. Definition `list()` entries only populate our `llms.txt` sections.
+- MCP reads AI Ready's stored page index. Prerender canonical HTML pages or use AI Ready's runtime
+  indexing to make their documents available to its tools. Installing MCP Toolkit and configuring
+  database storage remain application responsibilities.
+- HTML is the metadata authority for prerendered and indexed pages: title, description, headings,
+  keywords, and declared update dates come from HTML extraction. Our integration replaces the
+  Markdown body, including serialized document frontmatter, but does not synchronize those separate
+  index fields from document metadata. Keep HTML metadata aligned when accurate MCP listings and
+  search metadata matter. Arbitrary frontmatter is preserved inside Markdown, not exposed as
+  structured MCP fields.
+- Documents without a working canonical HTML page can be served through the runtime Markdown source
+  hook, but are not supported by AI Ready's HTML-based prerendering and route-indexing pipeline. A
+  raw Markdown URL alone is insufficient for that pipeline.
+- In AI Ready 2.5.3, polling and cron process pending index entries, including newly discovered
+  routes. They do not periodically refresh every indexed page after its TTL expires. For edits
+  between deployments, call AI Ready's authenticated reindex endpoint or trusted indexing helpers;
+  TTL controls freshness checks for manual indexing and sitemap refreshes. Unpublishing also needs
+  an explicit stored-index cleanup policy.
