@@ -1,0 +1,64 @@
+{
+  "name": "@onderwijsin/nuxt-tailwind-breakpoint",
+  "version": "0.0.0",
+  "description": "Nuxt UI badge showing the active Tailwind CSS breakpoint.",
+  "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
+  "bugs": {
+    "url": "https://github.com/onderwijsin/nuxt-modules/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Remi Huigen",
+    "email": "remihuigen@proton.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onderwijsin/nuxt-modules.git",
+    "directory": "modules/tailwind-breakpoint"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "typecheck": "vue-tsc --noEmit --project tsconfig.json",
+    "dev": "pnpm run dev:prepare && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground"
+  },
+  "dependencies": {
+    "@nuxt/kit": "catalog:",
+    "@onderwijsin/nuxt-module-utils": "workspace:^"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "catalog:",
+    "@nuxt/schema": "catalog:",
+    "@nuxt/ui": "catalog:",
+    "@vueuse/core": "catalog:",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:",
+    "vue": "catalog:",
+    "vue-tsc": "catalog:"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.0.0",
+    "@vueuse/core": "^14.0.0",
+    "vue": "^3.5.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "tailwind-breakpoint-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@onderwijsin/nuxt-tailwind-breakpoint": "workspace:*",
+    "nuxt": "catalog:",
+    "playground-layer": "workspace:*"
+  }
+}
