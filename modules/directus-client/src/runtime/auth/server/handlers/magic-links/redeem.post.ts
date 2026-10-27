@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, readValidatedBody } from "h3";
+import { defineEventHandler, readValidatedBody } from "h3";
 import { useRuntimeConfig } from "#imports";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
       body: { token: body.magicLinkToken, ...(body.otp ? { otp: body.otp } : {}), mode: "json" }
     });
   });
-  if (error) throw createError({ statusCode: 400, statusMessage: "Failed to redeem magic link" });
+  // Preserve Directus codes (including INVALID_OTP) for the shared error normalizer.
+  if (error !== null) throw error;
   return (await establishDirectusSession(event, parseDirectusAuthenticationResponse(data)))
     .snapshot;
 });

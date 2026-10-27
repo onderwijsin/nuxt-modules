@@ -203,6 +203,47 @@ describe("Directus authentication input limits", () => {
     expect(state.turnstile).not.toHaveBeenCalled();
   });
 
+  it("preserves OTP errors and allows retrying the same magic link with a code", async () => {
+    const error = Object.assign(new Error("Invalid user OTP"), {
+      statusCode: 401,
+      data: { errors: [{ message: "Invalid user OTP", extensions: { code: "INVALID_OTP" } }] }
+    });
+    state.body = { magicLinkToken: "magic-token" };
+    state.fetch.mockRejectedValueOnce(error);
+
+    await expect(magicLinkRedeemHandler(createTestEvent())).rejects.toBe(error);
+    expect(state.parse).not.toHaveBeenCalled();
+    expect(state.establish).not.toHaveBeenCalled();
+    expect(state.fetch).toHaveBeenLastCalledWith(
+      "https://directus.example.test/auth/magic-links/redeem",
+      expect.objectContaining({ body: { token: "magic-token", mode: "json" } })
+    );
+
+    state.body = { magicLinkToken: "magic-token", otp: "012345" };
+    state.fetch.mockResolvedValueOnce({ access_token: "access", refresh_token: "refresh" });
+    await expect(magicLinkRedeemHandler(createTestEvent())).resolves.toEqual({
+      input: { accessToken: "access", refreshToken: "refresh" }
+    });
+    expect(state.fetch).toHaveBeenLastCalledWith(
+      "https://directus.example.test/auth/magic-links/redeem",
+      expect.objectContaining({ body: { token: "magic-token", otp: "012345", mode: "json" } })
+    );
+    expect(state.establish).toHaveBeenCalledOnce();
+  });
+
+  it("preserves other upstream redemption failures without creating a session", async () => {
+    const error = Object.assign(new Error("Expired link"), {
+      statusCode: 403,
+      data: { errors: [{ message: "Expired link", extensions: { code: "TOKEN_EXPIRED" } }] }
+    });
+    state.body = { magicLinkToken: "expired-token" };
+    state.fetch.mockRejectedValueOnce(error);
+
+    await expect(magicLinkRedeemHandler(createTestEvent())).rejects.toBe(error);
+    expect(state.parse).not.toHaveBeenCalled();
+    expect(state.establish).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["magic-link email", "magic-link-request", { email: "a".repeat(1025) }],
     ["magic-link token", "magic-link-redeem", { magicLinkToken: "t".repeat(1025) }],

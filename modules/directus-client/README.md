@@ -515,8 +515,11 @@ post-login navigation. When magic links are disabled, these facade methods perfo
 request.
 
 Directus MFA failures are exposed through `useDirectusError(error).isOtpError`, allowing the UI to
-ask for an OTP and retry `auth.login` or `auth.redeemMagicLink`. Local redemption token validation
-uses `INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
+ask for an OTP and retry `auth.login` or `auth.redeemMagicLink`. Magic-link redemption preserves the
+upstream error code and status. The magic-links extension leaves the token unconsumed on
+`INVALID_OTP`, so request the code only after that error and retry with the same token. Local
+redemption token validation uses `INVALID_MAGIC_LINK_TOKEN_INPUT` and
+`isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, Directus session cookies are ignored: they are not read,
 refreshed, forwarded upstream, or added to the SSR payload. Proxy, preview, and unauthenticated
