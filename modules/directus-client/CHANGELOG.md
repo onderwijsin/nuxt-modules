@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.5
+
+### Patch Changes
+
+- 2511e6f: Preserve upstream magic-link redemption errors so consumers can detect INVALID_OTP and retry the same unconsumed token with an authenticator code.
+
 ## 0.12.4
 
 ### Patch Changes
