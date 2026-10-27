@@ -357,8 +357,11 @@ Use `auth.requestMagicLink(email, meta?)` and `auth.redeemMagicLink(token, otp?)
 cannot override the callback URL, and Directus access/refresh tokens remain server-side in the
 sealed HTTP-only session. The consuming application implements the callback route, URL token
 extraction and cleanup, OTP UI, TFA setup navigation, return-to state, and post-login navigation.
-When disabled, these methods perform no network request. Local invalid token input is exposed as
-`INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
+Redemption preserves upstream error codes and status. Use `useDirectusError(error).isOtpError` to
+show an OTP challenge only after `INVALID_OTP`; the extension leaves the token unconsumed, so retry
+`auth.redeemMagicLink` with the same token and the entered code. When disabled, these methods
+perform no network request. Local invalid token input is exposed as `INVALID_MAGIC_LINK_TOKEN_INPUT`
+and `isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, the module does not read, refresh, forward, or serialize
 Directus session cookies. Proxy, preview, and unauthenticated access continue to work.
