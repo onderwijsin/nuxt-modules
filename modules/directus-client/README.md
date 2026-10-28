@@ -516,10 +516,13 @@ request.
 
 Directus MFA failures are exposed through `useDirectusError(error).isOtpError`, allowing the UI to
 ask for an OTP and retry `auth.login` or `auth.redeemMagicLink`. Magic-link redemption preserves the
-upstream error code and status. The magic-links extension leaves the token unconsumed on
-`INVALID_OTP`, so request the code only after that error and retry with the same token. Local
-redemption token validation uses `INVALID_MAGIC_LINK_TOKEN_INPUT` and
-`isInvalidMagicLinkTokenInput`.
+recognized upstream authentication error codes and HTTP status in development and production.
+Password login uses the same contract. Expected 4xx codes are `INVALID_OTP`, `INVALID_CREDENTIALS`,
+`INVALID_TOKEN`, `TOKEN_EXPIRED`, `FORBIDDEN`, and `REQUESTS_EXCEEDED`. Their responses contain
+fixed messages and codes, without upstream messages or extra fields. Unexpected failures retain
+production error redaction. The magic-links extension leaves the token unconsumed on `INVALID_OTP`,
+so request the code only after that error and retry with the same token. Local redemption token
+validation uses `INVALID_MAGIC_LINK_TOKEN_INPUT` and `isInvalidMagicLinkTokenInput`.
 
 When `client.auth.enabled` is `false`, Directus session cookies are ignored: they are not read,
 refreshed, forwarded upstream, or added to the SSR payload. Proxy, preview, and unauthenticated

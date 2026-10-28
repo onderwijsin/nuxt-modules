@@ -22,7 +22,8 @@ const state = vi.hoisted(() => ({
   turnstile: vi.fn()
 }));
 
-vi.mock("h3", () => ({
+vi.mock("h3", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("h3")>()),
   defineEventHandler: (handler: unknown) => handler,
   createEvent: () => ({}),
   setResponseStatus: vi.fn(),
@@ -211,7 +212,11 @@ describe("Directus authentication input limits", () => {
     state.body = { magicLinkToken: "magic-token" };
     state.fetch.mockRejectedValueOnce(error);
 
-    await expect(magicLinkRedeemHandler(createTestEvent())).rejects.toBe(error);
+    await expect(magicLinkRedeemHandler(createTestEvent())).rejects.toMatchObject({
+      statusCode: 401,
+      unhandled: false,
+      data: { errors: [{ extensions: { code: "INVALID_OTP" } }] }
+    });
     expect(state.parse).not.toHaveBeenCalled();
     expect(state.establish).not.toHaveBeenCalled();
     expect(state.fetch).toHaveBeenLastCalledWith(
@@ -239,7 +244,11 @@ describe("Directus authentication input limits", () => {
     state.body = { magicLinkToken: "expired-token" };
     state.fetch.mockRejectedValueOnce(error);
 
-    await expect(magicLinkRedeemHandler(createTestEvent())).rejects.toBe(error);
+    await expect(magicLinkRedeemHandler(createTestEvent())).rejects.toMatchObject({
+      statusCode: 403,
+      unhandled: false,
+      data: { errors: [{ extensions: { code: "TOKEN_EXPIRED" } }] }
+    });
     expect(state.parse).not.toHaveBeenCalled();
     expect(state.establish).not.toHaveBeenCalled();
   });

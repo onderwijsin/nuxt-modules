@@ -45,6 +45,15 @@ projection and is never sealed into the auth cookie. Roles, policies, and permis
 intentionally not part of this release. Sealing and rotation are defined separately in
 [directus-sealed-session.md](directus-sealed-session.md).
 
+Password login and magic-link redemption translate recognized upstream 4xx authentication failures
+into handled H3 errors so their codes survive production HTTP serialization. The boundary validates
+the error envelope and allows only `INVALID_OTP`, `INVALID_CREDENTIALS`, `INVALID_TOKEN`,
+`TOKEN_EXPIRED`, `FORBIDDEN`, and `REQUESTS_EXCEEDED`. It preserves HTTP status and returns fixed
+messages with code-only extensions; upstream messages and other fields stay private. Unknown,
+malformed, transport, and server failures remain unhandled and retain production error redaction.
+Production fixture tests exercise missing and invalid OTP responses and successful retries for both
+authentication methods.
+
 ## Alternatives considered
 
 - The Directus SDK authentication composable: rejected because mutable client token state and

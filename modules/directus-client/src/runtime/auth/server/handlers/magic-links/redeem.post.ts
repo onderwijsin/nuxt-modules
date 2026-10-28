@@ -10,6 +10,7 @@ import {
   parseDirectusAuthenticationResponse
 } from "../../authentication";
 import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
+import { createDirectusAuthenticationError } from "../../authentication-error";
 
 const magicLinkRedeemSchema = z.object({
   magicLinkToken: z.string().min(1).max(1024),
@@ -26,8 +27,7 @@ export default defineEventHandler(async (event) => {
       body: { token: body.magicLinkToken, ...(body.otp ? { otp: body.otp } : {}), mode: "json" }
     });
   });
-  // Preserve Directus codes (including INVALID_OTP) for the shared error normalizer.
-  if (error !== null) throw error;
+  if (error !== null) throw createDirectusAuthenticationError(error) ?? error;
   return (await establishDirectusSession(event, parseDirectusAuthenticationResponse(data)))
     .snapshot;
 });
