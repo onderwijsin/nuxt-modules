@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.6
+
+### Patch Changes
+
+- 6f09e76: Preserve expected password-login and magic-link authentication error codes in production HTTP responses, including OTP challenges, while excluding private upstream error details.
+
 ## 0.12.5
 
 ### Patch Changes
