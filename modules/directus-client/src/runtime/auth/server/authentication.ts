@@ -1,12 +1,13 @@
 import type { H3Event } from "h3";
 import { createError } from "h3";
 import { useRuntimeConfig } from "#imports";
-import { attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
+import { attempt, attemptSync, isBoolean, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 import { ofetch } from "ofetch";
 import { joinURL } from "ufo";
 import { z } from "zod";
 
 import { setDirectusSession, type DirectusSession, type DirectusSessionSnapshot } from "./session";
+import { createDirectusAuthenticationError } from "./authentication-error";
 
 const directusTokenResponseSchema = z.object({
   data: z.object({
@@ -151,14 +152,17 @@ export async function createDirectusSession(
   event: H3Event,
   input: { readonly email: string; readonly password: string; readonly otp?: string }
 ): Promise<DirectusSession> {
-  const response = await ofetch<unknown>(getDirectusEndpoint(event, "auth/login"), {
-    method: "POST",
-    body: {
-      email: input.email,
-      password: input.password,
-      ...(input.otp ? { otp: input.otp } : {}),
-      mode: "json"
-    }
-  });
-  return establishDirectusSession(event, parseDirectusAuthenticationResponse(response));
+  const { data, error } = await attempt(() =>
+    ofetch<unknown>(getDirectusEndpoint(event, "auth/login"), {
+      method: "POST",
+      body: {
+        email: input.email,
+        password: input.password,
+        ...(input.otp ? { otp: input.otp } : {}),
+        mode: "json"
+      }
+    })
+  );
+  if (error !== null) throw createDirectusAuthenticationError(error) ?? error;
+  return establishDirectusSession(event, parseDirectusAuthenticationResponse(data));
 }

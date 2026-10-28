@@ -18,6 +18,7 @@ export class MockDirectus {
   refreshDelayMs = 0;
   userDelayMs = 0;
   loginExpires = 1;
+  requiredOtp: string | undefined;
 
   /** Returns the number of login requests received by the mock.
    * @returns The login request count.
@@ -63,6 +64,7 @@ export class MockDirectus {
     this.refreshDelayMs = 0;
     this.userDelayMs = 0;
     this.loginExpires = 1;
+    this.requiredOtp = undefined;
     this._lastItemsAuthorization = undefined;
     this.lastItemsUrl = undefined;
     this.lastPreviewHeader = undefined;
@@ -125,7 +127,17 @@ export class MockDirectus {
           request.on("data", (chunk: Buffer) => (value += chunk.toString()));
           request.on("end", () => resolve(value));
         });
-        const email = (JSON.parse(body) as { email?: string }).email ?? "user@example.test";
+        const input = JSON.parse(body);
+        if (this.requiredOtp !== undefined && input.otp !== this.requiredOtp) {
+          response.writeHead(401, { "content-type": "application/json" });
+          response.end(
+            JSON.stringify({
+              errors: [{ message: "Invalid user OTP", extensions: { code: "INVALID_OTP" } }]
+            })
+          );
+          return;
+        }
+        const email = input.email ?? "user@example.test";
         const tokenSuffix = email === "user@example.test" ? String(this._loginRequests) : email;
         response.writeHead(200, { "content-type": "application/json" });
         response.end(
@@ -212,6 +224,21 @@ export class MockDirectus {
       }
 
       if (request.url?.startsWith("/auth/magic-links/redeem")) {
+        const body = await new Promise<string>((resolve) => {
+          let value = "";
+          request.on("data", (chunk: Buffer) => (value += chunk.toString()));
+          request.on("end", () => resolve(value));
+        });
+        const input = JSON.parse(body);
+        if (this.requiredOtp !== undefined && input.otp !== this.requiredOtp) {
+          response.writeHead(401, { "content-type": "application/json" });
+          response.end(
+            JSON.stringify({
+              errors: [{ message: "Invalid user OTP", extensions: { code: "INVALID_OTP" } }]
+            })
+          );
+          return;
+        }
         response.writeHead(200, { "content-type": "application/json" });
         response.end(
           JSON.stringify({

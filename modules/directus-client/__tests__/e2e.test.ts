@@ -522,6 +522,56 @@ describe("Directus client and server composables", async () => {
     ).resolves.toBeUndefined();
   });
 
+  it.each([
+    {
+      method: "password login",
+      route: "/_directus/auth/login",
+      input: { email: "user@example.test", password: "password" }
+    },
+    {
+      method: "magic-link redemption",
+      route: "/_directus/auth/magic-links/redeem",
+      input: { magicLinkToken: "raw-token" }
+    }
+  ])(
+    "preserves production OTP challenges for $method and allows retrying",
+    async ({ route, input }) => {
+      upstream.requiredOtp = "012345";
+      const headers = {
+        "content-type": "application/json",
+        origin: new URL(url("/")).origin,
+        "x-turnstile-token": "directus-login"
+      };
+
+      for (const otp of [undefined, "999999"]) {
+        const response = await fetch(url(route), {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ ...input, ...(otp === undefined ? {} : { otp }) })
+        });
+
+        expect(response.status).toBe(401);
+        expect(response.headers.get("set-cookie") ?? "").not.toContain("directus_session=");
+        // Soft assertions also exercise invalid OTP and a successful retry when production strips data.
+        expect.soft(await response.json(), `OTP ${otp ?? "missing"} at ${route}`).toMatchObject({
+          data: { errors: [{ extensions: { code: "INVALID_OTP" } }] }
+        });
+      }
+
+      const response = await fetch(url(route), {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...input, otp: upstream.requiredOtp })
+      });
+      expect(response.status, await response.clone().text()).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        userId: "user-1",
+        requiresTfaSetup: false
+      });
+      expect(getSessionCookie(response)).toMatch(/^directus_session=/);
+    }
+  );
+
   it("redeems a magic link into the normal cookie session", async () => {
     await expect(
       $fetch("/_directus/auth/magic-links/redeem", {
