@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- d6b7f79: Add the auto-imported createLoopsColorMapper utility with role-specific exact matching and opt-in
+  nearest-source matching through colorMapping.approximation. Approximation uses a bounded OKLab
+  distance and preserves exact matches, CSS-token targets and unmatched colors. Select strategies at
+  build time so disabled approximation code and unused mapper utilities are absent from app bundles.
+- d6b7f79: Support consumer-provided runtime color mapping after source style validation, with authored and
+  target theme metadata, color roles, node colors and nested background context. Consumers can map
+  exact colors to their own light/dark palette or CSS variables without changing the stored AST.
+
 ## 0.2.11
 
 ### Patch Changes
