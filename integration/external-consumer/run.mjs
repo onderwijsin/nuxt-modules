@@ -411,6 +411,13 @@ async function runFocusedAssertions(port, profile, directusMock) {
     const page = await (await waitForResponse(`http://127.0.0.1:${port}/sanity/${layer}`)).text();
     if (!page.includes(`data-sanity="${layer}"`) || !page.includes(layer))
       throw new Error(`External consumer page assertion failed for layer ${layer}.`);
+    if (
+      layer === "loops-renderer" &&
+      (!page.includes("Mapped campaign proof") ||
+        !page.includes("color:var(--campaign-text)") ||
+        !page.includes("padding-top:16px"))
+    )
+      throw new Error("Packed Loops renderer did not apply runtime color policy during SSR.");
     if (layer === "redirects" && !page.includes('data-shared-pinia="true"'))
       throw new Error("Packed Redirects store did not use the application Pinia instance.");
     if (

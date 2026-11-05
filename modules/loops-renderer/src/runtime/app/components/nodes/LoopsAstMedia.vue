@@ -4,17 +4,21 @@ import {
   getLoopsLmxImageWidth,
   resolveSafeLoopsLmxUrl,
   resolveLoopsLmxVariables,
-  applyInlineStyles,
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const style = useLoopsNodeStyles(
+  () => props.node,
+  () => props.config
+);
 
 const source = computed(() =>
   resolveSafeLoopsLmxUrl(
@@ -33,25 +37,9 @@ const width = computed(() => getLoopsLmxImageWidth(props.node.attributes.width))
 </script>
 
 <template>
-  <hr
-    v-if="node.name === 'Divider'"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-  />
+  <hr v-if="node.name === 'Divider'" :style="style" />
   <a v-else-if="source && imageLink" :href="imageLink" rel="noopener noreferrer">
-    <img
-      :src="source"
-      :alt="alt"
-      :width="width"
-      loading="lazy"
-      :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-    />
+    <img :src="source" :alt="alt" :width="width" loading="lazy" :style="style" />
   </a>
-  <img
-    v-else-if="source"
-    :src="source"
-    :alt="alt"
-    :width="width"
-    loading="lazy"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-  />
+  <img v-else-if="source" :src="source" :alt="alt" :width="width" loading="lazy" :style="style" />
 </template>

@@ -9,6 +9,7 @@ import {
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../types";
+import { resetLoopsRendererBackground } from "../composables/node-styles";
 import { createLoopsRendererConfig } from "../utils/renderer";
 
 const props = defineProps<{
@@ -17,6 +18,8 @@ const props = defineProps<{
   variables: LoopsLmxVariables;
   config?: LoopsRendererConfig;
 }>();
+
+resetLoopsRendererBackground();
 
 const appConfig = useAppConfig() as { loopsRenderer?: LoopsRendererConfig };
 

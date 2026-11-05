@@ -3,11 +3,11 @@ import { computed } from "#imports";
 import {
   resolveSafeLoopsLmxUrl,
   resolveLoopsLmxVariables,
-  applyInlineStyles,
   type LoopsLmxNode,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   node: LoopsLmxNode;
@@ -42,11 +42,9 @@ const inlineTag = computed(() => {
     } as const
   )[props.node.name as "Strong" | "Em" | "Underline" | "Code"];
 });
-const style = computed(() =>
-  applyInlineStyles(
-    props.node.type === "element" ? props.node.attributes : {},
-    props.config.applyInlineStyles !== false
-  )
+const style = useLoopsNodeStyles(
+  () => (props.node.type === "element" ? props.node : undefined),
+  () => props.config
 );
 </script>
 

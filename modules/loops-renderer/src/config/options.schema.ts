@@ -10,6 +10,14 @@ export const EVALUATE_DEFAULTS = {
 export const loopsRendererOptionsSchema = z.strictObject({
   enabled,
   applyInlineStyles: z.boolean().default(true),
+  /** Theme in which archived colors were authored; omitted means unknown. */
+  sourceTheme: z.enum(["light", "dark"]).optional(),
+  colorMapping: z
+    .strictObject({
+      /** Include the nearest-source-color strategy in the auto-imported mapper utility. */
+      approximation: z.boolean().default(false)
+    })
+    .default({ approximation: false }),
   evaluate: z
     .strictObject({
       /** Result for a valid variable whose value is null or undefined. */

@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { computed } from "#imports";
-import {
-  applyInlineStyles,
-  type LoopsLmxElement,
-  type LoopsLmxVariables
-} from "@onderwijsin/loops-core";
+import { type LoopsLmxElement, type LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   /** The ordered or unordered LMX list to render. */
@@ -14,6 +11,10 @@ const props = defineProps<{
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const style = useLoopsNodeStyles(
+  () => props.node,
+  () => props.config
+);
 
 /** Ignores LMX formatting whitespace while retaining only semantic list-item elements. */
 const items = computed(() =>
@@ -27,23 +28,13 @@ const tag = computed(() => (props.node.name === "OrderedList" ? "ol" : "ul"));
 </script>
 
 <template>
-  <component
-    :is="tag"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-  >
-    <li
+  <component :is="tag" :style="style">
+    <LoopsAstListItem
       v-for="(item, index) in items"
       :key="index"
-      :style="applyInlineStyles(item.attributes, config.applyInlineStyles !== false)"
-    >
-      <LoopsAstNode
-        v-for="(child, childIndex) in item.children"
-        :key="childIndex"
-        :node="child"
-        :variables="variables"
-        :config="config"
-        :resolve-variables="true"
-      />
-    </li>
+      :node="item"
+      :variables="variables"
+      :config="config"
+    />
   </component>
 </template>

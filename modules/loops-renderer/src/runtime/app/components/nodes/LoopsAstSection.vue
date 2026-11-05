@@ -2,12 +2,12 @@
 import { computed } from "#imports";
 import {
   evaluate,
-  applyInlineStyles,
   type LoopsLmxCondition,
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   /** Section node whose optional conditional attributes control visibility. */
@@ -15,6 +15,10 @@ const props = defineProps<{
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const style = useLoopsNodeStyles(
+  () => props.node,
+  () => props.config
+);
 
 const condition = computed<LoopsLmxCondition | null>(() => {
   const variable = props.node.attributes.if;
@@ -35,10 +39,7 @@ const isVisible = computed(
 </script>
 
 <template>
-  <section
-    v-if="isVisible"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-  >
+  <section v-if="isVisible" :style="style">
     <LoopsAstNode
       v-for="(child, index) in node.children"
       :key="index"

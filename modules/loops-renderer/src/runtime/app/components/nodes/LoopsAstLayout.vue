@@ -2,17 +2,21 @@
 import { computed } from "#imports";
 import {
   getLoopsLmxColumnsLayout,
-  applyInlineStyles,
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const style = useLoopsNodeStyles(
+  () => (props.node.name === "Section" ? undefined : props.node),
+  () => props.config
+);
 
 const columns = computed(() =>
   props.node.children.filter(
@@ -39,7 +43,7 @@ const columnsStyle = computed(() =>
     v-else-if="node.name === 'Columns' && columns.length"
     :style="{
       ...columnsStyle,
-      ...applyInlineStyles(node.attributes, config.applyInlineStyles !== false)
+      ...style
     }"
   >
     <LoopsAstNode
@@ -50,10 +54,7 @@ const columnsStyle = computed(() =>
       :config="config"
     />
   </div>
-  <div
-    v-else-if="node.name === 'ColumnItem'"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-  >
+  <div v-else-if="node.name === 'ColumnItem'" :style="style">
     <LoopsAstNode
       v-for="(child, index) in node.children"
       :key="index"

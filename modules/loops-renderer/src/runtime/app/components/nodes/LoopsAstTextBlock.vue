@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { computed } from "#imports";
-import {
-  applyInlineStyles,
-  type LoopsLmxElement,
-  type LoopsLmxVariables
-} from "@onderwijsin/loops-core";
+import { type LoopsLmxElement, type LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const style = useLoopsNodeStyles(
+  () => props.node,
+  () => props.config
+);
 
 const tag = computed(() => {
   const tags = {
@@ -32,12 +33,7 @@ const alignmentClass = computed(() => {
 </script>
 
 <template>
-  <component
-    v-if="tag"
-    :is="tag"
-    :class="alignmentClass"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
-  >
+  <component v-if="tag" :is="tag" :class="alignmentClass" :style="style">
     <LoopsAstNode
       v-for="(child, index) in node.children"
       :key="index"
