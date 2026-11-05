@@ -3,11 +3,11 @@ import { computed } from "#imports";
 import {
   isRenderableLoopsLmxElement,
   resolveSafeLoopsLmxUrl,
-  applyInlineStyles,
   type LoopsLmxNode,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   node: LoopsLmxNode;
@@ -15,6 +15,10 @@ const props = defineProps<{
   config: LoopsRendererConfig;
   resolveVariables?: boolean;
 }>();
+const style = useLoopsNodeStyles(
+  () => (props.node.type === "element" && props.node.name === "Button" ? props.node : undefined),
+  () => props.config
+);
 
 const isRenderable = computed(
   () =>
@@ -104,7 +108,7 @@ const buttonLink = computed(() =>
     :href="buttonLink"
     rel="noopener noreferrer"
     class="no-underline text-inverted"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="style"
   >
     <LoopsAstInline
       v-for="(child, index) in node.children"
@@ -116,7 +120,7 @@ const buttonLink = computed(() =>
   </UButton>
   <span
     v-else-if="isRenderable && node.type === 'element' && node.name === 'Button'"
-    :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)"
+    :style="style"
   >
     <LoopsAstInline
       v-for="(child, index) in node.children"

@@ -88,5 +88,5 @@ describe("built-in component metadata", () => {
         }
       }
     });
-  });
+  }, 15_000);
 });

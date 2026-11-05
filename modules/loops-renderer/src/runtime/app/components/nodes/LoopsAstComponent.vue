@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import {
-  applyInlineStyles,
-  type LoopsLmxElement,
-  type LoopsLmxVariables
-} from "@onderwijsin/loops-core";
+import { type LoopsLmxElement, type LoopsLmxVariables } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
-defineProps<{
+const props = defineProps<{
   /** Component nodes contain already-expanded LMX children from the archival parser. */
   node: LoopsLmxElement;
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const style = useLoopsNodeStyles(
+  () => props.node,
+  () => props.config
+);
 </script>
 
 <template>
-  <div :style="applyInlineStyles(node.attributes, config.applyInlineStyles !== false)">
+  <div :style="style">
     <LoopsAstNode
       v-for="(child, index) in node.children"
       :key="index"

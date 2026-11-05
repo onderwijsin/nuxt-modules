@@ -1,4 +1,10 @@
-import { addComponentsDir, createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
+import {
+  addComponentsDir,
+  addImports,
+  createResolver,
+  defineNuxtModule,
+  useLogger
+} from "@nuxt/kit";
 import { defu } from "defu";
 import type { ModuleDependencies } from "@nuxt/schema";
 import {
@@ -12,6 +18,17 @@ import {
 import { version } from "../package.json";
 import { EVALUATE_DEFAULTS, loopsRendererOptionsSchema } from "./config/options.schema";
 import type { ModuleOptions } from "./config/options.schema";
+
+export type {
+  LoopsRendererColorContext,
+  LoopsRendererColorMapper,
+  LoopsRendererColorMap,
+  LoopsRendererColorMappingOptions,
+  LoopsRendererColorProperty,
+  LoopsRendererColors,
+  LoopsRendererConfig,
+  LoopsRendererTheme
+} from "./runtime/types";
 
 const MODULE_KEY = "loopsRenderer";
 const MODULE_NAME = resolveModuleName(MODULE_KEY);
@@ -51,6 +68,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.appConfig.loopsRenderer = defu(
       {
         applyInlineStyles: validatedOptions.applyInlineStyles,
+        sourceTheme: validatedOptions.sourceTheme,
         evaluate: validatedOptions.evaluate
       },
       nuxt.options.appConfig.loopsRenderer
@@ -60,6 +78,15 @@ export default defineNuxtModule<ModuleOptions>({
     const runtimeDir = resolver.resolve("./runtime");
 
     transpileRuntime(nuxt, runtimeDir);
+    addImports({
+      name: "createLoopsColorMapper",
+      from: resolver.resolve(
+        runtimeDir,
+        "app",
+        "utils",
+        validatedOptions.colorMapping.approximation ? "color-mapper-approximation" : "color-mapper"
+      )
+    });
     addComponentsDir({
       path: resolver.resolve(runtimeDir, "app", "components"),
       pathPrefix: false

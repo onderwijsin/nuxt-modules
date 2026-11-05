@@ -3,17 +3,21 @@ import { computed } from "#imports";
 import {
   getLoopsLmxPixels,
   resolveSafeLoopsLmxUrl,
-  applyInlineStyles,
   type LoopsLmxElement,
   type LoopsLmxVariables
 } from "@onderwijsin/loops-core";
 import type { LoopsRendererConfig } from "../../../types";
+import { useLoopsNodeStyles } from "../../composables/node-styles";
 
 const props = defineProps<{
   node: LoopsLmxElement;
   variables: LoopsLmxVariables;
   config: LoopsRendererConfig;
 }>();
+const inlineStyle = useLoopsNodeStyles(
+  () => props.node,
+  () => props.config
+);
 
 type RenderableIcon = { name: string; href: string | null };
 
@@ -37,7 +41,7 @@ const style = computed(() => ({
   display: "flex",
   gap: `${getLoopsLmxPixels(props.node.attributes.gap, 0, 200) ?? 16}px`,
   fontSize: `${getLoopsLmxPixels(props.node.attributes.size, 18, 48) ?? 24}px`,
-  ...applyInlineStyles(props.node.attributes, props.config.applyInlineStyles !== false)
+  ...inlineStyle.value
 }));
 
 /**

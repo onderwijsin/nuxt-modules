@@ -17,4 +17,15 @@ describe("renderer utilities", () => {
       }
     });
   });
+
+  it("keeps runtime color policy and lets a renderer override the authored theme", () => {
+    const mapColor = () => "var(--campaign-text)";
+    expect(
+      createLoopsRendererConfig(
+        { sourceTheme: "dark", targetTheme: "light", mapColor },
+        { sourceTheme: "light" }
+      )
+    ).toMatchObject({ sourceTheme: "dark", targetTheme: "light", mapColor });
+    expect(createLoopsRendererConfig({}, { sourceTheme: "dark" }).sourceTheme).toBe("dark");
+  });
 });
