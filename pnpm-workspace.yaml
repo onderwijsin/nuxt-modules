@@ -30,7 +30,7 @@ catalog:
   nuxt-schema-org: 6.2.8
   nuxt-site-config: 4.2.0
   "@nuxt/kit": 4.5.2
-  "@nuxt/schema": 4.5.2
+  "@nuxt/schema": 4.6.4
   "@nuxt/ui": 4.10.0
   "@tanstack/vue-table": 8.21.3
   "@sentry/nuxt": 10.69.0
