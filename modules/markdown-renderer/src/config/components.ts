@@ -16,9 +16,8 @@ interface ResolvedNuxtComponent {
 /**
  * Resolves the persisted Markdown node name for a discovered Vue component.
  *
- * Reference nodes predate the `Markdown` component prefix and are already stored as `:Reference`
- * in Directus. Keeping that public name here lets the Vue implementation use the unambiguous
- * `MarkdownReference` name without migrating persisted content.
+ * Reference and list nodes keep their persisted CMS names while their Vue implementations use
+ * the `Markdown` prefix. Mapping those names here avoids migrating stored content.
  * Nuxt's default component scan may prefix a file in `components/renderer/` as `RendererFoo` even
  * when this module also registers that directory without a path prefix. The filename is the module's
  * stable public contract; `componentName` remains available separately for metadata lookup.
@@ -27,7 +26,10 @@ interface ResolvedNuxtComponent {
  */
 function resolveRendererNodeName(filePath: string): string {
   const fileName = basename(filePath, extname(filePath));
-  return fileName === "MarkdownReference" ? "Reference" : fileName;
+  if (fileName === "MarkdownReference") return "Reference";
+  if (fileName === "MarkdownItemList") return "ItemList";
+  if (fileName === "MarkdownRelatedItemList") return "RelatedItemList";
+  return fileName;
 }
 
 /**

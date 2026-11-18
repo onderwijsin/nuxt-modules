@@ -390,6 +390,8 @@ async function runFocusedAssertions(port, profile, directusMock) {
         await waitForResponse(`http://127.0.0.1:${port}/api/sanity/markdown-renderer`),
         (body) =>
           body.components.includes("MarkdownButton") &&
+          body.components.includes("MarkdownItemList") &&
+          body.components.includes("MarkdownRelatedItemList") &&
           body.components.some((name) => name.endsWith("MarkdownHero")) &&
           !body.components.includes("Unrelated") &&
           !body.components.includes("UButton")
@@ -405,7 +407,14 @@ async function runFocusedAssertions(port, profile, directusMock) {
           body.some(
             (component) => component.name === "MarkdownHero" && component.label === "Hero"
           ) &&
-          !body.some((component) => component.name === "Reference")
+          body.some(
+            (component) =>
+              component.name === "ItemList" &&
+              component.nodeType === "block" &&
+              component.props.items?.items?.properties?.image?.type === "string" &&
+              component.props.items?.items?.properties?.external?.type === "boolean"
+          ) &&
+          !body.some((component) => ["Reference", "RelatedItemList"].includes(component.name))
       );
     }
     const page = await (await waitForResponse(`http://127.0.0.1:${port}/sanity/${layer}`)).text();
@@ -431,16 +440,41 @@ async function runFocusedAssertions(port, profile, directusMock) {
       );
     if (
       layer === "markdown-renderer" &&
-      (!page.includes("Reference proof") || /<reference\b/iu.test(page))
+      (!page.includes("Reference proof") ||
+        !page.includes('href="/events/42"') ||
+        /<reference\b/iu.test(page))
     )
       throw new Error(
-        "Packed Markdown renderer did not resolve Reference outside its component set."
+        "Packed Markdown renderer did not link Reference through referenceConfig outside its component set."
       );
     if (
       layer === "markdown-renderer" &&
       !page.includes('src="https://media.example.com/assets/clip.mp4"')
     )
       throw new Error("Packed Markdown renderer did not prefix the relative video source.");
+    if (
+      layer === "markdown-renderer" &&
+      !page.includes('<span id="existing-fragment" class="markdown-anchor"></span>')
+    )
+      throw new Error("Packed Markdown renderer did not render the fragment anchor.");
+    if (
+      layer === "markdown-renderer" &&
+      (!page.includes("Packed item list") ||
+        !page.includes("Packed list description") ||
+        !page.includes('src="/assets/list-image.svg"') ||
+        !/<a\b[^>]*href="https:\/\/example\.com\/item-list"[^>]*target="_blank"/u.test(page))
+    )
+      throw new Error(
+        "Packed Markdown renderer did not render the item list and its external link."
+      );
+    if (
+      layer === "markdown-renderer" &&
+      (!page.includes("Packed related article") ||
+        !page.includes("Related snapshot proof") ||
+        !page.includes('href="/articles/packed-related-article"') ||
+        /<related-item-list\b/iu.test(page))
+    )
+      throw new Error("Packed Markdown renderer did not map and link its CMS-owned related list.");
   }
   if (profile.modules.includes("@onderwijsin/nuxt-directus-client") && !directusDisabled) {
     const response = await fetch(`http://127.0.0.1:${port}/auth-state`, {

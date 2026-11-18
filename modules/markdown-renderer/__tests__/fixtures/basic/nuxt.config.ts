@@ -8,7 +8,14 @@ export default defineNuxtConfig({
   ],
   appConfig: { ui: { prose: { p: { base: "markdown-prose-proof" } } } },
   markdownRenderer: {
+    referenceConfig: { linkResolver: "~/utils/resolveReferencePath" },
+    relatedItemListConfig: {
+      mapItem: "~/utils/mapRelatedItem",
+      linkResolver: "~/utils/resolveRelatedItemPath"
+    },
     videoBaseUrl: "https://media.example.com/assets/",
-    componentSets: { demo: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"] }
+    componentSets: {
+      demo: ["ItemList", "MarkdownAnchor", "MarkdownButton", "MarkdownCallout", "MarkdownHero"]
+    }
   }
 });

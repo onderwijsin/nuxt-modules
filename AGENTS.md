@@ -1,141 +1,114 @@
-# AGENTS.md
+# Working on Nuxt modules
 
 > Operational contract for coding agents working in this repository.
 
+This pnpm workspace contains standalone Nuxt 4 modules under `modules/`, supporting packages under
+`packages/`, and one isolated playground per module. Installable consumer skills live under
+`skills/`; maintainer skills live under `.agents/skills/`.
+
 ## Sources and precedence
 
-Use repository guidance with these roles:
+1. The user's current request defines the outcome and scope and takes precedence over repository
+   guidance.
+2. This file sets repository constraints. Follow more specific applicable `AGENTS.md` instructions
+   within their scope.
+3. [Agent workflow](docs/agent-workflow.md) owns task phases, required skill use, documentation
+   routing, and handoff.
+4. Topic documentation under `docs/` defines contracts, runbooks, and accepted decisions.
+5. Manifests, effective configuration, implementation, tests, and comparable packages establish
+   current behavior and reveal conventions where guidance leaves a gap.
 
-1. The user's current request defines the intended outcome and scope. It authorizes an exception
-   only where this contract explicitly allows user or maintainer approval.
-2. This file defines the mandatory working contract and takes precedence over repository
-   documentation when they conflict.
-3. [`docs/agent-workflow.md`](docs/agent-workflow.md) routes the task to the required repository
-   documentation and defines the delivery process.
-4. Topic documentation under `docs/` defines repository contracts and accepted decisions.
-5. Existing implementation, tests, and nearby packages reveal conventions not yet documented.
-
-Do not treat an implementation that contradicts this contract or the documentation as a new pattern.
-If sources conflict, do not silently choose one: preserve the safer existing contract, report the
-conflict, and ask when the answer could change public behavior or compatibility.
+Existing code does not authorize a pattern that contradicts a documented contract. When sources
+disagree, establish the intended contract before changing behavior. Resolve clear changes within
+scope; surface unresolved conflicts when they affect public behavior or compatibility.
 
 ## Required workflow
 
-For every task:
+Start every task with the [workflow](docs/agent-workflow.md): plan, implement, review, cleanup and
+verify, handoff. Read and apply its five workflow skills and the documentation selected by its
+routing table before making the decisions they govern. Keep each pass within the requested scope; an
+assessment can conclude **no further changes needed**.
 
-1. Run `git status --short` and preserve all pre-existing or unrelated changes.
-2. Identify the affected files, packages, public contracts, runtimes, and release surfaces.
-3. Use the routing table in [`docs/agent-workflow.md`](docs/agent-workflow.md) and read every
-   article triggered by the task. Do not rely on memory or on this file as a substitute for the
-   docs.
-4. Inspect the affected implementation and tests. Before introducing a pattern, inspect a comparable
-   implementation elsewhere in the repository.
-5. Decide the expected impact on code, tests, documentation, consumer skills, dependencies,
-   compatibility, and Changesets before editing.
-6. Implement the smallest root-cause change that satisfies the request and documented contracts.
-7. Review the complete diff, run applicable validation, and reconcile every impact decision.
-8. Use the exact handoff structure in [`docs/agent-workflow.md`](docs/agent-workflow.md).
-
-For module creation, maintenance, testing, documentation, or restructuring, use the
-`authoring-nuxt-modules` skill. For a production-readiness or pre-publish review, use the
-`auditing-nuxt-modules` skill. Skills route the work; `docs/` remains the repository source of
-truth.
+For TypeScript code, configuration, or convention decisions, apply
+[TypeScript conventions across phases](docs/agent-workflow.md#typescript-conventions-across-phases).
+Module work also uses `authoring-nuxt-modules` and `nuxt-module-utils`; production-readiness and
+pre-publish reviews use `auditing-nuxt-modules`. Skills route the work; `docs/` owns repository
+contracts.
 
 ## Design priorities
 
-When multiple valid solutions exist, prefer, in order:
+Prefer, in order: correctness, small changes, existing patterns, readability, type safety, and
+performance. Choose the smallest maintainable solution, rather than optimizing for fewer lines.
+Reuse shared utilities, framework capabilities, and installed dependencies where their semantics
+fit. Add abstractions, configuration, defensive branches, or refactors only for a concrete current
+need.
 
-1. Correctness
-2. Small changes
-3. Existing patterns
-4. Readability
-5. Type safety
-6. Performance
+Keep presentational concerns in components and reusable logic in composables. Preserve route and
+file naming contracts. Fix verified causes; workarounds or symptom-masking changes require explicit
+permission. Keep adjacent cleanup outside the task.
 
-Keep presentational concerns in components and reusable logic in composables. Preserve existing
-route and file naming contracts. Do not perform opportunistic refactors.
+## Safety and compatibility
 
-## Non-negotiable rules
-
-- Do not introduce breaking UX or API-shape changes without an explicit request and compatibility
-  decision.
-- Do not implement workarounds, quick fixes, or symptom-masking changes without explicit permission.
-  Verify and address the root cause.
-- Do not edit `.husky/**` unless explicitly requested.
-- Do not edit `.agents/skills/**` unless explicitly requested.
-- Do not add dependencies unless explicitly requested and demonstrated to improve codebase health
-  and quality.
-- Do not change Vitest coverage include paths unless explicitly requested.
-- Do not add tests solely to meet coverage thresholds. Add tests for known risks, contracts, or
-  regression prevention.
-- Do not add global type stubs to fix TypeScript issues unless specifically requested.
-- Do not introduce TypeScript assertions or casts unless explicitly requested or approved by the
-  human maintainer. Model the types correctly.
-- Use Zod for boundary validation where applicable.
-- Preserve Node server and Cloudflare Workers runtime compatibility.
-- Pin every third-party GitHub Action to a full immutable commit SHA and retain the intended release
-  or tag in an inline comment. Mutable refs such as `@v1`, `@v4`, `@main`, branches, and tags are
-  prohibited.
-- When a module's public API or consumer-visible behavior changes, update its package README and
-  matching installable consumer skill under `skills/` in the same change.
-- When work changes, documents, or relies on `packages/module-utils`, keep
-  [`docs/module-cookbook/module-utils.md`](docs/module-cookbook/module-utils.md), its focused
-  articles, public exports, and runtime subpaths synchronized.
-- Create one Changeset file per concern. Unrelated package changes require separate Changesets even
-  when they affect the same package or have the same release level.
-- Do not commit changes. The human collaborator reviews and commits them unless the current request
-  explicitly says otherwise.
-- Do not try to verify changes by starting a browser session manually.
+- Preserve unrelated work and supported UX, APIs, runtime configuration, generated types, and
+  package contracts. Breaking changes require an explicit request and compatibility decision.
+- Validate untrusted boundaries with Zod where applicable. Preserve Node server and Cloudflare
+  Workers compatibility, including SSR/client and build/runtime boundaries.
+- Changes to `.husky/**`, `.agents/skills/**`, or Vitest coverage include paths require an explicit
+  request. Do not weaken checks to make a change pass.
+- New dependencies require an explicit request and demonstrated codebase benefit. TypeScript
+  assertions or casts require an explicit request or human-maintainer approval; global type stubs
+  require an explicit request. Model types correctly instead of bypassing errors.
+- Pin third-party GitHub Actions to full immutable commit SHAs, retaining the intended release or
+  tag in an inline comment. Mutable branches and tags are prohibited.
+- Do not verify changes by starting a browser session manually.
 
 ## Package manager and workspace safety
 
-Follow [`docs/workspace.md`](docs/workspace.md) for the complete tooling contract.
+Use Node.js 24 and the exact pnpm version in `package.json`. Agents invoke it as
+`corepack pnpm ...`; user-facing documentation uses `pnpm ...` unless Corepack itself is relevant.
+Follow [workspace and tooling](docs/workspace.md) for commands, ownership, and dependency rules.
 
-- Use the exact pnpm version declared in `package.json`, invoked as `corepack pnpm ...` in agent-run
-  commands. Use `pnpm ...` in user-facing documentation unless Corepack itself is relevant.
 - Never install dependencies or modify, delete, relink, or repair `node_modules` in the human
-  collaborator's primary checkout.
-- Do not override pnpm's configured store or create a repository-local store.
-- Run dependency-mutating commands only when the task requires dependency changes. Otherwise keep
-  `node_modules`, `pnpm-lock.yaml`, and pnpm configuration unchanged.
-- Every dependency addition or change must use a workspace catalog entry, and catalog versions must
-  be exact pins rather than ranges.
-- If pnpm reports a store mismatch or isolation is unavailable, stop and report it instead of
-  modifying the primary checkout.
+  collaborator's primary checkout. Use an isolated checkout when installation is necessary.
+- Run dependency-mutating commands only for required dependency changes. Otherwise preserve
+  `node_modules`, `pnpm-lock.yaml`, and pnpm configuration.
+- Preserve the configured external pnpm store; never override it or create a repository-local store.
+- Dependency additions and version changes use workspace catalog entries with exact pins. Peer
+  compatibility ranges follow the workspace contract.
+- If isolation is unavailable or pnpm reports a store mismatch, stop and report it instead of
+  altering the primary checkout.
 
-## Completion gates
+## Completion and handoff
 
-A task is complete when its applicable checks pass, or when an inapplicable or blocked check is
-recorded with a reason. Choose checks by the risk and scope of the change. Never claim success for a
-skipped or failing check. Include the exact command and blocker in the handoff.
+Select local checks by the task's changed or explicitly reviewed surfaces and affected consumers
+using [verification selection](docs/testing.md#selecting-verification-for-a-change). Unrelated dirty
+files do not expand the task. Required hooks, CI, build, package, and release gates remain in force.
+Report actual results and exact commands; never call a skipped or failing check successful.
 
-Use the [validation decision tree](docs/agent-workflow.md#6-validate-in-proportion-to-risk) to
-select checks. Also confirm maintainer and consumer documentation, matching consumer skills for
-public behavior changes, applicable JSDoc, runtime and compatibility contracts, and correctly scoped
-Changesets (or record a concrete reason each does not apply).
+Add a permanent test only for a meaningful protection gap that existing coverage does not adequately
+protect. A code edit, bug fix, or review finding alone does not require another test. Follow the
+[testing policy](docs/testing.md#choosing-and-maintaining-tests); coverage and test count are not
+goals.
 
-## Required handoff
+Reconcile implementation, tests, applicable JSDoc, maintainer docs, consumer docs and skills,
+dependencies, compatibility, and release impact before finishing:
 
-Every final handoff must use the applicable exact template in
-[`docs/agent-workflow.md`](docs/agent-workflow.md). The requirement is part of the contract, not
-optional presentation guidance.
+- Public module API or consumer-visible behavior changes update the package README and matching
+  installable consumer skill under `skills/` together.
+- Work that changes, documents, or relies on `packages/module-utils` keeps its
+  [cookbook](docs/module-cookbook/module-utils.md), focused articles, public exports, and runtime
+  subpaths synchronized. Shared-package changes also follow their routed maintainer-skill contracts.
+- Use one Changeset per public-package concern. Unrelated changes need separate entries even for the
+  same package or release level; follow [publishing](docs/publishing.md).
 
-For a change, include all of these sections:
-
-- `Changed`: a list of concrete changes;
-- `Validation`: passed, skipped, blocked, or failing checks with exact commands;
-- `Contracts and documentation`: compatibility impact, synchronized documentation and consumer
-  skills, and the Changeset decision;
-- `Risks and follow-up`: remaining risks or `None`; and
-- `Commit message`: a ready-to-copy Conventional Commit message in a fenced `text` block.
-
-For a read-only diagnosis, review, or audit, include `Verdict`, `Findings`,
-`Validation and evidence`, `Contracts and impact`, `Risks and follow-up`, and
-`Suggested commit message`. Use the documented read-only value when there is no coherent change to
-commit.
+Finish when the scoped diff is reviewed, affected contracts agree, and applicable checks pass or
+their blockers are recorded. Use the applicable exact
+[handoff template](docs/agent-workflow.md#5-handoff), including concrete reasons for inapplicable
+contract gates. Commit, push, or create PRs only when requested; the human collaborator otherwise
+reviews and commits the work.
 
 ## When to ask
 
-Ask instead of guessing when requirements remain ambiguous after inspection, equally valid
-architectural directions would create materially different contracts, a change could break
-compatibility, or completion requires broader authority than the user granted.
+Ask when missing information or an unresolved conflict materially changes scope, correctness,
+compatibility, or another consequential decision. Resolve routine choices from repository evidence
+and continue work already authorized.

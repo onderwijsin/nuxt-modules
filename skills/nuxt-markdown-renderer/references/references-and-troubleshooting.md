@@ -35,9 +35,10 @@ type ResolveReferencePath = (
 ) => string | undefined;
 ```
 
-The resolver is synchronous and default-exported from the configured file. It receives the
-collection, item, source label, author text, and optional snapshot. Return a non-empty route or URL
-to render a link; return `undefined` for unsupported collections.
+Set `markdownRenderer.referenceConfig.linkResolver` to the resolver file path. The resolver is
+synchronous and default-exported from that file. It receives the collection, item, source label,
+author text, and optional snapshot. Return a non-empty route or URL to render a link; return
+`undefined` for unsupported collections.
 
 ```ts
 // app/utils/resolveReferencePath.ts
@@ -57,11 +58,15 @@ export default resolveReferencePath;
 export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-markdown-renderer"],
   markdownRenderer: {
-    resolveReferencePath: "~/utils/resolveReferencePath",
+    referenceConfig: { linkResolver: "~/utils/resolveReferencePath" },
     componentSets: { article: ["MarkdownButton", "MarkdownCallout"] }
   }
 });
 ```
+
+The previous top-level `resolveReferencePath` option is removed and rejected by validation. Migrate
+its path into `referenceConfig.linkResolver`; the resolver function signature and persisted content
+are unchanged. This is a breaking configuration change intentionally released as a minor.
 
 For different presentation, create `app/components/renderer/MarkdownReference.vue` (or the
 configured renderer directory). It replaces the built-in while keeping stored `:Reference` syntax.

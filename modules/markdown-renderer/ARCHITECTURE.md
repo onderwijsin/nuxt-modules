@@ -25,6 +25,21 @@ static imports of the same plugin. The plugin captures the app-config base URL a
 rewrites relative string sources in its Comark `post` hook. Vue's compiled top-level await preserves
 the setup context; Nuxt supplies the async rendering boundary.
 
+`MarkdownRelatedItemList` accepts ordered CMS selections and delegates presentation to the built-in
+`MarkdownItemList`. Their persisted node names remain `RelatedItemList` and `ItemList`, following
+the `MarkdownReference` → `Reference` convention in `resolveRendererNodeName`.
+`runtime/shared/types.ts` owns the plain `RelatedItem` interface; `map-related-items.ts` applies
+consumer callbacks without reordering or runtime validation. As with references, consumers own
+validation at their CMS/content ingestion boundary. The `referenceConfig` and
+`relatedItemListConfig` options are strict objects of optional callback paths. Both use
+`linkResolver`; the related-list object also accepts `mapItem`. Module setup resolves each path
+through Nuxt Kit and aliases it to its default-exported callback, with built-in fallbacks for
+omitted paths. Callbacks run in both SSR and client code. The default keeps labels and leaves rows
+unlinked. The old flat `resolveReferencePath` and `relatedItemList` options are rejected. Like
+`Reference`, this CMS-owned node bypasses component sets and is excluded from editor metadata. The
+metadata source bundle includes shared types so imported `MarkdownItemList` prop types still resolve
+when parsing packaged sources.
+
 ## Editor metadata path
 
 `src/schema/editor-component-schema.ts` owns the Zod contracts and all derived types for the
@@ -51,8 +66,8 @@ carried through the `specialInputType` tag's `config` field in the endpoint outp
 schema, and the transformer forwards those validated fields without a per-input mapping. String
 shorthand is allowed when the config schema accepts an empty object. The checklist at the top of the
 schema file covers adding a control. `component-metadata-handler.ts` handles CORS, component-set
-selection, and the HTTP response. The endpoint returns an array of editor components; `Reference` is
-omitted because the Directus editor owns that node.
+selection, and the HTTP response. The endpoint returns an array of editor components; `Reference`
+and `RelatedItemList` are omitted because the CMS owns those editor nodes.
 
 Inference and merge precedence belong in `metadata.ts`, not in the Zod schemas: TypeScript supplies
 the prop structure, and the macro only overrides editor-specific fields. The schemas validate each

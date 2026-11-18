@@ -5,6 +5,7 @@ import { defineBuildConfig } from "unbuild";
 
 const rendererDirectory = "runtime/app/components/renderer";
 const metadataSupportSources = [
+  "runtime/shared/types.ts",
   "runtime/app/utils/define-editor-component-schema.ts",
   "schema/editor-component-schema.ts"
 ];

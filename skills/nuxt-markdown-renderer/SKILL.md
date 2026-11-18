@@ -22,13 +22,14 @@ lazy application components, and metadata for the Directus Markdown editor.
      overrides, the complete editor macro API, nested fields, and the Directus endpoint.
    - [Reference links and troubleshooting](references/references-and-troubleshooting.md): the public
      resolver type, persisted reference syntax, disabled behavior, and diagnostic checks.
-3. Use public package imports and Nuxt auto-imports in application code. The supported runtime
-   export is the `ResolveReferencePath` type from `@onderwijsin/nuxt-markdown-renderer/runtime`.
-   Keep editor schema calls static in renderer SFCs so the compiler can extract them.
+3. Use public package imports and Nuxt auto-imports in application code. The runtime entrypoint
+   `@onderwijsin/nuxt-markdown-renderer/runtime` exports the `ResolveReferencePath`, `RelatedItem`,
+   `ItemListItem`, `MapRelatedItem`, and `ResolveRelatedItemPath` types. Keep editor schema calls
+   static in renderer SFCs so the compiler can extract them.
 4. Check the application's rendered content and, for editor changes, the actual metadata response.
    An editor label does not rename a Markdown node; a component set controls runtime resolution as
-   well as editor choices. The reserved `Reference` node always resolves regardless of the set and
-   remains excluded from metadata.
+   well as editor choices. The CMS-owned `Reference` and `RelatedItemList` nodes always resolve
+   regardless of the set and remain excluded from metadata.
 
 All references are bundled with this skill and remain usable when installed outside this repository.
 
@@ -74,9 +75,15 @@ const content = "# Welcome\n\nRead **Markdown** and MDC in your Nuxt application
 - Put custom components directly in `app/components/renderer/`, or the configured directory below
   `app/components/`. Nested files are not discovered.
 - Use registered Markdown node names in MDC and `componentSets`, not editor labels. The built-in
-  `MarkdownReference` is registered as `Reference`.
+  `MarkdownReference`, `MarkdownItemList`, and `MarkdownRelatedItemList` implementations retain the
+  persisted node names `Reference`, `ItemList`, and `RelatedItemList` respectively.
 - Import `defineEditorComponentSchema` from `#imports` in custom renderer SFCs. Its top-level field
   map is `properties`; the metadata HTTP response uses `props`.
+- Configure callback file paths inside `referenceConfig` and `relatedItemListConfig`. Both accept
+  `linkResolver`; the related-list object also accepts `mapItem`. Each file default-exports a
+  function. The removed flat `resolveReferencePath` and `relatedItemList` options are rejected.
+  Migrate existing references to `referenceConfig.linkResolver`; this breaking change is
+  intentionally a minor release.
 - Special editor inputs (`image`, `url`, `icon`) require inferred string props, including nested
   fields. Icon inputs require a non-empty `collections` array.
 - The metadata endpoint is public. `corsOrigin` controls browser access and provides no

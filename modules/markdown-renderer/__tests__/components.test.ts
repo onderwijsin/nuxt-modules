@@ -21,6 +21,14 @@ describe("renderer component registry", () => {
             filePath: "/project/app/components/renderer/MarkdownReference.vue"
           },
           {
+            pascalName: "MarkdownItemList",
+            filePath: "/project/app/components/renderer/MarkdownItemList.vue"
+          },
+          {
+            pascalName: "RendererMarkdownRelatedItemList",
+            filePath: "/project/app/components/renderer/MarkdownRelatedItemList.vue"
+          },
+          {
             pascalName: "Nested",
             filePath: "/project/app/components/renderer/nested/Nested.vue"
           },
@@ -30,6 +38,11 @@ describe("renderer component registry", () => {
       )
     ).toEqual([
       {
+        name: "ItemList",
+        componentName: "MarkdownItemList",
+        filePath: "/project/app/components/renderer/MarkdownItemList.vue"
+      },
+      {
         name: "MarkdownHero",
         componentName: "RendererMarkdownHero",
         filePath: "/project/app/components/renderer/MarkdownHero.vue"
@@ -38,6 +51,11 @@ describe("renderer component registry", () => {
         name: "Reference",
         componentName: "MarkdownReference",
         filePath: "/project/app/components/renderer/MarkdownReference.vue"
+      },
+      {
+        name: "RelatedItemList",
+        componentName: "RendererMarkdownRelatedItemList",
+        filePath: "/project/app/components/renderer/MarkdownRelatedItemList.vue"
       },
       {
         name: "Video",
