@@ -43,47 +43,44 @@ packing the module for npm, so consumers receive the package transitively.
 The following table lists the public runtime utilities and their import locations. The signatures
 use the source-level generic types; type-only exports are listed separately below.
 
-| Utility                          | Calling signature                                                                                                                                                  | Import from                             |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| `attempt`                        | `attempt<T>(operation: () => T \| Promise<T>): Promise<AttemptResult<T>>`                                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
-| `attemptSync`                    | `attemptSync<T>(operation: () => T): AttemptResult<T>`                                                                                                             | `@onderwijsin/nuxt-module-utils/shared` |
-| `attemptWithRetry`               | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                                  | `@onderwijsin/nuxt-module-utils/shared` |
-| `toEntries`                      | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
-| `fromEntries`                    | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
-| `keys`                           | `keys<T extends object>(object: T): (keyof T)[]`                                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
-| `resolveModuleName`              | `resolveModuleName(moduleKey: string): string`                                                                                                                     | `@onderwijsin/nuxt-module-utils/build`  |
-| `resolveLoggerScope`             | `resolveLoggerScope(moduleKey: string): string`                                                                                                                    | `@onderwijsin/nuxt-module-utils/build`  |
-| `isPrepareMode`                  | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                               | `@onderwijsin/nuxt-module-utils/build`  |
-| `transpileRuntime`               | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                           | `@onderwijsin/nuxt-module-utils/build`  |
-| `moduleSetup`                    | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ConsolaInstance): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/build`  |
-| `moduleDependenciesWhenEnabled`  | `moduleDependenciesWhenEnabled<T extends object>(options: false \| { enabled?: boolean } \| undefined, dependencies: T): T \| Record<string, never>`               | `@onderwijsin/nuxt-module-utils/build`  |
-| `validateModuleOptions`          | `validateModuleOptions<S extends ZodType>(options: unknown, schema: S, log: ConsolaInstance): z.output<S>`                                                         | `@onderwijsin/nuxt-module-utils/build`  |
-| `useDirectusSetupCache`          | `useDirectusSetupCache(nuxt)` returns the module-setup-scoped cache shared by Directus modules for one Nuxt instance; it is cleared after `modules:done`.          | `@onderwijsin/nuxt-module-utils/build`  |
-| `withDirectusSetupCache`         | `withDirectusSetupCache(nuxt, identity, handler)` coalesces and caches one successful setup operation by stable identity.                                          | `@onderwijsin/nuxt-module-utils/build`  |
-| `getDirectusSetupHandlerId`      | `getDirectusSetupHandlerId(handler)` returns a process-local identity for a custom setup handler reference.                                                        | `@onderwijsin/nuxt-module-utils/build`  |
-| `enabled`                        | Zod schema: `z.boolean().default(true)`                                                                                                                            | `@onderwijsin/nuxt-module-utils/build`  |
-| `isDefined`                      | `isDefined<T>(value: T): value is Exclude<T, undefined>`                                                                                                           | `@onderwijsin/nuxt-module-utils/shared` |
-| `isRecord`                       | `isRecord(value: unknown): value is Record<string, unknown>`                                                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
-| `createDirectusRestClient`       | `createDirectusRestClient<Schema>({ baseUrl, fetch?, accessToken? }): DirectusRestClient<Schema>`                                                                  | `@onderwijsin/nuxt-module-utils/shared` |
-| `isArray`                        | `isArray(value: unknown): value is unknown[]`                                                                                                                      | `@onderwijsin/nuxt-module-utils/shared` |
-| `isString`                       | `isString(value: unknown): value is string`                                                                                                                        | `@onderwijsin/nuxt-module-utils/shared` |
-| `isNonEmptyString`               | `isNonEmptyString(value: unknown): value is string`                                                                                                                | `@onderwijsin/nuxt-module-utils/shared` |
-| `isNonBlankString`               | `isNonBlankString(value: unknown): value is string`                                                                                                                | `@onderwijsin/nuxt-module-utils/shared` |
-| `isNumber`                       | `isNumber(value: unknown): value is number`                                                                                                                        | `@onderwijsin/nuxt-module-utils/shared` |
-| `isFiniteNumber`                 | `isFiniteNumber(value: unknown): value is number`                                                                                                                  | `@onderwijsin/nuxt-module-utils/shared` |
-| `isInteger`                      | `isInteger(value: unknown): value is number`                                                                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
-| `isBoolean`                      | `isBoolean(value: unknown): value is boolean`                                                                                                                      | `@onderwijsin/nuxt-module-utils/shared` |
-| `isFunction`                     | `isFunction(value: unknown): value is (...args: never[]) => unknown`                                                                                               | `@onderwijsin/nuxt-module-utils/shared` |
-| `hasKeys`                        | `hasKeys(value: Record<string, unknown>): boolean`                                                                                                                 | `@onderwijsin/nuxt-module-utils/shared` |
-| `hasKey`                         | `hasKey<Key extends PropertyKey>(value: object, key: Key): value is object & Record<Key, unknown>`                                                                 | `@onderwijsin/nuxt-module-utils/shared` |
-| `hasMatchingRequestToken`        | `hasMatchingRequestToken(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                 | `@onderwijsin/nuxt-module-utils/server` |
-| `isAdmin`                        | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                                 | `@onderwijsin/nuxt-module-utils/server` |
-| `isDevelopmentAuthBypassEnabled` | `isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean`                                                                          | `@onderwijsin/nuxt-module-utils/server` |
-| `assertAdminAccess`              | `assertAdminAccess(event: H3Event, options: AdminAuthOptions, isDevelopment: boolean): void`                                                                       | `@onderwijsin/nuxt-module-utils/server` |
-| `discoverSourceFiles`            | `discoverSourceFiles(directory: string): string[]`                                                                                                                 | `@onderwijsin/nuxt-module-utils/build`  |
-| `instanceSchema`                 | Shared Directus instance schema (`baseUrl`, `proxyToken`)                                                                                                          | `@onderwijsin/nuxt-module-utils/build`  |
-| `clientSchema`                   | Shared Directus client schema excluding instance credentials                                                                                                       | `@onderwijsin/nuxt-module-utils/build`  |
-| `sitemapSchema`                  | Shared Directus sitemap source schema                                                                                                                              | `@onderwijsin/nuxt-module-utils/build`  |
+| Utility                          | Calling signature                                                                                                                                               | Import from                             |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `attempt`                        | `attempt<T>(operation: () => T \| Promise<T>): Promise<AttemptResult<T>>`                                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
+| `attemptSync`                    | `attemptSync<T>(operation: () => T): AttemptResult<T>`                                                                                                          | `@onderwijsin/nuxt-module-utils/shared` |
+| `attemptWithRetry`               | `attemptWithRetry<T>(operation: () => T \| Promise<T>, options?: AttemptRetryOptions): Promise<AttemptResult<T>>`                                               | `@onderwijsin/nuxt-module-utils/shared` |
+| `toEntries`                      | `toEntries<T extends object>(value: T): [keyof T, T[keyof T]][]`                                                                                                | `@onderwijsin/nuxt-module-utils/shared` |
+| `fromEntries`                    | `fromEntries<K extends PropertyKey, V>(entries: Iterable<readonly [K, V]>): Record<K, V>`                                                                       | `@onderwijsin/nuxt-module-utils/shared` |
+| `keys`                           | `keys<T extends object>(object: T): (keyof T)[]`                                                                                                                | `@onderwijsin/nuxt-module-utils/shared` |
+| `resolveModuleName`              | `resolveModuleName(moduleKey: string): string`                                                                                                                  | `@onderwijsin/nuxt-module-utils/build`  |
+| `resolveLoggerScope`             | `resolveLoggerScope(moduleKey: string): string`                                                                                                                 | `@onderwijsin/nuxt-module-utils/build`  |
+| `isPrepareMode`                  | `isPrepareMode(nuxt: Nuxt): boolean`                                                                                                                            | `@onderwijsin/nuxt-module-utils/build`  |
+| `transpileRuntime`               | `transpileRuntime(nuxt: Nuxt, runtimeDir: string): void`                                                                                                        | `@onderwijsin/nuxt-module-utils/build`  |
+| `moduleSetup`                    | `moduleSetup<T extends BaseModuleOptions>(moduleName: string, options: T, log: ModuleLogger): { start: () => void; end: () => void; isEnabled: () => boolean }` | `@onderwijsin/nuxt-module-utils/build`  |
+| `moduleDependenciesWhenEnabled`  | `moduleDependenciesWhenEnabled<T extends object>(options: false \| { enabled?: boolean } \| undefined, dependencies: T): T \| Record<string, never>`            | `@onderwijsin/nuxt-module-utils/build`  |
+| `validateModuleOptions`          | `validateModuleOptions<S extends $ZodType>(options: unknown, schema: S, log: Pick<ModuleLogger, "info">): output<S>`                                            | `@onderwijsin/nuxt-module-utils/build`  |
+| `useDirectusSetupCache`          | `useDirectusSetupCache(nuxt)` returns the module-setup-scoped cache shared by Directus modules for one Nuxt instance; it is cleared after `modules:done`.       | `@onderwijsin/nuxt-module-utils/build`  |
+| `withDirectusSetupCache`         | `withDirectusSetupCache(nuxt, identity, handler)` coalesces and caches one successful setup operation by stable identity.                                       | `@onderwijsin/nuxt-module-utils/build`  |
+| `getDirectusSetupHandlerId`      | `getDirectusSetupHandlerId(handler)` returns a process-local identity for a custom setup handler reference.                                                     | `@onderwijsin/nuxt-module-utils/build`  |
+| `enabled`                        | Zod schema: `z.boolean().default(true)`                                                                                                                         | `@onderwijsin/nuxt-module-utils/build`  |
+| `isDefined`                      | `isDefined<T>(value: T): value is Exclude<T, undefined>`                                                                                                        | `@onderwijsin/nuxt-module-utils/shared` |
+| `isRecord`                       | `isRecord(value: unknown): value is Record<string, unknown>`                                                                                                    | `@onderwijsin/nuxt-module-utils/shared` |
+| `createDirectusRestClient`       | `createDirectusRestClient<Schema>({ baseUrl, fetch?, accessToken? }): DirectusRestClient<Schema>`                                                               | `@onderwijsin/nuxt-module-utils/shared` |
+| `isArray`                        | `isArray(value: unknown): value is unknown[]`                                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
+| `isString`                       | `isString(value: unknown): value is string`                                                                                                                     | `@onderwijsin/nuxt-module-utils/shared` |
+| `isNonEmptyString`               | `isNonEmptyString(value: unknown): value is string`                                                                                                             | `@onderwijsin/nuxt-module-utils/shared` |
+| `isNonBlankString`               | `isNonBlankString(value: unknown): value is string`                                                                                                             | `@onderwijsin/nuxt-module-utils/shared` |
+| `isNumber`                       | `isNumber(value: unknown): value is number`                                                                                                                     | `@onderwijsin/nuxt-module-utils/shared` |
+| `isFiniteNumber`                 | `isFiniteNumber(value: unknown): value is number`                                                                                                               | `@onderwijsin/nuxt-module-utils/shared` |
+| `isInteger`                      | `isInteger(value: unknown): value is number`                                                                                                                    | `@onderwijsin/nuxt-module-utils/shared` |
+| `isBoolean`                      | `isBoolean(value: unknown): value is boolean`                                                                                                                   | `@onderwijsin/nuxt-module-utils/shared` |
+| `isFunction`                     | `isFunction(value: unknown): value is (...args: never[]) => unknown`                                                                                            | `@onderwijsin/nuxt-module-utils/shared` |
+| `hasKeys`                        | `hasKeys(value: Record<string, unknown>): boolean`                                                                                                              | `@onderwijsin/nuxt-module-utils/shared` |
+| `hasKey`                         | `hasKey<Key extends PropertyKey>(value: object, key: Key): value is object & Record<Key, unknown>`                                                              | `@onderwijsin/nuxt-module-utils/shared` |
+| `hasMatchingRequestToken`        | `hasMatchingRequestToken(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                              | `@onderwijsin/nuxt-module-utils/server` |
+| `isAdmin`                        | `isAdmin(event: H3Event, token: string \| undefined, headerName: string): boolean`                                                                              | `@onderwijsin/nuxt-module-utils/server` |
+| `isDevelopmentAuthBypassEnabled` | `isDevelopmentAuthBypassEnabled(isDevelopment: boolean, devAuthBypass: boolean): boolean`                                                                       | `@onderwijsin/nuxt-module-utils/server` |
+| `assertAdminAccess`              | `assertAdminAccess(event: H3Event, options: AdminAuthOptions, isDevelopment: boolean): void`                                                                    | `@onderwijsin/nuxt-module-utils/server` |
+| `discoverSourceFiles`            | `discoverSourceFiles(directory: string): string[]`                                                                                                              | `@onderwijsin/nuxt-module-utils/build`  |
 
 ## `discoverSourceFiles`
 
@@ -224,7 +221,9 @@ transpileRuntime(nuxt, runtimeDir);
 
 `moduleSetup` provides consistent lifecycle logging and an enabled check for a Nuxt module. Its
 returned `start` and `end` functions log loading state; `isEnabled` logs and returns `false` when
-`options.enabled === false`.
+`options.enabled === false`. Its structural `ModuleLogger` requires only `start`, `success`, and
+`info` methods accepting a message string, so Nuxt Kit's `useLogger()` and focused test loggers work
+without assertions or Consola-specific state.
 
 ```ts
 import { moduleSetup } from "@onderwijsin/nuxt-module-utils/build";
@@ -269,6 +268,23 @@ const options = validateModuleOptions(rawOptions, turnstileOptionsSchema, log);
 
 Define the complete module schema, including the shared `enabled` field, in
 `src/config/options.schema.ts`.
+
+The schema boundary uses `$ZodType` and `output<S>` from `zod/v4/core`, following
+[Zod's library-author guidance](https://zod.dev/library-authors). Top-level core `safeParse` accepts
+both Classic and Mini schemas without requiring Classic instance methods or local augmentations. The
+logger requires only `info`. Parsing remains synchronous; output inference includes defaults and
+transforms, and invalid options keep the existing formatted log and thrown error.
+
+Zod is a required peer (`^4.4.3`), with an exact catalog development dependency. Keep the peer owned
+by the application when exposing schemas or accepting application-created schemas; a private pinned
+Zod can make types from different versions incompatible. The only exported schema is `enabled`,
+which remains a Classic boolean default schema and resolves through the same peer installation. The
+`/shared`, `/server`, and root compatibility exports do not expose Zod schema types.
+
+Validate changed schema boundaries outside the workspace with the packed consumer's normal profile
+and `--module-utils-compatibility` profile (Nuxt Kit 4.6.2 / Zod 4.6.7). These check peer identity,
+real Nuxt loggers, composition with `enabled`, output inference, parsing, errors, and disabled
+handling. See [external consumer validation](../workspace.md#external-consumer-validation).
 
 ## `enabled`
 
@@ -319,7 +335,8 @@ if (isAdmin(event, runtimeConfig.module.adminToken, runtimeConfig.module.adminHe
 
 The package also exports `AttemptResult` and `AttemptRetryOptions` from
 `@onderwijsin/nuxt-module-utils/shared`, and `BaseModuleOptions` from
-`@onderwijsin/nuxt-module-utils/build` or `@onderwijsin/nuxt-module-utils/types`. Use type-only
-imports for these contracts. Declare `@onderwijsin/nuxt-module-utils` as a `workspace:^` runtime
-dependency, and inspect the generated bundle or tarball to ensure the package resolves correctly.
-Never import `test-utils` from published runtime code.
+`@onderwijsin/nuxt-module-utils/build` or `@onderwijsin/nuxt-module-utils/types`. `ModuleLogger` is
+also exported from `/build` and `/types`. Use type-only imports for these contracts. Declare
+`@onderwijsin/nuxt-module-utils` as a `workspace:^` runtime dependency, and inspect the generated
+bundle or tarball to ensure the package resolves correctly. Never import `test-utils` from published
+runtime code.

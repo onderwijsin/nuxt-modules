@@ -1,1 +1,1 @@
-export type { BaseModuleOptions } from "./build/setup";
+export type { BaseModuleOptions, ModuleLogger } from "./build/setup";

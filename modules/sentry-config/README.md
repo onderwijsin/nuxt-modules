@@ -6,12 +6,13 @@ without rewriting the initialization options.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-sentry-config @nuxt/ui vue
+pnpm add @onderwijsin/nuxt-sentry-config @sentry/nuxt@^10.69.0 @nuxt/ui vue
 ```
 
-The application supplies `@nuxt/ui`, `vue` as peer dependencies so module runtime code shares the
-application's instances. Nuxt module registration remains automatic. `@nuxt/ui` is optional when the
-diagnostics page is disabled.
+The application supplies `@sentry/nuxt`, `@nuxt/ui`, and `vue` as peer dependencies so module
+runtime code and initialization types use the application's SDK. `@sentry/nuxt` is required,
+including when diagnostic tools are disabled. Nuxt module registration remains automatic. `@nuxt/ui`
+is optional when the diagnostics page is disabled.
 
 ```ts
 export default defineNuxtConfig({
@@ -109,6 +110,12 @@ When `configFile` is omitted, the module uses these defaults:
 The consumer config is shallow-merged over the defaults, so every field can be replaced. Set
 `enabled: false` to keep the generated wiring inert in a particular deployment.
 
+`sendDefaultPii: false` disables automatic user IP collection. It does not sanitize data attached by
+application code or integrations: the v10 Nitro integration can still forward request cookies and
+authorization headers. Apply your required redaction through Sentry data scrubbing or a
+consumer-owned `beforeSend` hook. `enableLogs: false` disables SDK logs when overridden in your
+server config or after spreading the client defaults.
+
 ## Diagnostic test tools
 
 By default, the module provides a small diagnostic page at `/_sentry` and a deliberate-error
@@ -149,8 +156,9 @@ initializes Sentry twice and can produce duplicate instrumentation and difficult
 ### Plug-and-play startup (default)
 
 `autoInjectServerConfig` defaults to `true`. At build time the module places an import of the
-emitted preload at the top of `.output/server/index.mjs`, so the ordinary Nitro command is
-sufficient:
+emitted preload at the top of `.output/server/index.mjs` through Rollup output, before a development
+worker loads the entry. Cold and cached development starts use the same wiring, and source maps
+remain managed by Rollup. The ordinary Nitro command is sufficient:
 
 ```sh
 node .output/server/index.mjs
@@ -256,6 +264,18 @@ to retain the upstream Nitro upload plugin.
 
 ## Compatibility
 
-Developed and tested against Nuxt 4.5.x, Nitro 2.13.x, and Sentry 10.69.x. The package requires
-Node.js 24 or newer for builds and Node deployments. Node.js 22 may work but is untested and
-unsupported.
+Developed against Nuxt 4.5.x and Nitro 2.13.x. The required Sentry peer range is `^10.69.0`; packed
+consumers are checked with 10.69.0 and 10.78.0. The package requires Node.js 24 or newer for builds
+and Node deployments. Node.js 22 may work but is untested and unsupported.
+
+### SDK migration
+
+When upgrading from 0.2.3, explicitly install `@sentry/nuxt@^10.69.0` in the application. The module
+no longer installs a private SDK copy. Keep other Sentry SDK packages on the same version.
+
+SDK 11 is unsupported in this release. Its removed `sendDefaultPii` and `enableLogs` options
+conflict with the exported defaults and documented overrides. Its bundled server initialization and
+compatibility preload also require a separate initialization-ownership decision. Supporting SDK 11
+needs a separate compatible module release with explicit `dataCollection` defaults and packed
+Node/Cloudflare validation; widening the peer range is insufficient. See
+[Sentry's v11 migration guide](https://docs.sentry.io/platforms/javascript/guides/nuxt/migration/v10-to-v11/).

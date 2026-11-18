@@ -16,7 +16,9 @@ import {
 import { join, resolve } from "node:path";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
+import { createRequire } from "node:module";
 import { consumerModules, getLayerName } from "./layer-registry.mjs";
+import { discoverWorkspacePackages } from "../../scripts/package-validation.mjs";
 import {
   findMissingWorkspaceDependencies,
   resolvePackedDependencies,
@@ -29,7 +31,14 @@ const packagesDirectory = resolve(
     join(root, ".artifacts", "packages")
 );
 const keepConsumer = process.argv.includes("--keep");
+const moduleUtilsCompatibility = process.argv.includes("--module-utils-compatibility");
 const sharedRuntimeRegression = process.argv.includes("--shared-runtime-regression");
+const vueuseNuxtVersion = process.argv
+  .find((argument) => argument.startsWith("--vueuse-nuxt-version="))
+  ?.slice("--vueuse-nuxt-version=".length);
+const sentrySdkVersion = process.argv
+  .find((argument) => argument.startsWith("--sentry-sdk-version="))
+  ?.slice("--sentry-sdk-version=".length);
 const markdownRuntimeRegression = process.argv.includes("--markdown-runtime-regression");
 const markdownDocumentsPrefix = process.argv.includes("--markdown-documents-prefix");
 const directusDisabled = process.argv.includes("--directus-disabled");
@@ -267,6 +276,26 @@ async function runFocusedAssertions(port, profile, directusMock) {
       await waitForResponse(`http://127.0.0.1:${port}/api/sanity/${layer}`),
       (body) => body.layer === layer
     );
+    if (layer === "sentry-config") {
+      await readJson(
+        await waitForResponse(`http://127.0.0.1:${port}/api/sanity/sentry-config`, {
+          headers: {
+            authorization: "Bearer SENTRY_AUTH_SENTINEL",
+            cookie: "session=SENTRY_COOKIE_SENTINEL",
+            "x-forwarded-for": "203.0.113.39"
+          }
+        }),
+        (body) =>
+          body.initializations === 1 &&
+          body.sendDefaultPii === false &&
+          body.enableLogs === true &&
+          body.events?.length === 1 &&
+          body.events[0].includes("SENTRY_PACKED_ERROR") &&
+          body.events[0].includes("/api/sanity/sentry-config") &&
+          !body.events[0].includes('"ip_address"') &&
+          !/SENTRY_(AUTH|COOKIE)_SENTINEL/u.test(body.events[0])
+      );
+    }
     if (layer === "markdown-documents") {
       const prefix = markdownDocumentsPrefix ? "/raw" : "";
       await readJson(
@@ -611,21 +640,49 @@ export async function main() {
   // controls the generated dependency metadata and the fixture's conditional Nuxt config.
   const manifest = readManifest();
   const packageManifests = validateWorkspaceDependencies(manifest);
+  const workspacePackages = discoverWorkspacePackages(root);
   const peerDependencies = {};
   // Keep the normal consumer on the catalog-pinned development graph. Published peer ranges
   // describe compatibility; they should not silently turn this check into a latest-version matrix.
   for (const metadata of packageManifests) {
+    const workspacePackage = workspacePackages.find(
+      ({ manifest }) => manifest.name === metadata.name
+    );
+    if (!workspacePackage) throw new Error(`Unknown workspace package: ${metadata.name}`);
     for (const name of Object.keys(metadata.peerDependencies ?? {})) {
       const developmentManifest = JSON.parse(
-        readFileSync(
-          join(root, "modules", getLayerName(metadata.name), "node_modules", name, "package.json"),
-          "utf8"
-        )
+        readFileSync(join(workspacePackage.directory, "node_modules", name, "package.json"), "utf8")
       );
       peerDependencies[name] = developmentManifest.version;
     }
   }
   const profile = getProfile(manifest);
+  const hasModuleUtils = profile.packageNames.includes("@onderwijsin/nuxt-module-utils");
+  if (moduleUtilsCompatibility && !hasModuleUtils)
+    throw new Error("--module-utils-compatibility requires the packed module utilities package.");
+  const nuxtVersion = moduleUtilsCompatibility ? "4.6.2" : "4.5.2";
+  const moduleUtilsDependencies = hasModuleUtils
+    ? { "@nuxt/kit": nuxtVersion, ...(moduleUtilsCompatibility ? { zod: "4.6.7" } : {}) }
+    : {};
+  if (vueuseNuxtVersion && !profile.modules.includes("@onderwijsin/nuxt-theme-customizer"))
+    throw new Error("--vueuse-nuxt-version requires the packed theme customizer module.");
+  const vueuseDependencies = vueuseNuxtVersion ? { "@vueuse/nuxt": vueuseNuxtVersion } : {};
+  // Nuxt's generated typecheck config requires the Volar plugin shipped by this router.
+  const themeDependencies = profile.modules.includes("@onderwijsin/nuxt-theme-customizer")
+    ? {
+        "vue-router": JSON.parse(
+          readFileSync(
+            createRequire(import.meta.resolve("nuxt")).resolve("vue-router/package.json"),
+            "utf8"
+          )
+        ).version
+      }
+    : {};
+  if (sentrySdkVersion) {
+    if (!profile.modules.includes("@onderwijsin/nuxt-sentry-config"))
+      throw new Error("--sentry-sdk-version requires the packed Sentry config module.");
+    peerDependencies["@sentry/nuxt"] = sentrySdkVersion;
+  }
   const llmsDependencies = profile.modules.includes("@onderwijsin/nuxt-markdown-documents")
     ? {
         "nuxt-llms": JSON.parse(
@@ -647,11 +704,11 @@ export async function main() {
     cpSync(fixtureDirectory, consumerDirectory, { recursive: true });
     writeFileSync(
       join(consumerDirectory, "consumer-profile.json"),
-      `${JSON.stringify({ layers: profile.modules.map(getLayerName), full: profile.full, markdownDocumentsPrefix }, null, 2)}\n`
+      `${JSON.stringify({ layers: profile.modules.map(getLayerName), full: profile.full, markdownDocumentsPrefix, vueuseNuxt: Boolean(vueuseNuxtVersion) }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "package.json"),
-      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...peerDependencies, ...llmsDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
+      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: nuxtVersion, ...peerDependencies, ...moduleUtilsDependencies, ...llmsDependencies, ...vueuseDependencies, ...themeDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "pnpm-workspace.yaml"),
@@ -662,7 +719,7 @@ export async function main() {
         "  sharp: true",
         "  vue-demi: true",
         "overrides:",
-        ...Object.entries(packedDependencies).map(
+        ...Object.entries({ ...packedDependencies, ...themeDependencies }).map(
           ([name, dependency]) => `  ${JSON.stringify(name)}: ${JSON.stringify(dependency)}`
         ),
         ""
@@ -688,6 +745,34 @@ for (const metadata of manifests) {
 `
     );
     run("node", ["--experimental-import-meta-resolve", sharedRuntimeCheck], consumerDirectory);
+    if (hasModuleUtils) {
+      cpSync(
+        join(root, "packages/module-utils/__tests__/fixtures/consumer.ts"),
+        join(consumerDirectory, "module-utils-check.ts")
+      );
+      run(
+        "node",
+        [
+          join(root, "node_modules/typescript/bin/tsc"),
+          "--noEmit",
+          "--strict",
+          "--skipLibCheck",
+          "--module",
+          "NodeNext",
+          "--moduleResolution",
+          "NodeNext",
+          "--target",
+          "ESNext",
+          "--types",
+          "node",
+          "--typeRoots",
+          join(root, "node_modules/@types"),
+          "module-utils-check.ts"
+        ],
+        consumerDirectory
+      );
+      run("node", ["module-utils-check.ts"], consumerDirectory);
+    }
     if (markdownRuntimeRegression) {
       const runtimeCheck = join(consumerDirectory, "check-markdown-runtime.mjs");
       writeFileSync(
@@ -760,7 +845,66 @@ void [options, document, entries, resolved, listed, url, fetchContext];
         consumerDirectory
       );
     }
+    if (profile.modules.includes("@onderwijsin/nuxt-sentry-config")) {
+      writeFileSync(
+        join(consumerDirectory, "sentry-types.ts"),
+        `
+import type { init } from "@sentry/nuxt";
+import { defineSentryServerConfig, defaultSentryClientConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
+import type { SentryInitConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
+const privacyConfig: SentryInitConfig = { sendDefaultPii: false };
+const loggingConfig: SentryInitConfig = { enableLogs: false };
+const config = { ...privacyConfig, ...loggingConfig };
+const sdkConfig: Parameters<typeof init>[0] = defineSentryServerConfig(config);
+const clientConfig: Parameters<typeof init>[0] = { ...defaultSentryClientConfig, ...config };
+void [sdkConfig, clientConfig];
+`
+      );
+      run(
+        "node",
+        [
+          join(root, "node_modules/typescript/bin/tsc"),
+          "--noEmit",
+          "--strict",
+          "--skipLibCheck",
+          "--module",
+          "ESNext",
+          "--moduleResolution",
+          "Bundler",
+          "--target",
+          "ESNext",
+          "sentry-types.ts"
+        ],
+        consumerDirectory
+      );
+    }
     run("pnpm", ["exec", "nuxt", "prepare"], consumerDirectory);
+    if (profile.modules.includes("@onderwijsin/nuxt-theme-customizer")) {
+      writeFileSync(
+        join(consumerDirectory, "tsconfig.theme-customizer.json"),
+        JSON.stringify({
+          extends: "./.nuxt/tsconfig.app.json",
+          compilerOptions: { types: ["node"], typeRoots: [join(root, "node_modules/@types")] },
+          include: [
+            ".nuxt/**/*.d.ts",
+            "consumer-layers/theme-customizer/**/*.vue",
+            "node_modules/@onderwijsin/nuxt-theme-customizer/dist/runtime/app/**/*.vue",
+            "node_modules/@onderwijsin/nuxt-theme-customizer/dist/runtime/app/**/*.ts"
+          ],
+          exclude: []
+        })
+      );
+      run(
+        "node",
+        [
+          join(root, "node_modules/vue-tsc/bin/vue-tsc.js"),
+          "--noEmit",
+          "--project",
+          "tsconfig.theme-customizer.json"
+        ],
+        consumerDirectory
+      );
+    }
     run("pnpm", ["exec", "nuxt", "build"], consumerDirectory);
     const serverEntryPath = join(consumerDirectory, ".output", "server", "index.mjs");
     if (!existsSync(serverEntryPath))

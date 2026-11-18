@@ -86,7 +86,7 @@ const amber = {
 
 export default defineNuxtConfig({
   extends: ["playground-layer"],
-  modules: ["@onderwijsin/nuxt-theme-customizer"],
+  modules: ["@vueuse/nuxt", "@onderwijsin/nuxt-theme-customizer"],
   css: ["~/assets/main.css"],
   ui: {
     theme: {

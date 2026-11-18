@@ -68,14 +68,16 @@
   "dependencies": {
     "@directus/sdk": "catalog:",
     "@nuxt/schema": "catalog:",
-    "consola": "catalog:",
-    "h3": "catalog:",
-    "zod": "catalog:"
+    "h3": "catalog:"
   },
   "devDependencies": {
     "scule": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "zod": "^4.4.3"
   },
   "engines": {
     "node": ">=24"

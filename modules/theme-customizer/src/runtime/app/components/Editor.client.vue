@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { z } from "zod";
-import { useClipboard, useToast, shallowRef, useRuntimeConfig, computed } from "#imports";
+import { useToast, shallowRef, useRuntimeConfig, computed } from "#imports";
+import { useClipboard } from "@vueuse/core";
 
 import { useThemeCustomizerConfirmDialog } from "../composables/confirm-dialog";
 import { useFormModal } from "../composables/form-modal";

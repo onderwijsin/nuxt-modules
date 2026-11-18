@@ -60,7 +60,6 @@ catalog:
   scule: 1.3.0
   simple-icons: 16.28.0
   tailwindcss: 4.3.3
-  consola: 3.4.2
   tsdown: 0.22.14
   defu: 6.1.7
   yaml: 2.9.0
@@ -96,6 +95,8 @@ packages:
 catalogMode: "strict"
 cleanupUnusedCatalogs: true
 overrides:
+  # Keep Nuxt, playgrounds, and SSR dependencies on the catalog Vue runtime.
+  vue: "catalog:"
   zod: 4.4.3
 saveExact: true
 minimumReleaseAge: 1440

@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import type { ModuleDependencies } from "@nuxt/schema";
 import { defu } from "defu";
 
@@ -23,7 +22,6 @@ import {
 import {
   createSentryPreloadPlugin,
   generateCloudflareSentryPluginSource,
-  injectSentryPreloadImport,
   normalizeRollupPlugins,
   resolveSentryConfigFile,
   resolveSentryRuntime,
@@ -164,15 +162,8 @@ export default defineNuxtModule<ModuleOptions>({
         const plugins = options.disableNitroSourceMapUpload
           ? stripSentryNitroRollupPlugin(rollupConfig.plugins)
           : normalizeRollupPlugins(rollupConfig.plugins);
-        plugins.push(createSentryPreloadPlugin(configFile));
+        plugins.push(createSentryPreloadPlugin(configFile, options.autoInjectServerConfig));
         rollupConfig.plugins = plugins;
-
-        if (options.autoInjectServerConfig) {
-          nitro.hooks.hook("compiled", async () => {
-            const serverDir = resolve(nuxt.options.rootDir, nitro.options.output.serverDir);
-            await injectSentryPreloadImport(resolve(serverDir, "index.mjs"));
-          });
-        }
       });
       log.info("Registered the Node Sentry preload configuration.");
     }

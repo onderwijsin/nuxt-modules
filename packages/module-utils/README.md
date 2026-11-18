@@ -50,6 +50,25 @@ process-local strings and are only suitable for the current build. The cache is 
 is not written to Nuxt configuration, coalesces concurrent operations, removes failed operations,
 and is cleared after Nuxt finishes module setup (with instance close as a fallback).
 
+## Build helper compatibility
+
+Zod is a required peer (`^4.4.3`), with 4.4.3 as the development baseline. Module authors supply a
+compatible Zod installation so application-created schemas and exported helpers such as `enabled`
+share that installation. Do not pin a separate Zod copy or add overrides to make schema types match.
+
+`validateModuleOptions` accepts Zod 4 core schemas, including Classic and Mini schemas, and
+preserves their inferred output after defaults and transforms. It keeps synchronous parsing,
+formatted error logging, and the `Invalid module options ☝. Exiting.` error for invalid options.
+
+`moduleSetup` accepts a structural `ModuleLogger` with `start`, `success`, and `info` methods taking
+a message string. `validateModuleOptions` needs only `info`. Nuxt Kit's `useLogger()` satisfies
+these contracts; neither helper requires Consola internals. Import `ModuleLogger` as a type from
+`/build` or `/types` when defining your own logger.
+
+The packed-consumer checks exercise the development baseline and a focused Nuxt Kit 4.6.2 / Zod
+4.6.7 regression profile. This is targeted compatibility evidence, not a matrix of every Zod or Nuxt
+version.
+
 ## API reference
 
 For the complete utility list, signatures, behavior, and examples, see the

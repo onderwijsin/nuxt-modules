@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@onderwijsin/nuxt-sentry-config": "workspace:*",
+    "@sentry/nuxt": "catalog:",
     "nuxt": "catalog:",
     "playground-layer": "workspace:*"
   },

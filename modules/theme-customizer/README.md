@@ -14,8 +14,10 @@ pnpm add @onderwijsin/nuxt-theme-customizer @nuxt/ui @pinia/nuxt pinia pinia-plu
 
 The application supplies `@nuxt/ui`, `@pinia/nuxt`, `pinia`, `pinia-plugin-persistedstate`, `vue` as
 peer dependencies so module runtime code shares the application's instances. Nuxt module
-registration remains automatic. VueUse remains a normal dependency: clipboard and debounce helpers
-do not require shared package state.
+registration remains automatic. Clipboard and debounced font search import their helpers directly
+from the module’s normal `@vueuse/core` dependency; these utilities do not require shared package
+state. The module does not install or register `@vueuse/nuxt`, so applications can use their own
+VueUse Nuxt integration (including v15) or omit it entirely.
 
 The module adds the application’s Pinia package to Nuxt’s transpilation list so its Vue feature
 flags are compiled for SSR.
@@ -59,7 +61,12 @@ Import the stylesheet after Tailwind and Nuxt UI:
 ```
 
 Nuxt UI, Pinia, and persisted-state modules are registered automatically using the application-owned
-peers. VueUse is registered from this package’s normal dependencies.
+peers. Register `@vueuse/nuxt` yourself only if your application needs VueUse auto-imports; it is
+not required by the theme picker or editor.
+
+If your application previously relied on the customizer to provide VueUse auto-imports, install
+`@vueuse/nuxt` and add it to your application's `modules` array. The customizer's own clipboard and
+font helpers work without that integration.
 
 ## Configuration
 

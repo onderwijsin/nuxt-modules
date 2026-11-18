@@ -55,7 +55,9 @@ describe("sentry-config production artifacts", () => {
       expect(existsSync(preloadPath)).toBe(true);
       expect(readFileSync(preloadPath, "utf8")).toContain('runtime: "node-server"');
       expect(readFileSync(preloadPath, "utf8")).toContain("init(sentryConfig)");
-      expect(readFileSync(entryPath, "utf8")).toMatch(/^import '\.\/sentry\.server\.config\.mjs';/);
+      expect(
+        readFileSync(entryPath, "utf8").match(/import '\.\/sentry\.server\.config\.mjs';/gu)
+      ).toHaveLength(1);
       expect(readClientArtifacts()).toContain("sendDefaultPii");
       expect(readClientArtifacts()).toContain("Sentry diagnostics");
       expect(readServerArtifacts()).toContain("Sentry test API route error");

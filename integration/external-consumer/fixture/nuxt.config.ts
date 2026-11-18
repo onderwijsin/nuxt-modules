@@ -5,6 +5,7 @@ const profile = JSON.parse(
 );
 
 export default defineNuxtConfig({
+  modules: profile.vueuseNuxt ? ["@vueuse/nuxt"] : [],
   compatibilityDate: "2025-01-01",
   nitro: {
     storage: {

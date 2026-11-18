@@ -52,6 +52,32 @@ for framework integrations that must use the application's installed version. Or
 self-contained runtime utilities remain dependencies. In user-facing documentation, use `pnpm ...`
 unless Corepack itself is relevant; agents invoke the pinned version as `corepack pnpm ...`.
 
+### Shared Vue runtime in workspace builds
+
+The root `overrides.vue: "catalog:"` keeps transitive Vue dependencies, including Nuxt's runtime, on
+the same exact version as direct workspace dependencies. A catalog alone controls only explicit
+`catalog:` references; it does not align Nuxt's semver dependency with that version. Vue then
+selects its matching `@vue/runtime-*`, reactivity, compiler, and server-renderer packages.
+
+Keep this rule at the workspace boundary. Published modules continue to use application-owned
+runtimes through their supported peer ranges; do not add the workspace Vue patch as a published
+runtime dependency or introduce per-fixture Vue aliases and Nitro inlining.
+
+The split Vue graph previously made Nitro omit `vue/server-renderer/index.mjs` from an otherwise
+successful Loops Renderer playground build. Aligning Vue fixes the traced output without a Nitro
+configuration override. After changing the Vue catalog or Nuxt version, validate a clean frozen
+install in an isolated checkout, run the renderer E2E tests, and build the standalone playground:
+
+```sh
+pnpm --filter loops-renderer-playground build
+node modules/loops-renderer/playground/.output/server/index.mjs
+```
+
+Request `/rendering`, `/color-mapping`, and `/approximation` from that server and check actual
+rendered HTML, not only serialized payloads. Also run the packed-consumer
+`--shared-runtime-regression` profile below, which deliberately uses a different Vue patch outside
+the workspace override.
+
 ### Dependency release-age protection
 
 Third-party dependency versions must be at least one day old before pnpm selects them. The workspace
@@ -156,6 +182,22 @@ credentials and does not call external services. Every module layer must keep it
 assertions local. Pull request CI runs this same consumer validation after package artifacts are
 produced, and the publish workflow runs it against the exact artifacts immediately before the
 unchanged Changesets publish step.
+
+When the artifacts include Module Utils, the consumer installs its Zod peer explicitly and checks
+that its build helpers accept application-created schemas and the real Nuxt Kit logger. The check
+compiles output-inference assertions, then exercises parsing, errors, lifecycle logging, and
+disabled handling against the installed tarball.
+
+Use `--module-utils-compatibility` with a focused Module Utils artifact set to repeat this check on
+Nuxt / Nuxt Kit 4.6.2 and Zod 4.6.7. The normal profile uses the pinned workspace development
+versions. This regression profile does not change the workspace pins or add a general compatibility
+matrix:
+
+```sh
+pnpm pack:packages /tmp/module-utils-artifacts --packages=@onderwijsin/nuxt-module-utils
+pnpm validate:external-consumer --packages-dir=/tmp/module-utils-artifacts
+pnpm validate:external-consumer --packages-dir=/tmp/module-utils-artifacts --module-utils-compatibility
+```
 
 To check the Markdown renderer against Comark 0.6.2 and a consumer Vue patch different from the
 workspace pin, run the packed consumer with `--markdown-runtime-regression`. This profile checks
