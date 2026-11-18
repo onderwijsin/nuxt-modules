@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import * as mini from "zod/mini";
 import {
   enabled,
   moduleDependenciesWhenEnabled,
@@ -60,7 +61,7 @@ describe("transpileRuntime", () => {
 describe("moduleSetup", () => {
   it("logs setup lifecycle events and allows enabled modules", () => {
     const log = { start: vi.fn(), success: vi.fn(), info: vi.fn() };
-    const setup = moduleSetup("@onderwijsin/nuxt-example", {}, log as never);
+    const setup = moduleSetup("@onderwijsin/nuxt-example", {}, log);
 
     setup.start();
     setup.end();
@@ -72,8 +73,8 @@ describe("moduleSetup", () => {
   });
 
   it("skips disabled modules and logs the reason", () => {
-    const log = { info: vi.fn() };
-    const setup = moduleSetup("@onderwijsin/nuxt-example", { enabled: false }, log as never);
+    const log = { start: vi.fn(), success: vi.fn(), info: vi.fn() };
+    const setup = moduleSetup("@onderwijsin/nuxt-example", { enabled: false }, log);
 
     expect(setup.isEnabled()).toBe(false);
     expect(log.info).toHaveBeenCalledWith(
@@ -92,10 +93,22 @@ describe("validateModuleOptions", () => {
         name: z.string(),
         retries: z.number().default(2)
       }),
-      log as never
+      log
     );
 
     expect(result).toEqual({ enabled: true, name: "example", retries: 2 });
+  });
+
+  it("accepts Zod Mini schemas through the core validation boundary", () => {
+    const log = { info: vi.fn() };
+    const result = validateModuleOptions(
+      { name: "example" },
+      mini.object({ name: mini.string() }),
+      log
+    );
+
+    expect(result).toEqual({ name: "example" });
+    expect(log.info).not.toHaveBeenCalled();
   });
 
   it("logs and throws when options are invalid", () => {
@@ -105,10 +118,12 @@ describe("validateModuleOptions", () => {
       validateModuleOptions(
         { enabled: true, name: 42 },
         z.object({ enabled: z.boolean(), name: z.string() }),
-        log as never
+        log
       )
     ).toThrow("Invalid module options ☝. Exiting.");
-    expect(log.info).toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledWith(
+      "✖ Invalid input: expected string, received number\n  → at name"
+    );
   });
 
   it("keeps explicit option values", () => {
@@ -117,7 +132,7 @@ describe("validateModuleOptions", () => {
     const result = validateModuleOptions(
       { enabled: false, mode: "production" },
       z.object({ enabled: z.boolean(), mode: z.enum(["development", "production"]) }),
-      log as never
+      log
     );
 
     expect(result).toEqual({ enabled: false, mode: "production" });

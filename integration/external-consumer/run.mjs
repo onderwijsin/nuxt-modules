@@ -18,6 +18,7 @@ import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import { consumerModules, getLayerName } from "./layer-registry.mjs";
+import { discoverWorkspacePackages } from "../../scripts/package-validation.mjs";
 import {
   findMissingWorkspaceDependencies,
   resolvePackedDependencies,
@@ -30,6 +31,7 @@ const packagesDirectory = resolve(
     join(root, ".artifacts", "packages")
 );
 const keepConsumer = process.argv.includes("--keep");
+const moduleUtilsCompatibility = process.argv.includes("--module-utils-compatibility");
 const sharedRuntimeRegression = process.argv.includes("--shared-runtime-regression");
 const vueuseNuxtVersion = process.argv
   .find((argument) => argument.startsWith("--vueuse-nuxt-version="))
@@ -638,21 +640,30 @@ export async function main() {
   // controls the generated dependency metadata and the fixture's conditional Nuxt config.
   const manifest = readManifest();
   const packageManifests = validateWorkspaceDependencies(manifest);
+  const workspacePackages = discoverWorkspacePackages(root);
   const peerDependencies = {};
   // Keep the normal consumer on the catalog-pinned development graph. Published peer ranges
   // describe compatibility; they should not silently turn this check into a latest-version matrix.
   for (const metadata of packageManifests) {
+    const workspacePackage = workspacePackages.find(
+      ({ manifest }) => manifest.name === metadata.name
+    );
+    if (!workspacePackage) throw new Error(`Unknown workspace package: ${metadata.name}`);
     for (const name of Object.keys(metadata.peerDependencies ?? {})) {
       const developmentManifest = JSON.parse(
-        readFileSync(
-          join(root, "modules", getLayerName(metadata.name), "node_modules", name, "package.json"),
-          "utf8"
-        )
+        readFileSync(join(workspacePackage.directory, "node_modules", name, "package.json"), "utf8")
       );
       peerDependencies[name] = developmentManifest.version;
     }
   }
   const profile = getProfile(manifest);
+  const hasModuleUtils = profile.packageNames.includes("@onderwijsin/nuxt-module-utils");
+  if (moduleUtilsCompatibility && !hasModuleUtils)
+    throw new Error("--module-utils-compatibility requires the packed module utilities package.");
+  const nuxtVersion = moduleUtilsCompatibility ? "4.6.2" : "4.5.2";
+  const moduleUtilsDependencies = hasModuleUtils
+    ? { "@nuxt/kit": nuxtVersion, ...(moduleUtilsCompatibility ? { zod: "4.6.7" } : {}) }
+    : {};
   if (vueuseNuxtVersion && !profile.modules.includes("@onderwijsin/nuxt-theme-customizer"))
     throw new Error("--vueuse-nuxt-version requires the packed theme customizer module.");
   const vueuseDependencies = vueuseNuxtVersion ? { "@vueuse/nuxt": vueuseNuxtVersion } : {};
@@ -697,7 +708,7 @@ export async function main() {
     );
     writeFileSync(
       join(consumerDirectory, "package.json"),
-      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: "4.5.2", ...peerDependencies, ...llmsDependencies, ...vueuseDependencies, ...themeDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
+      `${JSON.stringify({ name: "external-nuxt-consumer", private: true, type: "module", packageManager: "pnpm@11.13.1", dependencies: { nuxt: nuxtVersion, ...peerDependencies, ...moduleUtilsDependencies, ...llmsDependencies, ...vueuseDependencies, ...themeDependencies, ...(sharedRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", pinia: "4.0.2" } : {}), ...(markdownRuntimeRegression ? { vue: "3.5.40", "@nuxt/ui": "4.10.0", "@comark/nuxt": "0.6.2", "@comark/vue": "0.6.2", comark: "0.6.2" } : {}), ...packedDependencies } }, null, 2)}\n`
     );
     writeFileSync(
       join(consumerDirectory, "pnpm-workspace.yaml"),
@@ -734,6 +745,34 @@ for (const metadata of manifests) {
 `
     );
     run("node", ["--experimental-import-meta-resolve", sharedRuntimeCheck], consumerDirectory);
+    if (hasModuleUtils) {
+      cpSync(
+        join(root, "packages/module-utils/__tests__/fixtures/consumer.ts"),
+        join(consumerDirectory, "module-utils-check.ts")
+      );
+      run(
+        "node",
+        [
+          join(root, "node_modules/typescript/bin/tsc"),
+          "--noEmit",
+          "--strict",
+          "--skipLibCheck",
+          "--module",
+          "NodeNext",
+          "--moduleResolution",
+          "NodeNext",
+          "--target",
+          "ESNext",
+          "--types",
+          "node",
+          "--typeRoots",
+          join(root, "node_modules/@types"),
+          "module-utils-check.ts"
+        ],
+        consumerDirectory
+      );
+      run("node", ["module-utils-check.ts"], consumerDirectory);
+    }
     if (markdownRuntimeRegression) {
       const runtimeCheck = join(consumerDirectory, "check-markdown-runtime.mjs");
       writeFileSync(

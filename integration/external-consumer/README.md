@@ -29,3 +29,10 @@ runtime, build the application, and serve the editor and picker fixture. The mod
 `@vueuse/nuxt`.
 
 The theme profile uses the workspace's Vue Router version for Nuxt's generated Volar plugin.
+
+When Module Utils is packed, the runner typechecks and executes its package-owned consumer fixture
+against the application's Zod and Nuxt Kit logger. This checks inferred transformed/defaulted
+options, composition with the exported `enabled` schema, and existing lifecycle, disabled, and error
+behavior. The normal profile installs the catalog-pinned Zod peer. Repeat a focused Module Utils
+artifact set with `--module-utils-compatibility` to check Nuxt / Nuxt Kit 4.6.2 and Zod 4.6.7
+without applying the workspace's dependency overrides.

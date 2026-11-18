@@ -1,12 +1,18 @@
 import { kebabCase } from "scule";
 import type { Nuxt } from "@nuxt/schema";
-import type { ConsolaInstance } from "consola";
 import { z } from "zod";
-import type { ZodType } from "zod";
+import { safeParse, prettifyError, type $ZodType, type output } from "zod/v4/core";
 
 export interface BaseModuleOptions {
   /** Indicates if the module is enabled */
   enabled?: boolean;
+}
+
+/** Logging capabilities used by the module lifecycle helpers. */
+export interface ModuleLogger {
+  start(message: string): void;
+  success(message: string): void;
+  info(message: string): void;
 }
 
 /** Shared schema for the module enabled option. */
@@ -65,13 +71,13 @@ export function transpileRuntime(nuxt: Nuxt, runtimeDir: string): void {
  * Creates shared lifecycle helpers for a Nuxt module.
  * @param MODULE_NAME - The module name.
  * @param options - The module options.
- * @param log - The module logger.
+ * @param log - A logger providing start, success, and info methods.
  * @returns Module lifecycle helpers.
  */
 export function moduleSetup<T extends BaseModuleOptions>(
   MODULE_NAME: string,
   options: T,
-  log: ConsolaInstance
+  log: ModuleLogger
 ) {
   const start = () => log.start(`Loading module ${MODULE_NAME}`);
   const end = () => log.success(`Module ${MODULE_NAME} Loaded`);
@@ -87,24 +93,24 @@ export function moduleSetup<T extends BaseModuleOptions>(
 }
 
 /**
- * Validates module options against a Zod schema.
+ * Validates module options against a consumer-owned Zod 4 schema.
  * @param options - The module options.
  * @param schema - The complete module-specific Zod schema, including `enabled`.
- * @param log - The module logger.
+ * @param log - A logger providing an info method.
  * @returns The validated options.
  * @throws When validation fails.
  */
-export function validateModuleOptions<S extends ZodType>(
+export function validateModuleOptions<S extends $ZodType>(
   options: unknown,
   schema: S,
-  log: ConsolaInstance
-): z.output<S> {
-  const result = schema.safeParse(options);
+  log: Pick<ModuleLogger, "info">
+): output<S> {
+  const result = safeParse(schema, options);
 
   if (result.success) {
     return result.data;
   }
 
-  log.info(z.prettifyError(result.error));
+  log.info(prettifyError(result.error));
   throw new Error("Invalid module options ☝. Exiting.");
 }

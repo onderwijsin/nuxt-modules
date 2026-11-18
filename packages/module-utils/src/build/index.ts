@@ -14,4 +14,4 @@ export {
   validateModuleOptions,
   enabled
 } from "./setup";
-export type { BaseModuleOptions } from "./setup";
+export type { BaseModuleOptions, ModuleLogger } from "./setup";

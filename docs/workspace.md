@@ -183,6 +183,22 @@ assertions local. Pull request CI runs this same consumer validation after packa
 produced, and the publish workflow runs it against the exact artifacts immediately before the
 unchanged Changesets publish step.
 
+When the artifacts include Module Utils, the consumer installs its Zod peer explicitly and checks
+that its build helpers accept application-created schemas and the real Nuxt Kit logger. The check
+compiles output-inference assertions, then exercises parsing, errors, lifecycle logging, and
+disabled handling against the installed tarball.
+
+Use `--module-utils-compatibility` with a focused Module Utils artifact set to repeat this check on
+Nuxt / Nuxt Kit 4.6.2 and Zod 4.6.7. The normal profile uses the pinned workspace development
+versions. This regression profile does not change the workspace pins or add a general compatibility
+matrix:
+
+```sh
+pnpm pack:packages /tmp/module-utils-artifacts --packages=@onderwijsin/nuxt-module-utils
+pnpm validate:external-consumer --packages-dir=/tmp/module-utils-artifacts
+pnpm validate:external-consumer --packages-dir=/tmp/module-utils-artifacts --module-utils-compatibility
+```
+
 To check the Markdown renderer against Comark 0.6.2 and a consumer Vue patch different from the
 workspace pin, run the packed consumer with `--markdown-runtime-regression`. This profile checks
 that the renderer resolves the application's Vue, Comark, and Nuxt UI installations and that SSR
