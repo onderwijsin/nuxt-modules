@@ -24,6 +24,7 @@ describe("Sentry runtime configuration", () => {
   it("defaults to Node and detects the Cloudflare module preset", () => {
     expect(resolveSentryRuntime(undefined, undefined)).toBe("node-server");
     expect(resolveSentryRuntime(undefined, "cloudflare_module")).toBe("cloudflare_module");
+    expect(resolveSentryRuntime(undefined, "cloudflare-module")).toBe("cloudflare_module");
     expect(resolveSentryRuntime("node-server", "cloudflare_module")).toBe("node-server");
   });
 
@@ -94,10 +95,14 @@ describe("Sentry runtime configuration", () => {
     }
   );
 
-  it("removes only the duplicate Sentry Nitro upload pass", () => {
+  it("removes Sentry upload and staging while preserving Nitro instrumentation", () => {
     expect(
-      stripSentryNitroRollupPlugin([[{ name: "sentry-rollup-plugin" }], false, { name: "nitro" }])
-    ).toEqual([{ name: "nitro" }]);
+      stripSentryNitroRollupPlugin([
+        [{ name: "sentry-rollup-plugin" }, { name: "sentry-rollup-upload-staging" }],
+        false,
+        { name: "sentry-orchestrion-rollup" }
+      ])
+    ).toEqual([{ name: "sentry-orchestrion-rollup" }]);
   });
 
   it("narrows Rollup plugin values safely", () => {

@@ -39,22 +39,45 @@ export function isCloudflare(
   return runtime === "cloudflare_module";
 }
 
-/** Conservative defaults shared by Node and Cloudflare server initialization. */
-export const defaultSentryServerConfig = {
-  enableLogs: true,
+const commonDefaults = {
   enabled: true,
   sampleRate: 1,
-  sendDefaultPii: false,
   tracesSampleRate: 0.1
 } satisfies SentryInitConfig;
 
-/** Sensible defaults consumers can spread into their `sentry.client.config.ts` initialization. */
-export const defaultSentryClientConfig = {
+const legacyDefaults = {
+  ...commonDefaults,
   enableLogs: true,
-  enabled: true,
-  sampleRate: 1,
-  sendDefaultPii: false,
-  tracesSampleRate: 0.1
+  sendDefaultPii: false
+} satisfies SentryInitConfig & { enableLogs: boolean; sendDefaultPii: boolean };
+
+/** Conservative server defaults for SDK 10. */
+export const defaultSentryServerConfig = { ...legacyDefaults };
+
+/** Defaults for an application-owned SDK 10 client config. */
+export const defaultSentryClientConfig = { ...legacyDefaults };
+
+const piiFieldNames = ["forwarded", "-ip", "remote-", "via", "-user"];
+const restrictiveDataCollection = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: {
+    request: { deny: piiFieldNames },
+    response: { deny: piiFieldNames }
+  },
+  httpBodies: [],
+  urlQueryParams: { deny: piiFieldNames },
+  databaseQueryData: false,
+  genAI: { inputs: false, outputs: false },
+  graphQL: { document: false, variables: false },
+  queues: false,
+  frameContextLines: 7
+} satisfies NonNullable<SentryInitConfig["dataCollection"]> & { queues: boolean };
+
+/** Restrictive SDK 11 defaults for both server and client initialization. */
+export const defaultSentryConfigV11 = {
+  ...commonDefaults,
+  dataCollection: restrictiveDataCollection
 } satisfies SentryInitConfig;
 
 /**

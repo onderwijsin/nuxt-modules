@@ -261,9 +261,10 @@ async function readJson(response, assertion) {
  * @param {number} port - Nitro server port.
  * @param {{modules: string[], full: boolean}} profile - Selected consumer profile.
  * @param {{state: {userRequests: number}}} directusMock - Directus mock state.
+ * @param {boolean} sentryV11 - Whether the consumer installs Sentry SDK 11.
  * @returns {Promise<void>}
  */
-async function runFocusedAssertions(port, profile, directusMock) {
+async function runFocusedAssertions(port, profile, directusMock, sentryV11) {
   await readJson(
     await waitForResponse(`http://127.0.0.1:${port}/api/consumer/profile`),
     (body) =>
@@ -287,14 +288,28 @@ async function runFocusedAssertions(port, profile, directusMock) {
         }),
         (body) =>
           body.initializations === 1 &&
-          body.sendDefaultPii === false &&
-          body.enableLogs === true &&
+          (sentryV11
+            ? body.dataCollection?.userInfo === false && body.dataCollection?.cookies === false
+            : body.sendDefaultPii === false && body.enableLogs === true) &&
           body.events?.length === 1 &&
           body.events[0].includes("SENTRY_PACKED_ERROR") &&
           body.events[0].includes("/api/sanity/sentry-config") &&
           !body.events[0].includes('"ip_address"') &&
           !/SENTRY_(AUTH|COOKIE)_SENTINEL/u.test(body.events[0])
       );
+      if (sentryV11) {
+        const response = await fetch(`http://127.0.0.1:${port}/api/_sentry/trigger-error`);
+        await response.body?.cancel();
+        if (response.status !== 500)
+          throw new Error(`Expected a thrown Sentry diagnostic error, got ${response.status}.`);
+        await readJson(
+          await waitForResponse(`http://127.0.0.1:${port}/api/sanity/sentry-config?inspect=true`),
+          (body) =>
+            body.initializations === 1 &&
+            body.events.filter((event) => event.includes("Sentry test API route error")).length ===
+              1
+        );
+      }
     }
     if (layer === "markdown-documents") {
       const prefix = markdownDocumentsPrefix ? "/raw" : "";
@@ -683,6 +698,7 @@ export async function main() {
       throw new Error("--sentry-sdk-version requires the packed Sentry config module.");
     peerDependencies["@sentry/nuxt"] = sentrySdkVersion;
   }
+  const sentryV11 = peerDependencies["@sentry/nuxt"]?.startsWith("11.") ?? false;
   const llmsDependencies = profile.modules.includes("@onderwijsin/nuxt-markdown-documents")
     ? {
         "nuxt-llms": JSON.parse(
@@ -846,17 +862,19 @@ void [options, document, entries, resolved, listed, url, fetchContext];
       );
     }
     if (profile.modules.includes("@onderwijsin/nuxt-sentry-config")) {
+      const defaults = sentryV11 ? "defaultSentryConfigV11" : "defaultSentryClientConfig";
+      const overrides = sentryV11
+        ? "{ dataCollection: { userInfo: false } }"
+        : "{ sendDefaultPii: false, enableLogs: false }";
       writeFileSync(
         join(consumerDirectory, "sentry-types.ts"),
         `
 import type { init } from "@sentry/nuxt";
-import { defineSentryServerConfig, defaultSentryClientConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
+import { defineSentryServerConfig, ${defaults} } from "@onderwijsin/nuxt-sentry-config/runtime";
 import type { SentryInitConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
-const privacyConfig: SentryInitConfig = { sendDefaultPii: false };
-const loggingConfig: SentryInitConfig = { enableLogs: false };
-const config = { ...privacyConfig, ...loggingConfig };
+const config: SentryInitConfig = ${overrides};
 const sdkConfig: Parameters<typeof init>[0] = defineSentryServerConfig(config);
-const clientConfig: Parameters<typeof init>[0] = { ...defaultSentryClientConfig, ...config };
+const clientConfig: Parameters<typeof init>[0] = { ...${defaults}, ...config };
 void [sdkConfig, clientConfig];
 `
       );
@@ -944,7 +962,7 @@ void [sdkConfig, clientConfig];
     try {
       // Focused checks are the baseline for every profile. Full mode adds only
       // release-level behavior checks after this baseline has completed.
-      await runFocusedAssertions(port, profile, directusMock);
+      await runFocusedAssertions(port, profile, directusMock, sentryV11);
       if (profile.full) await runFullAssertions(port, profile);
       console.log(`External consumer ${profile.full ? "full" : "focused"} checks passed.`);
     } finally {

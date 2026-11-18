@@ -6,13 +6,14 @@ without rewriting the initialization options.
 ## Installation
 
 ```sh
-pnpm add @onderwijsin/nuxt-sentry-config @sentry/nuxt@^10.69.0 @nuxt/ui vue
+pnpm add @onderwijsin/nuxt-sentry-config '@sentry/nuxt@^11.14.0' @nuxt/ui vue
 ```
 
 The application supplies `@sentry/nuxt`, `@nuxt/ui`, and `vue` as peer dependencies so module
 runtime code and initialization types use the application's SDK. `@sentry/nuxt` is required,
 including when diagnostic tools are disabled. Nuxt module registration remains automatic. `@nuxt/ui`
-is optional when the diagnostics page is disabled.
+is optional when the diagnostics page is disabled. Applications on SDK 10 can install
+`@sentry/nuxt@^10.69.0`.
 
 ```ts
 export default defineNuxtConfig({
@@ -49,32 +50,11 @@ resolver function:
 
 ```ts
 // sentry.config.ts
-import {
-  defineSentryServerConfig,
-  isCloudflare,
-  isNode
-} from "@onderwijsin/nuxt-sentry-config/runtime";
+import { defineSentryServerConfig, isCloudflare } from "@onderwijsin/nuxt-sentry-config/runtime";
 
 export default defineSentryServerConfig(({ runtime, runtimeConfig }) => ({
   dsn: runtimeConfig.public.sentry.dsn,
   environment: isCloudflare(runtime) ? "production-edge" : "production-server",
-  sendDefaultPii: isNode(runtime),
-  tracesSampleRate: isCloudflare(runtime) ? 0.05 : 0.1
-}));
-```
-
-Use `isNode(runtime)` and `isCloudflare(runtime)` from the runtime export when a resolver needs a
-readable runtime guard:
-
-```ts
-import {
-  defineSentryServerConfig,
-  isCloudflare,
-  isNode
-} from "@onderwijsin/nuxt-sentry-config/runtime";
-
-export default defineSentryServerConfig(({ runtime }) => ({
-  sendDefaultPii: isNode(runtime),
   tracesSampleRate: isCloudflare(runtime) ? 0.05 : 0.1
 }));
 ```
@@ -95,26 +75,18 @@ The module writes `runtimeConfig.public.sentry.dsn` and `runtimeConfig.public.se
 consumer-owned client and server config files. The DSN is public by design; never put the Sentry
 auth token in runtime config.
 
-When `configFile` is omitted, the module uses these defaults:
+The module sets `enabled: true`, `sampleRate: 1`, and `tracesSampleRate: 0.1` on both SDK majors.
+SDK 10 also gets `sendDefaultPii: false` and `enableLogs: true`. SDK 11 gets the restrictive
+`dataCollection` settings from `defaultSentryConfigV11`, which limit user and request data.
 
-```ts
-{
-  enableLogs: true,
-  enabled: true,
-  sampleRate: 1,
-  sendDefaultPii: false,
-  tracesSampleRate: 0.1
-}
-```
+The module shallow-merges the consumer config over these defaults. Spread
+`defaultSentryConfigV11.dataCollection` when overriding individual categories to retain the other
+restrictions. Set `enabled: false` in your server config to disable event delivery.
 
-The consumer config is shallow-merged over the defaults, so every field can be replaced. Set
-`enabled: false` to keep the generated wiring inert in a particular deployment.
-
-`sendDefaultPii: false` disables automatic user IP collection. It does not sanitize data attached by
-application code or integrations: the v10 Nitro integration can still forward request cookies and
-authorization headers. Apply your required redaction through Sentry data scrubbing or a
-consumer-owned `beforeSend` hook. `enableLogs: false` disables SDK logs when overridden in your
-server config or after spreading the client defaults.
+On SDK 10, integrations can still attach request data such as cookies and authorization headers. Use
+Sentry data scrubbing or a consumer-owned `beforeSend` hook for required redaction. SDK 10 accepts
+`enableLogs: false`. SDK 11 captures logs when you call a Sentry logging API or add a logging
+integration.
 
 ## Diagnostic test tools
 
@@ -149,23 +121,21 @@ enabled, and `@onderwijsin/nuxt-simple-rate-limiter` only when the endpoint is e
 
 ## Node runtime
 
-For Node, the module emits `.output/server/sentry.server.config.mjs`. It initializes Sentry before
-the Nitro server begins handling requests. Choose exactly one startup strategy; using two
-initializes Sentry twice and can produce duplicate instrumentation and difficult-to-diagnose errors.
+### Automatic startup (default)
 
-### Plug-and-play startup (default)
-
-`autoInjectServerConfig` defaults to `true`. At build time the module places an import of the
-emitted preload at the top of `.output/server/index.mjs` through Rollup output, before a development
-worker loads the entry. Cold and cached development starts use the same wiring, and source maps
-remain managed by Rollup. The ordinary Nitro command is sufficient:
+With `autoInjectServerConfig: true`, SDK 10 uses an import of the generated preload at the start of
+Nitro's entrypoint. SDK 11 uses Sentry's bundled Nitro startup, which also captures errors thrown by
+Nitro routes. Both start with the ordinary Nitro command:
 
 ```sh
 node .output/server/index.mjs
 ```
 
-Use this option when the deployment platform controls the Node command or when the simplest
-deployment path is preferred. Do not additionally pass Node's `--import` flag.
+Keep initialization options in `sentry.config.ts` and leave `sentry.configDir` unset for managed
+startup. Sentry checks application and layer files named `sentry.server.config.*` first. Move the
+options from any such file into the shared config when switching to managed startup. Remove
+`sentry.autoInjectServerSentry` and any existing Node `--import` flag when adopting SDK 11 bundled
+startup.
 
 ### Explicit Node preload
 
@@ -190,9 +160,10 @@ For process managers that only expose environment-variable configuration, the eq
 NODE_OPTIONS="--import ./.output/server/sentry.server.config.mjs" node .output/server/index.mjs
 ```
 
-The preload file is emitted in both modes; the option only decides whether the module injects it
-into Nitro's entrypoint. Do not also enable `@sentry/nuxt`'s `sentry.autoInjectServerSentry`,
-because this module is already responsible for server initialization.
+Both SDK majors emit a real initializer in explicit preload mode. Keep the application’s
+initialization options in `sentry.config.ts` and leave `sentry.autoInjectServerSentry` unset. On SDK
+11, this mode uses the standalone SDK startup. Use automatic startup for Nitro’s error and request
+instrumentation.
 
 ## Cloudflare runtime
 
@@ -229,14 +200,15 @@ Nuxt's `NUXT_PUBLIC_SENTRY_DSN` runtime-config override rather than exposing an 
 ## Client defaults
 
 Client config generation is intentionally outside this module. A reusable default object is exported
-for a consumer-owned `sentry.client.config.ts`:
+for a consumer-owned `sentry.client.config.ts`. Use `defaultSentryClientConfig` with SDK 10 and
+`defaultSentryConfigV11` with SDK 11.
 
 ```ts
 import * as Sentry from "@sentry/nuxt";
-import { defaultSentryClientConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
+import { defaultSentryConfigV11 } from "@onderwijsin/nuxt-sentry-config/runtime";
 
 Sentry.init({
-  ...defaultSentryClientConfig,
+  ...defaultSentryConfigV11,
   dsn: "https://public-key@example.ingest.sentry.io/project-id"
 });
 ```
@@ -245,8 +217,8 @@ Sentry.init({
 
 `@sentry/nuxt` can register Sentry upload plugins for both Vite and the final Nitro Rollup build.
 The extra Nitro pass can duplicate artifact work and significantly increase build memory, so this
-module removes the `sentry-rollup-plugin` pass by default. Set `disableNitroSourceMapUpload: false`
-to retain the upstream Nitro upload plugin.
+module removes the Nitro upload and staging plugins by default. Set
+`disableNitroSourceMapUpload: false` to retain them.
 
 ## Options
 
@@ -256,7 +228,7 @@ to retain the upstream Nitro upload plugin.
 | `dsn`                         | omitted                      | Public Sentry DSN exposed as `runtimeConfig.public.sentry.dsn`. |
 | `runtime`                     | inferred                     | Overrides `node-server` or `cloudflare_module` detection.       |
 | `configFile`                  | omitted                      | Consumer config file, resolved from the Nuxt root.              |
-| `autoInjectServerConfig`      | `true`                       | Adds the generated Node preload to Nitro's entry.               |
+| `autoInjectServerConfig`      | `true`                       | Starts Sentry automatically on Node.                            |
 | `disableNitroSourceMapUpload` | `true`                       | Removes the duplicate Nitro Sentry upload pass.                 |
 | `testTools`                   | enabled                      | Optional diagnostic page and controlled-error endpoint.         |
 | `testTools.page`              | `/_sentry`                   | Browser diagnostic page; set to `false` to omit it.             |
@@ -264,18 +236,10 @@ to retain the upstream Nitro upload plugin.
 
 ## Compatibility
 
-Developed against Nuxt 4.5.x and Nitro 2.13.x. The required Sentry peer range is `^10.69.0`; packed
-consumers are checked with 10.69.0 and 10.78.0. The package requires Node.js 24 or newer for builds
-and Node deployments. Node.js 22 may work but is untested and unsupported.
+Developed against Nuxt 4.5.x and Nitro 2.13.x. The required Sentry peer range is
+`^10.69.0 || ^11.14.0`. Keep any other Sentry SDK packages on the same version. The module requires
+Node.js 24 or newer for builds and Node deployments.
 
-### SDK migration
-
-When upgrading from 0.2.3, explicitly install `@sentry/nuxt@^10.69.0` in the application. The module
-no longer installs a private SDK copy. Keep other Sentry SDK packages on the same version.
-
-SDK 11 is unsupported in this release. Its removed `sendDefaultPii` and `enableLogs` options
-conflict with the exported defaults and documented overrides. Its bundled server initialization and
-compatibility preload also require a separate initialization-ownership decision. Supporting SDK 11
-needs a separate compatible module release with explicit `dataCollection` defaults and packed
-Node/Cloudflare validation; widening the peer range is insufficient. See
-[Sentry's v11 migration guide](https://docs.sentry.io/platforms/javascript/guides/nuxt/migration/v10-to-v11/).
+When upgrading to SDK 11, migrate consumer-owned `sendDefaultPii` settings to `dataCollection`,
+remove `enableLogs`, and use the SDK 11 client defaults shown above. See
+[Sentry's SDK 11 migration guide](https://docs.sentry.io/platforms/javascript/guides/nuxt/migration/v10-to-v11/).
