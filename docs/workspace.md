@@ -217,7 +217,8 @@ metadata.
 
 ## Validation
 
-Run repository checks from the root:
+Use the [testing guide](testing.md#selecting-verification-for-a-change) to select local checks by
+affected surface and risk. Run the selected commands from the root; the full command set is:
 
 ```sh
 pnpm format:check
@@ -228,23 +229,19 @@ pnpm build
 pnpm validate:packages
 ```
 
-Apply formatting and lint fixes with `pnpm format` and `pnpm lint:fix`. Root preparation builds
-`@onderwijsin/nuxt-module-utils` before consuming modules. Preparation creates module stubs and
-playground Nuxt types; `build` performs the shared utility build once and then runs the module-only
-`build:packages` phase for full production builds.
+Apply formatting and lint fixes only to task-owned paths, using `pnpm exec oxfmt --write <paths>`
+and `pnpm exec oxlint --fix <paths>`. The root `pnpm format` and `pnpm lint:fix` commands apply to
+the whole repository. Root preparation builds `@onderwijsin/nuxt-module-utils` before consuming
+modules. Preparation creates module stubs and playground Nuxt types; `build` performs the shared
+utility build once and then runs the module-only `build:packages` phase for full production builds.
 
 ### Select additional validation by impact
 
-| Change                                                                     | Additional validation                                                                                      |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Focused source behavior                                                    | Run the owning package's focused Vitest target while iterating.                                            |
-| Module setup, generated types, or playground integration                   | Run `pnpm dev:prepare`, the module build, and the affected playground typecheck/build.                     |
-| Public package exports, dependency classification, or emitted runtime code | Run `pnpm build`, `pnpm validate:packages`, and inspect packed artefacts.                                  |
-| Release-facing or pre-publish work                                         | Run `pnpm pack:packages` and `pnpm validate:external-consumer` with a unique temporary artefact directory. |
-
-Formatting, linting, type checking, and tests remain the completion baseline when applicable. If a
-check cannot run, record the exact command, its result, and the blocker; a narrower successful check
-does not imply that a broader skipped check passed.
+The [verification selection table](testing.md#selecting-verification-for-a-change) owns the local
+check policy, including documentation-only changes, focused tests, affected consumers, and when
+broader checks are required. Use the package and external-consumer commands above for its build and
+artifact checks. Required CI and release gates are unchanged. If a selected check cannot run, record
+the exact command and blocker; a focused success does not imply that a skipped broader check passed.
 
 `pnpm validate:docs` verifies that every public module is represented in the root README package
 table and has a matching installable consumer skill under `skills/`. CI runs this guard for every

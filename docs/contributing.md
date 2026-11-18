@@ -31,18 +31,21 @@ test helpers, use `packages/test-utils`; never import test utilities from publis
 
 ## Validation workflow
 
-Run these commands from the repository root:
+Select local checks with the [testing guide](testing.md#selecting-verification-for-a-change). Keep
+them scoped to the change and affected consumers; use focused package checks while iterating. For
+new modules, major package features or refactors, and release readiness, run the full baseline from
+the repository root:
 
 ```sh
-pnpm format
-pnpm lint:fix
+pnpm format:check
+pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 pnpm validate:packages
 ```
 
-When iterating on one module, use filters without changing the root tooling:
+For focused module checks, use filters without changing the root tooling:
 
 ```sh
 pnpm exec vitest run modules/ui-form-extensions/__tests__
@@ -94,8 +97,9 @@ pull request description.
 
 ## Pull requests
 
-Pull requests must pass formatting, linting, type checking, tests, recursive typechecks, package
-builds, package metadata validation, and packed artefact validation. They may also receive CodeQL
-findings and Dependabot security-update changes; handle those through the
-[security guide](security.md) and the normal review process. Changesets reports release impact in a
-pull request comment. Releases are never published by pull request or push CI.
+Pull requests must pass the checks selected by the repository's CI policy; local check selection
+does not waive required CI or release validation. See [Continuous integration](ci.md) for the
+authoritative phase and scope rules. Pull requests may also receive CodeQL findings and Dependabot
+security-update changes; handle those through the [security guide](security.md) and the normal
+review process. Changesets reports release impact in a pull request comment. Releases are never
+published by pull request or push CI.

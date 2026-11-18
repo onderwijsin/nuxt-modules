@@ -1,27 +1,75 @@
 # Agent workflow and documentation routing
 
-This guide turns the repository contract into a repeatable task workflow. Use it for every change or
-review. `AGENTS.md` contains the non-negotiable rules; this article determines which detailed
-repository guidance applies and how to prove the work is complete.
+Use this workflow for every task: plan, implement, review, cleanup and verify, handoff.
+[AGENTS.md](../AGENTS.md) holds repository constraints; topic docs own technical contracts. This
+article owns the task sequence, required skill use, documentation routes, and handoff.
 
-## 1. Establish the task boundary
+## Required skills
 
-Before editing:
+Read and apply these five skills in their phases for every task. Keep each pass within the task's
+scope; a pass can conclude that no changes are needed.
 
-1. Run `git status --short`. Treat every existing change as user-owned unless the current task
-   clearly created it.
-2. Name the requested outcome, affected package or system, and files likely to change.
-3. Identify possible impact on:
-   - public options, exports, components, composables, auto-imports, routes, and behavior;
-   - runtime configuration, generated types, secrets, SSR, and Node/Cloudflare portability;
-   - dependencies, package metadata, built output, and release scope;
-   - tests, fixtures, playgrounds, maintainer documentation, package READMEs, and consumer skills.
-4. Select every matching row in the routing table. Multiple rows commonly apply.
+| Skill                                                                 | Question                                         | Phase                                                                                   |
+| --------------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| [implement-simply](../.agents/skills/implement-simply/SKILL.md)       | What is the simplest sufficient solution?        | Plan and implement.                                                                     |
+| [review-code-bloat](../.agents/skills/review-code-bloat/SKILL.md)     | Does each capability earn its maintenance cost?  | Review necessity and unsupported flexibility.                                           |
+| [review-code-hygiene](../.agents/skills/review-code-hygiene/SKILL.md) | Is necessary code easy to understand and change? | Review responsibilities, coupling, types, control flow, and error ownership.            |
+| [review-test-value](../.agents/skills/review-test-value/SKILL.md)     | What meaningful failure would this test detect?  | Review behavioral evidence, independent expectations, overlap, and refactor resilience. |
+| [clean-code](../.agents/skills/clean-code/SKILL.md)                   | Which justified improvements should be applied?  | Clean up scoped findings and verify the result.                                         |
 
-Do not start from an isolated file when the behavior crosses a package boundary. Trace the contract
-from configuration or public API through runtime behavior, emitted output, tests, and documentation.
+For documentation-only tasks, apply simplicity, necessity, and clarity to the instructions and
+routes. Test-value review assesses the selected verification; when no tests are affected, conclude
+that pass without expanding into an unrelated suite. For read-only tasks, implementation means
+investigation and cleanup means selecting justified recommendations; preserve the read-only scope.
 
-## 2. Route the task to its sources of truth
+### TypeScript conventions across phases
+
+For TypeScript code, Vue scripts, tests, TypeScript configuration, or convention decisions, also
+read [typescript-conventions](../.agents/skills/typescript-conventions/SKILL.md) and the reference
+branches relevant to the decision. It supplies conventions throughout the workflow, without adding a
+phase.
+
+| Phase     | Apply the reference                                                                                                   |
+| --------- | --------------------------------------------------------------------------------------------------------------------- |
+| Plan      | Resolve applicable contracts and effective compiler, module, formatter, and linter configuration.                     |
+| Implement | Apply relevant conventions while preserving framework and runtime boundaries.                                         |
+| Review    | Distinguish adopted requirements, inferred habits, and recommendations; give a concrete consequence for each finding. |
+| Cleanup   | Preserve the same conventions and contracts while resolving findings.                                                 |
+
+Repository contracts, effective configuration, and framework guidance govern. Skill examples fill
+gaps; they do not authorize tooling or architecture migrations. Keep observations in working context
+unless a coding guide is requested.
+
+Use other applicable workspace skills selected by the routes below or the task's framework. Read
+their instructions and required references before making the decisions they govern.
+
+## 1. Plan
+
+Use `implement-simply` to establish the outcome and direct approach.
+
+1. Read the request and applicable `AGENTS.md` files. Run `git status --short` and preserve existing
+   changes as user-owned unless the task created them.
+2. Name the observable result, owning packages or documentation, and likely affected files. Inspect
+   their implementation, tests, configuration, and scripts, plus a comparable implementation before
+   introducing a pattern.
+3. For every task, read the [module cookbook index](module-cookbook/index.md) and
+   [Module utilities](module-cookbook/module-utils.md), even when no shared utility appears
+   necessary. Select the relevant cookbook articles and every matching documentation route below.
+   Read each selected article completely before making its decision, including applicable feature
+   decisions and skill references.
+4. Trace affected callers, exports, registrations, runtime boundaries, and consumers. Decide the
+   impact on implementation, tests and fixtures, maintainer docs, package READMEs, consumer skills,
+   dependencies and metadata, compatibility, and Changesets. Keep brief reasons in working context,
+   including why an area is unaffected.
+5. Choose the smallest sufficient change and its checks using
+   [verification selection](testing.md#selecting-verification-for-a-change). In the progress update
+   before substantive edits, state the scope, relevant routes and skills, and material assumptions.
+
+Planning is complete when the outcome, owning boundary, applicable contracts, and verification path
+are clear. Resolve routine choices from repository evidence; use `AGENTS.md` for consequential
+conflicts and questions.
+
+### Documentation routes
 
 | Task or affected surface                                                     | Required guidance                                                                                                                                             |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -45,115 +93,61 @@ from configuration or public API through runtime behavior, emitted output, tests
 | Directus session authentication or sealed sessions                           | [`decisions/directus-session-auth.md`](decisions/directus-session-auth.md) and [`decisions/directus-sealed-session.md`](decisions/directus-sealed-session.md) |
 | Simple rate limiter guarantees                                               | [`decisions/simple-rate-limiter.md`](decisions/simple-rate-limiter.md)                                                                                        |
 | Static-text translation compatibility                                        | [`decisions/static-text-i18n-compatibility.md`](decisions/static-text-i18n-compatibility.md)                                                                  |
+| TypeScript code, configuration, or convention decisions                      | [TypeScript conventions across phases](#typescript-conventions-across-phases) and the affected package's effective configuration                              |
+| Local verification selection                                                 | [Testing policy and check selection](testing.md), [workspace commands and safety](workspace.md)                                                               |
+| Agent guidance or task workflow                                              | [Required skills](#required-skills), [repository contract](../AGENTS.md), and the topic docs reached by changed routes                                        |
+| Compatibility claims or runtime validation                                   | [Compatibility testing policy](decisions/compatibility-testing.md)                                                                                            |
+| Directus and Nitro error contracts                                           | [Error normalization decision](decisions/directus-error-normalization.md)                                                                                     |
 
-Read each selected article completely before making its decision. Then inspect nearby code because
-the cookbook records required and recurring patterns but cannot enumerate every valid local
-convention. A decision record is binding for its feature until the user explicitly requests a new
-decision.
+Multiple routes can apply. Topic docs and accepted decisions remain the source of truth; existing
+implementation helps interpret them and does not silently override them.
 
-In the first progress update before substantive edits, name the selected route and the articles
-being used. This gives the collaborator a chance to correct scope without interrupting safe
-inspection.
+## 2. Implement
 
-## 3. Form the implementation plan
+Apply `implement-simply` at the owning boundary, using the
+[module cookbook](module-cookbook/index.md), its task-selected articles, and
+[Module utilities](module-cookbook/module-utils.md) as supporting references alongside the skill.
+Update affected callers, configuration, exports, tests, and documentation together according to the
+planned impacts and routed contracts. Remove support made unused by the change after checking
+surviving consumers.
 
-For every impact category, decide `affected` or `not affected` and why. Keep the reasoning brief,
-but do not silently omit a category.
+Use selected checks while iterating when they provide useful evidence. Keep edits and autofixes
+within scope. Implementation is complete when the requested result reaches all affected paths and
+each changed part has a current purpose.
 
-| Impact          | If affected                                                                                   |
-| --------------- | --------------------------------------------------------------------------------------------- |
-| Implementation  | Change the smallest owning layer and address the verified root cause.                         |
-| Tests           | Add or update tests for the changed invariant or regression risk; never for coverage alone.   |
-| Maintainer docs | Update the article that defines the changed repository pattern or utility contract.           |
-| Consumer docs   | Update the package README for changed public behavior, configuration, compatibility, or APIs. |
-| Consumer skill  | Update `skills/<module>/SKILL.md` alongside the README for the same public change.            |
-| Package/release | Add a Changeset for each public-package concern under the correct SemVer scope.               |
-| Dependencies    | Use an exact catalog pin and verify runtime versus development classification.                |
-| Compatibility   | Verify Node, Cloudflare Workers, SSR/client boundaries, and existing public behavior.         |
+## 3. Review
 
-Documentation synchronization is an impact decision, not a demand for meaningless edits. If no
-documentation changes are needed, record the concrete reason in the handoff. If implementation and
-documentation disagree, verify runtime behavior and reconcile the source of truth in the same task.
+Apply `review-code-bloat`, then `review-code-hygiene`, then `review-test-value` to the task's
+complete diff or named assessment target. Keep these passes read-only and collect findings before
+cleanup. Also review correctness and affected contracts; the three passes do not replace that
+assessment.
 
-## 4. Implement with repository patterns
+Use the [module cookbook](module-cookbook/index.md), its task-selected articles, and
+[Module utilities](module-cookbook/module-utils.md) as supporting references alongside the review
+skills when assessing findings against repository contracts.
 
-- Prefer an existing helper or pattern over a new abstraction when it expresses the same contract.
-- Keep orchestration, build-time logic, runtime logic, public types, and presentation in their
-  documented locations.
-- Validate external boundaries with Zod where applicable. Use focused runtime guards for ordinary
-  narrowing and domain predicates for domain-specific shapes.
-- Verify behavior from code before changing documentation, and verify documentation before claiming
-  a repository convention.
-- Preserve all unrelated work and avoid generated files, broad rewrites, and opportunistic cleanup.
+Use each skill's evidence checks and finding format. Group findings with the same cause and keep
+working notes for resolved findings. A pass ends with evidence-backed findings or a brief
+no-material-findings conclusion; finding counts and lines removed are not goals.
 
-When a documented pattern does not fit, do not bypass it silently. Explain why the module's
-requirements differ and either preserve the local exception or propose a cookbook update.
+## 4. Cleanup and verify
 
-## 5. Audit the diff before validation
+Use `clean-code` to recheck findings against current files and apply justified improvements within
+the authorized task. No fresh approval is needed for scoped fixes. Preserve unresolved candidates
+whose evidence is missing. A cleanup pass may need no edits; a read-only task ends with
+recommendations.
 
-Run and inspect:
+Update affected callers, tests, and docs with each coherent change. Revisit the relevant review pass
+when cleanup changes its evidence. Run the checks selected under
+[verification selection](testing.md#selecting-verification-for-a-change), resolve failures
+introduced by this task, and reconcile the planned impacts and `AGENTS.md` completion gates.
 
-```sh
-git status --short
-git diff --check
-git diff --stat
-git diff -- <affected paths>
-```
+Before handoff, inspect `git status --short`, `git diff --check -- <task-paths>`, and
+`git diff -- <task-paths>`, including any new untracked files separately. Compare task files with
+the starting state when they already contained edits. Confirm the task's diff is focused, affected
+contracts and documentation agree, and material findings are resolved or explicitly deferred.
 
-Confirm that:
-
-- every changed file belongs to the task;
-- public changes have matching README, consumer-skill, and Changeset decisions;
-- module-utils changes have synchronized exports, runtime subpaths, tests, and cookbook references;
-- every module task has applied the `nuxt-module-utils` maintainer skill;
-- `packages/module-utils` changes have synchronized `.agents/skills/nuxt-module-utils/SKILL.md`;
-- `packages/test-utils` changes have synchronized `.agents/skills/nuxt-test-utils/SKILL.md`;
-- new dependencies use exact catalog entries and the right dependency section;
-- generated output and unrelated user changes are absent from the diff; and
-- code has applicable JSDoc and no unapproved casts, assertions, stubs, or compatibility breaks.
-
-## 6. Validate in proportion to risk
-
-Use [`workspace.md`](workspace.md) for command order and environment safety. Select checks based on
-the change's scope and risk; more than one row can apply. A higher tier includes lower-tier checks
-unless they are inapplicable.
-
-| Change                                                                                                                        | Required checks                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| A few lines of Markdown or other documentation edits, with no code or config changes                                          | No formatting, lint, typecheck, or test commands. Review the diff and run `git diff --check`. |
-| A new Markdown file or a documentation edit exceeding 100 lines                                                               | `corepack pnpm format` and `corepack pnpm lint:fix`.                                          |
-| A few lines of code changed in one isolated area                                                                              | `corepack pnpm lint:fix`.                                                                     |
-| Substantial code changes (over 50 lines), type changes, or edits across multiple files that are not tightly coupled           | `corepack pnpm lint:fix` and `corepack pnpm typecheck`.                                       |
-| Tests added or changed                                                                                                        | Run the focused test file or package command for those tests.                                 |
-| Major code work: multiple interdependent files, or linked functions/components/composables implemented or refactored together | `corepack pnpm lint:fix`, `corepack pnpm typecheck`, and `corepack pnpm test`.                |
-| New modules or major features, or a large refactor that changes package behavior, exports, dependencies, or emitted output    | Run the major-work checks, plus the relevant build/package checks and packed-consumer checks. |
-
-For changes that affect formatting, linting, types, or behavior, include the relevant checks even if
-the change is below a size threshold. A focused test does not automatically require the full suite;
-a test-only change uses focused tests unless it also meets a higher tier. If a command is
-inapplicable or blocked, record the exact command and reason. Never describe an unrun check as
-passing.
-
-Completion also requires the following contract gates; record a concrete reason when a gate does not
-apply:
-
-- maintainer and consumer documentation synchronized;
-- matching consumer skill synchronized when public module behavior changes;
-- proper JSDoc present where applicable for code written or touched;
-- runtime and compatibility contracts preserved unless an explicit change was requested; and
-- one correctly scoped Changeset per affected public-package concern.
-
-Add targeted tests while iterating. For package-facing work, select the relevant build and package
-checks; use packed artefact and external-consumer validation for exports, dependencies, emitted
-runtime code, or release readiness.
-
-## 7. Reconcile completion
-
-Before answering, revisit the impact table and completion gates in `AGENTS.md`. Resolve every
-applicable item or state the exact blocker. A task is not complete merely because implementation
-compiles or the requested file changed.
-
-## 8. Required handoff
+## 5. Handoff
 
 Use the change handoff whenever files changed. Use every heading, even for a documentation-only
 change or when validation is blocked:
