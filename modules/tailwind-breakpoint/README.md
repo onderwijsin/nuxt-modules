@@ -5,7 +5,7 @@ computed `--breakpoint-*` CSS variables and reacts to viewport changes through V
 
 ## Installation
 
-Requires Node.js 24+, Nuxt 4, Nuxt UI 4, VueUse 14, Vue 3.5+, and Tailwind CSS 4.
+Requires Node.js 24+, Nuxt 4, Nuxt UI 4, VueUse 14 or 15, Vue 3.5+, and Tailwind CSS 4.
 
 ```sh
 pnpm add @onderwijsin/nuxt-tailwind-breakpoint @nuxt/ui @vueuse/core

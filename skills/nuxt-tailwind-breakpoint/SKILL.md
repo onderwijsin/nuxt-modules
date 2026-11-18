@@ -6,7 +6,7 @@ description:
 
 # Tailwind breakpoint badge
 
-Requires Node.js 24+, Nuxt 4, Nuxt UI 4, VueUse 14, Vue 3.5+, and Tailwind CSS 4.
+Requires Node.js 24+, Nuxt 4, Nuxt UI 4, VueUse 14 or 15, Vue 3.5+, and Tailwind CSS 4.
 
 1. Install `@onderwijsin/nuxt-tailwind-breakpoint`, `@nuxt/ui`, and `@vueuse/core`.
 2. Add `"@onderwijsin/nuxt-tailwind-breakpoint"` to `modules` in `nuxt.config.ts`. The module
