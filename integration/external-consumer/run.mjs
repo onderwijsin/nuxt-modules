@@ -30,6 +30,9 @@ const packagesDirectory = resolve(
 );
 const keepConsumer = process.argv.includes("--keep");
 const sharedRuntimeRegression = process.argv.includes("--shared-runtime-regression");
+const sentrySdkVersion = process.argv
+  .find((argument) => argument.startsWith("--sentry-sdk-version="))
+  ?.slice("--sentry-sdk-version=".length);
 const markdownRuntimeRegression = process.argv.includes("--markdown-runtime-regression");
 const markdownDocumentsPrefix = process.argv.includes("--markdown-documents-prefix");
 const directusDisabled = process.argv.includes("--directus-disabled");
@@ -267,6 +270,26 @@ async function runFocusedAssertions(port, profile, directusMock) {
       await waitForResponse(`http://127.0.0.1:${port}/api/sanity/${layer}`),
       (body) => body.layer === layer
     );
+    if (layer === "sentry-config") {
+      await readJson(
+        await waitForResponse(`http://127.0.0.1:${port}/api/sanity/sentry-config`, {
+          headers: {
+            authorization: "Bearer SENTRY_AUTH_SENTINEL",
+            cookie: "session=SENTRY_COOKIE_SENTINEL",
+            "x-forwarded-for": "203.0.113.39"
+          }
+        }),
+        (body) =>
+          body.initializations === 1 &&
+          body.sendDefaultPii === false &&
+          body.enableLogs === true &&
+          body.events?.length === 1 &&
+          body.events[0].includes("SENTRY_PACKED_ERROR") &&
+          body.events[0].includes("/api/sanity/sentry-config") &&
+          !body.events[0].includes('"ip_address"') &&
+          !/SENTRY_(AUTH|COOKIE)_SENTINEL/u.test(body.events[0])
+      );
+    }
     if (layer === "markdown-documents") {
       const prefix = markdownDocumentsPrefix ? "/raw" : "";
       await readJson(
@@ -626,6 +649,11 @@ export async function main() {
     }
   }
   const profile = getProfile(manifest);
+  if (sentrySdkVersion) {
+    if (!profile.modules.includes("@onderwijsin/nuxt-sentry-config"))
+      throw new Error("--sentry-sdk-version requires the packed Sentry config module.");
+    peerDependencies["@sentry/nuxt"] = sentrySdkVersion;
+  }
   const llmsDependencies = profile.modules.includes("@onderwijsin/nuxt-markdown-documents")
     ? {
         "nuxt-llms": JSON.parse(
@@ -756,6 +784,39 @@ void [options, document, entries, resolved, listed, url, fetchContext];
           join(root, "node_modules/typescript/bin/tsc"),
           "--project",
           "tsconfig.markdown-documents.json"
+        ],
+        consumerDirectory
+      );
+    }
+    if (profile.modules.includes("@onderwijsin/nuxt-sentry-config")) {
+      writeFileSync(
+        join(consumerDirectory, "sentry-types.ts"),
+        `
+import type { init } from "@sentry/nuxt";
+import { defineSentryServerConfig, defaultSentryClientConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
+import type { SentryInitConfig } from "@onderwijsin/nuxt-sentry-config/runtime";
+const privacyConfig: SentryInitConfig = { sendDefaultPii: false };
+const loggingConfig: SentryInitConfig = { enableLogs: false };
+const config = { ...privacyConfig, ...loggingConfig };
+const sdkConfig: Parameters<typeof init>[0] = defineSentryServerConfig(config);
+const clientConfig: Parameters<typeof init>[0] = { ...defaultSentryClientConfig, ...config };
+void [sdkConfig, clientConfig];
+`
+      );
+      run(
+        "node",
+        [
+          join(root, "node_modules/typescript/bin/tsc"),
+          "--noEmit",
+          "--strict",
+          "--skipLibCheck",
+          "--module",
+          "ESNext",
+          "--moduleResolution",
+          "Bundler",
+          "--target",
+          "ESNext",
+          "sentry-types.ts"
         ],
         consumerDirectory
       );

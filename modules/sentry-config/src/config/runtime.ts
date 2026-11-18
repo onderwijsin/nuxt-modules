@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
 
@@ -14,6 +13,7 @@ interface RollupPluginLike {
 }
 
 interface SentryPreloadPlugin extends RollupPluginLike {
+  banner(chunk: { fileName: string; imports: string[] }): string;
   buildStart(this: {
     emitFile(file: { type: "chunk"; id: string; fileName: string }): string;
   }): void;
@@ -110,11 +110,23 @@ export function generateCloudflareSentryPluginSource(configFile?: string): strin
  * Creates the Rollup entry that emits the Node Sentry preload beside Nitro's server entry.
  *
  * @param configFile - Optional absolute consumer config path.
+ * @param autoInjectServerConfig - Whether to import the preload before the Nitro entry starts.
  * @returns Rollup plugin for the emitted preload entry.
  */
-export function createSentryPreloadPlugin(configFile?: string): SentryPreloadPlugin {
+export function createSentryPreloadPlugin(
+  configFile?: string,
+  autoInjectServerConfig = true
+): SentryPreloadPlugin {
   return {
     name: "onderwijsin-sentry-server-config",
+    banner(chunk) {
+      // Rollup can already import the preload as a shared chunk in development.
+      return autoInjectServerConfig &&
+        chunk.fileName === "index.mjs" &&
+        !chunk.imports.includes(SENTRY_PRELOAD_FILENAME)
+        ? `import './${SENTRY_PRELOAD_FILENAME}';`
+        : "";
+    },
     buildStart() {
       this.emitFile({
         type: "chunk",
@@ -157,18 +169,4 @@ export function normalizeRollupPlugins(plugins?: unknown): RollupPluginLike[] {
 
 function isRollupPlugin(value: unknown): value is RollupPluginLike {
   return isRecord(value) && isString(value.name);
-}
-
-/**
- * Adds the generated Sentry preload as the first import in a Node Nitro entrypoint.
- *
- * @param entryFile - Absolute Nitro entrypoint path.
- * @returns Whether the entrypoint was changed.
- */
-export async function injectSentryPreloadImport(entryFile: string): Promise<boolean> {
-  const source = await readFile(entryFile, "utf8");
-  const importStatement = `import './${SENTRY_PRELOAD_FILENAME}';`;
-  if (source.startsWith(importStatement)) return false;
-  await writeFile(entryFile, `${importStatement}\n${source}`, "utf8");
-  return true;
 }

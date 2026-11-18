@@ -71,6 +71,29 @@ describe("Sentry runtime configuration", () => {
     ]);
   });
 
+  it.each([
+    {
+      autoInject: true,
+      fileName: "index.mjs",
+      imports: [],
+      expected: "import './sentry.server.config.mjs';"
+    },
+    {
+      autoInject: true,
+      fileName: "index.mjs",
+      imports: ["sentry.server.config.mjs"],
+      expected: ""
+    },
+    { autoInject: false, fileName: "index.mjs", imports: [], expected: "" },
+    { autoInject: true, fileName: "chunks/nitro.mjs", imports: [], expected: "" }
+  ])(
+    "adds a single preload before output for $fileName (automatic: $autoInject, imports: $imports)",
+    ({ autoInject, fileName, imports, expected }) => {
+      const plugin = createSentryPreloadPlugin(undefined, autoInject);
+      expect(plugin.banner({ fileName, imports })).toBe(expected);
+    }
+  );
+
   it("removes only the duplicate Sentry Nitro upload pass", () => {
     expect(
       stripSentryNitroRollupPlugin([[{ name: "sentry-rollup-plugin" }], false, { name: "nitro" }])

@@ -13,3 +13,10 @@ as health, redirects, and webmanifest behavior.
 Run the contract tests with `pnpm exec vitest run integration/external-consumer/__tests__`. To run
 the packed consumer locally, first build and pack the workspace, then use
 `pnpm validate:external-consumer --packages-dir=/path/to/artifacts`.
+
+For Sentry compatibility checks, include the Sentry config module and its internal dependency
+closure in the artifact set. The normal run explicitly installs its catalog-pinned SDK peer. Repeat
+with `--sentry-sdk-version=10.78.0` to check a different exact SDK without changing the workspace
+catalog. The Sentry layer uses a local transport, checks one initialization and one error event per
+capture, verifies the v10 privacy/logging defaults and consumer-owned payload redaction, and
+typechecks consumer configuration against the chosen SDK.

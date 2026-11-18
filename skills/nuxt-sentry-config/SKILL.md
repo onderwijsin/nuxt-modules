@@ -11,12 +11,13 @@ switching between Nitro's Node and Cloudflare module runtimes.
 ## Installation and Nuxt configuration
 
 ```sh
-pnpm add @onderwijsin/nuxt-sentry-config @nuxt/ui vue
+pnpm add @onderwijsin/nuxt-sentry-config @sentry/nuxt@^10.69.0 @nuxt/ui vue
 ```
 
-The application supplies `@nuxt/ui`, `vue` as peer dependencies so module runtime code shares the
-application's instances. Nuxt module registration remains automatic. `@nuxt/ui` is optional when the
-diagnostics page is disabled.
+The application supplies `@sentry/nuxt`, `@nuxt/ui`, and `vue` as peer dependencies so module
+runtime code and initialization types use the application's SDK. `@sentry/nuxt` is required,
+including when diagnostic tools are disabled. Nuxt module registration remains automatic. `@nuxt/ui`
+is optional when the diagnostics page is disabled.
 
 Register both this module and `@sentry/nuxt/module`. They have separate responsibilities:
 
@@ -171,7 +172,9 @@ The module always emits `.output/server/sentry.server.config.mjs`. Choose exactl
 strategy; using two starts Sentry twice.
 
 The default, plug-and-play strategy is `autoInjectServerConfig: true`. The module places an import
-of the generated preload at the top of `.output/server/index.mjs`, so start Nitro normally:
+of the generated preload at the top of `.output/server/index.mjs` during Rollup output, before
+development workers load it. Cold and cached dev starts retain a single preload import. Start Nitro
+normally:
 
 ```sh
 node .output/server/index.mjs
@@ -239,3 +242,22 @@ This module removes Nitro's duplicate Sentry Rollup source-map upload plugin by 
 follows the reference module's intent: avoid duplicate artifact work from the final Nitro upload
 pass. Set `disableNitroSourceMapUpload: false` only when that Nitro upload pass is intentionally
 required. The `sentry` option remains the place to control whether source maps upload at all.
+
+## SDK compatibility and migration
+
+Install the required `@sentry/nuxt@^10.69.0` peer explicitly when upgrading from 0.2.3. There is no
+private SDK dependency; runtime imports and public initialization types use the application SDK.
+Packed consumers are checked with 10.69.0 and 10.78.0. Keep any other Sentry packages on the same
+SDK version.
+
+SDK 11 is unsupported: it removes `sendDefaultPii` and `enableLogs`, and changes server config
+discovery and initialization ownership. Do not widen the range or assume the v10 defaults preserve
+v11 privacy behavior. A separate compatible release needs explicit `dataCollection` defaults and
+packed Node/Cloudflare validation. See
+[Sentry's migration guide](https://docs.sentry.io/platforms/javascript/guides/nuxt/migration/v10-to-v11/).
+
+The v10 defaults keep automatic user IP collection disabled, but `sendDefaultPii: false` does not
+sanitize data attached by application code or integrations. Nitro request cookies and authorization
+headers can still be forwarded. Configure required redaction with Sentry data scrubbing or a
+consumer-owned `beforeSend` hook. Override `enableLogs: false` in the server config or after
+spreading the client defaults to disable SDK logs.
