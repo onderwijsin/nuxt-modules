@@ -20,10 +20,10 @@ pnpm changeset
 pnpm changeset:status
 ```
 
-Select every affected publishable package, choose the appropriate SemVer impact, and write a concise
-release note. Commit the generated `.changeset/<name>.md` file with the code change. Changesets
-posts a status comment on the pull request showing the release impact. Documentation-only or CI-only
-changes may use the `no-changeset` label instead.
+Select every affected publishable package, choose the appropriate SemVer impact, and write a
+consumer upgrade guide using the requirements below. Commit the generated `.changeset/<name>.md`
+file with the code change. Changesets posts a status comment on the pull request showing the release
+impact. Documentation-only or CI-only changes may use the `no-changeset` label instead.
 
 Use one Changeset file per concern. Do not combine unrelated package changes into one release note,
 even when they affect the same package or use the same SemVer level.
@@ -32,6 +32,31 @@ The local Changeset is input to the release process. Its summary remains the cur
 the configured `@changesets/changelog-git` generator also appends links to the commits included in
 the release. Developers do not need to run `changeset:version` or `changeset:publish` locally. The
 GitHub Actions workflow runs them after the change has been reviewed and merged.
+
+## Changesets as consumer upgrade guides
+
+Each Changeset must make sense on its own when copied into a package changelog or release. Lead with
+the resulting behavior and identify who must act. Include the concrete steps consumers need:
+
+- State required migrations and breaking changes explicitly, including removed keys and defaults.
+  Show before/after configuration and the persisted content names when relevant. Preserve an
+  intentional release-level decision rather than silently changing it while editing release notes.
+- Explain dependency ownership: required and optional peers, supported ranges, installation in the
+  consuming package, and when a dependency belongs in a published module's peers, development, or
+  runtime dependencies. Give copyable commands or manifest fragments; match package upgrade targets
+  to the intended release plan rather than an unbounded future `latest`. Retain existing compatible
+  versions instead of prescribing unrelated upgrades or downgrades.
+- Describe application registration, callback/export changes, startup commands, and removed
+  workarounds where the release requires them. Say when existing consumers need no migration.
+- Distinguish compatible application-owned runtimes from deliberately private utility dependencies.
+  Do not recommend overrides or ignored peer errors as a substitute for supported compatibility.
+- End with checks a consumer can perform in their own application: type generation, typechecking,
+  production build, and the changed runtime behavior. Link to supporting documentation for depth,
+  while keeping mandatory migration steps in the release note itself.
+
+Keep one public-package concern per file, including when several entries contribute to the same
+release. Feature entries should note unchanged peer requirements when those matter for adoption;
+they should not introduce new requirements that the package does not actually have.
 
 ## Release flow
 
