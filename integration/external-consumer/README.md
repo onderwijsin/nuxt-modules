@@ -15,11 +15,11 @@ the packed consumer locally, first build and pack the workspace, then use
 `pnpm validate:external-consumer --packages-dir=/path/to/artifacts`.
 
 For Sentry compatibility checks, include the Sentry config module and its internal dependency
-closure in the artifact set. The normal run explicitly installs its catalog-pinned SDK peer. Repeat
-with `--sentry-sdk-version=10.78.0` to check a different exact SDK without changing the workspace
-catalog. The Sentry layer uses a local transport, checks one initialization and one error event per
-capture, verifies the v10 privacy/logging defaults and consumer-owned payload redaction, and
-typechecks consumer configuration against the chosen SDK.
+closure in the artifact set. The normal run installs its catalog-pinned SDK peer. Repeat with
+`--sentry-sdk-version=11.14.0` to exercise SDK 11 against the same artifacts. The Sentry layer uses
+a local transport to verify initialization, capture, the selected SDK's defaults, and consumer-owned
+redaction. SDK 11 also checks that Nitro captures a thrown route error exactly once. Consumer
+configuration is typechecked against the installed SDK.
 
 Theme customizer runs without a VueUse Nuxt integration by default. Repeat its focused packed
 consumer with `--vueuse-nuxt-version=14.4.0` and `--vueuse-nuxt-version=15.0.0` to check

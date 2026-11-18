@@ -1,4 +1,4 @@
-import type { ModuleDependencies } from "@nuxt/schema";
+import type { ModuleDependencies, Nuxt } from "@nuxt/schema";
 import { defu } from "defu";
 
 import {
@@ -18,10 +18,13 @@ import {
   transpileRuntime,
   validateModuleOptions
 } from "@onderwijsin/nuxt-module-utils/build";
+import { hasKey, isArray, isRecord } from "@onderwijsin/nuxt-module-utils/shared";
 
 import {
   createSentryPreloadPlugin,
   generateCloudflareSentryPluginSource,
+  generateSentryConfigSource,
+  isSentryV11,
   normalizeRollupPlugins,
   resolveSentryConfigFile,
   resolveSentryRuntime,
@@ -67,8 +70,14 @@ function resolveTestTools(testTools?: SentryTestToolsOptions | false): ResolvedT
   };
 }
 
+function usesBundledNodeConfig(nuxt: Nuxt, options?: ModuleOptions): boolean {
+  if (!isSentryV11 || options?.autoInjectServerConfig === false) return false;
+  const upstream = hasKey(nuxt.options, "sentry") ? nuxt.options.sentry : undefined;
+  return upstream !== false && !(isRecord(upstream) && upstream.enabled === false);
+}
+
 /** Registers runtime-specific Sentry server initialization from one consumer config object. */
-export default defineNuxtModule<ModuleOptions>({
+const sentryConfigModule = defineNuxtModule<ModuleOptions>({
   meta: {
     name: MODULE_NAME,
     configKey: MODULE_KEY,
@@ -76,13 +85,37 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility: { nuxt: "^4.0.0" }
   },
   moduleDependencies: (nuxt): ModuleDependencies => {
-    const configuredOptions = nuxt.options.sentryConfig;
-    const testTools =
-      configuredOptions === false || configuredOptions?.enabled === false
-        ? { page: false, endpoint: false }
-        : resolveTestTools(configuredOptions?.testTools);
+    const configured = nuxt.options.sentryConfig;
+    if (configured === false) return {};
+
+    // Nuxt applies tuple options later, but startup ownership must be decided before SDK setup.
+    const entry = isSentryV11
+      ? nuxt.options.modules.find(
+          (module) =>
+            isArray(module) && (module[0] === MODULE_NAME || module[0] === sentryConfigModule)
+        )
+      : undefined;
+    const configuredOptions =
+      isArray(entry) && isRecord(entry[1])
+        ? sentryConfigOptionsSchema.parse(defu(entry[1], configured))
+        : configured;
+    if (configuredOptions?.enabled === false) return {};
+
+    const testTools = resolveTestTools(configuredOptions?.testTools);
+    const preset = nuxt.options.nitro.preset ?? process.env.NITRO_PRESET;
+    const bundledNode =
+      usesBundledNodeConfig(nuxt, configuredOptions) &&
+      resolveSentryRuntime(configuredOptions?.runtime, preset) === "node-server";
 
     return {
+      // Sentry scans app layers before falling back to its config directory.
+      ...(bundledNode
+        ? {
+            "@sentry/nuxt/module": {
+              defaults: { configDir: resolver.resolve("./runtime/server/node") }
+            }
+          }
+        : {}),
       ...(testTools.page === false ? {} : { "@nuxt/ui": { version: "^4.0.0" } }),
       ...(testTools.endpoint === false
         ? {}
@@ -155,6 +188,12 @@ export default defineNuxtModule<ModuleOptions>({
       });
       addServerPlugin(resolver.resolve("./runtime/server/plugins/cloudflare"));
       log.info("Registered Sentry through the Cloudflare Nitro plugin.");
+    } else if (usesBundledNodeConfig(nuxt, options)) {
+      addServerTemplate({
+        filename: "#sentry-config/node-config.mjs",
+        getContents: () => generateSentryConfigSource("node-server", configFile)
+      });
+      log.info("Registered the Sentry SDK 11 bundled Node configuration.");
     } else {
       nuxt.hook("nitro:init", (nitro) => {
         const rollupConfig = nitro.options.rollupConfig ?? { output: {} };
@@ -179,3 +218,5 @@ export default defineNuxtModule<ModuleOptions>({
     end();
   }
 });
+
+export default sentryConfigModule;

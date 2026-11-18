@@ -1,10 +1,16 @@
 import { existsSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { isArray, isRecord, isString } from "@onderwijsin/nuxt-module-utils/shared";
+import sentryPackage from "@sentry/nuxt/package.json" with { type: "json" };
 
 import type { SentryRuntime } from "./options.schema";
 
-const SENTRY_NITRO_ROLLUP_PLUGIN_NAME = "sentry-rollup-plugin";
+export const isSentryV11 = sentryPackage.version.startsWith("11.");
+
+const SENTRY_NITRO_UPLOAD_PLUGINS = new Set([
+  "sentry-rollup-plugin",
+  "sentry-rollup-upload-staging"
+]);
 const SENTRY_PRELOAD_FILENAME = "sentry.server.config.mjs";
 const VIRTUAL_SENTRY_CONFIG_ID = "\0virtual:onderwijsin-sentry-server-config";
 
@@ -33,7 +39,9 @@ export function resolveSentryRuntime(
   nitroPreset: string | undefined
 ): SentryRuntime {
   if (configuredRuntime) return configuredRuntime;
-  return nitroPreset === "cloudflare_module" ? "cloudflare_module" : "node-server";
+  return nitroPreset === "cloudflare_module" || nitroPreset === "cloudflare-module"
+    ? "cloudflare_module"
+    : "node-server";
 }
 
 /**
@@ -66,16 +74,17 @@ export function generateSentryConfigSource(runtime: SentryRuntime, configFile?: 
   const consumerImport = configFile
     ? `import consumerConfig from ${JSON.stringify(configFile)};`
     : "const consumerConfig = {};";
+  const defaults = isSentryV11 ? "defaultSentryConfigV11" : "defaultSentryServerConfig";
 
   return `import { useRuntimeConfig } from 'nitropack/runtime';
-import { defaultSentryServerConfig } from '@onderwijsin/nuxt-sentry-config/runtime';
+import { ${defaults} } from '@onderwijsin/nuxt-sentry-config/runtime';
 ${consumerImport}
 
 export function resolveSentryConfig() {
   const resolvedConsumerConfig = typeof consumerConfig === 'function'
     ? consumerConfig({ runtime: ${JSON.stringify(runtime)}, runtimeConfig: useRuntimeConfig() })
     : consumerConfig;
-  return { ...defaultSentryServerConfig, ...resolvedConsumerConfig };
+  return { ...${defaults}, ...resolvedConsumerConfig };
 }
 `;
 }
@@ -144,14 +153,14 @@ export function createSentryPreloadPlugin(
 }
 
 /**
- * Flattens a Rollup plugin input and removes only the upstream Sentry upload plugin.
+ * Flattens a Rollup plugin input and removes the upstream Sentry upload and staging plugins.
  *
  * @param plugins - Arbitrarily nested Rollup plugin input.
  * @returns Plugins without the upstream Sentry upload pass.
  */
 export function stripSentryNitroRollupPlugin(plugins?: unknown): RollupPluginLike[] {
   return normalizeRollupPlugins(plugins).filter(
-    (plugin) => plugin?.name !== SENTRY_NITRO_ROLLUP_PLUGIN_NAME
+    (plugin) => !SENTRY_NITRO_UPLOAD_PLUGINS.has(plugin.name)
   );
 }
 

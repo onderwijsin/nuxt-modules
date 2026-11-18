@@ -4,20 +4,23 @@ import { createServer } from "node:net";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import sentryPackage from "@sentry/nuxt/package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { resolveFixture } from "../../../packages/test-utils/src";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
+const sentryV11 = sentryPackage.version.startsWith("11.");
 const readySchema = z.object({
   initializations: z.number(),
   release: z.string(),
-  sendDefaultPii: z.boolean(),
-  enableLogs: z.boolean()
+  sendDefaultPii: z.boolean().optional(),
+  enableLogs: z.boolean().optional(),
+  dataCollection: z.object({ userInfo: z.boolean(), cookies: z.boolean() }).optional()
 });
 
 describe("Sentry CLI development startup", () => {
-  it("starts cold and cached workers with one preload and one captured error", async () => {
+  it("starts cold and cached workers with one initialization and one captured error", async () => {
     const fixture = resolveFixture(import.meta.url, "startup");
     const temporary = await mkdtemp(join(fixture, ".startup-"));
     try {
@@ -71,11 +74,12 @@ describe("Sentry CLI development startup", () => {
               },
               { timeout: 45_000, interval: 200 }
             )
-            .toEqual({
+            .toMatchObject({
               initializations: 1,
               release: "sentry-startup-regression",
-              sendDefaultPii: false,
-              enableLogs: true
+              ...(sentryV11
+                ? { dataCollection: { userInfo: false, cookies: false } }
+                : { sendDefaultPii: false, enableLogs: true })
             });
           const response = await fetch(`http://127.0.0.1:${port}/capture`, {
             method: "POST",
@@ -99,8 +103,8 @@ describe("Sentry CLI development startup", () => {
           expect(
             entry.match(
               /from ['"]\.\/sentry\.server\.config\.mjs['"]|import ['"]\.\/sentry\.server\.config\.mjs['"]/gu
-            )
-          ).toHaveLength(1);
+            ) ?? []
+          ).toHaveLength(sentryV11 ? 0 : 1);
           expect(output).not.toMatch(/worker exited|unhandledRejection/u);
         } finally {
           if (server.exitCode === null && server.signalCode === null) {

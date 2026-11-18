@@ -2,10 +2,12 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import sentryPackage from "@sentry/nuxt/package.json" with { type: "json" };
 
 import { describe, expect, it } from "vitest";
 
 const ARTIFACT_E2E_TIMEOUT = 90_000;
+const sentryV11 = sentryPackage.version.startsWith("11.");
 
 const rootDirectory = fileURLToPath(new URL("../../../", import.meta.url));
 const playgroundDirectory = fileURLToPath(new URL("../playground", import.meta.url));
@@ -44,7 +46,7 @@ function readServerArtifacts(): string {
 
 describe("sentry-config production artifacts", () => {
   it(
-    "emits the Node preload, diagnostics, and client defaults without Nitro source-map uploads",
+    "emits Node startup, diagnostics, and client defaults without Nitro source-map uploads",
     () => {
       buildPlayground("build:node");
 
@@ -52,13 +54,18 @@ describe("sentry-config production artifacts", () => {
       const preloadPath = join(serverDirectory, "sentry.server.config.mjs");
       const entryPath = join(serverDirectory, "index.mjs");
 
-      expect(existsSync(preloadPath)).toBe(true);
-      expect(readFileSync(preloadPath, "utf8")).toContain('runtime: "node-server"');
-      expect(readFileSync(preloadPath, "utf8")).toContain("init(sentryConfig)");
-      expect(
-        readFileSync(entryPath, "utf8").match(/import '\.\/sentry\.server\.config\.mjs';/gu)
-      ).toHaveLength(1);
-      expect(readClientArtifacts()).toContain("sendDefaultPii");
+      if (sentryV11) {
+        expect(readServerArtifacts()).toContain('runtime: "node-server"');
+      } else {
+        const preload = readFileSync(preloadPath, "utf8");
+        expect(preload).toContain('runtime: "node-server"');
+        expect(preload).toContain("init(sentryConfig)");
+      }
+      const preloadImports = readFileSync(entryPath, "utf8").match(
+        /import '\.\/sentry\.server\.config\.mjs';/gu
+      );
+      expect(preloadImports ?? []).toHaveLength(sentryV11 ? 0 : 1);
+      expect(readClientArtifacts()).toContain(sentryV11 ? "dataCollection" : "sendDefaultPii");
       expect(readClientArtifacts()).toContain("Sentry diagnostics");
       expect(readServerArtifacts()).toContain("Sentry test API route error");
     },
