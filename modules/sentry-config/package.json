@@ -1,6 +1,6 @@
 {
   "name": "@onderwijsin/nuxt-sentry-config",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Runtime-portable Sentry server configuration for Nuxt.",
   "homepage": "https://github.com/onderwijsin/nuxt-modules#readme",
   "bugs": {
