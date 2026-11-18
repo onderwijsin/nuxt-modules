@@ -89,11 +89,10 @@ describe("theme customizer module", () => {
       configKey: "themeCustomizer",
       compatibility: { nuxt: "^4.0.0" }
     });
-    expect(moduleDefinition.moduleDependencies({ options: {} })).toMatchObject({
+    expect(moduleDefinition.moduleDependencies({ options: {} })).toEqual({
       "@nuxt/ui": { version: "^4.6.1" },
       "@pinia/nuxt": { version: "^1.0.1" },
       "pinia-plugin-persistedstate": { version: "^4.7.1" },
-      "@vueuse/nuxt": { version: "^14.3.0" },
       "@onderwijsin/nuxt-simple-rate-limiter": { version: "*" }
     });
     expect(

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@onderwijsin/nuxt-theme-customizer": "workspace:*",
+    "@vueuse/nuxt": "catalog:",
     "nuxt": "catalog:",
     "playground-layer": "workspace:*"
   }

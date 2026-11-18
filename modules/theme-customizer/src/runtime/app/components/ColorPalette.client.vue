@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed, useClipboard, useToast } from "#imports";
+import { computed, useToast } from "#imports";
+import { useClipboard } from "@vueuse/core";
 import { useFormModal } from "../composables/form-modal";
 import { useThemeCustomizerStore } from "../stores/theme-customizer";
 import { z } from "zod";

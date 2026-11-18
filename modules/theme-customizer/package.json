@@ -47,7 +47,6 @@
     "@onderwijsin/nuxt-module-utils": "workspace:^",
     "@onderwijsin/nuxt-simple-rate-limiter": "workspace:*",
     "@vueuse/core": "catalog:",
-    "@vueuse/nuxt": "catalog:",
     "defu": "catalog:",
     "h3": "catalog:",
     "nitropack": "catalog:",

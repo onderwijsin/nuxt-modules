@@ -1,5 +1,6 @@
 import type { ThemeFontOption } from "../types";
-import { computed, refDebounced, shallowRef, useRuntimeConfig, watch } from "#imports";
+import { computed, shallowRef, useRuntimeConfig, watch } from "#imports";
+import { refDebounced } from "@vueuse/core";
 import { ofetch } from "ofetch";
 import { attempt } from "@onderwijsin/nuxt-module-utils/shared";
 

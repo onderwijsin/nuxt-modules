@@ -1,8 +1,11 @@
+import { fileURLToPath } from "node:url";
+
 export default defineNuxtConfig({
+  css: [fileURLToPath(new URL("./app/assets/main.css", import.meta.url))],
   modules: ["@onderwijsin/nuxt-theme-customizer"],
   themeCustomizer: {
     enabled: true,
-    googleFonts: { families: ["Inter"], apiKey: "dummy-fonts-key" },
+    googleFonts: { families: ["Inter", "Public Sans"] },
     primary: {
       default: {
         50: "#f8fafc",

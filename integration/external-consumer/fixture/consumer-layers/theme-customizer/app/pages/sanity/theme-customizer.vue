@@ -1,5 +1,10 @@
 <template>
-  <p :data-sanity="layerName">{{ data }}</p>
+  <div>
+    <p :data-sanity="layerName">{{ data }}</p>
+    <ClientOnly>
+      <ThemeCustomizerThemePicker />
+    </ClientOnly>
+  </div>
 </template>
 
 <script setup lang="ts">

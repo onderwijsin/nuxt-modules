@@ -20,3 +20,12 @@ with `--sentry-sdk-version=10.78.0` to check a different exact SDK without chang
 catalog. The Sentry layer uses a local transport, checks one initialization and one error event per
 capture, verifies the v10 privacy/logging defaults and consumer-owned payload redaction, and
 typechecks consumer configuration against the chosen SDK.
+
+Theme customizer runs without a VueUse Nuxt integration by default. Repeat its focused packed
+consumer with `--vueuse-nuxt-version=14.4.0` and `--vueuse-nuxt-version=15.0.0` to check
+application-owned integrations. These runs prepare and typecheck the published picker/editor
+runtime, build the application, and serve the editor and picker fixture. The module keeps
+`@vueuse/core` as an isolated utility dependency; it does not register the application's
+`@vueuse/nuxt`.
+
+The theme profile uses the workspace's Vue Router version for Nuxt's generated Volar plugin.

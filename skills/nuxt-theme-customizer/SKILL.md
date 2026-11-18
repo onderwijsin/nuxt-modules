@@ -9,8 +9,8 @@ Use this skill when integrating `@onderwijsin/nuxt-theme-customizer` into a Nuxt
 
 ## Requirements
 
-When the module is enabled, it registers its required Nuxt UI, Pinia, persisted-state, and VueUse
-dependencies. Configure at least one complete named palette under `themeCustomizer.primary`. There
+When the module is enabled, it registers its required Nuxt UI, Pinia, and persisted-state
+integrations. Configure at least one complete named palette under `themeCustomizer.primary`. There
 is no default primary color. Every palette must define the eleven Tailwind shades `50`, `100`,
 `200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, and `950` as six-digit HEX values.
 
@@ -22,8 +22,13 @@ pnpm add @onderwijsin/nuxt-theme-customizer @nuxt/ui @pinia/nuxt pinia pinia-plu
 
 The application supplies `@nuxt/ui`, `@pinia/nuxt`, `pinia`, `pinia-plugin-persistedstate`, `vue` as
 peer dependencies so module runtime code shares the application's instances. Nuxt module
-registration remains automatic. VueUse remains a normal dependency: clipboard and debounce helpers
-do not require shared package state.
+registration remains automatic. Clipboard and debounced font search import their helpers directly
+from the module’s normal `@vueuse/core` dependency; these utilities do not require shared package
+state. The module does not install or register `@vueuse/nuxt`, so applications can use their own
+VueUse Nuxt integration (including v15) or omit it entirely.
+
+When migrating an application that relied on the customizer for VueUse auto-imports, explicitly
+install `@vueuse/nuxt` and register it in the application's `modules` array.
 
 The module adds the application’s Pinia package to Nuxt’s transpilation list so its Vue feature
 flags are compiled for SSR.
