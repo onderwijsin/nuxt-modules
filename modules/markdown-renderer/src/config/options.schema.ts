@@ -2,6 +2,7 @@ import { enabled } from "@onderwijsin/nuxt-module-utils/build";
 import { z } from "zod";
 
 const origin = z.string().trim().min(1);
+const callbackPath = z.string().trim().min(1);
 
 /** Runtime validation schema for the public Markdown renderer module options. */
 export const markdownRendererOptionsSchema = z.strictObject({
@@ -10,7 +11,15 @@ export const markdownRendererOptionsSchema = z.strictObject({
   scopeComponentMeta: z.boolean().default(true),
   componentsDir: z.string().trim().min(1).default("renderer"),
   componentSets: z.record(z.string(), z.array(z.string().trim().min(1))).default({}),
-  resolveReferencePath: z.string().trim().min(1).optional(),
+  /** Consumer-owned reference callbacks, resolved through Nuxt aliases and extensions. */
+  referenceConfig: z.strictObject({ linkResolver: callbackPath.optional() }).optional(),
+  /** Consumer-owned related-list callbacks, resolved through Nuxt aliases and extensions. */
+  relatedItemListConfig: z
+    .strictObject({
+      mapItem: callbackPath.optional(),
+      linkResolver: callbackPath.optional()
+    })
+    .optional(),
   videoBaseUrl: z.url().optional(),
   corsOrigin: z
     .union([

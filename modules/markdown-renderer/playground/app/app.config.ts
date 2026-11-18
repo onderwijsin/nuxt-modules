@@ -1,5 +1,8 @@
 export default defineAppConfig({
   header: {
-    actions: [{ label: "Schema", to: "/schema" }]
+    actions: [
+      { label: "Related items", to: "/related-items" },
+      { label: "Schema", to: "/schema" }
+    ]
   }
 });

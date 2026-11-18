@@ -247,8 +247,8 @@ function resolveCustomComponentMetadata(
  * Converts Nuxt component metadata to the Directus Markdown editor contract.
  *
  * The registry is an external/generated boundary, so every value is narrowed before use. Reserved
- * `Reference` nodes are omitted because Directus owns that editor node. Components without parsed
- * metadata are also omitted rather than returning an incomplete contract.
+ * `Reference` and `RelatedItemList` are omitted because the CMS owns those editor nodes.
+ * Components without parsed metadata are also omitted rather than returning an incomplete contract.
  *
  * The result is a bare array. The Directus extension accepts either this shape or a legacy
  * `{ components: [...] }` wrapper and normalizes both; the array avoids an unnecessary envelope.
@@ -264,7 +264,7 @@ export function createEditorComponentMetadata(
   if (!isRecord(registry)) return [];
 
   const output = components.flatMap(({ name, componentName }) => {
-    if (name === "Reference") return [];
+    if (name === "Reference" || name === "RelatedItemList") return [];
 
     const component = registry[componentName];
     if (!isRecord(component) || !isRecord(component.meta)) return [];

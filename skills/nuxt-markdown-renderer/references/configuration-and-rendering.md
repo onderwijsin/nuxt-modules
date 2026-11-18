@@ -4,15 +4,16 @@
 
 Configure the module under `markdownRenderer` in `nuxt.config.ts`.
 
-| Option                 | Type                       | Default      | Application contract                                                                         |
-| ---------------------- | -------------------------- | ------------ | -------------------------------------------------------------------------------------------- |
-| `enabled`              | `boolean`                  | `true`       | Register runtime components, auto-imports, templates, and routes.                            |
-| `scopeComponentMeta`   | `boolean`                  | `true`       | Scope global metadata extraction to built-ins and direct children of the renderer directory. |
-| `componentsDir`        | `string`                   | `"renderer"` | Directory relative to `app/components/`.                                                     |
-| `componentSets`        | `Record<string, string[]>` | `{}`         | Named allowlists of registered Markdown node names.                                          |
-| `resolveReferencePath` | `string`                   | unset        | Nuxt-resolvable path to a default-exported resolver.                                         |
-| `videoBaseUrl`         | `string`                   | unset        | Absolute URL used to prefix relative video sources.                                          |
-| `corsOrigin`           | `string \| string[]`       | `"*"`        | Browser origins allowed to read metadata.                                                    |
+| Option                  | Type                                          | Default      | Application contract                                                                         |
+| ----------------------- | --------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------- |
+| `enabled`               | `boolean`                                     | `true`       | Register runtime components, auto-imports, templates, and routes.                            |
+| `scopeComponentMeta`    | `boolean`                                     | `true`       | Scope global metadata extraction to built-ins and direct children of the renderer directory. |
+| `componentsDir`         | `string`                                      | `"renderer"` | Directory relative to `app/components/`.                                                     |
+| `componentSets`         | `Record<string, string[]>`                    | `{}`         | Named allowlists of registered Markdown node names.                                          |
+| `referenceConfig`       | `{ linkResolver?: string }`                   | unset        | Optional reference callback file paths.                                                      |
+| `relatedItemListConfig` | `{ mapItem?: string; linkResolver?: string }` | unset        | Optional related-list callback file paths.                                                   |
+| `videoBaseUrl`          | `string`                                      | unset        | Absolute URL used to prefix relative video sources.                                          |
+| `corsOrigin`            | `string \| string[]`                          | `"*"`        | Browser origins allowed to read metadata.                                                    |
 
 ```ts
 export default defineNuxtConfig({
@@ -25,7 +26,11 @@ export default defineNuxtConfig({
       article: ["MarkdownButton", "MarkdownCallout", "MarkdownHero"],
       landing: ["MarkdownButton", "MarkdownHero"]
     },
-    resolveReferencePath: "~/utils/resolveReferencePath",
+    referenceConfig: { linkResolver: "~/utils/resolveReferencePath" },
+    relatedItemListConfig: {
+      mapItem: "~/utils/mapRelatedItem",
+      linkResolver: "~/utils/resolveRelatedItemPath"
+    },
     videoBaseUrl: "https://media.example.com/assets/",
     corsOrigin: ["https://directus.example.com", "http://localhost:8055"]
   }
@@ -71,8 +76,8 @@ Read the documentation before proceeding.
 
 Omit `component-set` to allow every discovered renderer component. An unknown set prevents custom
 component resolution and returns HTTP 404 from its metadata URL. Sets use registered node names;
-`Reference` always resolves regardless of the selected set, including empty or unknown sets, and
-remains excluded from all metadata endpoints. It does not need a set entry.
+`Reference` and `RelatedItemList` always resolve regardless of the selected set, including empty or
+unknown sets, and remain excluded from all metadata endpoints. Neither needs a set entry.
 
 ## MDC syntax
 
@@ -103,6 +108,130 @@ Component syntax and editor insertion metadata are separate: the built-in button
 uses `type: "block"`, while existing inline `:MarkdownButton{...}` content is also supported.
 
 ## Built-in component APIs
+
+### RelatedItemList (MarkdownRelatedItemList)
+
+CMS-owned block node with only `items: RelatedItem[]` and no slots or additional display props. It
+reuses the built-in `MarkdownItemList` without dividers and preserves selection order. Its Vue
+implementation is `MarkdownRelatedItemList`; the persisted node remains `RelatedItemList`, following
+the `MarkdownReference` → `Reference` pattern. Each selection contains `collection: string`,
+`item: string | number`, optional `label: string`, and optional `data: Record<string, unknown>`. The
+CMS supplies snapshots; the component does not fetch data.
+
+```mdc
+::RelatedItemList
+---
+items:
+  - collection: articles
+    item: article-7
+    label: Becoming a teacher
+    data:
+      slug: becoming-a-teacher
+      summary: Explore the routes into teaching.
+      image: image-uuid
+  - collection: programs
+    item: 42
+    label: Teaching traineeship
+    data:
+      slug: teaching-traineeship
+      duration: 24
+---
+::
+```
+
+Set `markdownRenderer.relatedItemListConfig.mapItem` and `.linkResolver` to Nuxt-resolvable file
+paths. Each file default-exports its callback:
+
+```ts
+// app/utils/mapRelatedItem.ts
+import type { MapRelatedItem } from "@onderwijsin/nuxt-markdown-renderer/runtime";
+
+const mapRelatedItem: MapRelatedItem = (item) => {
+  const { summary, image } = item.data ?? {};
+  return {
+    description: typeof summary === "string" ? summary : undefined,
+    image: typeof image === "string" ? `/assets/${encodeURIComponent(image)}` : undefined
+  };
+};
+
+export default mapRelatedItem;
+```
+
+```ts
+// app/utils/resolveRelatedItemPath.ts
+import type { ResolveRelatedItemPath } from "@onderwijsin/nuxt-markdown-renderer/runtime";
+
+const resolveRelatedItemPath: ResolveRelatedItemPath = (item) => {
+  const slug = item.data?.slug;
+  if (item.collection !== "articles" || typeof slug !== "string") return undefined;
+  return `/articles/${encodeURIComponent(slug)}`;
+};
+
+export default resolveRelatedItemPath;
+```
+
+Both callback paths are optional. The synchronous callbacks use the exported `MapRelatedItem` and
+`ResolveRelatedItemPath` types: `mapItem` returns `Omit<ItemListItem, "to">`, while `linkResolver`
+returns `string | undefined`. Both receive the full `RelatedItem`, including numeric primary keys.
+These types are exported from `/runtime`. Titles default to source labels and can be overridden;
+other display fields and links remain unset without configuration. Consumers own collection-specific
+validation, image URL conversion, and routing. The configuration runs during SSR and in the client;
+keep it free of secrets.
+
+`RelatedItem` is a plain TypeScript interface. Like `Reference`, selections are mapped without
+runtime prop validation; consumers validate persisted data at their CMS/content ingestion boundary.
+Additional component attributes, including `divide`, are ignored. Like `Reference`, this node
+resolves even with an empty or unknown component set and is excluded from generic editor metadata.
+
+### ItemList (MarkdownItemList)
+
+A block wrapper around Nuxt UI `UPageList` with ghost `UPageCard` rows and no content slots. The Vue
+implementation is `MarkdownItemList`; persisted Markdown and component sets use `ItemList`. `items`
+is a required array; `divide?: boolean` defaults to `false`.
+
+Every item field is optional: `image?: string` (image URL), `title?: string`,
+`description?: string`, `to?: string`, `external?: boolean`, and `icon?: string` (Iconify name).
+Images take precedence over icons. An item with `external: true` and a non-empty `to` opens as an
+external link in a new tab. Without `to`, the item remains unlinked.
+
+```mdc
+::ItemList
+---
+divide: true
+items:
+  - title: Services
+    image: /images/services.jpg
+    to: /services
+  - title: Nuxt UI
+    description: Component documentation
+    icon: i-lucide-external-link
+    to: https://ui.nuxt.com
+    external: true
+---
+::
+```
+
+Add `ItemList` to the selected component set when using one. Nested editor metadata uses the image
+and URL controls and the Lucide icon picker. The current metadata contract has no conditional field
+visibility: `icon` and `external` remain editable regardless of `image` and `to`. Runtime image
+precedence and link handling still apply.
+
+### MarkdownAnchor
+
+An invisible block anchor with one required string prop, `id`, and no slots:
+
+```mdc
+::MarkdownAnchor{id="existing-fragment"}
+::
+```
+
+Renders `<span id="existing-fragment" class="markdown-anchor"></span>`. Link to it with
+`[Jump to section](#existing-fragment)`. Add `MarkdownAnchor` to the selected component set when
+using one.
+
+The module stylesheet sets `display: block` and `scroll-margin-top: 100px`, producing a −100px
+scroll offset without visible content or layout space. Consumers can override
+`.markdown-anchor { scroll-margin-top: 64px; }` in CSS loaded after the module stylesheet.
 
 ### MarkdownButton
 

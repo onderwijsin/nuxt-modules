@@ -141,8 +141,8 @@ export default createComponentMetadataHandler(
 );
 `
     });
-    const referenceResolver = options.resolveReferencePath
-      ? await resolvePath(options.resolveReferencePath)
+    const referenceResolver = options.referenceConfig?.linkResolver
+      ? await resolvePath(options.referenceConfig.linkResolver)
       : resolver.resolve(runtimeDir, "app", "utils", "resolve-reference-path");
 
     nuxt.options.alias["#markdown-renderer/manifest"] = manifest.dst;
@@ -153,6 +153,14 @@ export default createComponentMetadataHandler(
       "component-manifest"
     );
     nuxt.options.alias["#markdown-renderer/reference-resolver"] = referenceResolver;
+    nuxt.options.alias["#markdown-renderer/related-item-mapper"] = options.relatedItemListConfig
+      ?.mapItem
+      ? await resolvePath(options.relatedItemListConfig.mapItem)
+      : resolver.resolve(runtimeDir, "app", "utils", "map-related-item");
+    nuxt.options.alias["#markdown-renderer/related-item-resolver"] = options.relatedItemListConfig
+      ?.linkResolver
+      ? await resolvePath(options.relatedItemListConfig.linkResolver)
+      : resolver.resolve(runtimeDir, "app", "utils", "resolve-related-item-path");
 
     nuxt.options.appConfig.markdownRenderer = {
       videoBaseUrl: options.videoBaseUrl

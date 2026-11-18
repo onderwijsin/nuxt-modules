@@ -1,2 +1,7 @@
 @source "./app";
 @tailwindcss/typography;
+
+.markdown-anchor {
+  display: block;
+  scroll-margin-top: 100px;
+}

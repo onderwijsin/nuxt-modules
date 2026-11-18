@@ -3,6 +3,32 @@ import { describe, expect, it } from "vitest";
 import { markdownRendererOptionsSchema } from "../src/config/options.schema";
 
 describe("markdown renderer options", () => {
+  it("accepts matching config objects and rejects the removed flat options", () => {
+    const config = {
+      referenceConfig: { linkResolver: "~/utils/reference" },
+      relatedItemListConfig: { mapItem: "~/utils/mapper", linkResolver: "~/utils/relatedLink" }
+    };
+    expect(markdownRendererOptionsSchema.parse(config)).toMatchObject(config);
+    expect(
+      markdownRendererOptionsSchema.parse({ referenceConfig: {}, relatedItemListConfig: {} })
+    ).toMatchObject({
+      referenceConfig: {},
+      relatedItemListConfig: {}
+    });
+    expect(
+      markdownRendererOptionsSchema.safeParse({ resolveReferencePath: "~/utils/reference" }).success
+    ).toBe(false);
+    expect(
+      markdownRendererOptionsSchema.safeParse({ relatedItemList: "~/utils/relatedItems" }).success
+    ).toBe(false);
+    expect(
+      markdownRendererOptionsSchema.safeParse({ referenceConfig: "~/utils/reference" }).success
+    ).toBe(false);
+    expect(
+      markdownRendererOptionsSchema.safeParse({ relatedItemListConfig: "~/utils/relatedItems" })
+        .success
+    ).toBe(false);
+  });
   it("scopes metadata by default and accepts the global opt-out", () => {
     expect(markdownRendererOptionsSchema.parse({}).scopeComponentMeta).toBe(true);
     expect(

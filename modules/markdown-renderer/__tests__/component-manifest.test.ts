@@ -24,11 +24,12 @@ describe("renderer component manifest", () => {
   });
 
   it.each([undefined, "article", "empty", "missing"])(
-    "resolves Reference independently of the selected set (%s)",
+    "resolves CMS-owned nodes independently of the selected set (%s)",
     async (componentSet) => {
       const loadReference = vi.fn(async () => ({ default: "reference" }));
+      const loadRelated = vi.fn(async () => ({ default: "related-item-list" }));
       const manifest = createRendererManifest(
-        { Reference: loadReference },
+        { Reference: loadReference, RelatedItemList: loadRelated },
         { article: ["MarkdownButton"], empty: [] }
       );
 
@@ -36,6 +37,10 @@ describe("renderer component manifest", () => {
         default: "reference"
       });
       expect(loadReference).toHaveBeenCalledOnce();
+      await expect(
+        manifest.resolveRendererComponent("related-item-list", componentSet)
+      ).resolves.toEqual({ default: "related-item-list" });
+      expect(loadRelated).toHaveBeenCalledOnce();
     }
   );
 

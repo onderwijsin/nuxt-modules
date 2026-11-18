@@ -5,8 +5,21 @@ export default defineNuxtConfig({
   modules: ["@onderwijsin/nuxt-markdown-renderer", "@nuxt/image"],
   css: ["~/assets/main.css"],
   markdownRenderer: {
-    resolveReferencePath: "~/utils/resolveReferencePath",
-    componentSets: { demo: ["MarkdownButton", "MarkdownCallout", "MarkdownHero", "Reference"] },
+    referenceConfig: { linkResolver: "~/utils/resolveReferencePath" },
+    relatedItemListConfig: {
+      mapItem: "~/utils/mapRelatedItem",
+      linkResolver: "~/utils/resolveRelatedItemPath"
+    },
+    componentSets: {
+      demo: [
+        "ItemList",
+        "MarkdownAnchor",
+        "MarkdownButton",
+        "MarkdownCallout",
+        "MarkdownHero",
+        "Reference"
+      ]
+    },
     videoBaseUrl: "http://localhost:8055"
   },
   appConfig: { packageName },

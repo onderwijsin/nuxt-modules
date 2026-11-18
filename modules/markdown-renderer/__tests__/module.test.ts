@@ -70,7 +70,9 @@ describe("markdown renderer module", () => {
     expect(nuxt.options.alias).toEqual({
       "#markdown-renderer/manifest": ".nuxt/markdown-renderer/manifest.mjs",
       "#markdown-renderer/manifest-factory": "./runtime/app/utils/component-manifest",
-      "#markdown-renderer/reference-resolver": "./runtime/app/utils/resolve-reference-path"
+      "#markdown-renderer/reference-resolver": "./runtime/app/utils/resolve-reference-path",
+      "#markdown-renderer/related-item-mapper": "./runtime/app/utils/map-related-item",
+      "#markdown-renderer/related-item-resolver": "./runtime/app/utils/resolve-related-item-path"
     });
     expect(kit.addComponent).toHaveBeenCalledWith({
       name: "MarkdownRenderer",
@@ -187,18 +189,35 @@ describe("markdown renderer module", () => {
     expect(metadataTemplate.getContents()).toContain('["https://directus.example.com"]');
   });
 
-  it("resolves a configured reference resolver through Nuxt Kit", async () => {
+  it("resolves consumer-owned runtime files through Nuxt Kit", async () => {
     const nuxt = {
       options: { srcDir: "/project/app", appConfig: {}, alias: {}, build: { transpile: [] } },
       hook: vi.fn(),
       hooks: { addHooks: vi.fn() }
     };
 
-    await setupModule({ resolveReferencePath: "~/utils/reference" }, nuxt);
+    kit.resolvePath
+      .mockResolvedValueOnce("/project/app/utils/reference.ts")
+      .mockResolvedValueOnce("/project/app/utils/mapRelatedItem.ts")
+      .mockResolvedValueOnce("/project/app/utils/resolveRelatedItemPath.ts");
+    await setupModule(
+      {
+        referenceConfig: { linkResolver: "~/utils/reference" },
+        relatedItemListConfig: {
+          mapItem: "~/utils/mapRelatedItem",
+          linkResolver: "~/utils/resolveRelatedItemPath"
+        }
+      },
+      nuxt
+    );
 
     expect(kit.resolvePath).toHaveBeenCalledWith("~/utils/reference");
+    expect(kit.resolvePath).toHaveBeenCalledWith("~/utils/mapRelatedItem");
+    expect(kit.resolvePath).toHaveBeenCalledWith("~/utils/resolveRelatedItemPath");
     expect(nuxt.options.alias).toMatchObject({
-      "#markdown-renderer/reference-resolver": "/project/app/utils/reference.ts"
+      "#markdown-renderer/reference-resolver": "/project/app/utils/reference.ts",
+      "#markdown-renderer/related-item-mapper": "/project/app/utils/mapRelatedItem.ts",
+      "#markdown-renderer/related-item-resolver": "/project/app/utils/resolveRelatedItemPath.ts"
     });
   });
 

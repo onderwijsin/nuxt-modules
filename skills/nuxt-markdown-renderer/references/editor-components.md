@@ -7,8 +7,10 @@ Create Vue files directly under `app/components/<componentsDir>/`; the default i
 and supported file extensions; use those names in MDC and component sets. Components remain lazy
 through Comark's manifest.
 
-A consumer file named `MarkdownButton.vue`, `MarkdownCallout.vue`, or `MarkdownReference.vue`
-replaces that built-in. `MarkdownReference` retains the public `Reference` node name.
+A consumer file with the same filename replaces a built-in component, including
+`MarkdownItemList.vue`, `MarkdownRelatedItemList.vue`, `MarkdownAnchor.vue`, `MarkdownButton.vue`,
+`MarkdownCallout.vue`, or `MarkdownReference.vue`. The persisted node names remain `ItemList`,
+`RelatedItemList`, and `Reference` for the corresponding prefixed Vue components.
 
 ## A complete custom component
 
@@ -214,8 +216,9 @@ https://website.example.com/api/markdown-renderer/components/article
 ```
 
 The first returns all discovered editor components; the second returns only the configured set. The
-response is a bare array, with no `{ components: ... }` wrapper. `Reference` is reserved for
-Directus and deliberately excluded. Both `GET` and browser `OPTIONS` preflight are handled.
+response is a bare array, with no `{ components: ... }` wrapper. `Reference` and `RelatedItemList`
+are owned by the CMS and deliberately excluded. Both `GET` and browser `OPTIONS` preflight are
+handled.
 
 A representative component entry has this shape:
 

@@ -31,6 +31,7 @@ export function createRendererManifest(
 
       if (
         normalizedName !== "Reference" &&
+        normalizedName !== "RelatedItemList" &&
         componentSet &&
         (!allowedComponents || !allowedComponents.includes(normalizedName))
       ) {
