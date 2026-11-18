@@ -1,5 +1,3 @@
-import { createRequire } from "node:module";
-import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { fetch, setupFixture } from "../../../packages/test-utils/src";
 
@@ -16,26 +14,7 @@ async function renderPage(path: string): Promise<string> {
 }
 
 describe("renderer playground pages", async () => {
-  const requireVue = createRequire(createRequire(import.meta.url).resolve("vue"));
-  const vuePackages = [
-    "vue",
-    "@vue/runtime-dom",
-    "@vue/runtime-core",
-    "@vue/reactivity",
-    "@vue/shared",
-    "@vue/server-renderer"
-  ];
-  // Match the markdown renderer fixture: use one Vue runtime throughout SSR.
-  await setupFixture(import.meta.url, "../../playground", {
-    nuxtConfig: {
-      nitro: {
-        alias: Object.fromEntries(
-          vuePackages.map((name) => [name, dirname(requireVue.resolve(`${name}/package.json`))])
-        ),
-        externals: { inline: vuePackages }
-      }
-    }
-  });
+  await setupFixture(import.meta.url, "../../playground");
 
   it("renders the normal newsletter and links all three example pages", async () => {
     const html = await renderPage("/rendering");

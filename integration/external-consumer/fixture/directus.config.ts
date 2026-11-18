@@ -13,7 +13,7 @@ export default defineDirectusConfig({
           id: user.id,
           email: user.email,
           displayName: user.email,
-          role: user.role?.name ?? null
+          role: typeof user.role === "object" ? (user.role?.name ?? null) : null
         })
       }
     }

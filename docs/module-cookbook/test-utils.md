@@ -60,6 +60,11 @@ for the active run, while stale builds from interrupted or crashed test runs are
 cleanup is intentionally limited to Nuxt Test Utils' six-character build directory names and does
 not make test failure depend on cleanup succeeding.
 
+`setupFixture` forwards additional Nuxt Test Utils options unchanged; it does not inject Vue aliases
+or Nitro external settings. The
+[workspace Vue runtime rule](../workspace.md#shared-vue-runtime-in-workspace-builds) owns dependency
+alignment for repository SSR builds, including fixtures.
+
 Use `createTestEvent` for pure server-handler tests that need an H3 event but do not need a running
 Nuxt application:
 

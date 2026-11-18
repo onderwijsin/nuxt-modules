@@ -1,32 +1,9 @@
-import { createRequire } from "node:module";
-import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { $fetch, setupFixture } from "../../../packages/test-utils/src";
 import type { EditorComponentOutput } from "../src/schema/editor-component-schema";
 
 describe("markdown renderer module", async () => {
-  const requireVue = createRequire(createRequire(import.meta.url).resolve("vue"));
-  const vuePackages = [
-    "vue",
-    "@vue/runtime-dom",
-    "@vue/runtime-core",
-    "@vue/reactivity",
-    "@vue/shared",
-    "@vue/server-renderer"
-  ];
-  // Nitro can trace another Vue patch from the workspace into the standalone server.
-  // Resolve the runtime graph from this fixture's Vue and bundle Comark with it so
-  // component resolution and SSR slots use the same runtime instance.
-  await setupFixture(import.meta.url, "basic", {
-    nuxtConfig: {
-      nitro: {
-        alias: Object.fromEntries(
-          vuePackages.map((name) => [name, dirname(requireVue.resolve(`${name}/package.json`))])
-        ),
-        externals: { inline: [...vuePackages, "@comark/vue"] }
-      }
-    }
-  });
+  await setupFixture(import.meta.url);
 
   it("serves built-in and consumer renderer metadata alongside webmanifest", async () => {
     const metadata = await $fetch<EditorComponentOutput[]>(

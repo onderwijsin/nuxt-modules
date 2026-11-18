@@ -52,6 +52,32 @@ for framework integrations that must use the application's installed version. Or
 self-contained runtime utilities remain dependencies. In user-facing documentation, use `pnpm ...`
 unless Corepack itself is relevant; agents invoke the pinned version as `corepack pnpm ...`.
 
+### Shared Vue runtime in workspace builds
+
+The root `overrides.vue: "catalog:"` keeps transitive Vue dependencies, including Nuxt's runtime, on
+the same exact version as direct workspace dependencies. A catalog alone controls only explicit
+`catalog:` references; it does not align Nuxt's semver dependency with that version. Vue then
+selects its matching `@vue/runtime-*`, reactivity, compiler, and server-renderer packages.
+
+Keep this rule at the workspace boundary. Published modules continue to use application-owned
+runtimes through their supported peer ranges; do not add the workspace Vue patch as a published
+runtime dependency or introduce per-fixture Vue aliases and Nitro inlining.
+
+The split Vue graph previously made Nitro omit `vue/server-renderer/index.mjs` from an otherwise
+successful Loops Renderer playground build. Aligning Vue fixes the traced output without a Nitro
+configuration override. After changing the Vue catalog or Nuxt version, validate a clean frozen
+install in an isolated checkout, run the renderer E2E tests, and build the standalone playground:
+
+```sh
+pnpm --filter loops-renderer-playground build
+node modules/loops-renderer/playground/.output/server/index.mjs
+```
+
+Request `/rendering`, `/color-mapping`, and `/approximation` from that server and check actual
+rendered HTML, not only serialized payloads. Also run the packed-consumer
+`--shared-runtime-regression` profile below, which deliberately uses a different Vue patch outside
+the workspace override.
+
 ### Dependency release-age protection
 
 Third-party dependency versions must be at least one day old before pnpm selects them. The workspace

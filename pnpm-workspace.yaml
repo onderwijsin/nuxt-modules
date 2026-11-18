@@ -96,6 +96,8 @@ packages:
 catalogMode: "strict"
 cleanupUnusedCatalogs: true
 overrides:
+  # Keep Nuxt, playgrounds, and SSR dependencies on the catalog Vue runtime.
+  vue: "catalog:"
   zod: 4.4.3
 saveExact: true
 minimumReleaseAge: 1440
