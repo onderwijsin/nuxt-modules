@@ -67,14 +67,14 @@ Import the module stylesheet in the consuming application's main CSS file after 
 
 The built-in MDC nodes are:
 
-| Markdown node     | Vue implementation        | Editor label | Behavior                                     |
-| ----------------- | ------------------------- | ------------ | -------------------------------------------- |
-| `ItemList`        | `MarkdownItemList`        | Item list    | Stacked page cards with optional dividers.   |
-| `MarkdownAnchor`  | `MarkdownAnchor`          | Anchor       | Invisible block target for fragment links.   |
-| `MarkdownButton`  | `MarkdownButton`          | Button       | Inline Nuxt UI button or link.               |
-| `MarkdownCallout` | `MarkdownCallout`         | Callout      | Block Nuxt UI alert with editable content.   |
-| `Reference`       | `MarkdownReference`       | —            | Directus item reference; excluded from menu. |
-| `RelatedItemList` | `MarkdownRelatedItemList` | —            | CMS selections rendered as mapped item rows. |
+| Markdown node      | Vue implementation        | Editor label | Behavior                                     |
+| ------------------ | ------------------------- | ------------ | -------------------------------------------- |
+| `MarkdownAnchor`   | `MarkdownAnchor`          | Anchor       | Invisible block target for fragment links.   |
+| `MarkdownButton`   | `MarkdownButton`          | Button       | Inline Nuxt UI button or link.               |
+| `MarkdownCallout`  | `MarkdownCallout`         | Callout      | Block Nuxt UI alert with editable content.   |
+| `MarkdownItemList` | `MarkdownItemList`        | Item list    | Stacked page cards with optional dividers.   |
+| `Reference`        | `MarkdownReference`       | —            | Directus item reference; excluded from menu. |
+| `RelatedItemList`  | `MarkdownRelatedItemList` | —            | CMS selections rendered as mapped item rows. |
 
 The built-in button's icon editor metadata uses the `lucide` collection by default. To offer other
 icon collections in component metadata, override the relevant renderer component and define its own
@@ -112,9 +112,9 @@ CSS after the module stylesheet:
 
 ### Item lists
 
-The `ItemList` node is rendered by `MarkdownItemList`, wrapping Nuxt UI's `UPageList` and ghost
-`UPageCard` components. It accepts a required `items` array and an optional boolean `divide` prop
-(default `false`). It exposes no content slots. All item fields are optional:
+The `MarkdownItemList` component wraps Nuxt UI's `UPageList` and ghost `UPageCard` components. It
+accepts a required `items` array and an optional boolean `divide` prop (default `false`). It exposes
+no content slots. All item fields are optional:
 
 | Field         | Type      | Behavior                                                           |
 | ------------- | --------- | ------------------------------------------------------------------ |
@@ -126,7 +126,7 @@ The `ItemList` node is rendered by `MarkdownItemList`, wrapping Nuxt UI's `UPage
 | `icon`        | `string`  | Iconify icon name, used when no image is supplied.                 |
 
 ```mdc
-::ItemList
+::MarkdownItemList
 ---
 divide: true
 items:
@@ -142,19 +142,22 @@ items:
 ::
 ```
 
-Include `ItemList` in any component set used to render it. Editor metadata provides image, URL, and
-Lucide icon controls for the nested fields. Conditional field visibility is not supported by the
-current metadata contract: `icon` and `external` remain visible in the editor; rendering gives
-images precedence and ignores `external` when `to` is empty.
+Include `MarkdownItemList` in any component set used to render it. Editor metadata provides image,
+URL, and Lucide icon controls for the nested fields. Conditional field visibility is not supported
+by the current metadata contract: `icon` and `external` remain visible in the editor; rendering
+gives images precedence and ignores `external` when `to` is empty.
+
+When upgrading from v0.3.0, rename stored `::ItemList` blocks to `::MarkdownItemList` and update any
+`ItemList` entries in `componentSets` and editor integrations to `MarkdownItemList`.
 
 ### Related item lists
 
 The `RelatedItemList` node is rendered by `MarkdownRelatedItemList`, reusing `MarkdownItemList` to
 render CMS-selected content in its original order. Its only prop is the required `items` array; it
-has no slots or additional display props. Like `MarkdownReference` → `Reference`, the Vue names are
-prefixed while persisted Markdown keeps the `ItemList` and `RelatedItemList` node names. Component
-sets use those persisted node names. Each selection has a required `collection: string` and
-`item: string | number`, plus optional `label: string` and `data: Record<string, unknown>`.
+has no slots or additional display props. Like `MarkdownReference` → `Reference`,
+`MarkdownRelatedItemList` keeps its CMS-owned node name `RelatedItemList`. Each selection has a
+required `collection: string` and `item: string | number`, plus optional `label: string` and
+`data: Record<string, unknown>`.
 
 ```mdc
 ::RelatedItemList

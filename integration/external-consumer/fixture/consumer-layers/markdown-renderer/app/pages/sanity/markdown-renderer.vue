@@ -3,7 +3,7 @@ import { shallowRef } from "vue";
 
 const content = shallowRef("Some content");
 const anchor = '::MarkdownAnchor{id="existing-fragment"}\n::';
-const itemList = `::ItemList
+const itemList = `::MarkdownItemList
 ---
 divide: true
 items:

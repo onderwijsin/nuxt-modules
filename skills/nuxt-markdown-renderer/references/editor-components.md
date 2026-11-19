@@ -3,14 +3,13 @@
 ## Discovery and overriding built-ins
 
 Create Vue files directly under `app/components/<componentsDir>/`; the default is
-`app/components/renderer/`. Nested files are not discovered. Nuxt determines their registered names
-and supported file extensions; use those names in MDC and component sets. Components remain lazy
-through Comark's manifest.
+`app/components/renderer/`. Nested files are not discovered. Use the component filename without its
+extension in MDC and component sets. Components remain lazy through Comark's manifest.
 
 A consumer file with the same filename replaces a built-in component, including
 `MarkdownItemList.vue`, `MarkdownRelatedItemList.vue`, `MarkdownAnchor.vue`, `MarkdownButton.vue`,
-`MarkdownCallout.vue`, or `MarkdownReference.vue`. The persisted node names remain `ItemList`,
-`RelatedItemList`, and `Reference` for the corresponding prefixed Vue components.
+`MarkdownCallout.vue`, or `MarkdownReference.vue`. The two CMS-owned exceptions use
+`RelatedItemList` for `MarkdownRelatedItemList.vue` and `Reference` for `MarkdownReference.vue`.
 
 ## A complete custom component
 

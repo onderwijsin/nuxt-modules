@@ -15,7 +15,13 @@ export default defineNuxtConfig({
     },
     videoBaseUrl: "https://media.example.com/assets/",
     componentSets: {
-      demo: ["ItemList", "MarkdownAnchor", "MarkdownButton", "MarkdownCallout", "MarkdownHero"]
+      demo: [
+        "MarkdownAnchor",
+        "MarkdownButton",
+        "MarkdownCallout",
+        "MarkdownHero",
+        "MarkdownItemList"
+      ]
     }
   }
 });

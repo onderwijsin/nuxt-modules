@@ -61,7 +61,7 @@ const componentExamples = `
 
 ### Item list with dividers
 
-::ItemList
+::MarkdownItemList
 ---
 divide: true
 items:
@@ -92,7 +92,7 @@ The invisible anchor immediately above this heading uses the default 100px scrol
 
 ### Item list without dividers
 
-::ItemList
+::MarkdownItemList
 ---
 items:
   - title: Plain item

@@ -183,11 +183,10 @@ runtime prop validation; consumers validate persisted data at their CMS/content 
 Additional component attributes, including `divide`, are ignored. Like `Reference`, this node
 resolves even with an empty or unknown component set and is excluded from generic editor metadata.
 
-### ItemList (MarkdownItemList)
+### MarkdownItemList
 
-A block wrapper around Nuxt UI `UPageList` with ghost `UPageCard` rows and no content slots. The Vue
-implementation is `MarkdownItemList`; persisted Markdown and component sets use `ItemList`. `items`
-is a required array; `divide?: boolean` defaults to `false`.
+A block wrapper around Nuxt UI `UPageList` with ghost `UPageCard` rows and no content slots. The
+`items` array is required. The optional `divide` boolean defaults to `false`.
 
 Every item field is optional: `image?: string` (image URL), `title?: string`,
 `description?: string`, `to?: string`, `external?: boolean`, and `icon?: string` (Iconify name).
@@ -195,7 +194,7 @@ Images take precedence over icons. An item with `external: true` and a non-empty
 external link in a new tab. Without `to`, the item remains unlinked.
 
 ```mdc
-::ItemList
+::MarkdownItemList
 ---
 divide: true
 items:
@@ -211,10 +210,13 @@ items:
 ::
 ```
 
-Add `ItemList` to the selected component set when using one. Nested editor metadata uses the image
-and URL controls and the Lucide icon picker. The current metadata contract has no conditional field
-visibility: `icon` and `external` remain editable regardless of `image` and `to`. Runtime image
-precedence and link handling still apply.
+Add `MarkdownItemList` to the selected component set when using one. Nested editor metadata uses the
+image and URL controls and the Lucide icon picker. The current metadata contract has no conditional
+field visibility: `icon` and `external` remain editable regardless of `image` and `to`. Runtime
+image precedence and link handling still apply.
+
+When upgrading from v0.3.0, rename stored `::ItemList` blocks to `::MarkdownItemList` and update any
+`ItemList` entries in `componentSets` and editor integrations to `MarkdownItemList`.
 
 ### MarkdownAnchor
 

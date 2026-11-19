@@ -26,12 +26,13 @@ rewrites relative string sources in its Comark `post` hook. Vue's compiled top-l
 the setup context; Nuxt supplies the async rendering boundary.
 
 `MarkdownRelatedItemList` accepts ordered CMS selections and delegates presentation to the built-in
-`MarkdownItemList`. Their persisted node names remain `RelatedItemList` and `ItemList`, following
-the `MarkdownReference` → `Reference` convention in `resolveRendererNodeName`.
-`runtime/shared/types.ts` owns the plain `RelatedItem` interface; `map-related-items.ts` applies
-consumer callbacks without reordering or runtime validation. As with references, consumers own
-validation at their CMS/content ingestion boundary. The `referenceConfig` and
-`relatedItemListConfig` options are strict objects of optional callback paths. Both use
+`MarkdownItemList`. The renderer uses component filenames as node names by default, so
+`MarkdownItemList` is exposed under its own name. `resolveRendererNodeName` maps
+`MarkdownRelatedItemList` and `MarkdownReference` to the CMS-owned names `RelatedItemList` and
+`Reference`. `runtime/shared/types.ts` owns the plain `RelatedItem` interface;
+`map-related-items.ts` applies consumer callbacks without reordering or runtime validation. As with
+references, consumers own validation at their CMS/content ingestion boundary. The `referenceConfig`
+and `relatedItemListConfig` options are strict objects of optional callback paths. Both use
 `linkResolver`; the related-list object also accepts `mapItem`. Module setup resolves each path
 through Nuxt Kit and aliases it to its default-exported callback, with built-in fallbacks for
 omitted paths. Callbacks run in both SSR and client code. The default keeps labels and leaves rows

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const anchor = '::MarkdownAnchor{id="existing-fragment"}\n::';
 const reference = `:Reference{collection="articles" item="article-7" label="Reference config proof" :data='{"slug":"reference-example"}'}`;
-const itemList = `::ItemList
+const itemList = `::MarkdownItemList
 ---
 divide: true
 items:
