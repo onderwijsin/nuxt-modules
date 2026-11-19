@@ -16,7 +16,7 @@ interface ResolvedNuxtComponent {
 /**
  * Resolves the persisted Markdown node name for a discovered Vue component.
  *
- * Reference and list nodes keep their persisted CMS names while their Vue implementations use
+ * Reference and RelatedItemList keep their persisted CMS names while their Vue implementations use
  * the `Markdown` prefix. Mapping those names here avoids migrating stored content.
  * Nuxt's default component scan may prefix a file in `components/renderer/` as `RendererFoo` even
  * when this module also registers that directory without a path prefix. The filename is the module's
@@ -27,7 +27,6 @@ interface ResolvedNuxtComponent {
 function resolveRendererNodeName(filePath: string): string {
   const fileName = basename(filePath, extname(filePath));
   if (fileName === "MarkdownReference") return "Reference";
-  if (fileName === "MarkdownItemList") return "ItemList";
   if (fileName === "MarkdownRelatedItemList") return "RelatedItemList";
   return fileName;
 }

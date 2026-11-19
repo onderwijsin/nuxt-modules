@@ -12,11 +12,11 @@ export default defineNuxtConfig({
     },
     componentSets: {
       demo: [
-        "ItemList",
         "MarkdownAnchor",
         "MarkdownButton",
         "MarkdownCallout",
         "MarkdownHero",
+        "MarkdownItemList",
         "Reference"
       ]
     },

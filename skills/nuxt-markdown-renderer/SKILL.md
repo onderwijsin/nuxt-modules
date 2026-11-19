@@ -74,9 +74,9 @@ const content = "# Welcome\n\nRead **Markdown** and MDC in your Nuxt application
 
 - Put custom components directly in `app/components/renderer/`, or the configured directory below
   `app/components/`. Nested files are not discovered.
-- Use registered Markdown node names in MDC and `componentSets`, not editor labels. The built-in
-  `MarkdownReference`, `MarkdownItemList`, and `MarkdownRelatedItemList` implementations retain the
-  persisted node names `Reference`, `ItemList`, and `RelatedItemList` respectively.
+- Use registered Markdown node names in MDC and `componentSets`. `MarkdownItemList` uses its
+  component filename. `MarkdownReference` and `MarkdownRelatedItemList` use the CMS-owned node names
+  `Reference` and `RelatedItemList`.
 - Import `defineEditorComponentSchema` from `#imports` in custom renderer SFCs. Its top-level field
   map is `properties`; the metadata HTTP response uses `props`.
 - Configure callback file paths inside `referenceConfig` and `relatedItemListConfig`. Both accept

@@ -453,7 +453,7 @@ async function runFocusedAssertions(port, profile, directusMock, sentryV11) {
           ) &&
           body.some(
             (component) =>
-              component.name === "ItemList" &&
+              component.name === "MarkdownItemList" &&
               component.nodeType === "block" &&
               component.props.items?.items?.properties?.image?.type === "string" &&
               component.props.items?.items?.properties?.external?.type === "boolean"

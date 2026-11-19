@@ -11,41 +11,6 @@ describe("markdown renderer module", async () => {
     );
     expect(metadata).toMatchObject([
       {
-        name: "ItemList",
-        label: "Item list",
-        nodeType: "block",
-        props: {
-          divide: { type: "boolean", default: false },
-          items: {
-            type: "array",
-            required: true,
-            items: {
-              type: "object",
-              properties: {
-                image: {
-                  type: "string",
-                  tags: [{ name: "specialInputType", text: "image" }]
-                },
-                title: { type: "string" },
-                description: { type: "string" },
-                to: {
-                  type: "string",
-                  tags: [{ name: "specialInputType", text: "url" }]
-                },
-                external: { type: "boolean" },
-                icon: {
-                  type: "string",
-                  tags: [
-                    { name: "specialInputType", text: "icon", config: { collections: ["lucide"] } }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        slots: []
-      },
-      {
         name: "MarkdownAnchor",
         label: "Anchor",
         nodeType: "block",
@@ -104,11 +69,46 @@ describe("markdown renderer module", async () => {
           actionTo: { tags: [{ name: "specialInputType", text: "url" }] }
         },
         slots: ["default"]
+      },
+      {
+        name: "MarkdownItemList",
+        label: "Item list",
+        nodeType: "block",
+        props: {
+          divide: { type: "boolean", default: false },
+          items: {
+            type: "array",
+            required: true,
+            items: {
+              type: "object",
+              properties: {
+                image: {
+                  type: "string",
+                  tags: [{ name: "specialInputType", text: "image" }]
+                },
+                title: { type: "string" },
+                description: { type: "string" },
+                to: {
+                  type: "string",
+                  tags: [{ name: "specialInputType", text: "url" }]
+                },
+                external: { type: "boolean" },
+                icon: {
+                  type: "string",
+                  tags: [
+                    { name: "specialInputType", text: "icon", config: { collections: ["lucide"] } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        slots: []
       }
     ]);
     expect(metadata.some((component) => component.name === "RelatedItemList")).toBe(false);
-    const itemProperties = metadata.find((component) => component.name === "ItemList")?.props.items
-      ?.items?.properties;
+    const itemProperties = metadata.find((component) => component.name === "MarkdownItemList")
+      ?.props.items?.items?.properties;
     for (const property of Object.values(itemProperties ?? {})) {
       expect(property.required).not.toBe(true);
     }

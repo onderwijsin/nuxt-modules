@@ -13,6 +13,6 @@ export default defineNuxtConfig({
     },
     componentsDir: fileURLToPath(new URL("./app/components/renderer", import.meta.url)),
     videoBaseUrl: "https://media.example.com/assets/",
-    componentSets: { sanity: ["ItemList", "MarkdownAnchor", "MarkdownCallout"] }
+    componentSets: { sanity: ["MarkdownAnchor", "MarkdownCallout", "MarkdownItemList"] }
   }
 });

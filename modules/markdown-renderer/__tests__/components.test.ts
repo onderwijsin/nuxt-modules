@@ -38,14 +38,14 @@ describe("renderer component registry", () => {
       )
     ).toEqual([
       {
-        name: "ItemList",
-        componentName: "MarkdownItemList",
-        filePath: "/project/app/components/renderer/MarkdownItemList.vue"
-      },
-      {
         name: "MarkdownHero",
         componentName: "RendererMarkdownHero",
         filePath: "/project/app/components/renderer/MarkdownHero.vue"
+      },
+      {
+        name: "MarkdownItemList",
+        componentName: "MarkdownItemList",
+        filePath: "/project/app/components/renderer/MarkdownItemList.vue"
       },
       {
         name: "Reference",
