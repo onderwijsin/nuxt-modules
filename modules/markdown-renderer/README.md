@@ -76,6 +76,8 @@ The built-in MDC nodes are:
 | `Reference`        | `MarkdownReference`       | —            | Directus item reference; excluded from menu. |
 | `RelatedItemList`  | `MarkdownRelatedItemList` | —            | CMS selections rendered as mapped item rows. |
 
+The CMS insert menu shows descriptions for Anchor, Button, Callout, and Item list.
+
 The built-in button's icon editor metadata uses the `lucide` collection by default. To offer other
 icon collections in component metadata, override the relevant renderer component and define its own
 `defineEditorComponentSchema` with the desired `collections` for each icon input.
@@ -118,11 +120,11 @@ no content slots. All item fields are optional:
 
 | Field         | Type      | Behavior                                                           |
 | ------------- | --------- | ------------------------------------------------------------------ |
-| `image`       | `string`  | Image URL, displayed instead of the icon when supplied.            |
-| `title`       | `string`  | Item heading.                                                      |
-| `description` | `string`  | Supporting text.                                                   |
+| `title`       | `string`  | Title of the list item.                                            |
+| `description` | `string`  | Supporting text below the title.                                   |
 | `to`          | `string`  | Internal path or full URL. Omit to render an unlinked item.        |
 | `external`    | `boolean` | Opens `to` as an external link in a new tab. Ignored without `to`. |
+| `image`       | `string`  | Leading image URL. Takes precedence over the icon.                 |
 | `icon`        | `string`  | Iconify icon name, used when no image is supplied.                 |
 
 ```mdc
@@ -142,10 +144,10 @@ items:
 ::
 ```
 
-Include `MarkdownItemList` in any component set used to render it. Editor metadata provides image,
-URL, and Lucide icon controls for the nested fields. Conditional field visibility is not supported
-by the current metadata contract: `icon` and `external` remain visible in the editor; rendering
-gives images precedence and ignores `external` when `to` is empty.
+Include `MarkdownItemList` in any component set used to render it. The CMS shows item fields in the
+order above, with Image directly above Icon. Editor metadata provides image, URL, and Lucide icon
+controls for the nested fields. The editor keeps `icon` and `external` visible. When rendered, an
+image takes precedence over the icon, and `external` applies only when `to` is set.
 
 When upgrading from v0.3.0, rename stored `::ItemList` blocks to `::MarkdownItemList` and update any
 `ItemList` entries in `componentSets` and editor integrations to `MarkdownItemList`.

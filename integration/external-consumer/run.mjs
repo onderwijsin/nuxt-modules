@@ -17,6 +17,7 @@ import { join, resolve } from "node:path";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
+import { isDeepStrictEqual } from "node:util";
 import { consumerModules, getLayerName } from "./layer-registry.mjs";
 import { discoverWorkspacePackages } from "../../scripts/package-validation.mjs";
 import {
@@ -445,6 +446,11 @@ async function runFocusedAssertions(port, profile, directusMock, sentryV11) {
         (body) =>
           body.some(
             (component) =>
+              component.name === "MarkdownAnchor" &&
+              component.description === "Add a link target for jumping to this spot on the page."
+          ) &&
+          body.some(
+            (component) =>
               component.name === "MarkdownButton" &&
               component.props.label?.description === "Label displayed inside the button."
           ) &&
@@ -458,13 +464,29 @@ async function runFocusedAssertions(port, profile, directusMock, sentryV11) {
                 (tag) => tag.name === "specialInputType" && tag.text === "video"
               )
           ) &&
-          body.some(
-            (component) =>
+          body.some((component) => {
+            const itemProperties = component.props.items?.items?.properties ?? {};
+            const descriptions = Object.entries(itemProperties).map(([name, property]) => [
+              name,
+              property.description
+            ]);
+            return (
               component.name === "MarkdownItemList" &&
               component.nodeType === "block" &&
-              component.props.items?.items?.properties?.image?.type === "string" &&
-              component.props.items?.items?.properties?.external?.type === "boolean"
-          ) &&
+              component.description ===
+                "Display a vertical list of cards with optional images, icons, and links." &&
+              itemProperties.image?.type === "string" &&
+              itemProperties.external?.type === "boolean" &&
+              isDeepStrictEqual(descriptions, [
+                ["title", "title of the list item"],
+                ["description", "Supporting text below the title."],
+                ["to", "Link destination, either an internal path or a full URL."],
+                ["external", "Whether to open the destination as an external link in a new tab."],
+                ["image", "Image that is leading the list item."],
+                ["icon", "Icon that is displayed when no image is provided."]
+              ])
+            );
+          }) &&
           !body.some((component) => ["Reference", "RelatedItemList"].includes(component.name))
       );
     }

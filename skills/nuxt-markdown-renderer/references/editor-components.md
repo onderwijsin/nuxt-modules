@@ -245,8 +245,9 @@ A representative component entry has this shape:
 
 Entries can also include `description` and `tags`. Prop fields can include `label`, `values`,
 `description`, `default`, `required`, `tags`, nested `properties`, and `items`. Inference supplies
-the complete prop map, keyed by Vue prop name. Built-ins retain their typed prop metadata, JSDoc,
-defaults, slots, and editor tags in installed applications.
+the complete prop map, keyed by Vue prop name. Anchor, Button, Callout, and Item list include a
+description for the CMS insert menu. Built-ins retain their typed prop metadata, JSDoc, defaults,
+slots, and editor tags in installed applications.
 
 The endpoint is public and has no authentication challenge. CORS is browser policy, not an access
 control mechanism. Configure `corsOrigin` for the Directus origins that need to read it.
