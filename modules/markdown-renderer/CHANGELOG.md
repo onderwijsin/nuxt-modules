@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 6d52875: Expose the item list as `MarkdownItemList` in Markdown, component sets, and editor metadata,
+  following its Vue filename.
+
+  **Breaking change for v0.3.0 consumers that use the item list.** Rename stored `::ItemList` blocks to
+  `::MarkdownItemList`. Replace `"ItemList"` with `"MarkdownItemList"` in `markdownRenderer.componentSets`
+  and update any editor integrations that use the old metadata name. `RelatedItemList` keeps its
+  CMS-owned node name.
+
+  After migrating, build the application and check that a stored list renders and the editor metadata
+  endpoint returns `MarkdownItemList` for the relevant component set.
+
+- e33ea69: Set an editor display label on any inferred property with
+  `properties: { video: { label: "My Video", input: "video" } }` in `defineEditorComponentSchema`.
+  Labels also work on nested property overrides. The metadata endpoint returns the optional `label`
+  alongside the Vue prop name and the rest of its metadata.
+
+  Existing schemas need no migration. To verify a new label, typecheck and build the application,
+  then inspect the property in `/api/markdown-renderer/components`.
+
+- e33ea69: Support `input: "video"` and `input: { type: "video" }` in `defineEditorComponentSchema` for
+  inferred string props. Video uses the same option-free schema as image and emits a
+  `specialInputType` tag with the value `video`.
+
+  Existing component schemas need no migration. To use the new input, add it to a string prop,
+  typecheck and build the application, then check the prop's tag at `/api/markdown-renderer/components`.
+
+### Patch Changes
+
+- e33ea69: Add descriptions for Anchor and Item list to the Markdown renderer metadata shown in the CMS
+  insert menu. Existing Markdown content needs no migration. After upgrading and rebuilding your
+  Nuxt app, reopen the CMS insert menu to see the descriptions.
+- e33ea69: Show the Image field directly above Icon when editing a `MarkdownItemList` item in the CMS. The
+  item field descriptions explain where the text, link, image, and fallback icon appear. Existing
+  Markdown content needs no migration. After upgrading and rebuilding the Nuxt app, open an item
+  in the CMS to check the field order and descriptions.
+
 ## 0.3.0
 
 ### Minor Changes
