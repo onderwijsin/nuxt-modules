@@ -12,9 +12,7 @@ export interface RelatedItem {
 
 /** Display fields shared by the item-list components. */
 export interface ItemListItem {
-  /** Image URL; takes precedence over the icon. */
-  image?: string;
-  /** Item title. */
+  /** title of the list item */
   title?: string;
   /** Supporting text below the title. */
   description?: string;
@@ -22,7 +20,9 @@ export interface ItemListItem {
   to?: string;
   /** Whether to open the destination as an external link in a new tab. */
   external?: boolean;
-  /** Iconify icon name, displayed when no image is provided. */
+  /** Image that is leading the list item. */
+  image?: string;
+  /** Icon that is displayed when no image is provided. */
   icon?: string;
 }
 

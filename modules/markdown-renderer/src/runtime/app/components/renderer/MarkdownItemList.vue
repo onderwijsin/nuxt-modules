@@ -4,6 +4,7 @@ import type { ItemListItem } from "../../../shared/types";
 
 defineEditorComponentSchema({
   label: "Item list",
+  description: "Display a vertical list of cards with optional images, icons, and links.",
   type: "block",
   properties: {
     items: {

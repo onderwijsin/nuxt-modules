@@ -19,7 +19,7 @@ const description = z.string().optional();
 const defaultValue = z.unknown().optional();
 /** Whether the editor requires a prop or nested property. */
 const required = z.boolean().optional();
-/** Human-readable component label supplied by the macro. */
+/** Human-readable label supplied by the macro. */
 const label = z.string();
 
 /**
@@ -57,11 +57,19 @@ const urlInput = defineSpecialInput({
   propertyType: "string",
   config: z.strictObject({})
 });
+
+const mediaInputConfig = z.strictObject({});
 /** Image editor control, with optional empty configuration. */
 const imageInput = defineSpecialInput({
   inputType: "image",
   propertyType: "string",
-  config: z.strictObject({})
+  config: mediaInputConfig
+});
+/** Video editor control, with the same configuration as the image control. */
+const videoInput = defineSpecialInput({
+  inputType: "video",
+  propertyType: "string",
+  config: mediaInputConfig
 });
 /** Icon editor control, requiring at least one Iconify collection. */
 const iconInput = defineSpecialInput({
@@ -77,11 +85,17 @@ const iconInput = defineSpecialInput({
 export const specialInputs = z.discriminatedUnion("inputType", [
   urlInput.endpoint,
   imageInput.endpoint,
+  videoInput.endpoint,
   iconInput.endpoint
 ]);
 
 /** Accepted macro input names, derived from the special-input definitions. */
-export const SpecialInputNameSchema = z.union([urlInput.name, imageInput.name, iconInput.name]);
+export const SpecialInputNameSchema = z.union([
+  urlInput.name,
+  imageInput.name,
+  videoInput.name,
+  iconInput.name
+]);
 
 /**
  * Macro syntax for controls. Every control accepts an object form; controls without required
@@ -90,8 +104,14 @@ export const SpecialInputNameSchema = z.union([urlInput.name, imageInput.name, i
 export const SpecialInputMacroSchema = z.union([
   urlInput.shorthand,
   imageInput.shorthand,
+  videoInput.shorthand,
   iconInput.shorthand,
-  z.discriminatedUnion("type", [urlInput.macro, imageInput.macro, iconInput.macro])
+  z.discriminatedUnion("type", [
+    urlInput.macro,
+    imageInput.macro,
+    videoInput.macro,
+    iconInput.macro
+  ])
 ]);
 
 /** Tag name used by the endpoint to identify a validated special editor input. */
@@ -110,6 +130,7 @@ const deprecation = z.union([z.boolean(), z.object({ text: z.string() }), z.stri
 
 /** Non-recursive property overrides accepted by the authoring macro. */
 const inputFields = z.strictObject({
+  label: label.optional(),
   values: choices.optional(),
   input: SpecialInputMacroSchema.optional(),
   deprecated: deprecation.optional(),

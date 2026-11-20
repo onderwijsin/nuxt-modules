@@ -3,6 +3,7 @@ import { defineEditorComponentSchema } from "../../utils/define-editor-component
 
 defineEditorComponentSchema({
   label: "Anchor",
+  description: "Add a link target for jumping to this spot on the page.",
   type: "block"
 });
 

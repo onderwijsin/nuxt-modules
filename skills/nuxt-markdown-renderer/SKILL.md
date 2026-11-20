@@ -78,14 +78,15 @@ const content = "# Welcome\n\nRead **Markdown** and MDC in your Nuxt application
   component filename. `MarkdownReference` and `MarkdownRelatedItemList` use the CMS-owned node names
   `Reference` and `RelatedItemList`.
 - Import `defineEditorComponentSchema` from `#imports` in custom renderer SFCs. Its top-level field
-  map is `properties`; the metadata HTTP response uses `props`.
+  map is `properties`. Set `properties.<name>.label` to give a prop an editor display label. The
+  metadata HTTP response uses `props` keyed by Vue prop names.
 - Configure callback file paths inside `referenceConfig` and `relatedItemListConfig`. Both accept
   `linkResolver`; the related-list object also accepts `mapItem`. Each file default-exports a
   function. The removed flat `resolveReferencePath` and `relatedItemList` options are rejected.
   Migrate existing references to `referenceConfig.linkResolver`; this breaking change is
   intentionally a minor release.
-- Special editor inputs (`image`, `url`, `icon`) require inferred string props, including nested
-  fields. Icon inputs require a non-empty `collections` array.
+- Special editor inputs (`image`, `video`, `url`, `icon`) require inferred string props, including
+  nested fields. Icon inputs require a non-empty `collections` array.
 - The metadata endpoint is public. `corsOrigin` controls browser access and provides no
   authentication.
 - `scopeComponentMeta: true` scopes the application's global metadata parser. Set it to `false` when

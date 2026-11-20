@@ -188,10 +188,11 @@ resolves even with an empty or unknown component set and is excluded from generi
 A block wrapper around Nuxt UI `UPageList` with ghost `UPageCard` rows and no content slots. The
 `items` array is required. The optional `divide` boolean defaults to `false`.
 
-Every item field is optional: `image?: string` (image URL), `title?: string`,
-`description?: string`, `to?: string`, `external?: boolean`, and `icon?: string` (Iconify name).
-Images take precedence over icons. An item with `external: true` and a non-empty `to` opens as an
-external link in a new tab. Without `to`, the item remains unlinked.
+The CMS displays `title`, `description`, `to`, `external`, `image`, and `icon` in that order. All
+six fields are optional. `external` is a boolean and the other fields are strings. `image` accepts a
+URL and `icon` accepts an Iconify name. Images take precedence over icons. An item with
+`external: true` and a non-empty `to` opens as an external link in a new tab. Without `to`, the item
+remains unlinked.
 
 ```mdc
 ::MarkdownItemList
