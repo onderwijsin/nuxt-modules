@@ -2,8 +2,12 @@
 import { defineEditorComponentSchema } from "#imports";
 
 /** Consumer page introduction. */
-defineProps<{ title: string }>();
-defineEditorComponentSchema({ label: "Hero", type: "block" });
+defineProps<{ title: string; videoSrc?: string }>();
+defineEditorComponentSchema({
+  label: "Hero",
+  type: "block",
+  properties: { videoSrc: { input: "video" } }
+});
 </script>
 
 <template>

@@ -449,7 +449,13 @@ async function runFocusedAssertions(port, profile, directusMock, sentryV11) {
               component.props.label?.description === "Label displayed inside the button."
           ) &&
           body.some(
-            (component) => component.name === "MarkdownHero" && component.label === "Hero"
+            (component) =>
+              component.name === "MarkdownHero" &&
+              component.label === "Hero" &&
+              component.props.videoSrc?.type === "string" &&
+              component.props.videoSrc.tags?.some(
+                (tag) => tag.name === "specialInputType" && tag.text === "video"
+              )
           ) &&
           body.some(
             (component) =>

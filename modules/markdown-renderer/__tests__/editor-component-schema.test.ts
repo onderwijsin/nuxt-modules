@@ -24,18 +24,18 @@ describe("editor component contract", () => {
     ).toBe(false);
   });
 
-  it("defines image as a control for string properties", () => {
-    expect(specialInputs.safeParse({ inputType: "image", propertyType: "string" }).success).toBe(
-      true
-    );
-    expect(specialInputs.safeParse({ inputType: "image", propertyType: "number" }).success).toBe(
-      false
-    );
+  it.each(["image", "video"])("defines %s as a string control without options", (inputType) => {
+    expect(specialInputs.safeParse({ inputType, propertyType: "string" }).success).toBe(true);
+    expect(specialInputs.safeParse({ inputType, propertyType: "number" }).success).toBe(false);
+    expect(
+      specialInputs.safeParse({ inputType, propertyType: "string", config: { extra: true } })
+        .success
+    ).toBe(false);
     expect(
       EditorComponentInputSchema.safeParse({
         label: "Hero",
         type: "block",
-        properties: { image: { input: { type: "image" } }, url: { input: { type: "url" } } }
+        properties: { src: { input: inputType }, preview: { input: { type: inputType } } }
       }).success
     ).toBe(true);
   });

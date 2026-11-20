@@ -84,8 +84,8 @@ const content = "# Welcome\n\nRead **Markdown** and MDC in your Nuxt application
   function. The removed flat `resolveReferencePath` and `relatedItemList` options are rejected.
   Migrate existing references to `referenceConfig.linkResolver`; this breaking change is
   intentionally a minor release.
-- Special editor inputs (`image`, `url`, `icon`) require inferred string props, including nested
-  fields. Icon inputs require a non-empty `collections` array.
+- Special editor inputs (`image`, `video`, `url`, `icon`) require inferred string props, including
+  nested fields. Icon inputs require a non-empty `collections` array.
 - The metadata endpoint is public. `corsOrigin` controls browser access and provides no
   authentication.
 - `scopeComponentMeta: true` scopes the application's global metadata parser. Set it to `false` when

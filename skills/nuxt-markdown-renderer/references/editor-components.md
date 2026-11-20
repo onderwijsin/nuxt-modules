@@ -131,11 +131,12 @@ no deprecation tag. Both component-level and property-level deprecation are supp
 | ----- | ------------------------------------------- | -------------------------------------------------------------- |
 | URL   | `"url"` or `{ type: "url" }`                | Inferred string field; no extra options.                       |
 | Image | `"image"` or `{ type: "image" }`            | Inferred string field; no extra options.                       |
+| Video | `"video"` or `{ type: "video" }`            | Inferred string field; no extra options.                       |
 | Icon  | `{ type: "icon", collections: ["lucide"] }` | Inferred string field; at least one non-empty collection name. |
 
 There is no bare `"icon"` shorthand because collections are required. These controls emit a
-`specialInputType` tag; icon options appear in its `config.collections`. Use the actual inferred
-string field for an image URL, not its enclosing object.
+`specialInputType` tag. Icon options appear in its `config.collections`. Apply image and video
+inputs directly to the inferred string field that holds the source.
 
 ### Choices, defaults, and complex fields
 
