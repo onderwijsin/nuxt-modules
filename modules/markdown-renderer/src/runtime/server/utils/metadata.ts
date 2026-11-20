@@ -186,6 +186,7 @@ function transformProperty(
   const name = isString(value.name) ? value.name : fallbackName;
   if (!name) return undefined;
 
+  const label = custom?.label;
   const description = custom?.description ?? value.description;
   const values = custom?.values ?? resolveSchemaValues(value.schema);
   const inferredType = resolveEditorType(value.type);
@@ -216,6 +217,7 @@ function transformProperty(
 
   return {
     name,
+    ...(isDefined(label) ? { label } : {}),
     type,
     ...(structure?.properties ? { properties: structure.properties } : {}),
     ...(structure?.items ? { items: structure.items } : {}),

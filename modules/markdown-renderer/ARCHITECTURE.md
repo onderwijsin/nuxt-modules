@@ -57,8 +57,9 @@ module builds, the build copies every direct Vue file in the built-in renderer d
 while runtime registration uses their compiled Vue components. This keeps props, defaults, slots,
 and macro tags available from a published package. On the server,
 `src/runtime/server/utils/metadata.ts` recursively merges that inferred structure with the
-namespaced enrichment and validates the resulting editor schema. It accepts array item schemas as
-arrays or numeric-keyed maps, both of which occur in generated component metadata. Partial
+namespaced enrichment and validates the resulting editor schema. The merge keeps inferred property
+names as identifiers and includes explicitly supplied display labels. It accepts array item schemas
+as arrays or numeric-keyed maps, both of which occur in generated component metadata. Partial
 namespaced metadata from `extendComponentMeta` remains supported. The special input definitions
 specify both their names and supported inferred property types, plus any required per-input
 configuration. The server checks these before applying a type override. Configured inputs are

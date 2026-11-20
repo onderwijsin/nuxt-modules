@@ -24,7 +24,7 @@ defineEditorComponentSchema({
   description: "A page introduction with optional artwork and links.",
   type: "block",
   properties: {
-    actionTo: { input: "url" },
+    actionTo: { label: "Call to action", input: "url" },
     image: { properties: { src: { input: "image" } } },
     actions: {
       items: {
@@ -112,6 +112,7 @@ These fields apply both to top-level props and nested object/array fields.
 
 | Field         | Type                                                       | Purpose                                                             |
 | ------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| `label`       | `string`                                                   | Optional editor display label.                                      |
 | `values`      | `string[]`                                                 | Explicit choices, useful when an imported union cannot be expanded. |
 | `input`       | Special input below                                        | Editor control for an inferred string field.                        |
 | `deprecated`  | `boolean \| string \| { text: string }`                    | Prop deprecation hint.                                              |
@@ -232,6 +233,7 @@ A representative component entry has this shape:
       "title": { "name": "title", "type": "string", "required": true },
       "actionTo": {
         "name": "actionTo",
+        "label": "Call to action",
         "type": "string",
         "tags": [{ "name": "specialInputType", "text": "url" }]
       }
@@ -241,10 +243,10 @@ A representative component entry has this shape:
 ]
 ```
 
-Entries can also include `description` and `tags`; prop fields can include `values`, `description`,
-`default`, `required`, `tags`, nested `properties`, and `items`. Inference supplies the complete
-prop map, not just the fields overridden by the macro. Built-ins retain their typed prop metadata,
-JSDoc, defaults, slots, and editor tags in installed applications.
+Entries can also include `description` and `tags`. Prop fields can include `label`, `values`,
+`description`, `default`, `required`, `tags`, nested `properties`, and `items`. Inference supplies
+the complete prop map, keyed by Vue prop name. Built-ins retain their typed prop metadata, JSDoc,
+defaults, slots, and editor tags in installed applications.
 
 The endpoint is public and has no authentication challenge. CORS is browser policy, not an access
 control mechanism. Configure `corsOrigin` for the Directus origins that need to read it.

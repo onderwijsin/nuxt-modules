@@ -452,7 +452,8 @@ async function runFocusedAssertions(port, profile, directusMock, sentryV11) {
             (component) =>
               component.name === "MarkdownHero" &&
               component.label === "Hero" &&
-              component.props.videoSrc?.type === "string" &&
+              component.props.videoSrc?.label === "My Video" &&
+              component.props.videoSrc.type === "string" &&
               component.props.videoSrc.tags?.some(
                 (tag) => tag.name === "specialInputType" && tag.text === "video"
               )

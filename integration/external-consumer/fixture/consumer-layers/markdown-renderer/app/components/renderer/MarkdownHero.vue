@@ -6,7 +6,7 @@ defineProps<{ title: string; videoSrc?: string }>();
 defineEditorComponentSchema({
   label: "Hero",
   type: "block",
-  properties: { videoSrc: { input: "video" } }
+  properties: { videoSrc: { label: "My Video", input: "video" } }
 });
 </script>
 

@@ -19,7 +19,7 @@ const description = z.string().optional();
 const defaultValue = z.unknown().optional();
 /** Whether the editor requires a prop or nested property. */
 const required = z.boolean().optional();
-/** Human-readable component label supplied by the macro. */
+/** Human-readable label supplied by the macro. */
 const label = z.string();
 
 /**
@@ -130,6 +130,7 @@ const deprecation = z.union([z.boolean(), z.object({ text: z.string() }), z.stri
 
 /** Non-recursive property overrides accepted by the authoring macro. */
 const inputFields = z.strictObject({
+  label: label.optional(),
   values: choices.optional(),
   input: SpecialInputMacroSchema.optional(),
   deprecated: deprecation.optional(),

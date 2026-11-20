@@ -110,7 +110,7 @@ describe("Markdown editor component metadata", () => {
     ).toThrow("Hero.props.actions.items.properties.to");
   });
 
-  it("preserves nested objects, array items, descriptions, and literal choices", () => {
+  it("preserves nested objects, array items, display labels, descriptions, and literal choices", () => {
     const result = createEditorComponentMetadata(
       {
         Hero: {
@@ -118,7 +118,9 @@ describe("Markdown editor component metadata", () => {
             markdownRenderer: {
               props: {
                 image: {
-                  properties: { src: { tags: [{ name: "specialInputType", text: "image" }] } }
+                  properties: {
+                    src: { label: "Image", tags: [{ name: "specialInputType", text: "image" }] }
+                  }
                 },
                 actions: {
                   items: {
@@ -191,6 +193,8 @@ describe("Markdown editor component metadata", () => {
       type: "object",
       properties: {
         src: {
+          name: "src",
+          label: "Image",
           type: "string",
           required: true,
           description: "Image source.",

@@ -318,7 +318,7 @@ defineEditorComponentSchema({
   description: "A prominent page introduction.",
   type: "block",
   properties: {
-    actionTo: { input: "url" },
+    actionTo: { label: "Call to action", input: "url" },
     image: { properties: { src: { input: "image" } } },
     actions: {
       items: {
@@ -375,6 +375,7 @@ well as the module playground.
 | `description`                                    | Help text shown while choosing a component.                                                                                                  |
 | `type`                                           | Required insertion behavior: `"block"` or `"inline"`.                                                                                        |
 | `deprecated`                                     | `true`, a non-empty guidance string, or `{ text: string }`.                                                                                  |
+| `properties.<name>.label`                        | Optional display label for the prop in the editor.                                                                                           |
 | `properties.<name>.values`                       | Explicit choices, particularly for imported union types.                                                                                     |
 | `properties.<name>.input`                        | `"image"`, `"video"`, or `"url"` as shorthand or in an object such as `{ type: "video" }`. Icon uses `{ type: "icon", collections: [...] }`. |
 | `properties.<name>.properties`                   | Overrides for fields of an inferred object prop.                                                                                             |
@@ -395,7 +396,8 @@ inputs require an inferred string prop, including at nested paths. An incompatib
 causes the metadata endpoint to report the component and property path as a validation error.
 
 Use `properties` at the top level of `defineEditorComponentSchema` and for nested object fields. The
-generated metadata and Directus endpoint response continue to expose component fields as `props`.
+metadata endpoint returns the fields under `props`, keyed by their Vue names. Each field carries an
+optional `label` when one is supplied.
 
 ### Component sets
 
