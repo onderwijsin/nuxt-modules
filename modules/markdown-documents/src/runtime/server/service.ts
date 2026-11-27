@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 /** Internal application service with per-definition LLMS discovery. */
-interface DocumentService extends MarkdownDocumentService {
+export interface DocumentService extends MarkdownDocumentService {
   listLlmsSections: (context?: MarkdownDocumentContext) => Promise<
     (MarkdownDocumentLlmsSection & {
       links: (MarkdownDocumentListItem & { href: string })[];

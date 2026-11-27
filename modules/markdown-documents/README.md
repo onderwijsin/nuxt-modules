@@ -139,12 +139,13 @@ export default defineNuxtConfig({
 });
 ```
 
-| Option        | Default            | Behavior                                                                                                                 |
-| ------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `enabled`     | `true`             | Enables server discovery, utilities, and raw delivery. `false` skips registration; options are still validated.          |
-| `dir`         | `server/documents` | Definition directory relative to application `rootDir`.                                                                  |
-| `rawPrefix`   | Unset              | Serves canonical paths with `.md` appended. Set a prefix such as `/raw` for prefixed delivery.                           |
-| `contentType` | `"plain"`          | Response MIME type: `"plain"` for `text/plain`, or `"markdown"` for `text/markdown`. Request headers do not override it. |
+| Option                            | Default            | Behavior                                                                                                                          |
+| --------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                         | `true`             | Enables server discovery, utilities, and raw delivery. `false` skips registration; options are still validated.                   |
+| `dir`                             | `server/documents` | Definition directory relative to application `rootDir`.                                                                           |
+| `rawPrefix`                       | Unset              | Serves canonical paths with `.md` appended. Set a prefix such as `/raw` for prefixed delivery.                                    |
+| `contentType`                     | `"plain"`          | Response MIME type: `"plain"` for `text/plain`, or `"markdown"` for `text/markdown`. Request headers do not override it.          |
+| `dedupeAiReadyLlmsSitemapEntries` | Unset              | [Removes sitemap entries already covered by curated Markdown](#deduplicate-ai-ready-sitemap-entries) from AI Ready's `/llms.txt`. |
 
 The implicit default directory may be absent. An explicitly configured missing directory, or a path
 that is not a directory, fails setup. `dir` must be a nonempty relative path without traversal. It
@@ -382,6 +383,36 @@ arbitrary frontmatter remains available in the individual generated `.md` files.
 Nitro captures request-hook errors and continues serving the AI Ready route. If a document listing
 fails, `/llms.txt` can still return HTTP 200 with AI Ready's base output and no document sections.
 Check server error reporting when document sections are unexpectedly absent.
+
+### Deduplicate AI Ready sitemap entries
+
+Set `markdownDocuments.dedupeAiReadyLlmsSitemapEntries` with AI Ready 3.6.1 or a later 3.6 patch. On
+each runtime discovery request, the integration replaces AI Ready's automatic `Pages` list with
+sitemap entries that have no curated Markdown entry. Remove any app-level
+`aiReady.llmsTxt.pages: false` that you added for deduplication. The adapter sets it for the
+discovery request.
+
+```ts
+export default defineNuxtConfig({
+  markdownDocuments: {
+    dedupeAiReadyLlmsSitemapEntries: {
+      title: "Overige pagina's",
+      description: "Andere openbare pagina's op deze website."
+    }
+  }
+});
+```
+
+An empty object uses the default title `Other pages` and omits the description. Discovery uses the
+configured sitemap names from `aiReady.llmsTxt.sitemaps`, or all configured sitemaps when that
+option is omitted. An empty array excludes all sitemaps. Pages can be served dynamically as long as
+their URLs appear in a selected sitemap.
+
+Each URL appears at most once in the deduplicated section. A URL already listed by a Markdown
+Documents section keeps its curated title, description, and Markdown link. The other links use the
+sitemap's canonical HTML URLs and their paths as labels. AI Ready's `llmsTxtCacheSeconds` controls
+when discovery output refreshes. Serve `/llms.txt` from Nitro to receive runtime updates. A
+prerendered file reflects build-time discovery.
 
 ### Original Markdown content
 
