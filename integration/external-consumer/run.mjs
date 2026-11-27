@@ -104,7 +104,7 @@ function getPackedDependencies(manifest) {
 /**
  * Verifies that packed workspace dependencies cannot silently come from npm.
  *
- * Third-party dependencies are intentionally left to pnpm's normal resolver. Internal
+ * Third-party dependencies resolve with the generated consumer's pnpm settings. Internal
  * `@onderwijsin/nuxt-*` dependencies must be represented by matching local artifacts so
  * the consumer validates one coherent release set.
  *
@@ -764,6 +764,8 @@ export async function main() {
         "  sharp: true",
         "  vue-demi: true",
         "overrides:",
+        // Nuxt 4.5.2 can resolve unctx as both bundled and external with Vite 8.4.
+        ...(nuxtVersion === "4.5.2" ? ['  vite: "8.3.8"'] : []),
         ...Object.entries({ ...packedDependencies, ...themeDependencies }).map(
           ([name, dependency]) => `  ${JSON.stringify(name)}: ${JSON.stringify(dependency)}`
         ),

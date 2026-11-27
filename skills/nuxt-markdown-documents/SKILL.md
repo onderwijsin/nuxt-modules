@@ -217,6 +217,20 @@ Nitro captures request-hook errors and continues serving the AI Ready route. If 
 fails, `/llms.txt` can still return HTTP 200 with AI Ready's base output and no document sections.
 Check server error reporting when document sections are unexpectedly absent.
 
+### Deduplicate AI Ready sitemap entries
+
+With AI Ready 3.6.1 or a later 3.6 patch, opt in to remove automatic sitemap entries that overlap
+curated Markdown entries. Configure `markdownDocuments.dedupeAiReadyLlmsSitemapEntries` with an
+optional `title` (default `Other pages`) and `description`. For Dutch sites, use
+`dedupeAiReadyLlmsSitemapEntries: { title: "Overige pagina's" }`.
+
+The adapter replaces AI Ready's automatic `Pages` list at runtime. Remove any app-level
+`aiReady.llmsTxt.pages: false` added for deduplication. The adapter uses the sitemap names selected
+by `aiReady.llmsTxt.sitemaps` and compares against concrete listed document paths. A new page
+appears once its URL enters a selected sitemap. Links for those pages use canonical HTML URLs with
+path labels. Serve `/llms.txt` from Nitro and account for AI Ready's output cache when verifying
+updates.
+
 ### Original Markdown content
 
 When AI Ready is registered, the module also supplies original documents through its Nitro content

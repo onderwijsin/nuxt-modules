@@ -1,13 +1,4 @@
-import {
-  addServerImports,
-  addServerPlugin,
-  addServerTemplate,
-  addTypeTemplate,
-  createResolver,
-  defineNuxtModule,
-  useLogger,
-  hasNuxtModule
-} from "@nuxt/kit";
+import { createResolver, defineNuxtModule, useLogger } from "@nuxt/kit";
 import {
   moduleSetup,
   resolveLoggerScope,
@@ -17,13 +8,9 @@ import {
 } from "@onderwijsin/nuxt-module-utils/build";
 import { version } from "../package.json";
 import { markdownDocumentsOptionsSchema } from "./config/options.schema";
-import {
-  documentServiceUtilities,
-  generateDocumentServiceTypes,
-  generateDocumentRegistry,
-  watchDocumentDefinitions,
-  resolveDefinitionDirectory
-} from "./config/definitions";
+import { resolveDefinitionDirectory, watchDocumentDefinitions } from "./config/definitions";
+import { registerDocuments } from "./config/register-documents";
+import { registerDiscovery } from "./config/register-discovery";
 import type { ModuleOptions } from "./types/options";
 
 export type { ModuleOptions } from "./types/options";
@@ -49,75 +36,27 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolver = createResolver(import.meta.url);
     const runtimeDir = resolver.resolve("./runtime");
+    const serverRuntimeDir = resolver.resolve(runtimeDir, "server");
     const directory = resolveDefinitionDirectory(
       nuxt.options.rootDir,
       options.dir,
       rawOptions.dir !== undefined
     );
     transpileRuntime(nuxt, runtimeDir);
-    addServerImports({
-      name: "defineMarkdownDocument",
-      from: resolver.resolve(runtimeDir, "server/index")
-    });
+    const registry = registerDocuments(nuxt, serverRuntimeDir, directory, options);
 
-    const registry = addServerTemplate({
-      filename: "#markdown-documents",
-      getContents: () =>
-        generateDocumentRegistry(directory, resolver.resolve(runtimeDir, "server"), {
-          baseURL: nuxt.options.app.baseURL,
-          rawPrefix: options.rawPrefix,
-          contentType: options.contentType
-        })
-    });
-    addServerImports(documentServiceUtilities.map((name) => ({ name, from: registry.filename })));
-    addTypeTemplate(
-      { filename: "types/markdown-documents.d.ts", getContents: generateDocumentServiceTypes },
-      { nuxt: false, nitro: true }
+    // AI Ready can be installed by Nuxt SEO after this module's setup runs.
+    nuxt.hook("modules:done", () =>
+      registerDiscovery(
+        nuxt,
+        serverRuntimeDir,
+        registry,
+        options.dedupeAiReadyLlmsSitemapEntries,
+        log
+      )
     );
-    const plugin = addServerTemplate({
-      filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/plugin.mjs"),
-      getContents:
-        () => `import { registerMarkdownDocumentHandlers } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/http"))};
-import { documents, configuration, resolveMarkdownDocument } from ${JSON.stringify(registry.filename)};
-export default (app) => registerMarkdownDocumentHandlers(app.h3App, documents, resolveMarkdownDocument, configuration, app.router.handler);
-`
-    });
-    addServerPlugin(plugin.filename);
 
-    nuxt.hook("modules:done", () => {
-      // Add nuxt-llms integration
-      if (hasNuxtModule("nuxt-llms", nuxt)) {
-        const llmsPlugin = addServerTemplate({
-          filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/llms.mjs"),
-          getContents:
-            () => `import { registerMarkdownDocumentLlms } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/llms"))};
-import { service } from ${JSON.stringify(registry.filename)};
-export default (app) => registerMarkdownDocumentLlms(app.hooks, service);
-`
-        });
-        addServerPlugin(llmsPlugin.filename);
-      }
-
-      // Add nuxt-ai-ready integration
-      if (hasNuxtModule("nuxt-ai-ready", nuxt)) {
-        const aiReadyPlugin = addServerTemplate({
-          filename: resolver.resolve(nuxt.options.buildDir, "markdown-documents/ai-ready.mjs"),
-          getContents: () => `import { defineNitroPlugin, useRuntimeConfig } from "#imports";
-import { registerMarkdownDocumentAiReady } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/ai-ready"))};
-import { registerMarkdownDocumentAiReadySource, registerMarkdownDocumentAiReadyMarkdown } from ${JSON.stringify(resolver.resolve(runtimeDir, "server/ai-ready-content"))};
-import { service, configuration } from ${JSON.stringify(registry.filename)};
-export default defineNitroPlugin((app) => {
-  registerMarkdownDocumentAiReady(app.hooks, service, useRuntimeConfig, configuration);
-  registerMarkdownDocumentAiReadySource(app.hooks, service, configuration);
-  registerMarkdownDocumentAiReadyMarkdown(app.hooks, service);
-});
-`
-        });
-        addServerPlugin(aiReadyPlugin.filename);
-      }
-    });
-
-    // Add HMR watchers for server/documents
+    // Refresh registry membership when definition files are added or removed in development.
     if (nuxt.options.dev) watchDocumentDefinitions(nuxt, directory);
     end();
   }

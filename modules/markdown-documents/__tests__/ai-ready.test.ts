@@ -8,6 +8,8 @@ import type { MarkdownDocumentServiceOptions } from "../src/runtime/server/types
 
 type RuntimeConfig = ReturnType<Parameters<typeof registerMarkdownDocumentAiReady>[2]>;
 
+const llmsConfig = (config?: RuntimeConfig) => config?.["nuxt-ai-ready"]?.llmsTxt || undefined;
+
 /**
  * Creates a request with the URL and method observed by Nitro hooks.
  * @param path Request target, including an optional query.
@@ -24,9 +26,13 @@ function request(path = "/llms.txt", method = "GET") {
 /**
  * Registers the adapter against real document validation and request-local configuration.
  * @param options Application base URL and raw prefix.
+ * @param deduplication Optional runtime sitemap reader and custom section metadata.
  * @returns The request callback, configuration reader and observable source callbacks.
  */
-function setup(options: MarkdownDocumentServiceOptions = {}) {
+function setup(
+  options: MarkdownDocumentServiceOptions = {},
+  deduplication?: Parameters<typeof registerMarkdownDocumentAiReady>[4]
+) {
   const list = vi.fn(() => [
     { title: "Public article", description: "Article summary", path: "/articles/one" }
   ]);
@@ -76,7 +82,7 @@ function setup(options: MarkdownDocumentServiceOptions = {}) {
       }
     }
   }));
-  registerMarkdownDocumentAiReady(hooks, service, getConfig, options);
+  registerMarkdownDocumentAiReady(hooks, service, getConfig, options, deduplication);
   const onRequest = hooks.hook.mock.calls[0]?.[1];
   if (!onRequest) throw new Error("Missing request hook");
   return { onRequest, getConfig, list, fetch, excludedList };
@@ -99,7 +105,7 @@ describe("AI Ready document discovery", () => {
       const event = request(path);
       await onRequest(event);
       expect(getConfig).toHaveBeenCalledWith(event);
-      expect(getConfig.mock.results[0]?.value["nuxt-ai-ready"]?.llmsTxt?.sections).toEqual([
+      expect(llmsConfig(getConfig.mock.results[0]?.value)?.sections).toEqual([
         { title: "Existing", links: [{ title: "Support", href: "/support" }] },
         {
           title: "Articles",
@@ -123,6 +129,60 @@ describe("AI Ready document discovery", () => {
       expect(excludedList).not.toHaveBeenCalled();
     }
   );
+
+  it("discovers missing pages from the selected sitemaps on each request", async () => {
+    let standalone = "quick-scan";
+    const fetchSitemapUrlGroups = vi.fn(
+      async () =>
+        new Map([
+          [
+            "pages",
+            [
+              { loc: "https://example.com/site/" },
+              { loc: `https://example.com/site/${standalone}` },
+              { loc: "https://external.com/site/external" }
+            ]
+          ],
+          [
+            "articles",
+            [
+              { loc: "https://example.com/site/articles/one/" },
+              { loc: `https://example.com/site/${standalone}/` }
+            ]
+          ]
+        ])
+    );
+    const { onRequest, getConfig } = setup(
+      { baseURL: "/site/", rawPrefix: "/raw" },
+      {
+        title: "Overige pagina's",
+        description: "Andere openbare pagina's.",
+        fetchSitemapUrlGroups,
+        getSiteUrl: () => "https://example.com"
+      }
+    );
+    getConfig.mockImplementation(() => ({
+      "nuxt-ai-ready": { llmsTxt: { pages: "sitemap", sitemaps: ["pages", "articles"] } }
+    }));
+
+    const first = request("/site/llms.txt");
+    await onRequest(first);
+    expect(fetchSitemapUrlGroups).toHaveBeenCalledWith(first, ["pages", "articles"]);
+    const firstConfig = llmsConfig(getConfig.mock.results[0]?.value);
+    expect(firstConfig?.pages).toBe(false);
+    expect(firstConfig?.sections).toContainEqual({
+      title: "Overige pagina's",
+      description: "Andere openbare pagina's.",
+      links: [{ title: "/quick-scan", href: "https://example.com/site/quick-scan" }]
+    });
+    expect(firstConfig?.sections?.[0]?.links?.[0]?.href).toBe("/site/raw/articles/one.md");
+
+    standalone = "tips";
+    await onRequest(request("/site/llms/_configured-1.txt"));
+    expect(llmsConfig(getConfig.mock.results[1]?.value)?.sections?.at(-1)?.links).toEqual([
+      { title: "/tips", href: "https://example.com/site/tips" }
+    ]);
+  });
 
   it.each([
     { path: "/about", method: "GET" },
@@ -160,17 +220,14 @@ describe("AI Ready document discovery", () => {
     const config: RuntimeConfig = { "nuxt-ai-ready": { llmsTxt: {} } };
     getConfig.mockReturnValue(config);
     await onRequest(request());
-    expect(config["nuxt-ai-ready"]?.llmsTxt?.sections?.map(({ title }) => title)).toEqual([
-      "Articles",
-      "Home"
-    ]);
+    expect(llmsConfig(config)?.sections?.map(({ title }) => title)).toEqual(["Articles", "Home"]);
   });
 
   it("keeps opted-in section metadata when a listing is empty", async () => {
     const { onRequest, getConfig, list, fetch } = setup();
     list.mockReturnValue([]);
     await onRequest(request());
-    expect(getConfig.mock.results[0]?.value["nuxt-ai-ready"]?.llmsTxt?.sections).toContainEqual({
+    expect(llmsConfig(getConfig.mock.results[0]?.value)?.sections).toContainEqual({
       title: "Articles",
       description: "Public articles",
       links: []
@@ -183,8 +240,8 @@ describe("AI Ready document discovery", () => {
     const first = request();
     const second = request();
     await Promise.all([onRequest(first), onRequest(second)]);
-    const firstSections = getConfig.mock.results[0]?.value["nuxt-ai-ready"]?.llmsTxt?.sections;
-    const secondSections = getConfig.mock.results[1]?.value["nuxt-ai-ready"]?.llmsTxt?.sections;
+    const firstSections = llmsConfig(getConfig.mock.results[0]?.value)?.sections;
+    const secondSections = llmsConfig(getConfig.mock.results[1]?.value)?.sections;
     expect(firstSections).toHaveLength(3);
     expect(secondSections).toEqual(firstSections);
     expect(secondSections).not.toBe(firstSections);
@@ -200,7 +257,7 @@ describe("AI Ready document discovery", () => {
     await expect(onRequest(request())).rejects.toThrow(
       "Markdown document list failed in articles.ts."
     );
-    expect(getConfig.mock.results[0]?.value["nuxt-ai-ready"]?.llmsTxt?.sections).toHaveLength(1);
+    expect(llmsConfig(getConfig.mock.results[0]?.value)?.sections).toHaveLength(1);
   });
 
   it("rejects listing paths outside the owning definition", async () => {

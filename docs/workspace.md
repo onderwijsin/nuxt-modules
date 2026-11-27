@@ -183,6 +183,11 @@ assertions local. Pull request CI runs this same consumer validation after packa
 produced, and the publish workflow runs it against the exact artifacts immediately before the
 unchanged Changesets publish step.
 
+The Nuxt 4.5.2 consumer pins Vite to 8.3.8 in its generated pnpm configuration. Vite 8.4 rejects
+inconsistent `unctx` imports during SSR with that Nuxt version. Revisit the pin when upgrading the
+consumer to a Nuxt release with the
+[SSR external resolution fix](https://github.com/nuxt/nuxt/pull/36796).
+
 When the artifacts include Module Utils, the consumer installs its Zod peer explicitly and checks
 that its build helpers accept application-created schemas and the real Nuxt Kit logger. The check
 compiles output-inference assertions, then exercises parsing, errors, lifecycle logging, and
